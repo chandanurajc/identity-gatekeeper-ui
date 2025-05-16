@@ -12,6 +12,9 @@ import UsersList from "./pages/admin/UsersList";
 import CreateUser from "./pages/admin/CreateUser";
 import EditUser from "./pages/admin/EditUser";
 import UserDetails from "./pages/admin/UserDetails";
+import RolesList from "./pages/admin/RolesList";
+import RoleForm from "./pages/admin/RoleForm";
+import RoleDetails from "./pages/admin/RoleDetails";
 import Settings from "./pages/Settings";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -78,6 +81,48 @@ const App = () => (
                 <ProtectedRoute requiredRoles={["admin"]}>
                   <MainLayout>
                     <UserDetails />
+                  </MainLayout>
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Role Management Routes */}
+            <Route 
+              path="/admin/roles" 
+              element={
+                <ProtectedRoute requiredRoles={["admin"]}>
+                  <MainLayout>
+                    <RolesList />
+                  </MainLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/roles/create" 
+              element={
+                <ProtectedRoute requiredRoles={["admin"]}>
+                  <MainLayout>
+                    <RoleForm />
+                  </MainLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/roles/edit/:roleId" 
+              element={
+                <ProtectedRoute requiredRoles={["admin"]}>
+                  <MainLayout>
+                    <RoleForm />
+                  </MainLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/roles/:roleId" 
+              element={
+                <ProtectedRoute requiredRoles={["admin"]}>
+                  <MainLayout>
+                    <RoleDetails />
                   </MainLayout>
                 </ProtectedRoute>
               } 

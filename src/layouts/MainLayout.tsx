@@ -16,8 +16,9 @@ import {
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/context/AuthContext";
 import { NavLink } from "react-router-dom";
-import { Users, LayoutList, Settings } from "lucide-react";
+import { Users, LayoutList, Settings, UserRound, Shield } from "lucide-react";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useRolePermissions } from "@/hooks/useRolePermissions";
 import { Button } from "@/components/ui/button";
 
 interface MainLayoutProps {
@@ -27,6 +28,7 @@ interface MainLayoutProps {
 export const MainLayout = ({ children }: MainLayoutProps) => {
   const { user, logout } = useAuth();
   const { canViewUsers } = usePermissions();
+  const { canViewRoles } = useRolePermissions();
 
   return (
     <SidebarProvider>
@@ -61,6 +63,17 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
                     </SidebarMenuItem>
                   )}
                   
+                  {canViewRoles && (
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild tooltip="Role Management">
+                        <NavLink to="/admin/roles" className={({ isActive }) => isActive ? "font-bold" : ""}>
+                          <Shield />
+                          <span>Role Management</span>
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  )}
+                  
                   <SidebarMenuItem>
                     <SidebarMenuButton asChild tooltip="Settings">
                       <NavLink to="/settings" className={({ isActive }) => isActive ? "font-bold" : ""}>
@@ -77,7 +90,10 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
           <SidebarFooter className="p-4">
             {user && (
               <div className="space-y-2">
-                <div className="text-sm font-medium">{user.name || user.email}</div>
+                <div className="flex items-center space-x-2">
+                  <UserRound className="h-5 w-5 text-muted-foreground" />
+                  <div className="text-sm font-medium">{user.name || user.email}</div>
+                </div>
                 <div className="text-xs text-muted-foreground">Role: {user.roles.join(', ')}</div>
                 <Button variant="outline" size="sm" className="w-full" onClick={logout}>
                   Logout
