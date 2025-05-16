@@ -1,4 +1,5 @@
 
+import React from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -23,132 +24,134 @@ import { MainLayout } from "./layouts/MainLayout";
 const queryClient = new QueryClient();
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
+  <React.StrictMode>
+    <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            
-            {/* Protected routes with MainLayout */}
-            <Route 
-              path="/dashboard" 
-              element={
-                <ProtectedRoute>
-                  <MainLayout>
-                    <Dashboard />
-                  </MainLayout>
-                </ProtectedRoute>
-              } 
-            />
-            
-            {/* User Management Routes */}
-            <Route 
-              path="/admin/users" 
-              element={
-                <ProtectedRoute requiredRoles={["admin"]}>
-                  <MainLayout>
-                    <UsersList />
-                  </MainLayout>
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/admin/users/create" 
-              element={
-                <ProtectedRoute requiredRoles={["admin"]}>
-                  <MainLayout>
-                    <CreateUser />
-                  </MainLayout>
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/admin/users/edit/:userId" 
-              element={
-                <ProtectedRoute requiredRoles={["admin"]}>
-                  <MainLayout>
-                    <EditUser />
-                  </MainLayout>
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/admin/users/:userId" 
-              element={
-                <ProtectedRoute requiredRoles={["admin"]}>
-                  <MainLayout>
-                    <UserDetails />
-                  </MainLayout>
-                </ProtectedRoute>
-              } 
-            />
-            
-            {/* Role Management Routes */}
-            <Route 
-              path="/admin/roles" 
-              element={
-                <ProtectedRoute requiredRoles={["admin"]}>
-                  <MainLayout>
-                    <RolesList />
-                  </MainLayout>
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/admin/roles/create" 
-              element={
-                <ProtectedRoute requiredRoles={["admin"]}>
-                  <MainLayout>
-                    <RoleForm />
-                  </MainLayout>
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/admin/roles/edit/:roleId" 
-              element={
-                <ProtectedRoute requiredRoles={["admin"]}>
-                  <MainLayout>
-                    <RoleForm />
-                  </MainLayout>
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/admin/roles/:roleId" 
-              element={
-                <ProtectedRoute requiredRoles={["admin"]}>
-                  <MainLayout>
-                    <RoleDetails />
-                  </MainLayout>
-                </ProtectedRoute>
-              } 
-            />
-            
-            {/* Settings Route */}
-            <Route 
-              path="/settings" 
-              element={
-                <ProtectedRoute>
-                  <MainLayout>
-                    <Settings />
-                  </MainLayout>
-                </ProtectedRoute>
-              } 
-            />
-            
-            <Route path="/unauthorized" element={<Unauthorized />} />
-            
-            {/* Catch-all route */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
+        <TooltipProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              
+              {/* Protected routes with MainLayout */}
+              <Route 
+                path="/dashboard" 
+                element={
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <Dashboard />
+                    </MainLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              
+              {/* User Management Routes */}
+              <Route 
+                path="/admin/users" 
+                element={
+                  <ProtectedRoute requiredRoles={["admin"]}>
+                    <MainLayout>
+                      <UsersList />
+                    </MainLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/users/create" 
+                element={
+                  <ProtectedRoute requiredRoles={["admin"]}>
+                    <MainLayout>
+                      <CreateUser />
+                    </MainLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/users/edit/:userId" 
+                element={
+                  <ProtectedRoute requiredRoles={["admin"]}>
+                    <MainLayout>
+                      <EditUser />
+                    </MainLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/users/:userId" 
+                element={
+                  <ProtectedRoute requiredRoles={["admin"]}>
+                    <MainLayout>
+                      <UserDetails />
+                    </MainLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              
+              {/* Role Management Routes */}
+              <Route 
+                path="/admin/roles" 
+                element={
+                  <ProtectedRoute requiredRoles={["admin"]}>
+                    <MainLayout>
+                      <RolesList />
+                    </MainLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/roles/create" 
+                element={
+                  <ProtectedRoute requiredRoles={["admin"]}>
+                    <MainLayout>
+                      <RoleForm />
+                    </MainLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/roles/edit/:roleId" 
+                element={
+                  <ProtectedRoute requiredRoles={["admin"]}>
+                    <MainLayout>
+                      <RoleForm />
+                    </MainLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/roles/:roleId" 
+                element={
+                  <ProtectedRoute requiredRoles={["admin"]}>
+                    <MainLayout>
+                      <RoleDetails />
+                    </MainLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              
+              {/* Settings Route */}
+              <Route 
+                path="/settings" 
+                element={
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <Settings />
+                    </MainLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route path="/unauthorized" element={<Unauthorized />} />
+              
+              {/* Catch-all route */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+          <Toaster />
+          <Sonner />
+        </TooltipProvider>
       </AuthProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
+    </QueryClientProvider>
+  </React.StrictMode>
 );
 
 export default App;
