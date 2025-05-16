@@ -1,97 +1,69 @@
 
-import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { usePermissions } from "@/hooks/usePermissions"; 
+import { Users } from "lucide-react";
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
+  const { canViewUsers } = usePermissions();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate("/");
+    } catch (error) {
+      console.error("Logout failed", error);
+    }
+  };
+
+  const navigateToUserManagement = () => {
+    navigate("/admin/users");
+  };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
-      <header className="bg-white border-b shadow-sm">
-        <div className="container mx-auto py-4 px-6 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-primary">Dashboard</h1>
-          <div className="flex items-center gap-4">
-            <span className="text-sm font-medium">
-              Welcome, {user?.name || user?.email}
-            </span>
-            <Button variant="outline" onClick={logout}>
-              Logout
-            </Button>
-          </div>
-        </div>
-      </header>
+    <div className="container mx-auto py-8">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold">Dashboard</h1>
+        <Button onClick={handleLogout} variant="outline">Logout</Button>
+      </div>
 
-      <main className="flex-grow container mx-auto py-8 px-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Welcome, {user?.name || user?.email}!</CardTitle>
+            <CardDescription>
+              Your current role{user?.roles.length !== 1 ? 's' : ''}: {user?.roles.join(', ')}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p>This is your application dashboard.</p>
+          </CardContent>
+        </Card>
+
+        {canViewUsers && (
           <Card>
             <CardHeader>
-              <CardTitle>User Information</CardTitle>
-              <CardDescription>Your account details</CardDescription>
+              <CardTitle>User Management</CardTitle>
+              <CardDescription>
+                Manage user accounts and permissions
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Email:</span>
-                  <span className="font-medium">{user?.email}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Role(s):</span>
-                  <span className="font-medium capitalize">
-                    {user?.roles.join(", ")}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">User ID:</span>
-                  <span className="font-medium">{user?.id}</span>
-                </div>
-              </div>
+              <p>Create, view, and edit user accounts in the system.</p>
             </CardContent>
+            <CardFooter>
+              <Button onClick={navigateToUserManagement}>
+                <Users className="mr-2 h-4 w-4" />
+                Manage Users
+              </Button>
+            </CardFooter>
           </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Access Information</CardTitle>
-              <CardDescription>Your roles and permissions</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2">
-                {user?.roles.includes("admin") && (
-                  <li className="flex items-center gap-2">
-                    <div className="h-2 w-2 rounded-full bg-green-500"></div>
-                    <span>Full administrative access</span>
-                  </li>
-                )}
-                {user?.roles.includes("user") && (
-                  <li className="flex items-center gap-2">
-                    <div className="h-2 w-2 rounded-full bg-blue-500"></div>
-                    <span>Standard user access</span>
-                  </li>
-                )}
-                {user?.roles.includes("guest") && (
-                  <li className="flex items-center gap-2">
-                    <div className="h-2 w-2 rounded-full bg-gray-500"></div>
-                    <span>Limited guest access</span>
-                  </li>
-                )}
-              </ul>
-              <div className="mt-4 pt-4 border-t">
-                <p className="text-sm text-muted-foreground">
-                  Your roles determine your level of access to various features and actions within the system.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </main>
-
-      <footer className="bg-white border-t py-4">
-        <div className="container mx-auto px-6">
-          <p className="text-sm text-center text-muted-foreground">
-            This is a demo application with Role-Based Access Control (RBAC)
-          </p>
-        </div>
-      </footer>
+        )}
+      </div>
     </div>
   );
 };

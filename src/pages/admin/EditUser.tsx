@@ -1,0 +1,145 @@
+
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { UserFormData, User } from "@/types/user";
+import { getUserById, updateUser } from "@/services/userService";
+import UserForm from "@/components/admin/UserForm";
+import { useToast } from "@/hooks/use-toast";
+import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { usePermissions } from "@/hooks/usePermissions";
+
+const EditUser = () => {
+  const { userId } = useParams<{ userId: string }>();
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const { canEditUsers } = usePermissions();
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        if (!userId) {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "User ID is missing.",
+          });
+          navigate("/admin/users");
+          return;
+        }
+
+        const userData = await getUserById(userId);
+        
+        if (!userData) {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "User not found.",
+          });
+          navigate("/admin/users");
+          return;
+        }
+        
+        setUser(userData);
+      } catch (error) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load user data.",
+        });
+        navigate("/admin/users");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, [userId, navigate, toast]);
+
+  const handleUpdateUser = async (userData: UserFormData) => {
+    if (!userId) return;
+    
+    try {
+      await updateUser(userId, userData);
+    } catch (error) {
+      console.error("Error updating user:", error);
+      throw error;
+    }
+  };
+
+  if (!canEditUsers) {
+    return (
+      <div className="container mx-auto py-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>Access Denied</CardTitle>
+            <CardDescription>
+              You don't have permission to edit users.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="container mx-auto py-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>Loading</CardTitle>
+            <CardDescription>
+              Loading user data...
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="container mx-auto py-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>User Not Found</CardTitle>
+            <CardDescription>
+              The requested user could not be found.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    );
+  }
+
+  // Transform user data to form data format
+  const userFormData: Partial<UserFormData> = {
+    firstName: user.firstName,
+    lastName: user.lastName,
+    username: user.username,
+    email: user.email,
+    phone: user.phone,
+    designation: user.designation,
+    roles: user.roles,
+    effectiveFrom: user.effectiveFrom,
+    effectiveTo: user.effectiveTo,
+  };
+
+  return (
+    <div className="container mx-auto py-8">
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Edit User: {user.firstName} {user.lastName}</CardTitle>
+          <CardDescription>
+            Update user information. Fields marked with * are required.
+          </CardDescription>
+        </CardHeader>
+      </Card>
+      
+      <UserForm initialData={userFormData} isEditing onSubmit={handleUpdateUser} />
+    </div>
+  );
+};
+
+export default EditUser;

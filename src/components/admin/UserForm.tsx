@@ -1,0 +1,376 @@
+
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { UserFormData, UserRole } from "@/types/user";
+import { useToast } from "@/hooks/use-toast";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
+// Form schema including validation
+const formSchema = z.object({
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
+  username: z.string().email("Invalid email format"),
+  email: z.string().email("Invalid email format"),
+  password: z.string().optional(),
+  confirmPassword: z.string().optional(),
+  phoneCountryCode: z.string().min(1, "Country code is required"),
+  phoneNumber: z.string()
+    .min(10, "Phone number must be at least 10 digits")
+    .regex(/^\d+$/, "Phone number must contain only digits"),
+  designation: z.string().optional(),
+  roles: z.array(z.string()).min(1, "At least one role must be selected"),
+  effectiveFrom: z.string().min(1, "Effective from date is required"),
+  effectiveTo: z.string().optional(),
+}).refine(data => {
+  if (data.password && data.confirmPassword) {
+    return data.password === data.confirmPassword;
+  }
+  return true;
+}, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
+}).refine(data => {
+  if (data.password) {
+    const passwordRegex = /^(?=.*[a-z])(?=.*[0-9])(?=.*[!@#$%^&*])(?=.{8,16})/;
+    return passwordRegex.test(data.password);
+  }
+  return true;
+}, {
+  message: "Password must contain at least 1 lowercase letter, 1 number, 1 special character, and be 8-16 characters long",
+  path: ["password"],
+});
+
+interface UserFormProps {
+  initialData?: Partial<UserFormData>;
+  isEditing?: boolean;
+  onSubmit: (data: UserFormData) => Promise<void>;
+}
+
+const UserForm = ({ initialData, isEditing = false, onSubmit }: UserFormProps) => {
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  // Available roles
+  const availableRoles: { label: string; value: UserRole }[] = [
+    { label: "Administrator", value: "admin" },
+    { label: "Regular User", value: "user" },
+    { label: "Guest", value: "guest" },
+  ];
+
+  // Initialize form with default values
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      firstName: initialData?.firstName || "",
+      lastName: initialData?.lastName || "",
+      username: initialData?.username || "",
+      email: initialData?.email || "",
+      password: "",
+      confirmPassword: "",
+      phoneCountryCode: initialData?.phone?.countryCode || "+1",
+      phoneNumber: initialData?.phone?.number || "",
+      designation: initialData?.designation || "",
+      roles: initialData?.roles || [],
+      effectiveFrom: initialData?.effectiveFrom 
+        ? new Date(initialData.effectiveFrom).toISOString().split('T')[0]
+        : new Date().toISOString().split('T')[0],
+      effectiveTo: initialData?.effectiveTo
+        ? new Date(initialData.effectiveTo).toISOString().split('T')[0]
+        : "",
+    },
+  });
+
+  const handleSubmit = async (values: z.infer<typeof formSchema>) => {
+    try {
+      // Transform form data to match UserFormData structure
+      const userData: UserFormData = {
+        firstName: values.firstName,
+        lastName: values.lastName,
+        username: values.username,
+        email: values.email,
+        password: values.password,
+        confirmPassword: values.confirmPassword,
+        phone: {
+          countryCode: values.phoneCountryCode,
+          number: values.phoneNumber,
+        },
+        designation: values.designation,
+        roles: values.roles,
+        effectiveFrom: new Date(values.effectiveFrom),
+        effectiveTo: values.effectiveTo ? new Date(values.effectiveTo) : undefined,
+      };
+
+      await onSubmit(userData);
+
+      toast({
+        title: `User ${isEditing ? "updated" : "created"} successfully`,
+        description: `The user has been ${isEditing ? "updated" : "created"} successfully.`,
+      });
+      
+      navigate("/admin/users");
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: `Failed to ${isEditing ? "update" : "create"} user`,
+        description: error instanceof Error ? error.message : "An unknown error occurred",
+      });
+    }
+  };
+
+  const handleCancel = () => {
+    setShowCancelDialog(true);
+  };
+
+  const confirmCancel = () => {
+    navigate("/admin/users");
+  };
+
+  return (
+    <>
+      <Card>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleSubmit)}>
+            <CardContent className="grid grid-cols-2 gap-6 pt-6">
+              <FormField
+                control={form.control}
+                name="firstName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>First Name*</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="lastName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Last Name*</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="username"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email ID/Username*</FormLabel>
+                    <FormControl>
+                      <Input {...field} type="email" disabled={isEditing} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email*</FormLabel>
+                    <FormControl>
+                      <Input {...field} type="email" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{isEditing ? "New Password" : "Password"}</FormLabel>
+                    <FormControl>
+                      <Input {...field} type="password" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="confirmPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Re-enter Password</FormLabel>
+                    <FormControl>
+                      <Input {...field} type="password" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="flex gap-4">
+                <FormField
+                  control={form.control}
+                  name="phoneCountryCode"
+                  render={({ field }) => (
+                    <FormItem className="w-1/3">
+                      <FormLabel>Country Code*</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="phoneNumber"
+                  render={({ field }) => (
+                    <FormItem className="flex-1">
+                      <FormLabel>Phone Number*</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={form.control}
+                name="designation"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Designation</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="roles"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Roles*</FormLabel>
+                    <div className="flex flex-wrap gap-2">
+                      {availableRoles.map((role) => (
+                        <div key={role.value} className="flex items-center">
+                          <input
+                            type="checkbox"
+                            id={`role-${role.value}`}
+                            checked={field.value.includes(role.value)}
+                            onChange={(e) => {
+                              const updatedRoles = e.target.checked
+                                ? [...field.value, role.value]
+                                : field.value.filter(r => r !== role.value);
+                              field.onChange(updatedRoles);
+                            }}
+                            className="mr-2"
+                          />
+                          <label htmlFor={`role-${role.value}`}>{role.label}</label>
+                        </div>
+                      ))}
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="effectiveFrom"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Effective From*</FormLabel>
+                    <FormControl>
+                      <Input {...field} type="date" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="effectiveTo"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Effective To</FormLabel>
+                    <FormControl>
+                      <Input {...field} type="date" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+
+            <CardFooter className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={handleCancel}>
+                Cancel
+              </Button>
+              <Button type="submit">
+                {isEditing ? "Save Changes" : "Save"}
+              </Button>
+            </CardFooter>
+          </form>
+        </Form>
+      </Card>
+
+      <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You will lose all unsaved changes. Do you want to continue?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>No, continue editing</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmCancel}>Yes, discard changes</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
+};
+
+export default UserForm;
