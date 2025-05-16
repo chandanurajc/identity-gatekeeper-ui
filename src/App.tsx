@@ -12,8 +12,10 @@ import UsersList from "./pages/admin/UsersList";
 import CreateUser from "./pages/admin/CreateUser";
 import EditUser from "./pages/admin/EditUser";
 import UserDetails from "./pages/admin/UserDetails";
+import Settings from "./pages/Settings";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
+import { MainLayout } from "./layouts/MainLayout";
 
 const queryClient = new QueryClient();
 
@@ -26,22 +28,27 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
+            
+            {/* Protected routes with MainLayout */}
             <Route 
               path="/dashboard" 
               element={
                 <ProtectedRoute>
-                  <Dashboard />
+                  <MainLayout>
+                    <Dashboard />
+                  </MainLayout>
                 </ProtectedRoute>
               } 
             />
-            <Route path="/unauthorized" element={<Unauthorized />} />
             
             {/* User Management Routes */}
             <Route 
               path="/admin/users" 
               element={
                 <ProtectedRoute requiredRoles={["admin"]}>
-                  <UsersList />
+                  <MainLayout>
+                    <UsersList />
+                  </MainLayout>
                 </ProtectedRoute>
               } 
             />
@@ -49,7 +56,9 @@ const App = () => (
               path="/admin/users/create" 
               element={
                 <ProtectedRoute requiredRoles={["admin"]}>
-                  <CreateUser />
+                  <MainLayout>
+                    <CreateUser />
+                  </MainLayout>
                 </ProtectedRoute>
               } 
             />
@@ -57,7 +66,9 @@ const App = () => (
               path="/admin/users/edit/:userId" 
               element={
                 <ProtectedRoute requiredRoles={["admin"]}>
-                  <EditUser />
+                  <MainLayout>
+                    <EditUser />
+                  </MainLayout>
                 </ProtectedRoute>
               } 
             />
@@ -65,12 +76,28 @@ const App = () => (
               path="/admin/users/:userId" 
               element={
                 <ProtectedRoute requiredRoles={["admin"]}>
-                  <UserDetails />
+                  <MainLayout>
+                    <UserDetails />
+                  </MainLayout>
                 </ProtectedRoute>
               } 
             />
             
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            {/* Settings Route */}
+            <Route 
+              path="/settings" 
+              element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <Settings />
+                  </MainLayout>
+                </ProtectedRoute>
+              } 
+            />
+            
+            <Route path="/unauthorized" element={<Unauthorized />} />
+            
+            {/* Catch-all route */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

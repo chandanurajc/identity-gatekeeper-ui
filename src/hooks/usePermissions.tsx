@@ -14,8 +14,16 @@ export const usePermissions = () => {
 
   return {
     hasPermission,
+    // User Management permissions
     canViewUsers: hasPermission("view_users"),
     canCreateUsers: hasPermission("create_users"),
     canEditUsers: hasPermission("edit_users"),
+    
+    // Module access permissions
+    canAccessAdminModule: hasPermission("access_admin"),
+    canAccessSettingsModule: hasPermission("access_settings"),
+    
+    // For checking any permission dynamically
+    checkPermission: hasPermission,
   };
 };
