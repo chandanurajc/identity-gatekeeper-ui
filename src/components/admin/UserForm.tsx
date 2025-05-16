@@ -1,11 +1,12 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { UserFormData, UserRole } from "@/types/user";
 import { useToast } from "@/hooks/use-toast";
+import { roleService } from "@/services/roleService";
+import { Role } from "@/types/role";
 import {
   Form,
   FormControl,
@@ -28,6 +29,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { MultiSelect } from "@/components/ui/multi-select";
 
 // Form schema including validation
 const formSchema = z.object({
@@ -72,15 +74,35 @@ interface UserFormProps {
 
 const UserForm = ({ initialData, isEditing = false, onSubmit }: UserFormProps) => {
   const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [availableRoles, setAvailableRoles] = useState<{ label: string; value: string }[]>([]);
+  const [isLoadingRoles, setIsLoadingRoles] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Available roles
-  const availableRoles: { label: string; value: UserRole }[] = [
-    { label: "Administrator", value: "admin" },
-    { label: "Regular User", value: "user" },
-    { label: "Guest", value: "guest" },
-  ];
+  // Fetch available roles from the roleService
+  useEffect(() => {
+    const fetchRoles = async () => {
+      try {
+        const roles = await roleService.getAllRoles();
+        const formattedRoles = roles.map(role => ({
+          label: role.name,
+          value: role.name.toLowerCase(),
+        }));
+        setAvailableRoles(formattedRoles);
+      } catch (error) {
+        toast({
+          variant: "destructive",
+          title: "Failed to load roles",
+          description: "There was a problem loading the available roles."
+        });
+        console.error("Error loading roles:", error);
+      } finally {
+        setIsLoadingRoles(false);
+      }
+    };
+
+    fetchRoles();
+  }, [toast]);
 
   // Initialize form with default values
   const form = useForm<z.infer<typeof formSchema>>({
@@ -284,31 +306,27 @@ const UserForm = ({ initialData, isEditing = false, onSubmit }: UserFormProps) =
                 )}
               />
 
+              {/* Replace roles checkboxes with multi-select dropdown */}
               <FormField
                 control={form.control}
                 name="roles"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Roles*</FormLabel>
-                    <div className="flex flex-wrap gap-2">
-                      {availableRoles.map((role) => (
-                        <div key={role.value} className="flex items-center">
-                          <input
-                            type="checkbox"
-                            id={`role-${role.value}`}
-                            checked={field.value.includes(role.value)}
-                            onChange={(e) => {
-                              const updatedRoles = e.target.checked
-                                ? [...field.value, role.value]
-                                : field.value.filter(r => r !== role.value);
-                              field.onChange(updatedRoles);
-                            }}
-                            className="mr-2"
+                    <FormControl>
+                      <div className="relative">
+                        {isLoadingRoles ? (
+                          <div className="text-sm text-muted-foreground">Loading roles...</div>
+                        ) : (
+                          <MultiSelect
+                            options={availableRoles}
+                            selected={field.value}
+                            onChange={field.onChange}
+                            placeholder="Select roles..."
                           />
-                          <label htmlFor={`role-${role.value}`}>{role.label}</label>
-                        </div>
-                      ))}
-                    </div>
+                        )}
+                      </div>
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}

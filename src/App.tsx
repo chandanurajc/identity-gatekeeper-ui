@@ -24,134 +24,132 @@ import { MainLayout } from "./layouts/MainLayout";
 const queryClient = new QueryClient();
 
 const App = () => (
-  <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TooltipProvider>
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              
-              {/* Protected routes with MainLayout */}
-              <Route 
-                path="/dashboard" 
-                element={
-                  <ProtectedRoute>
-                    <MainLayout>
-                      <Dashboard />
-                    </MainLayout>
-                  </ProtectedRoute>
-                } 
-              />
-              
-              {/* User Management Routes */}
-              <Route 
-                path="/admin/users" 
-                element={
-                  <ProtectedRoute requiredRoles={["admin"]}>
-                    <MainLayout>
-                      <UsersList />
-                    </MainLayout>
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/admin/users/create" 
-                element={
-                  <ProtectedRoute requiredRoles={["admin"]}>
-                    <MainLayout>
-                      <CreateUser />
-                    </MainLayout>
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/admin/users/edit/:userId" 
-                element={
-                  <ProtectedRoute requiredRoles={["admin"]}>
-                    <MainLayout>
-                      <EditUser />
-                    </MainLayout>
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/admin/users/:userId" 
-                element={
-                  <ProtectedRoute requiredRoles={["admin"]}>
-                    <MainLayout>
-                      <UserDetails />
-                    </MainLayout>
-                  </ProtectedRoute>
-                } 
-              />
-              
-              {/* Role Management Routes */}
-              <Route 
-                path="/admin/roles" 
-                element={
-                  <ProtectedRoute requiredRoles={["admin"]}>
-                    <MainLayout>
-                      <RolesList />
-                    </MainLayout>
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/admin/roles/create" 
-                element={
-                  <ProtectedRoute requiredRoles={["admin"]}>
-                    <MainLayout>
-                      <RoleForm />
-                    </MainLayout>
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/admin/roles/edit/:roleId" 
-                element={
-                  <ProtectedRoute requiredRoles={["admin"]}>
-                    <MainLayout>
-                      <RoleForm />
-                    </MainLayout>
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/admin/roles/:roleId" 
-                element={
-                  <ProtectedRoute requiredRoles={["admin"]}>
-                    <MainLayout>
-                      <RoleDetails />
-                    </MainLayout>
-                  </ProtectedRoute>
-                } 
-              />
-              
-              {/* Settings Route */}
-              <Route 
-                path="/settings" 
-                element={
-                  <ProtectedRoute>
-                    <MainLayout>
-                      <Settings />
-                    </MainLayout>
-                  </ProtectedRoute>
-                } 
-              />
-              
-              <Route path="/unauthorized" element={<Unauthorized />} />
-              
-              {/* Catch-all route */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-          <Toaster />
-          <Sonner />
-        </TooltipProvider>
-      </AuthProvider>
-    </QueryClientProvider>
-  </React.StrictMode>
+  <QueryClientProvider client={queryClient}>
+    <AuthProvider>
+      <TooltipProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            
+            {/* Protected routes with MainLayout */}
+            <Route 
+              path="/dashboard" 
+              element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <Dashboard />
+                  </MainLayout>
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* User Management Routes */}
+            <Route 
+              path="/admin/users" 
+              element={
+                <ProtectedRoute requiredRoles={["admin"]}>
+                  <MainLayout>
+                    <UsersList />
+                  </MainLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/users/create" 
+              element={
+                <ProtectedRoute requiredRoles={["admin"]}>
+                  <MainLayout>
+                    <CreateUser />
+                  </MainLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/users/edit/:userId" 
+              element={
+                <ProtectedRoute requiredRoles={["admin"]}>
+                  <MainLayout>
+                    <EditUser />
+                  </MainLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/users/:userId" 
+              element={
+                <ProtectedRoute requiredRoles={["admin"]}>
+                  <MainLayout>
+                    <UserDetails />
+                  </MainLayout>
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Role Management Routes */}
+            <Route 
+              path="/admin/roles" 
+              element={
+                <ProtectedRoute requiredRoles={["admin"]}>
+                  <MainLayout>
+                    <RolesList />
+                  </MainLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/roles/create" 
+              element={
+                <ProtectedRoute requiredRoles={["admin"]}>
+                  <MainLayout>
+                    <RoleForm />
+                  </MainLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/roles/edit/:roleId" 
+              element={
+                <ProtectedRoute requiredRoles={["admin"]}>
+                  <MainLayout>
+                    <RoleForm />
+                  </MainLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/roles/:roleId" 
+              element={
+                <ProtectedRoute requiredRoles={["admin"]}>
+                  <MainLayout>
+                    <RoleDetails />
+                  </MainLayout>
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Settings Route */}
+            <Route 
+              path="/settings" 
+              element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <Settings />
+                  </MainLayout>
+                </ProtectedRoute>
+              } 
+            />
+            
+            <Route path="/unauthorized" element={<Unauthorized />} />
+            
+            {/* Catch-all route */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+        <Toaster />
+        <Sonner />
+      </TooltipProvider>
+    </AuthProvider>
+  </QueryClientProvider>
 );
 
 export default App;
