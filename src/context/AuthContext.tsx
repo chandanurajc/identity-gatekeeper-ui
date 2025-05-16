@@ -2,7 +2,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { authService } from "@/services/authService";
 import { LoginCredentials, User, AuthState } from "@/types/auth";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "@/components/ui/toast";
 
 interface AuthContextType extends AuthState {
   login: (credentials: LoginCredentials) => Promise<void>;
@@ -19,7 +19,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     isLoading: true,
     error: null
   });
-  const { toast } = useToast();
 
   useEffect(() => {
     const initAuth = () => {
