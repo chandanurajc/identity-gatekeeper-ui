@@ -42,6 +42,9 @@ export function MultiSelect({
 }: MultiSelectProps) {
   const [open, setOpen] = React.useState(false);
 
+  // Filter out any options with empty values to prevent the error
+  const validOptions = options.filter(option => option.value && option.value.trim() !== '');
+
   const handleUnselect = (value: string) => {
     onChange(selected.filter((item) => item !== value));
   };
@@ -55,7 +58,7 @@ export function MultiSelect({
   };
 
   // Get displayed label for selected values
-  const selectedLabels = options
+  const selectedLabels = validOptions
     .filter((option) => selected.includes(option.value))
     .map((option) => option.label);
 
@@ -91,7 +94,7 @@ export function MultiSelect({
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    const option = options.find(o => o.label === label);
+                    const option = validOptions.find(o => o.label === label);
                     if (option) handleUnselect(option.value);
                   }}
                 >
@@ -109,12 +112,12 @@ export function MultiSelect({
           <CommandList>
             <CommandEmpty>No options found.</CommandEmpty>
             <CommandGroup>
-              {options.map((option) => {
+              {validOptions.map((option) => {
                 const isSelected = selected.includes(option.value);
                 return (
                   <CommandItem
-                    key={option.value}
-                    value={option.value}
+                    key={option.value || `option-${option.label}`}
+                    value={option.value || `option-${option.label}`}
                     onSelect={() => handleSelect(option.value)}
                   >
                     <div className="flex items-center gap-2 w-full">

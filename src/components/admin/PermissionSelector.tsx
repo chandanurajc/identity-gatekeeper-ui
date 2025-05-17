@@ -1,246 +1,141 @@
 
-import { useState, useEffect } from "react";
-import { Permission } from "@/types/role";
-import { Card, CardContent } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import React, { useState, useEffect } from "react";
 import { roleService } from "@/services/roleService";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { Permission } from "@/types/role";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface PermissionSelectorProps {
   selectedPermissions: Permission[];
   onPermissionsChange: (permissions: Permission[]) => void;
 }
 
-const PermissionSelector = ({
+const PermissionSelector: React.FC<PermissionSelectorProps> = ({
   selectedPermissions,
   onPermissionsChange,
-}: PermissionSelectorProps) => {
-  const [availablePermissions, setAvailablePermissions] = useState<Permission[]>([]);
+}) => {
   const [allPermissions, setAllPermissions] = useState<Permission[]>([]);
   const [modules, setModules] = useState<string[]>([]);
-  const [components, setComponents] = useState<string[]>([]);
-  const [selectedModule, setSelectedModule] = useState<string>("");
-  const [selectedComponent, setSelectedComponent] = useState<string>("");
-  const [filterText, setFilterText] = useState<string>("");
+  const [loading, setLoading] = useState(true);
+  const [currentModule, setCurrentModule] = useState<string>("");
 
   useEffect(() => {
-    const loadPermissionsAndFilters = async () => {
-      const permissions = await roleService.getAllPermissions();
-      setAllPermissions(permissions);
-      
-      // Filter out permissions that are already selected
-      const available = permissions.filter(
-        p => !selectedPermissions.some(sp => sp.id === p.id)
-      );
-      setAvailablePermissions(available);
-      
-      // Load unique modules and components for filtering
-      const uniqueModules = await roleService.getUniqueModules();
-      setModules(uniqueModules);
-    };
-    
-    loadPermissionsAndFilters();
-  }, [selectedPermissions]);
-
-  useEffect(() => {
-    const loadComponents = async () => {
-      if (selectedModule) {
-        const componentsByModule = await roleService.getComponentsByModule(selectedModule);
-        setComponents(componentsByModule);
-      } else {
-        setComponents([]);
+    const loadPermissions = async () => {
+      try {
+        const permissions = await roleService.getAllPermissions();
+        const uniqueModules = await roleService.getUniqueModules();
+        
+        setAllPermissions(permissions);
+        setModules(uniqueModules);
+        
+        if (uniqueModules.length > 0) {
+          setCurrentModule(uniqueModules[0]);
+        }
+        
+        setLoading(false);
+      } catch (error) {
+        console.error("Failed to load permissions:", error);
+        setLoading(false);
       }
-      setSelectedComponent("");
     };
-    
-    loadComponents();
-  }, [selectedModule]);
 
-  useEffect(() => {
-    const filterPermissions = async () => {
-      let filtered: Permission[];
-      
-      if (selectedModule && selectedComponent) {
-        filtered = await roleService.getPermissionsByModuleAndComponent(
-          selectedModule,
-          selectedComponent
-        );
-      } else if (selectedModule) {
-        filtered = await roleService.getPermissionsByModule(selectedModule);
-      } else if (selectedComponent) {
-        filtered = await roleService.getPermissionsByComponent(selectedComponent);
-      } else {
-        filtered = await roleService.getAllPermissions();
+    loadPermissions();
+  }, []);
+
+  const handlePermissionChange = (checked: boolean | "indeterminate", permission: Permission) => {
+    if (checked === true) {
+      // Add permission if not already selected
+      if (!selectedPermissions.some(p => p.id === permission.id)) {
+        onPermissionsChange([...selectedPermissions, permission]);
       }
-      
-      // Apply text filter if present
-      if (filterText) {
-        filtered = filtered.filter(p => 
-          p.name.toLowerCase().includes(filterText.toLowerCase())
-        );
-      }
-      
-      // Filter out already selected permissions
-      filtered = filtered.filter(
-        p => !selectedPermissions.some(sp => sp.id === p.id)
-      );
-      
-      setAvailablePermissions(filtered);
-    };
+    } else {
+      // Remove permission
+      onPermissionsChange(selectedPermissions.filter(p => p.id !== permission.id));
+    }
+  };
+
+  const getComponentsForModule = (moduleName: string) => {
+    const components = allPermissions
+      .filter(p => p.module === moduleName)
+      .reduce<string[]>((acc, perm) => {
+        if (!acc.includes(perm.component)) {
+          acc.push(perm.component);
+        }
+        return acc;
+      }, []);
     
-    filterPermissions();
-  }, [selectedModule, selectedComponent, filterText, selectedPermissions]);
-
-  const handleAddPermission = (permission: Permission) => {
-    const updatedSelected = [...selectedPermissions, permission];
-    onPermissionsChange(updatedSelected);
+    return components;
   };
 
-  const handleRemovePermission = (permission: Permission) => {
-    const updatedSelected = selectedPermissions.filter(p => p.id !== permission.id);
-    onPermissionsChange(updatedSelected);
+  const isPermissionSelected = (permissionId: string) => {
+    return selectedPermissions.some(p => p.id === permissionId);
   };
 
-  const handleModuleChange = (value: string) => {
-    setSelectedModule(value);
-  };
-
-  const handleComponentChange = (value: string) => {
-    setSelectedComponent(value);
-  };
-
-  const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFilterText(e.target.value);
-  };
+  if (loading) {
+    return <div>Loading permissions...</div>;
+  }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div>
-        <h3 className="text-lg font-medium mb-2">Available Permissions</h3>
-        <div className="space-y-2 mb-4">
-          <div className="flex gap-2">
-            <Select onValueChange={handleModuleChange} value={selectedModule}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Module" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">All Modules</SelectItem>
-                {modules.map(module => (
-                  <SelectItem key={module} value={module}>
-                    {module}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+    <div className="space-y-4">
+      <Label className="text-base">Permissions*</Label>
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg">Select Role Permissions</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Tabs 
+            value={currentModule} 
+            onValueChange={setCurrentModule}
+            className="w-full"
+          >
+            <TabsList className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 w-full">
+              {modules.map(module => (
+                <TabsTrigger 
+                  key={module} 
+                  value={module}
+                  className="text-xs md:text-sm"
+                >
+                  {module}
+                </TabsTrigger>
+              ))}
+            </TabsList>
             
-            <Select 
-              onValueChange={handleComponentChange} 
-              value={selectedComponent}
-              disabled={!selectedModule}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select Component" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">All Components</SelectItem>
-                {components.map(component => (
-                  <SelectItem key={component} value={component}>
-                    {component}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <Input
-            placeholder="Filter permissions..."
-            value={filterText}
-            onChange={handleFilterChange}
-          />
-        </div>
-        
-        <Card className="h-80">
-          <CardContent className="p-2">
-            <ScrollArea className="h-full">
-              <ul className="space-y-1">
-                {availablePermissions.map(permission => (
-                  <li 
-                    key={permission.id} 
-                    className="flex items-center justify-between p-2 hover:bg-gray-100 rounded"
-                  >
-                    <div>
-                      <div className="font-medium">{permission.name}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {permission.module} &gt; {permission.component}
+            {modules.map(module => (
+              <TabsContent key={module} value={module} className="mt-4">
+                <ScrollArea className="h-[300px] pr-4">
+                  {getComponentsForModule(module).map(component => (
+                    <div key={component} className="mb-6">
+                      <h4 className="font-medium mb-2">{component}</h4>
+                      <div className="space-y-2">
+                        {allPermissions
+                          .filter(p => p.module === module && p.component === component)
+                          .map(permission => (
+                            <div key={permission.id} className="flex items-center space-x-2">
+                              <Checkbox 
+                                id={`permission-${permission.id}`}
+                                checked={isPermissionSelected(permission.id)}
+                                onCheckedChange={(checked) => handlePermissionChange(checked, permission)}
+                              />
+                              <Label 
+                                htmlFor={`permission-${permission.id}`}
+                                className="cursor-pointer"
+                              >
+                                {permission.name}
+                              </Label>
+                            </div>
+                          ))}
                       </div>
                     </div>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => handleAddPermission(permission)}
-                      title="Add permission"
-                    >
-                      <ArrowRight className="h-4 w-4" />
-                    </Button>
-                  </li>
-                ))}
-                {availablePermissions.length === 0 && (
-                  <li className="p-4 text-center text-muted-foreground">
-                    No available permissions match the filter criteria
-                  </li>
-                )}
-              </ul>
-            </ScrollArea>
-          </CardContent>
-        </Card>
-      </div>
-      
-      <div>
-        <h3 className="text-lg font-medium mb-2">Selected Permissions</h3>
-        <Card className="h-[332px]">
-          <CardContent className="p-2">
-            <ScrollArea className="h-full">
-              <ul className="space-y-1">
-                {selectedPermissions.map(permission => (
-                  <li 
-                    key={permission.id} 
-                    className="flex items-center justify-between p-2 hover:bg-gray-100 rounded"
-                  >
-                    <div>
-                      <div className="font-medium">{permission.name}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {permission.module} &gt; {permission.component}
-                      </div>
-                    </div>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => handleRemovePermission(permission)}
-                      title="Remove permission"
-                    >
-                      <ArrowLeft className="h-4 w-4" />
-                    </Button>
-                  </li>
-                ))}
-                {selectedPermissions.length === 0 && (
-                  <li className="p-4 text-center text-muted-foreground">
-                    No permissions selected yet
-                  </li>
-                )}
-              </ul>
-            </ScrollArea>
-          </CardContent>
-        </Card>
-      </div>
+                  ))}
+                </ScrollArea>
+              </TabsContent>
+            ))}
+          </Tabs>
+        </CardContent>
+      </Card>
     </div>
   );
 };
