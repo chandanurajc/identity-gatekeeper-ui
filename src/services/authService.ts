@@ -16,6 +16,13 @@ const MOCK_USERS = [
     password: "user123",
     name: "Regular User",
     roles: ["user"]
+  },
+  {
+    id: "3",
+    email: "chandanurajc@gmail.com",
+    password: "PassPass@123",
+    name: "Chandan User",
+    roles: ["admin", "user"]
   }
 ];
 
