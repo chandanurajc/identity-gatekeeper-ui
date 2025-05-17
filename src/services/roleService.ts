@@ -41,6 +41,16 @@ const mockRoles: Role[] = [
     createdBy: "System",
     createdOn: new Date("2025-01-01"),
   },
+  {
+    id: "4",
+    name: "Content Viewer",
+    permissions: [
+      mockPermissions.find(p => p.name === "view_users")!,
+      mockPermissions.find(p => p.name === "view_roles")!,
+    ],
+    createdBy: "chandanurajc@gmail.com",
+    createdOn: new Date("2025-05-15"),
+  }
 ];
 
 // In-memory storage for roles

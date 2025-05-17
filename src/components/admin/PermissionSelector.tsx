@@ -83,7 +83,7 @@ const PermissionSelector: React.FC<PermissionSelectorProps> = ({
       <Label className="text-base">Permissions*</Label>
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-lg">Select Role Permissions</CardTitle>
+          <CardTitle className="text-xl">Select Role Permissions</CardTitle>
         </CardHeader>
         <CardContent>
           <Tabs 
@@ -91,12 +91,12 @@ const PermissionSelector: React.FC<PermissionSelectorProps> = ({
             onValueChange={setCurrentModule}
             className="w-full"
           >
-            <TabsList className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 w-full">
+            <TabsList className="bg-gray-100 p-1 mb-4">
               {modules.map(module => (
                 <TabsTrigger 
                   key={module} 
                   value={module}
-                  className="text-xs md:text-sm"
+                  className="data-[state=active]:bg-white data-[state=active]:shadow-sm px-8 py-2"
                 >
                   {module}
                 </TabsTrigger>
@@ -105,25 +105,26 @@ const PermissionSelector: React.FC<PermissionSelectorProps> = ({
             
             {modules.map(module => (
               <TabsContent key={module} value={module} className="mt-4">
-                <ScrollArea className="h-[300px] pr-4">
+                <ScrollArea className="h-[400px] pr-4">
                   {getComponentsForModule(module).map(component => (
-                    <div key={component} className="mb-6">
-                      <h4 className="font-medium mb-2">{component}</h4>
-                      <div className="space-y-2">
+                    <div key={component} className="mb-8">
+                      <h3 className="text-lg font-medium mb-3">{component}</h3>
+                      <div className="space-y-3">
                         {allPermissions
                           .filter(p => p.module === module && p.component === component)
                           .map(permission => (
-                            <div key={permission.id} className="flex items-center space-x-2">
+                            <div key={permission.id} className="flex items-center gap-3">
                               <Checkbox 
                                 id={`permission-${permission.id}`}
                                 checked={isPermissionSelected(permission.id)}
                                 onCheckedChange={(checked) => handlePermissionChange(checked, permission)}
+                                className="h-5 w-5 border-2"
                               />
                               <Label 
                                 htmlFor={`permission-${permission.id}`}
-                                className="cursor-pointer"
+                                className="text-base font-normal cursor-pointer"
                               >
-                                {permission.name}
+                                {permission.name.replace(/_/g, ' ')}
                               </Label>
                             </div>
                           ))}

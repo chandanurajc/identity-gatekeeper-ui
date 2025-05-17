@@ -132,9 +132,9 @@ const RoleForm = () => {
 
   return (
     <div className="container mx-auto py-8">
-      <Card>
-        <CardHeader>
-          <CardTitle>{isEditing ? "Edit Role" : "Create Role"}</CardTitle>
+      <Card className="border-0 shadow-md">
+        <CardHeader className="pb-6">
+          <CardTitle className="text-2xl font-bold">{isEditing ? "Edit Role" : "Create Role"}</CardTitle>
           <CardDescription>
             {isEditing
               ? "Update role details and permissions"
@@ -142,13 +142,14 @@ const RoleForm = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="roleName">Role Name*</Label>
+          <div className="space-y-2 max-w-md">
+            <Label htmlFor="roleName" className="text-base">Role Name*</Label>
             <Input
               id="roleName"
               value={roleName}
               onChange={(e) => setRoleName(e.target.value)}
               placeholder="Enter role name"
+              className="h-12"
               required
             />
           </div>
@@ -158,10 +159,12 @@ const RoleForm = () => {
             onPermissionsChange={handlePermissionsChange}
           />
         </CardContent>
-        <CardFooter className="flex justify-end space-x-2">
+        <CardFooter className="flex justify-end space-x-3 pt-6">
           <AlertDialog open={showCancelAlert} onOpenChange={setShowCancelAlert}>
             <AlertDialogTrigger asChild>
-              <Button variant="outline" onClick={handleCancel}>Cancel</Button>
+              <Button variant="outline" size="lg" onClick={handleCancel}>
+                Cancel
+              </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
@@ -179,7 +182,7 @@ const RoleForm = () => {
             </AlertDialogContent>
           </AlertDialog>
           
-          <Button onClick={handleSave} disabled={saving}>
+          <Button onClick={handleSave} disabled={saving} size="lg">
             {saving ? "Saving..." : (isEditing ? "Save Changes" : "Save Role")}
           </Button>
         </CardFooter>

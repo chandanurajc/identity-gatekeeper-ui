@@ -1,7 +1,6 @@
 
 import { User, UserFormData, UserRole } from "@/types/user";
 import { v4 as uuidv4 } from "uuid";
-import { useAuth } from "@/context/AuthContext";
 
 // Mock users data
 const MOCK_USERS: User[] = [
@@ -39,6 +38,22 @@ const MOCK_USERS: User[] = [
     createdBy: "admin@example.com",
     createdOn: new Date("2023-02-15"),
   },
+  {
+    id: "3",
+    username: "chandanurajc@gmail.com",
+    email: "chandanurajc@gmail.com",
+    firstName: "Chandan",
+    lastName: "User",
+    phone: {
+      countryCode: "+91",
+      number: "9876543210",
+    },
+    designation: "Admin User",
+    roles: ["admin", "user"],
+    effectiveFrom: new Date("2023-05-15"),
+    createdBy: "system",
+    createdOn: new Date("2023-05-15"),
+  },
 ];
 
 // Simulate fetching users from an API
@@ -53,10 +68,14 @@ export const getUserById = async (id: string): Promise<User | undefined> => {
   return MOCK_USERS.find(user => user.id === id);
 };
 
-// Get current user info for attribution
+// Get current user info from localStorage (simulating authenticated user)
 const getCurrentUserInfo = () => {
   try {
-    // Get static reference without hooks (since we can't use hooks outside components)
+    const userJson = localStorage.getItem("user");
+    if (userJson) {
+      const user = JSON.parse(userJson);
+      return { email: user.email };
+    }
     return { email: "system" }; // Default fallback
   } catch (error) {
     console.error("Error getting current user:", error);
@@ -143,8 +162,8 @@ export const updateUser = async (id: string, userData: UserFormData): Promise<Us
 export const getUserPermissions = (roles: UserRole[]): string[] => {
   // In a real application, these would be retrieved from a backend
   const allPermissions = [
-    { role: "admin", permissions: ["view_users", "create_users", "edit_users"] },
-    { role: "user", permissions: ["view_users"] },
+    { role: "admin", permissions: ["view_users", "create_users", "edit_users", "create_role", "edit_roles", "view_roles", "access_settings", "access_admin"] },
+    { role: "user", permissions: ["view_users", "view_roles"] },
     { role: "guest", permissions: [] },
   ];
   
