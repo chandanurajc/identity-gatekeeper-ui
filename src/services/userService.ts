@@ -1,4 +1,3 @@
-
 import { User, UserFormData, UserRole } from "@/types/user";
 import { v4 as uuidv4 } from "uuid";
 
@@ -169,6 +168,11 @@ export const getUserPermissions = (roles: UserRole[]): string[] => {
   
   // Collect all permissions based on user roles
   const userPermissions = new Set<string>();
+  
+  // If user has no roles, give them at least access to view the dashboard
+  if (!roles.length) {
+    return ["access_dashboard"];
+  }
   
   roles.forEach(role => {
     const rolePermissions = allPermissions.find(p => p.role === role);

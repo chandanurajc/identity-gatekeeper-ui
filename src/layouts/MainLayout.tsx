@@ -9,8 +9,8 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarGroup,
   SidebarGroupLabel,
+  SidebarGroup,
   SidebarGroupContent,
   SidebarInset
 } from "@/components/ui/sidebar";
@@ -43,6 +43,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
               <SidebarGroupLabel>Modules</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
+                  {/* Dashboard is always visible for any logged in user */}
                   <SidebarMenuItem>
                     <SidebarMenuButton asChild tooltip="Dashboard">
                       <NavLink to="/dashboard" className={({ isActive }) => isActive ? "font-bold" : ""}>
@@ -74,6 +75,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
                     </SidebarMenuItem>
                   )}
                   
+                  {/* Settings is always visible for any logged in user */}
                   <SidebarMenuItem>
                     <SidebarMenuButton asChild tooltip="Settings">
                       <NavLink to="/settings" className={({ isActive }) => isActive ? "font-bold" : ""}>
@@ -94,7 +96,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
                   <UserRound className="h-5 w-5 text-muted-foreground" />
                   <div className="text-sm font-medium">{user.name || user.email}</div>
                 </div>
-                <div className="text-xs text-muted-foreground">Role: {user.roles.join(', ')}</div>
+                <div className="text-xs text-muted-foreground">Role: {user.roles.join(', ') || 'No roles assigned'}</div>
                 <Button variant="outline" size="sm" className="w-full" onClick={logout}>
                   Logout
                 </Button>

@@ -1,3 +1,4 @@
+
 import { LoginCredentials, User } from "@/types/auth";
 
 // Mock user database - in a real app, this would be handled by a backend
@@ -21,7 +22,7 @@ const MOCK_USERS = [
     email: "chandanurajc@gmail.com",
     password: "PassPass@123",
     name: "Chandan User",
-    roles: [] // Removed "admin" and "user" roles
+    roles: ["user"] // Added "user" role so they can see menus
   }
 ];
 
