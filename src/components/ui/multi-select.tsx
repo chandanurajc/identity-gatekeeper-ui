@@ -42,25 +42,49 @@ export function MultiSelect({
 }: MultiSelectProps) {
   const [open, setOpen] = React.useState(false);
 
+  // Debug
+  React.useEffect(() => {
+    console.log("MultiSelect options:", options);
+    console.log("MultiSelect selected:", selected);
+  }, [options, selected]);
+
   // Filter out any options with empty values to prevent the error
-  const validOptions = options.filter(option => option.value && option.value.trim() !== '');
+  const validOptions = React.useMemo(() => {
+    const filtered = options.filter(option => option.value && option.value.trim() !== '');
+    console.log("Filtered valid options:", filtered);
+    return filtered;
+  }, [options]);
+
+  // Ensure selected values are valid
+  const validSelected = React.useMemo(() => {
+    const filtered = selected.filter(value => value && value.trim() !== '');
+    console.log("Filtered valid selected:", filtered);
+    return filtered;
+  }, [selected]);
 
   const handleUnselect = (value: string) => {
-    onChange(selected.filter((item) => item !== value));
+    onChange(validSelected.filter((item) => item !== value));
   };
 
   const handleSelect = (value: string) => {
-    if (selected.includes(value)) {
-      onChange(selected.filter((item) => item !== value));
+    if (!value || value.trim() === '') {
+      console.warn("Attempted to select an empty value");
+      return;
+    }
+    
+    if (validSelected.includes(value)) {
+      onChange(validSelected.filter((item) => item !== value));
     } else {
-      onChange([...selected, value]);
+      onChange([...validSelected, value]);
     }
   };
 
   // Get displayed label for selected values
-  const selectedLabels = validOptions
-    .filter((option) => selected.includes(option.value))
-    .map((option) => option.label);
+  const selectedLabels = React.useMemo(() => {
+    return validOptions
+      .filter((option) => validSelected.includes(option.value))
+      .map((option) => option.label);
+  }, [validOptions, validSelected]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -71,13 +95,13 @@ export function MultiSelect({
           aria-expanded={open}
           className={cn(
             "w-full justify-between min-h-10",
-            selected.length > 0 ? "h-auto" : "",
+            validSelected.length > 0 ? "h-auto" : "",
             className
           )}
           disabled={disabled}
         >
           <div className="flex flex-wrap gap-1">
-            {selected.length === 0 && <span className="text-muted-foreground">{placeholder}</span>}
+            {validSelected.length === 0 && <span className="text-muted-foreground">{placeholder}</span>}
             {selectedLabels.map((label) => (
               <Badge
                 key={label}
@@ -112,26 +136,30 @@ export function MultiSelect({
           <CommandList>
             <CommandEmpty>No options found.</CommandEmpty>
             <CommandGroup>
-              {validOptions.map((option) => {
-                const isSelected = selected.includes(option.value);
-                return (
-                  <CommandItem
-                    key={option.value || `option-${option.label}`}
-                    value={option.value || `option-${option.label}`}
-                    onSelect={() => handleSelect(option.value)}
-                  >
-                    <div className="flex items-center gap-2 w-full">
-                      <span className={cn(
-                        "flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
-                        isSelected ? "bg-primary text-primary-foreground" : "opacity-50"
-                      )}>
-                        {isSelected && <Check className="h-3 w-3" />}
-                      </span>
-                      <span>{option.label}</span>
-                    </div>
-                  </CommandItem>
-                );
-              })}
+              {validOptions.length > 0 ? (
+                validOptions.map((option) => {
+                  const isSelected = validSelected.includes(option.value);
+                  return (
+                    <CommandItem
+                      key={option.value}
+                      value={option.value}
+                      onSelect={() => handleSelect(option.value)}
+                    >
+                      <div className="flex items-center gap-2 w-full">
+                        <span className={cn(
+                          "flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
+                          isSelected ? "bg-primary text-primary-foreground" : "opacity-50"
+                        )}>
+                          {isSelected && <Check className="h-3 w-3" />}
+                        </span>
+                        <span>{option.label}</span>
+                      </div>
+                    </CommandItem>
+                  );
+                })
+              ) : (
+                <CommandItem disabled>No valid options available</CommandItem>
+              )}
             </CommandGroup>
           </CommandList>
         </Command>

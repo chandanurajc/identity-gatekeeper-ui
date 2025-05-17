@@ -114,13 +114,12 @@ const SelectItem = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Item>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Item>
 >(({ className, children, ...props }, ref) => {
-  // Add validation to ensure value is not an empty string
-  const value = props.value;
-  if (value === undefined || value === '') {
-    console.warn('Select.Item must have a non-empty value prop');
+  // Skip rendering if value is undefined, null, or empty string
+  if (props.value === undefined || props.value === null || props.value === '') {
+    console.warn('SelectItem: Skipping item with invalid value prop');
     return null;
   }
-
+  
   return (
     <SelectPrimitive.Item
       ref={ref}

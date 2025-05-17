@@ -53,6 +53,17 @@ export const getUserById = async (id: string): Promise<User | undefined> => {
   return MOCK_USERS.find(user => user.id === id);
 };
 
+// Get current user info for attribution
+const getCurrentUserInfo = () => {
+  try {
+    // Get static reference without hooks (since we can't use hooks outside components)
+    return { email: "system" }; // Default fallback
+  } catch (error) {
+    console.error("Error getting current user:", error);
+    return { email: "system" };
+  }
+};
+
 // Simulate creating a new user
 export const createUser = async (userData: UserFormData): Promise<User> => {
   await new Promise(resolve => setTimeout(resolve, 800));
@@ -62,8 +73,12 @@ export const createUser = async (userData: UserFormData): Promise<User> => {
     throw new Error("Username already exists. Please choose a different username.");
   }
 
-  const { useAuth: authHook } = await import("@/context/AuthContext");
-  const { user: currentUser } = authHook();
+  const currentUser = getCurrentUserInfo();
+  
+  // Ensure roles is an array and filter out any empty values
+  const validRoles = Array.isArray(userData.roles) 
+    ? userData.roles.filter(role => role && role.trim() !== '')
+    : [];
   
   const newUser: User = {
     id: uuidv4(),
@@ -73,13 +88,15 @@ export const createUser = async (userData: UserFormData): Promise<User> => {
     lastName: userData.lastName,
     phone: userData.phone,
     designation: userData.designation,
-    roles: userData.roles,
+    roles: validRoles,
     effectiveFrom: userData.effectiveFrom,
     effectiveTo: userData.effectiveTo,
     createdBy: currentUser?.email || "system",
     createdOn: new Date(),
   };
 
+  console.log("Creating new user:", newUser);
+  
   // In a real application, we would hash the password before storing it
   // For this mock, we'll simulate password storage securely by not including it in the return value
   
@@ -97,8 +114,12 @@ export const updateUser = async (id: string, userData: UserFormData): Promise<Us
     throw new Error("User not found");
   }
 
-  const { useAuth: authHook } = await import("@/context/AuthContext");
-  const { user: currentUser } = authHook();
+  const currentUser = getCurrentUserInfo();
+  
+  // Ensure roles is an array and filter out any empty values
+  const validRoles = Array.isArray(userData.roles) 
+    ? userData.roles.filter(role => role && role.trim() !== '')
+    : [];
   
   const updatedUser: User = {
     ...MOCK_USERS[userIndex],
@@ -107,7 +128,7 @@ export const updateUser = async (id: string, userData: UserFormData): Promise<Us
     email: userData.email,
     phone: userData.phone,
     designation: userData.designation,
-    roles: userData.roles,
+    roles: validRoles,
     effectiveFrom: userData.effectiveFrom,
     effectiveTo: userData.effectiveTo,
     updatedBy: currentUser?.email || "system",
