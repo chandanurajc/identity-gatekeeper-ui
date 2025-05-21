@@ -41,12 +41,6 @@ import {
 } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
-import { 
-  NavigationMenu,
-  NavigationMenuList,
-  NavigationMenuItem,
-  NavigationMenuLink,
-} from "@/components/ui/navigation-menu";
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -155,20 +149,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
             </SidebarTrigger>
             {/* App name moved to the right of the hamburger */}
             <h1 className="text-xl font-bold">App Portal</h1>
-            <NavigationMenu className="hidden md:flex">
-              <NavigationMenuList>
-                {filteredGroups.map((group) => (
-                  <NavigationMenuItem key={group.name}>
-                    <NavigationMenuLink
-                      className="px-3 py-2 text-sm font-medium hover:bg-primary/90 transition-colors rounded-md cursor-pointer"
-                      asChild
-                    >
-                      <span>{group.name}</span>
-                    </NavigationMenuLink>
-                  </NavigationMenuItem>
-                ))}
-              </NavigationMenuList>
-            </NavigationMenu>
+            {/* Removed NavigationMenu component from here */}
           </div>
 
           {/* Search Bar */}
@@ -207,15 +188,12 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
         <div className="flex flex-1">
           {/* Vertical Sidebar - Made sticky */}
           <Sidebar variant="sidebar" collapsible="icon">
-            {/* Empty header since we removed the Navigation text */}
-            <SidebarHeader className="flex items-center justify-end px-4 py-2 sticky top-14 bg-sidebar z-10">
-              <SidebarTrigger>
-                <Menu className="h-5 w-5" />
-              </SidebarTrigger>
+            {/* Empty header without SidebarTrigger */}
+            <SidebarHeader className="sticky top-14 bg-sidebar z-10">
+              {/* Removed SidebarTrigger from here */}
             </SidebarHeader>
             
-            {/* Removed SidebarRail reference that was causing the error */}
-            
+            {/* Sidebar content */}
             <SidebarContent className="sticky top-24">
               {filteredGroups.map((group) => {
                 // Only show groups with at least one accessible item
