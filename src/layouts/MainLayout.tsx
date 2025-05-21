@@ -1,5 +1,5 @@
 
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, useEffect } from "react";
 import { 
   SidebarProvider, 
   Sidebar, 
@@ -12,7 +12,8 @@ import {
   SidebarGroupLabel,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarInset
+  SidebarInset,
+  SidebarTrigger
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/context/AuthContext";
 import { NavLink } from "react-router-dom";
@@ -25,19 +26,19 @@ import {
   Lock, 
   Folder,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Menu
 } from "lucide-react";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useRolePermissions } from "@/hooks/useRolePermissions";
 import { useCategoryPermissions } from "@/hooks/useCategoryPermissions";
 import { Button } from "@/components/ui/button";
 import { 
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger
-} from "@/components/ui/accordion";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+  Collapsible, 
+  CollapsibleContent, 
+  CollapsibleTrigger 
+} from "@/components/ui/collapsible";
+import { cn } from "@/lib/utils";
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -59,8 +60,8 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
   const { canViewUsers } = usePermissions();
   const { canViewRoles, canViewPermissions } = useRolePermissions();
   const { canViewCategory, canAccessInventory } = useCategoryPermissions();
-  const [isOpen, setIsOpen] = useState(false);
-
+  const [openGroup, setOpenGroup] = useState<string | null>(null);
+  
   // Group menu items by module
   const moduleGroups: ModuleGroup[] = [
     {
@@ -130,12 +131,19 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
     group => group.items.some(item => item.permission)
   );
 
+  const handleGroupToggle = (groupName: string) => {
+    setOpenGroup(openGroup === groupName ? null : groupName);
+  };
+
   return (
     <SidebarProvider defaultOpen={false}>
       <div className="flex min-h-screen w-full">
-        <Sidebar>
-          <SidebarHeader className="flex items-center px-4 py-2">
-            <h1 className="text-xl font-bold">App Portal</h1>
+        <Sidebar variant="sidebar" collapsible="icon">
+          <SidebarHeader className="flex items-center justify-between px-4 py-2">
+            <h1 className="text-xl font-bold truncate">App Portal</h1>
+            <SidebarTrigger className="ml-auto">
+              <Menu className="h-5 w-5" />
+            </SidebarTrigger>
           </SidebarHeader>
           
           <SidebarContent>
@@ -146,25 +154,43 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
 
               return (
                 <SidebarGroup key={group.name}>
-                  <SidebarGroupLabel>
+                  <SidebarGroupLabel
+                    className="cursor-pointer"
+                    onClick={() => handleGroupToggle(group.name)}
+                  >
                     <group.icon className="mr-2 h-5 w-5" />
-                    <span>{group.name}</span>
+                    <span className="flex-1">{group.name}</span>
+                    {openGroup === group.name ? (
+                      <ChevronUp className="h-4 w-4 ml-2" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4 ml-2" />
+                    )}
                   </SidebarGroupLabel>
                   <SidebarGroupContent>
                     <SidebarMenu>
-                      {accessibleItems.map((item) => (
-                        <SidebarMenuItem key={item.path}>
-                          <SidebarMenuButton asChild tooltip={item.label}>
-                            <NavLink 
-                              to={item.path} 
-                              className={({ isActive }) => isActive ? "font-bold" : ""}
-                            >
-                              <item.icon />
-                              <span>{item.label}</span>
-                            </NavLink>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      ))}
+                      <Collapsible 
+                        open={openGroup === group.name} 
+                        className="w-full"
+                      >
+                        <CollapsibleContent>
+                          {accessibleItems.map((item) => (
+                            <SidebarMenuItem key={item.path}>
+                              <SidebarMenuButton 
+                                asChild 
+                                tooltip={item.label}
+                              >
+                                <NavLink 
+                                  to={item.path} 
+                                  className={({ isActive }) => isActive ? "font-bold" : ""}
+                                >
+                                  <item.icon className="h-5 w-5" />
+                                  <span>{item.label}</span>
+                                </NavLink>
+                              </SidebarMenuButton>
+                            </SidebarMenuItem>
+                          ))}
+                        </CollapsibleContent>
+                      </Collapsible>
                     </SidebarMenu>
                   </SidebarGroupContent>
                 </SidebarGroup>
@@ -177,9 +203,9 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
               <div className="space-y-2">
                 <div className="flex items-center space-x-2">
                   <UserRound className="h-5 w-5 text-muted-foreground" />
-                  <div className="text-sm font-medium">{user.name || user.email}</div>
+                  <div className="text-sm font-medium truncate">{user.name || user.email}</div>
                 </div>
-                <div className="text-xs text-muted-foreground">Role: {user.roles.join(', ') || 'No roles assigned'}</div>
+                <div className="text-xs text-muted-foreground truncate">Role: {user.roles.join(', ') || 'No roles assigned'}</div>
                 <Button variant="outline" size="sm" className="w-full" onClick={logout}>
                   Logout
                 </Button>
