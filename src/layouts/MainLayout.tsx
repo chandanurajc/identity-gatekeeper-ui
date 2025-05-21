@@ -148,8 +148,8 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
   return (
     <SidebarProvider defaultOpen={false}>
       <div className="flex flex-col min-h-screen w-full">
-        {/* Horizontal Navigation Bar */}
-        <div className="flex items-center justify-between bg-primary text-primary-foreground h-14 px-4 shadow-md z-20">
+        {/* Horizontal Navigation Bar - Fixed at top */}
+        <div className="flex items-center justify-between bg-primary text-primary-foreground h-14 px-4 shadow-md z-20 fixed top-0 w-full">
           <div className="flex items-center gap-4">
             {/* Hamburger menu on the left */}
             <SidebarTrigger>
@@ -206,20 +206,20 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
           )}
         </div>
 
+        {/* Spacer to prevent content from hiding under fixed navbar */}
+        <div className="h-14"></div>
+
         <div className="flex flex-1">
-          {/* Vertical Sidebar */}
+          {/* Vertical Sidebar - Fixed position */}
           <Sidebar variant="sidebar" collapsible="icon">
-            <SidebarHeader className="flex items-center justify-between px-4 py-2">
+            <SidebarHeader className="flex items-center justify-between px-4 py-2 sticky top-14 bg-sidebar z-10">
               <h2 className="text-sm font-medium">Navigation</h2>
-              <SidebarTrigger className="ml-auto">
-                <Menu className="h-5 w-5" />
-              </SidebarTrigger>
             </SidebarHeader>
             
-            {/* Add SidebarRail for draggable resize */}
+            {/* We'll still include SidebarRail but it's been modified in sidebar.tsx to be hidden */}
             <SidebarRail />
             
-            <SidebarContent>
+            <SidebarContent className="fixed top-[7rem] bottom-0 overflow-auto">
               {filteredGroups.map((group) => {
                 // Only show groups with at least one accessible item
                 const accessibleItems = group.items.filter(item => item.permission);
@@ -231,16 +231,19 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
                       className="cursor-pointer flex items-center"
                       onClick={() => handleGroupToggle(group.name)}
                     >
-                      {/* Enhanced icon container for both states */}
-                      <div className="w-5 h-5 mr-2 flex items-center justify-center flex-shrink-0">
-                        <group.icon className="h-4 w-4" strokeWidth={2.5} />
+                      {/* Icon container with improved visibility */}
+                      <div className="w-6 h-6 mr-2 flex items-center justify-center flex-shrink-0">
+                        <group.icon className="h-5 w-5" strokeWidth={2} />
                       </div>
                       <span className="flex-1">{group.name}</span>
-                      {openGroup === group.name ? (
-                        <ChevronUp className="h-4 w-4 ml-2" />
-                      ) : (
-                        <ChevronDown className="h-4 w-4 ml-2" />
-                      )}
+                      {/* Chevron in expanded view only */}
+                      <span className="group-data-[collapsible=icon]:hidden">
+                        {openGroup === group.name ? (
+                          <ChevronUp className="h-4 w-4 ml-2" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4 ml-2" />
+                        )}
+                      </span>
                     </SidebarGroupLabel>
                     <SidebarGroupContent>
                       <SidebarMenu>
@@ -262,9 +265,9 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
                                       isActive ? "font-bold" : ""
                                     )}
                                   >
-                                    {/* Enhanced icon container for menu items */}
-                                    <div className="w-5 h-5 mr-2 flex items-center justify-center flex-shrink-0">
-                                      <item.icon className="h-4 w-4" strokeWidth={2.5} />
+                                    {/* Enhanced icon container for better visibility */}
+                                    <div className="w-6 h-6 mr-2 flex items-center justify-center flex-shrink-0">
+                                      <item.icon className="h-5 w-5" strokeWidth={2} />
                                     </div>
                                     <span>{item.label}</span>
                                   </NavLink>
