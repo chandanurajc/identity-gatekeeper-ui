@@ -44,7 +44,7 @@ const CategoriesList = () => {
         setLoading(false);
       } catch (error) {
         console.error("Error fetching categories:", error);
-        toast.error("Failed to load categories");
+        toast.error("Failed to load item categories");
         setLoading(false);
       }
     };
@@ -73,24 +73,24 @@ const CategoriesList = () => {
       const success = await categoryService.deleteCategory(id);
       if (success) {
         setCategories(prev => prev.filter(category => category.id !== id));
-        toast.success("Category deleted successfully");
+        toast.success("Item category deleted successfully");
       } else {
-        toast.error("Failed to delete category");
+        toast.error("Failed to delete item category");
       }
     } catch (error) {
       console.error("Error deleting category:", error);
-      toast.error("An error occurred while deleting the category");
+      toast.error("An error occurred while deleting the item category");
     }
   };
 
   return (
     <div className="container mx-auto py-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Categories</h1>
+        <h1 className="text-3xl font-bold">Item Categories</h1>
         {canCreateCategory && (
-          <Button onClick={() => navigate("/inventory/categories/create")}>
+          <Button onClick={() => navigate("/master-data/item-category/create")}>
             <Plus className="h-4 w-4 mr-2" />
-            Add Category
+            Add Item Category
           </Button>
         )}
       </div>
@@ -98,7 +98,7 @@ const CategoriesList = () => {
       <Card className="mb-6">
         <CardHeader>
           <CardTitle>Filters</CardTitle>
-          <CardDescription>Filter the categories list</CardDescription>
+          <CardDescription>Filter the item categories list</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -115,7 +115,7 @@ const CategoriesList = () => {
       </Card>
 
       {loading ? (
-        <div className="text-center py-10">Loading categories...</div>
+        <div className="text-center py-10">Loading item categories...</div>
       ) : (
         <Table>
           <TableCaption>List of item categories</TableCaption>
@@ -135,7 +135,7 @@ const CategoriesList = () => {
             {filteredCategories.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} className="text-center">
-                  No categories found
+                  No item categories found
                 </TableCell>
               </TableRow>
             ) : (
@@ -175,7 +175,7 @@ const CategoriesList = () => {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => navigate(`/inventory/categories/${category.id}`)}
+                      onClick={() => navigate(`/master-data/item-category/${category.id}`)}
                     >
                       <Edit className="h-4 w-4" />
                     </Button>

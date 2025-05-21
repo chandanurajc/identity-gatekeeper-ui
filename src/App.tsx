@@ -143,9 +143,9 @@ const App = () => (
               } 
             />
 
-            {/* Category Management Routes */}
+            {/* Item Category Management Routes */}
             <Route 
-              path="/inventory/categories" 
+              path="/master-data/item-category" 
               element={
                 <ProtectedRoute>
                   <MainLayout>
@@ -155,7 +155,7 @@ const App = () => (
               } 
             />
             <Route 
-              path="/inventory/categories/create" 
+              path="/master-data/item-category/create" 
               element={
                 <ProtectedRoute>
                   <MainLayout>
@@ -165,7 +165,7 @@ const App = () => (
               } 
             />
             <Route 
-              path="/inventory/categories/:categoryId" 
+              path="/master-data/item-category/:categoryId" 
               element={
                 <ProtectedRoute>
                   <MainLayout>

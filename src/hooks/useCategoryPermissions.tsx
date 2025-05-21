@@ -16,9 +16,9 @@ export const useCategoryPermissions = () => {
   };
 
   return {
-    canCreateCategory: hasPermission("create_category"),
-    canEditCategory: hasPermission("edit_category"),
-    canViewCategory: hasPermission("view_category"),
-    canAccessInventory: hasPermission("access_inventory"),
+    canCreateCategory: hasPermission("create_item_category"),
+    canEditCategory: hasPermission("edit_item_category"),
+    canViewCategory: hasPermission("view_item_category"),
+    canAccessInventory: hasPermission("access_master_data"),
   };
 };

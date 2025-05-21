@@ -16,18 +16,18 @@ const CategoryCreate = () => {
 
   const handleSubmit = async (formData: CategoryFormData) => {
     if (!canCreateCategory) {
-      toast.error("You don't have permission to create categories");
+      toast.error("You don't have permission to create item categories");
       return;
     }
 
     setIsSubmitting(true);
     try {
       const newCategory = await categoryService.createCategory(formData);
-      toast.success("Category created successfully");
-      navigate(`/inventory/categories/${newCategory.id}`);
+      toast.success("Item category created successfully");
+      navigate(`/master-data/item-category/${newCategory.id}`);
     } catch (error) {
-      console.error("Error creating category:", error);
-      toast.error("An error occurred while creating the category");
+      console.error("Error creating item category:", error);
+      toast.error("An error occurred while creating the item category");
     } finally {
       setIsSubmitting(false);
     }
@@ -44,7 +44,7 @@ const CategoryCreate = () => {
         <CardHeader>
           <div className="flex items-center space-x-2">
             <Plus className="h-5 w-5 text-muted-foreground" />
-            <CardTitle>Create New Category</CardTitle>
+            <CardTitle>Create New Item Category</CardTitle>
           </div>
           <CardDescription>Add a new item category to the system</CardDescription>
         </CardHeader>

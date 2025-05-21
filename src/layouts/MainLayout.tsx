@@ -90,10 +90,10 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
 
                   {canAccessInventory && (
                     <SidebarMenuItem>
-                      <SidebarMenuButton asChild tooltip="Categories">
-                        <NavLink to="/inventory/categories" className={({ isActive }) => isActive ? "font-bold" : ""}>
+                      <SidebarMenuButton asChild tooltip="Item Category">
+                        <NavLink to="/master-data/item-category" className={({ isActive }) => isActive ? "font-bold" : ""}>
                           <Folder />
-                          <span>Categories</span>
+                          <span>Item Category</span>
                         </NavLink>
                       </SidebarMenuButton>
                     </SidebarMenuItem>

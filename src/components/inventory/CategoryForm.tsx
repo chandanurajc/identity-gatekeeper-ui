@@ -20,9 +20,9 @@ import { toast } from "@/components/ui/sonner";
 
 const formSchema = z.object({
   name: z.string().min(2, {
-    message: "Category name must be at least 2 characters.",
+    message: "Item category name must be at least 2 characters.",
   }).max(50, {
-    message: "Category name must be less than 50 characters.",
+    message: "Item category name must be less than 50 characters.",
   }),
   subcategory: z.string().max(50, {
     message: "Subcategory name must be less than 50 characters.",
@@ -54,7 +54,7 @@ const CategoryForm = ({ initialData, onSubmit, isSubmitting }: CategoryFormProps
       // The toast will be shown by the parent component
     } catch (error) {
       console.error("Error submitting form:", error);
-      toast.error("Failed to save category");
+      toast.error("Failed to save item category");
     }
   };
 
@@ -66,9 +66,9 @@ const CategoryForm = ({ initialData, onSubmit, isSubmitting }: CategoryFormProps
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Category Name</FormLabel>
+              <FormLabel>Item Category Name</FormLabel>
               <FormControl>
-                <Input placeholder="Enter category name" {...field} />
+                <Input placeholder="Enter item category name" {...field} />
               </FormControl>
               <FormDescription>
                 The name of the item category.
@@ -105,7 +105,7 @@ const CategoryForm = ({ initialData, onSubmit, isSubmitting }: CategoryFormProps
                   Active Status
                 </FormLabel>
                 <FormDescription>
-                  Enable or disable this category.
+                  Enable or disable this item category.
                 </FormDescription>
               </div>
               <FormControl>
@@ -122,7 +122,7 @@ const CategoryForm = ({ initialData, onSubmit, isSubmitting }: CategoryFormProps
           <Button
             type="button"
             variant="outline"
-            onClick={() => navigate("/inventory/categories")}
+            onClick={() => navigate("/master-data/item-category")}
           >
             Cancel
           </Button>

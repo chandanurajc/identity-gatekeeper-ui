@@ -20,7 +20,7 @@ const CategoryDetail = () => {
   useEffect(() => {
     const fetchCategory = async () => {
       if (!categoryId) {
-        navigate("/inventory/categories");
+        navigate("/master-data/item-category");
         return;
       }
 
@@ -29,12 +29,12 @@ const CategoryDetail = () => {
         if (data) {
           setCategory(data);
         } else {
-          toast.error("Category not found");
-          navigate("/inventory/categories");
+          toast.error("Item category not found");
+          navigate("/master-data/item-category");
         }
       } catch (error) {
-        console.error("Error fetching category:", error);
-        toast.error("Failed to load category details");
+        console.error("Error fetching item category:", error);
+        toast.error("Failed to load item category details");
       } finally {
         setLoading(false);
       }
@@ -51,25 +51,25 @@ const CategoryDetail = () => {
       const updatedCategory = await categoryService.updateCategory(categoryId, formData);
       if (updatedCategory) {
         setCategory(updatedCategory);
-        toast.success("Category updated successfully");
-        navigate("/inventory/categories");
+        toast.success("Item category updated successfully");
+        navigate("/master-data/item-category");
       } else {
-        toast.error("Failed to update category");
+        toast.error("Failed to update item category");
       }
     } catch (error) {
-      console.error("Error updating category:", error);
-      toast.error("An error occurred while updating the category");
+      console.error("Error updating item category:", error);
+      toast.error("An error occurred while updating the item category");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   if (loading) {
-    return <div className="container mx-auto py-8 text-center">Loading category details...</div>;
+    return <div className="container mx-auto py-8 text-center">Loading item category details...</div>;
   }
 
   if (!category) {
-    return <div className="container mx-auto py-8 text-center">Category not found</div>;
+    return <div className="container mx-auto py-8 text-center">Item category not found</div>;
   }
 
   if (!canEditCategory) {
@@ -81,7 +81,7 @@ const CategoryDetail = () => {
               <Folder className="h-6 w-6 text-muted-foreground" />
               <CardTitle>{category.name}</CardTitle>
             </div>
-            <CardDescription>Category Details</CardDescription>
+            <CardDescription>Item Category Details</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
@@ -124,9 +124,9 @@ const CategoryDetail = () => {
         <CardHeader>
           <div className="flex items-center space-x-2">
             <Folder className="h-6 w-6 text-muted-foreground" />
-            <CardTitle>Edit Category</CardTitle>
+            <CardTitle>Edit Item Category</CardTitle>
           </div>
-          <CardDescription>Update category details</CardDescription>
+          <CardDescription>Update item category details</CardDescription>
         </CardHeader>
         <CardContent>
           <CategoryForm
