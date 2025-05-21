@@ -47,5 +47,7 @@ export const useRolePermissions = () => {
     canCreateRole: hasPermission("create_role"),
     canEditRoles: hasPermission("edit_roles"),
     canViewRoles: hasPermission("view_roles"),
+    // New permission for viewing all system permissions
+    canViewPermissions: hasPermission("view_permissions"),
   };
 };

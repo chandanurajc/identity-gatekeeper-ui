@@ -1,11 +1,10 @@
 
-import { User } from "./auth";
-
 export interface Permission {
   id: string;
   name: string;
   module: string;
   component: string;
+  description?: string;
 }
 
 export interface Role {

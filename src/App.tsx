@@ -17,6 +17,7 @@ import RolesList from "./pages/admin/RolesList";
 import RoleForm from "./pages/admin/RoleForm";
 import RoleDetails from "./pages/admin/RoleDetails";
 import Settings from "./pages/Settings";
+import PermissionsList from "./pages/admin/PermissionsList";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { MainLayout } from "./layouts/MainLayout";
@@ -122,6 +123,18 @@ const App = () => (
                 <ProtectedRoute requiredRoles={["admin"]}>
                   <MainLayout>
                     <RoleDetails />
+                  </MainLayout>
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Permissions Management Route */}
+            <Route 
+              path="/admin/permissions" 
+              element={
+                <ProtectedRoute requiredRoles={["admin"]}>
+                  <MainLayout>
+                    <PermissionsList />
                   </MainLayout>
                 </ProtectedRoute>
               } 

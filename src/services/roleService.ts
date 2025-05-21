@@ -1,59 +1,20 @@
-
 import { Permission, Role } from "@/types/role";
 import { v4 as uuidv4 } from "uuid";
 
 // Mock data for permissions
 const mockPermissions: Permission[] = [
-  { id: "1", name: "create_users", module: "Administration", component: "Users" },
-  { id: "2", name: "edit_users", module: "Administration", component: "Users" },
-  { id: "3", name: "view_users", module: "Administration", component: "Users" },
-  { id: "4", name: "create_role", module: "Administration", component: "Roles" },
-  { id: "5", name: "edit_roles", module: "Administration", component: "Roles" },
-  { id: "6", name: "view_roles", module: "Administration", component: "Roles" },
-  { id: "7", name: "access_settings", module: "Administration", component: "Settings" },
-  { id: "8", name: "access_admin", module: "Administration", component: "General" },
+  { id: "1", name: "create_users", module: "Administration", component: "Users", description: "Create new user accounts in the system" },
+  { id: "2", name: "edit_users", module: "Administration", component: "Users", description: "Edit existing user account details" },
+  { id: "3", name: "view_users", module: "Administration", component: "Users", description: "View user accounts and their details" },
+  { id: "4", name: "create_role", module: "Administration", component: "Roles", description: "Create new roles with custom permissions" },
+  { id: "5", name: "edit_roles", module: "Administration", component: "Roles", description: "Edit existing role details and permissions" },
+  { id: "6", name: "view_roles", module: "Administration", component: "Roles", description: "View roles and their assigned permissions" },
+  { id: "7", name: "access_settings", module: "Administration", component: "Settings", description: "Access application settings configuration" },
+  { id: "8", name: "access_admin", module: "Administration", component: "General", description: "General administration module access" },
+  { id: "9", name: "view_permissions", module: "Administration", component: "Permissions", description: "View all system permissions" },
 ];
 
 // Mock data for roles
-const mockRoles: Role[] = [
-  {
-    id: "1",
-    name: "Administrator",
-    permissions: mockPermissions,
-    createdBy: "System",
-    createdOn: new Date("2025-01-01"),
-    updatedBy: "System",
-    updatedOn: new Date("2025-01-01"),
-  },
-  {
-    id: "2",
-    name: "User Manager",
-    permissions: mockPermissions.filter(p => p.component === "Users"),
-    createdBy: "System",
-    createdOn: new Date("2025-01-01"),
-    updatedBy: "System",
-    updatedOn: new Date("2025-01-01"),
-  },
-  {
-    id: "3",
-    name: "Basic User",
-    permissions: [mockPermissions[2]], // Only view_users
-    createdBy: "System",
-    createdOn: new Date("2025-01-01"),
-  },
-  {
-    id: "4",
-    name: "Content Viewer",
-    permissions: [
-      mockPermissions.find(p => p.name === "view_users")!,
-      mockPermissions.find(p => p.name === "view_roles")!,
-    ],
-    createdBy: "chandanurajc@gmail.com",
-    createdOn: new Date("2025-05-15"),
-  }
-];
-
-// In-memory storage for roles
 let roles = [...mockRoles];
 
 export const roleService = {
