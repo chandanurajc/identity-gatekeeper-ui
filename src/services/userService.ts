@@ -1,3 +1,4 @@
+
 import { User, UserFormData, UserRole } from "@/types/user";
 import { v4 as uuidv4 } from "uuid";
 
@@ -157,14 +158,28 @@ export const updateUser = async (id: string, userData: UserFormData): Promise<Us
   return { ...updatedUser, password: undefined };
 };
 
+// Define all available permissions in the system
+const ALL_AVAILABLE_PERMISSIONS = [
+  // Admin permissions
+  "view_users", "create_users", "edit_users", "create_role", "edit_roles", 
+  "view_roles", "access_settings", "access_admin", "view_permissions",
+  // Master data permissions
+  "create_item_category", "edit_item_category", "view_item_category", 
+  "access_master_data", "view_supplier", "create_supplier", "edit_supplier"
+];
+
 // Permissions
 export const getUserPermissions = (roles: UserRole[]): string[] => {
-  // In a real application, these would be retrieved from a backend
-  const allPermissions = [
-    { role: "admin", permissions: ["view_users", "create_users", "edit_users", "create_role", "edit_roles", "view_roles", "access_settings", "access_admin"] },
-    { role: "user", permissions: ["view_users", "view_roles"] },
-    { role: "guest", permissions: [] },
-  ];
+  // If roles include 'admin', return all available permissions
+  if (roles.includes('admin')) {
+    return [...ALL_AVAILABLE_PERMISSIONS];
+  }
+  
+  // For other role-based permissions
+  const rolePermissions = {
+    "user": ["view_users", "view_roles", "access_dashboard"],
+    "guest": ["access_dashboard"]
+  };
   
   // Collect all permissions based on user roles
   const userPermissions = new Set<string>();
@@ -175,9 +190,10 @@ export const getUserPermissions = (roles: UserRole[]): string[] => {
   }
   
   roles.forEach(role => {
-    const rolePermissions = allPermissions.find(p => p.role === role);
-    if (rolePermissions) {
-      rolePermissions.permissions.forEach(permission => userPermissions.add(permission));
+    if (role in rolePermissions) {
+      rolePermissions[role as keyof typeof rolePermissions].forEach(permission => 
+        userPermissions.add(permission)
+      );
     }
   });
   
