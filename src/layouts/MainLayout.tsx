@@ -27,7 +27,9 @@ import {
   Folder,
   ChevronDown,
   ChevronUp,
-  Menu
+  Menu,
+  Search,
+  LogOut
 } from "lucide-react";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useRolePermissions } from "@/hooks/useRolePermissions";
@@ -39,6 +41,13 @@ import {
   CollapsibleTrigger 
 } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
+import { 
+  NavigationMenu,
+  NavigationMenuList,
+  NavigationMenuItem,
+  NavigationMenuLink,
+} from "@/components/ui/navigation-menu";
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -137,88 +146,130 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
 
   return (
     <SidebarProvider defaultOpen={false}>
-      <div className="flex min-h-screen w-full">
-        <Sidebar variant="sidebar" collapsible="icon">
-          <SidebarHeader className="flex items-center justify-between px-4 py-2">
-            <h1 className="text-xl font-bold truncate">App Portal</h1>
-            <SidebarTrigger className="ml-auto">
-              <Menu className="h-5 w-5" />
-            </SidebarTrigger>
-          </SidebarHeader>
-          
-          <SidebarContent>
-            {filteredGroups.map((group) => {
-              // Only show groups with at least one accessible item
-              const accessibleItems = group.items.filter(item => item.permission);
-              if (accessibleItems.length === 0) return null;
-
-              return (
-                <SidebarGroup key={group.name}>
-                  <SidebarGroupLabel
-                    className="cursor-pointer"
-                    onClick={() => handleGroupToggle(group.name)}
-                  >
-                    <group.icon className="mr-2 h-5 w-5" />
-                    <span className="flex-1">{group.name}</span>
-                    {openGroup === group.name ? (
-                      <ChevronUp className="h-4 w-4 ml-2" />
-                    ) : (
-                      <ChevronDown className="h-4 w-4 ml-2" />
-                    )}
-                  </SidebarGroupLabel>
-                  <SidebarGroupContent>
-                    <SidebarMenu>
-                      <Collapsible 
-                        open={openGroup === group.name} 
-                        className="w-full"
-                      >
-                        <CollapsibleContent>
-                          {accessibleItems.map((item) => (
-                            <SidebarMenuItem key={item.path}>
-                              <SidebarMenuButton 
-                                asChild 
-                                tooltip={item.label}
-                              >
-                                <NavLink 
-                                  to={item.path} 
-                                  className={({ isActive }) => isActive ? "font-bold" : ""}
-                                >
-                                  <item.icon className="h-5 w-5" />
-                                  <span>{item.label}</span>
-                                </NavLink>
-                              </SidebarMenuButton>
-                            </SidebarMenuItem>
-                          ))}
-                        </CollapsibleContent>
-                      </Collapsible>
-                    </SidebarMenu>
-                  </SidebarGroupContent>
-                </SidebarGroup>
-              );
-            })}
-          </SidebarContent>
-          
-          <SidebarFooter className="p-4">
-            {user && (
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2">
-                  <UserRound className="h-5 w-5 text-muted-foreground" />
-                  <div className="text-sm font-medium truncate">{user.name || user.email}</div>
-                </div>
-                <div className="text-xs text-muted-foreground truncate">Role: {user.roles.join(', ') || 'No roles assigned'}</div>
-                <Button variant="outline" size="sm" className="w-full" onClick={logout}>
-                  Logout
-                </Button>
-              </div>
-            )}
-          </SidebarFooter>
-        </Sidebar>
-        
-        <SidebarInset>
-          <div className="p-6">
-            {children}
+      <div className="flex flex-col min-h-screen w-full">
+        {/* Horizontal Navigation Bar */}
+        <div className="flex items-center justify-between bg-primary text-primary-foreground h-14 px-4 shadow-md z-20">
+          <div className="flex items-center gap-4">
+            <h1 className="text-xl font-bold">App Portal</h1>
+            <NavigationMenu className="hidden md:flex">
+              <NavigationMenuList>
+                {filteredGroups.map((group) => (
+                  <NavigationMenuItem key={group.name}>
+                    <NavigationMenuLink
+                      className="px-3 py-2 text-sm font-medium hover:bg-primary/90 transition-colors rounded-md cursor-pointer"
+                      asChild
+                    >
+                      <span>{group.name}</span>
+                    </NavigationMenuLink>
+                  </NavigationMenuItem>
+                ))}
+              </NavigationMenuList>
+            </NavigationMenu>
           </div>
-        </SidebarInset>
+
+          {/* Search Bar */}
+          <div className="flex-1 mx-8 max-w-md hidden md:block">
+            <div className="relative">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-primary-foreground/70" />
+              <Input 
+                className="bg-primary-foreground/20 border-primary-foreground/20 pl-8 text-primary-foreground placeholder:text-primary-foreground/70" 
+                placeholder="Search anything..." 
+              />
+            </div>
+          </div>
+
+          {/* User Info and Logout */}
+          {user && (
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <UserRound className="h-5 w-5" />
+                <span className="text-sm font-medium hidden md:inline">
+                  {user.name || user.email}
+                </span>
+              </div>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={logout} 
+                className="hover:bg-primary/90"
+              >
+                <LogOut className="h-5 w-5" />
+                <span className="sr-only">Logout</span>
+              </Button>
+            </div>
+          )}
+        </div>
+
+        <div className="flex flex-1">
+          {/* Vertical Sidebar */}
+          <Sidebar variant="sidebar" collapsible="icon">
+            <SidebarHeader className="flex items-center justify-between px-4 py-2">
+              <SidebarTrigger className="ml-auto">
+                <Menu className="h-5 w-5" />
+              </SidebarTrigger>
+            </SidebarHeader>
+            
+            <SidebarContent>
+              {filteredGroups.map((group) => {
+                // Only show groups with at least one accessible item
+                const accessibleItems = group.items.filter(item => item.permission);
+                if (accessibleItems.length === 0) return null;
+
+                return (
+                  <SidebarGroup key={group.name}>
+                    <SidebarGroupLabel
+                      className="cursor-pointer"
+                      onClick={() => handleGroupToggle(group.name)}
+                    >
+                      <group.icon className="mr-2 h-5 w-5" />
+                      <span className="flex-1">{group.name}</span>
+                      {openGroup === group.name ? (
+                        <ChevronUp className="h-4 w-4 ml-2" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4 ml-2" />
+                      )}
+                    </SidebarGroupLabel>
+                    <SidebarGroupContent>
+                      <SidebarMenu>
+                        <Collapsible 
+                          open={openGroup === group.name} 
+                          className="w-full"
+                        >
+                          <CollapsibleContent>
+                            {accessibleItems.map((item) => (
+                              <SidebarMenuItem key={item.path}>
+                                <SidebarMenuButton 
+                                  asChild 
+                                  tooltip={item.label}
+                                >
+                                  <NavLink 
+                                    to={item.path} 
+                                    className={({ isActive }) => isActive ? "font-bold" : ""}
+                                  >
+                                    <item.icon className="h-5 w-5" />
+                                    <span>{item.label}</span>
+                                  </NavLink>
+                                </SidebarMenuButton>
+                              </SidebarMenuItem>
+                            ))}
+                          </CollapsibleContent>
+                        </Collapsible>
+                      </SidebarMenu>
+                    </SidebarGroupContent>
+                  </SidebarGroup>
+                );
+              })}
+            </SidebarContent>
+            
+            {/* Removed user info from sidebar footer since it's now in the horizontal bar */}
+          </Sidebar>
+          
+          <SidebarInset>
+            <div className="p-6">
+              {children}
+            </div>
+          </SidebarInset>
+        </div>
       </div>
     </SidebarProvider>
   );
