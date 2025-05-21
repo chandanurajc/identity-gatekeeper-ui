@@ -231,9 +231,9 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
                       className="cursor-pointer flex items-center"
                       onClick={() => handleGroupToggle(group.name)}
                     >
-                      {/* Fix icon visibility - this div makes sure the icon displays well in both expanded and collapsed states */}
+                      {/* Enhanced icon container for both states */}
                       <div className="w-5 h-5 mr-2 flex items-center justify-center flex-shrink-0">
-                        <group.icon className="w-4 h-4" />
+                        <group.icon className="h-4 w-4" strokeWidth={2.5} />
                       </div>
                       <span className="flex-1">{group.name}</span>
                       {openGroup === group.name ? (
@@ -262,9 +262,9 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
                                       isActive ? "font-bold" : ""
                                     )}
                                   >
-                                    {/* Fix icon visibility in menu items - ensure proper sizing for collapsed state */}
+                                    {/* Enhanced icon container for menu items */}
                                     <div className="w-5 h-5 mr-2 flex items-center justify-center flex-shrink-0">
-                                      <item.icon className="w-4 h-4" />
+                                      <item.icon className="h-4 w-4" strokeWidth={2.5} />
                                     </div>
                                     <span>{item.label}</span>
                                   </NavLink>
