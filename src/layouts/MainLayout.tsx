@@ -13,7 +13,8 @@ import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarInset,
-  SidebarTrigger
+  SidebarTrigger,
+  SidebarRail
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/context/AuthContext";
 import { NavLink } from "react-router-dom";
@@ -145,7 +146,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
   };
 
   return (
-    <SidebarProvider defaultOpen={false}>
+    <SidebarProvider defaultOpen={true}>
       <div className="flex flex-col min-h-screen w-full">
         {/* Horizontal Navigation Bar */}
         <div className="flex items-center justify-between bg-primary text-primary-foreground h-14 px-4 shadow-md z-20">
@@ -204,10 +205,14 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
           {/* Vertical Sidebar */}
           <Sidebar variant="sidebar" collapsible="icon">
             <SidebarHeader className="flex items-center justify-between px-4 py-2">
+              <h2 className="text-sm font-medium">Navigation</h2>
               <SidebarTrigger className="ml-auto">
                 <Menu className="h-5 w-5" />
               </SidebarTrigger>
             </SidebarHeader>
+            
+            {/* Add SidebarRail for draggable resize */}
+            <SidebarRail />
             
             <SidebarContent>
               {filteredGroups.map((group) => {
@@ -218,10 +223,10 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
                 return (
                   <SidebarGroup key={group.name}>
                     <SidebarGroupLabel
-                      className="cursor-pointer"
+                      className="cursor-pointer flex items-center"
                       onClick={() => handleGroupToggle(group.name)}
                     >
-                      <group.icon className="mr-2 h-5 w-5" />
+                      <group.icon className="h-5 w-5 mr-2" />
                       <span className="flex-1">{group.name}</span>
                       {openGroup === group.name ? (
                         <ChevronUp className="h-4 w-4 ml-2" />
@@ -263,6 +268,10 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
                 );
               })}
             </SidebarContent>
+            
+            <SidebarFooter className="px-4 py-2">
+              <div className="text-xs text-sidebar-foreground/70">App Portal v1.0</div>
+            </SidebarFooter>
           </Sidebar>
           
           <SidebarInset>
