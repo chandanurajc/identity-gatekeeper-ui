@@ -1,4 +1,5 @@
-import { ReactNode, useState, useEffect } from "react";
+
+import { ReactNode, useState } from "react";
 import { 
   SidebarProvider, 
   Sidebar, 
@@ -36,8 +37,7 @@ import { useCategoryPermissions } from "@/hooks/useCategoryPermissions";
 import { Button } from "@/components/ui/button";
 import { 
   Collapsible, 
-  CollapsibleContent, 
-  CollapsibleTrigger 
+  CollapsibleContent
 } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
@@ -204,21 +204,17 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
           )}
         </div>
 
-        {/* Spacer to prevent content from hiding under fixed navbar */}
-        <div className="h-14"></div>
-
         <div className="flex flex-1">
           {/* Vertical Sidebar - Made sticky */}
           <Sidebar variant="sidebar" collapsible="icon">
-            {/* Removed "Navigation" text from SidebarHeader */}
-            <SidebarHeader className="flex items-center justify-between px-4 py-2 sticky top-14 bg-sidebar z-10">
-              <SidebarTrigger className="ml-auto">
+            {/* Empty header since we removed the Navigation text */}
+            <SidebarHeader className="flex items-center justify-end px-4 py-2 sticky top-14 bg-sidebar z-10">
+              <SidebarTrigger>
                 <Menu className="h-5 w-5" />
               </SidebarTrigger>
             </SidebarHeader>
             
-            {/* We'll still include SidebarRail but it's been modified in sidebar.tsx to be hidden */}
-            <SidebarRail />
+            {/* Removed SidebarRail reference that was causing the error */}
             
             <SidebarContent className="sticky top-24">
               {filteredGroups.map((group) => {
