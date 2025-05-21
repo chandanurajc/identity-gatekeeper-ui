@@ -1,4 +1,5 @@
 
+
 export interface Reference {
   id: string;
   type: 'GST' | 'CIN' | 'PAN';
@@ -9,13 +10,13 @@ export interface Contact {
   id: string;
   type: 'Registered location' | 'Billing' | 'Shipping' | 'Owner';
   firstName: string;
-  lastName: string;
-  address1: string;
+  lastName?: string;
+  address1?: string;
   address2?: string;
-  postalCode: string;
-  city: string;
-  state: string;
-  country: string;
+  postalCode?: string;
+  city?: string;
+  state?: string;
+  country?: string;
   phoneNumber?: string;
   email?: string;
   website?: string;
@@ -41,3 +42,4 @@ export interface SupplierFormData {
   references: Reference[];
   contacts: Contact[];
 }
+
