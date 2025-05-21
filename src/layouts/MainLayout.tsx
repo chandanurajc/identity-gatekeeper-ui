@@ -151,7 +151,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
         {/* Horizontal Navigation Bar */}
         <div className="flex items-center justify-between bg-primary text-primary-foreground h-14 px-4 shadow-md z-20">
           <div className="flex items-center gap-4">
-            {/* Hamburger menu now on the left */}
+            {/* Hamburger menu on the left */}
             <SidebarTrigger>
               <Menu className="h-5 w-5" />
             </SidebarTrigger>
@@ -231,9 +231,9 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
                       className="cursor-pointer flex items-center"
                       onClick={() => handleGroupToggle(group.name)}
                     >
-                      {/* Fix icon visibility by ensuring it's always displayed properly */}
+                      {/* Fix icon visibility - this div makes sure the icon displays well in both expanded and collapsed states */}
                       <div className="w-5 h-5 mr-2 flex items-center justify-center flex-shrink-0">
-                        <group.icon className="w-full h-full" />
+                        <group.icon className="w-4 h-4" />
                       </div>
                       <span className="flex-1">{group.name}</span>
                       {openGroup === group.name ? (
@@ -262,9 +262,9 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
                                       isActive ? "font-bold" : ""
                                     )}
                                   >
-                                    {/* Fix icon visibility in menu items */}
+                                    {/* Fix icon visibility in menu items - ensure proper sizing for collapsed state */}
                                     <div className="w-5 h-5 mr-2 flex items-center justify-center flex-shrink-0">
-                                      <item.icon className="w-full h-full" />
+                                      <item.icon className="w-4 h-4" />
                                     </div>
                                     <span>{item.label}</span>
                                   </NavLink>
@@ -280,7 +280,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
               })}
             </SidebarContent>
             
-            {/* Remove the App Portal v1.0 watermark by leaving the footer empty */}
+            {/* Empty footer */}
             <SidebarFooter className="px-4 py-2"></SidebarFooter>
           </Sidebar>
           
