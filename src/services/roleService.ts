@@ -15,6 +15,24 @@ const mockPermissions: Permission[] = [
 ];
 
 // Mock data for roles
+const mockRoles: Role[] = [
+  {
+    id: "1",
+    name: "Admin",
+    permissions: mockPermissions,
+    createdBy: "System",
+    createdOn: new Date("2024-05-01"),
+  },
+  {
+    id: "2",
+    name: "User",
+    permissions: mockPermissions.filter(p => p.name === "view_users"),
+    createdBy: "System",
+    createdOn: new Date("2024-05-01"),
+  }
+];
+
+// Mock data for roles
 let roles = [...mockRoles];
 
 export const roleService = {
