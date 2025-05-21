@@ -57,7 +57,8 @@ const CategoriesList = () => {
       setFilteredCategories(categories);
     } else {
       const filtered = categories.filter(category => 
-        category.name.toLowerCase().includes(searchTerm.toLowerCase())
+        category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (category.subcategory && category.subcategory.toLowerCase().includes(searchTerm.toLowerCase()))
       );
       setFilteredCategories(filtered);
     }
@@ -103,7 +104,7 @@ const CategoriesList = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Input
-                placeholder="Search by name..."
+                placeholder="Search by name or subcategory..."
                 value={searchTerm}
                 onChange={handleSearch}
                 className="w-full"
@@ -121,6 +122,7 @@ const CategoriesList = () => {
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
+              <TableHead>Subcategory</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Created By</TableHead>
               <TableHead>Created On</TableHead>
@@ -132,7 +134,7 @@ const CategoriesList = () => {
           <TableBody>
             {filteredCategories.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center">
+                <TableCell colSpan={8} className="text-center">
                   No categories found
                 </TableCell>
               </TableRow>
@@ -145,6 +147,7 @@ const CategoriesList = () => {
                       {category.name}
                     </div>
                   </TableCell>
+                  <TableCell>{category.subcategory || "—"}</TableCell>
                   <TableCell>
                     {category.isActive ? (
                       <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">

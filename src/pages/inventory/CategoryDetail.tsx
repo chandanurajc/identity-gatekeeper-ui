@@ -85,6 +85,10 @@ const CategoryDetail = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
+              <p className="font-semibold">Subcategory:</p>
+              <p>{category.subcategory || "—"}</p>
+            </div>
+            <div>
               <p className="font-semibold">Status:</p>
               <p>{category.isActive ? "Active" : "Inactive"}</p>
             </div>

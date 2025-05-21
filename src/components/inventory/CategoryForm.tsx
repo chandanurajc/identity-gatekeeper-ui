@@ -24,6 +24,9 @@ const formSchema = z.object({
   }).max(50, {
     message: "Category name must be less than 50 characters.",
   }),
+  subcategory: z.string().max(50, {
+    message: "Subcategory name must be less than 50 characters.",
+  }).optional(),
   isActive: z.boolean().default(true),
 });
 
@@ -40,6 +43,7 @@ const CategoryForm = ({ initialData, onSubmit, isSubmitting }: CategoryFormProps
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: initialData?.name || "",
+      subcategory: initialData?.subcategory || "",
       isActive: initialData?.isActive ?? true,
     },
   });
@@ -68,6 +72,23 @@ const CategoryForm = ({ initialData, onSubmit, isSubmitting }: CategoryFormProps
               </FormControl>
               <FormDescription>
                 The name of the item category.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={form.control}
+          name="subcategory"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Subcategory</FormLabel>
+              <FormControl>
+                <Input placeholder="Enter subcategory (optional)" {...field} />
+              </FormControl>
+              <FormDescription>
+                A subcategory or group within the main category (optional).
               </FormDescription>
               <FormMessage />
             </FormItem>
