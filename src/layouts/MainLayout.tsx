@@ -146,11 +146,16 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
   };
 
   return (
-    <SidebarProvider defaultOpen={true}>
+    <SidebarProvider defaultOpen={false}>
       <div className="flex flex-col min-h-screen w-full">
         {/* Horizontal Navigation Bar */}
         <div className="flex items-center justify-between bg-primary text-primary-foreground h-14 px-4 shadow-md z-20">
           <div className="flex items-center gap-4">
+            {/* Hamburger menu now on the left */}
+            <SidebarTrigger>
+              <Menu className="h-5 w-5" />
+            </SidebarTrigger>
+            {/* App name moved to the right of the hamburger */}
             <h1 className="text-xl font-bold">App Portal</h1>
             <NavigationMenu className="hidden md:flex">
               <NavigationMenuList>
@@ -226,7 +231,10 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
                       className="cursor-pointer flex items-center"
                       onClick={() => handleGroupToggle(group.name)}
                     >
-                      <group.icon className="h-5 w-5 mr-2" />
+                      {/* Fix icon visibility by ensuring it's always displayed properly */}
+                      <div className="w-5 h-5 mr-2 flex items-center justify-center flex-shrink-0">
+                        <group.icon className="w-full h-full" />
+                      </div>
                       <span className="flex-1">{group.name}</span>
                       {openGroup === group.name ? (
                         <ChevronUp className="h-4 w-4 ml-2" />
@@ -254,7 +262,10 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
                                       isActive ? "font-bold" : ""
                                     )}
                                   >
-                                    <item.icon className="h-5 w-5 mr-2" />
+                                    {/* Fix icon visibility in menu items */}
+                                    <div className="w-5 h-5 mr-2 flex items-center justify-center flex-shrink-0">
+                                      <item.icon className="w-full h-full" />
+                                    </div>
                                     <span>{item.label}</span>
                                   </NavLink>
                                 </SidebarMenuButton>
@@ -269,9 +280,8 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
               })}
             </SidebarContent>
             
-            <SidebarFooter className="px-4 py-2">
-              <div className="text-xs text-sidebar-foreground/70">App Portal v1.0</div>
-            </SidebarFooter>
+            {/* Remove the App Portal v1.0 watermark by leaving the footer empty */}
+            <SidebarFooter className="px-4 py-2"></SidebarFooter>
           </Sidebar>
           
           <SidebarInset>
