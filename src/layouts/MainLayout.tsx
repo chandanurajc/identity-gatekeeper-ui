@@ -1,5 +1,5 @@
 
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import { 
   SidebarProvider, 
   Sidebar, 
@@ -16,14 +16,42 @@ import {
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/context/AuthContext";
 import { NavLink } from "react-router-dom";
-import { Users, LayoutList, Settings, UserRound, Shield, Lock, Folder } from "lucide-react";
+import { 
+  Users, 
+  LayoutList, 
+  Settings, 
+  UserRound, 
+  Shield, 
+  Lock, 
+  Folder,
+  ChevronDown,
+  ChevronUp
+} from "lucide-react";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useRolePermissions } from "@/hooks/useRolePermissions";
 import { useCategoryPermissions } from "@/hooks/useCategoryPermissions";
 import { Button } from "@/components/ui/button";
+import { 
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger
+} from "@/components/ui/accordion";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface MainLayoutProps {
   children: ReactNode;
+}
+
+interface ModuleGroup {
+  name: string;
+  icon: React.ElementType;
+  items: {
+    path: string;
+    label: string;
+    icon: React.ElementType;
+    permission: boolean;
+  }[];
 }
 
 export const MainLayout = ({ children }: MainLayoutProps) => {
@@ -31,9 +59,79 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
   const { canViewUsers } = usePermissions();
   const { canViewRoles, canViewPermissions } = useRolePermissions();
   const { canViewCategory, canAccessInventory } = useCategoryPermissions();
+  const [isOpen, setIsOpen] = useState(false);
+
+  // Group menu items by module
+  const moduleGroups: ModuleGroup[] = [
+    {
+      name: "Dashboard",
+      icon: LayoutList,
+      items: [
+        {
+          path: "/dashboard",
+          label: "Dashboard",
+          icon: LayoutList,
+          permission: true // Always accessible
+        }
+      ]
+    },
+    {
+      name: "Admin",
+      icon: Shield,
+      items: [
+        {
+          path: "/admin/users",
+          label: "User Management",
+          icon: Users,
+          permission: canViewUsers
+        },
+        {
+          path: "/admin/roles",
+          label: "Role Management",
+          icon: Shield,
+          permission: canViewRoles
+        },
+        {
+          path: "/admin/permissions",
+          label: "System Permissions",
+          icon: Lock,
+          permission: canViewPermissions
+        }
+      ]
+    },
+    {
+      name: "Master Data",
+      icon: Folder,
+      items: [
+        {
+          path: "/master-data/item-category",
+          label: "Item Category",
+          icon: Folder,
+          permission: canAccessInventory
+        }
+      ]
+    },
+    {
+      name: "Settings",
+      icon: Settings,
+      items: [
+        {
+          path: "/settings",
+          label: "Settings",
+          icon: Settings,
+          permission: true // Always accessible
+        }
+      ]
+    }
+  ];
+
+  // Filter groups where at least one item has permission
+  const filteredGroups = moduleGroups.filter(
+    group => group.items.some(item => item.permission)
+  );
 
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={false}>
       <div className="flex min-h-screen w-full">
         <Sidebar>
           <SidebarHeader className="flex items-center px-4 py-2">
@@ -41,76 +139,37 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
           </SidebarHeader>
           
           <SidebarContent>
-            <SidebarGroup>
-              <SidebarGroupLabel>Modules</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {/* Dashboard is always visible for any logged in user */}
-                  <SidebarMenuItem>
-                    <SidebarMenuButton asChild tooltip="Dashboard">
-                      <NavLink to="/dashboard" className={({ isActive }) => isActive ? "font-bold" : ""}>
-                        <LayoutList />
-                        <span>Dashboard</span>
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  
-                  {canViewUsers && (
-                    <SidebarMenuItem>
-                      <SidebarMenuButton asChild tooltip="User Management">
-                        <NavLink to="/admin/users" className={({ isActive }) => isActive ? "font-bold" : ""}>
-                          <Users />
-                          <span>User Management</span>
-                        </NavLink>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  )}
-                  
-                  {canViewRoles && (
-                    <SidebarMenuItem>
-                      <SidebarMenuButton asChild tooltip="Role Management">
-                        <NavLink to="/admin/roles" className={({ isActive }) => isActive ? "font-bold" : ""}>
-                          <Shield />
-                          <span>Role Management</span>
-                        </NavLink>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  )}
-                  
-                  {canViewPermissions && (
-                    <SidebarMenuItem>
-                      <SidebarMenuButton asChild tooltip="System Permissions">
-                        <NavLink to="/admin/permissions" className={({ isActive }) => isActive ? "font-bold" : ""}>
-                          <Lock />
-                          <span>System Permissions</span>
-                        </NavLink>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  )}
+            {filteredGroups.map((group) => {
+              // Only show groups with at least one accessible item
+              const accessibleItems = group.items.filter(item => item.permission);
+              if (accessibleItems.length === 0) return null;
 
-                  {canAccessInventory && (
-                    <SidebarMenuItem>
-                      <SidebarMenuButton asChild tooltip="Item Category">
-                        <NavLink to="/master-data/item-category" className={({ isActive }) => isActive ? "font-bold" : ""}>
-                          <Folder />
-                          <span>Item Category</span>
-                        </NavLink>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  )}
-                  
-                  {/* Settings is always visible for any logged in user */}
-                  <SidebarMenuItem>
-                    <SidebarMenuButton asChild tooltip="Settings">
-                      <NavLink to="/settings" className={({ isActive }) => isActive ? "font-bold" : ""}>
-                        <Settings />
-                        <span>Settings</span>
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
+              return (
+                <SidebarGroup key={group.name}>
+                  <SidebarGroupLabel>
+                    <group.icon className="mr-2 h-5 w-5" />
+                    <span>{group.name}</span>
+                  </SidebarGroupLabel>
+                  <SidebarGroupContent>
+                    <SidebarMenu>
+                      {accessibleItems.map((item) => (
+                        <SidebarMenuItem key={item.path}>
+                          <SidebarMenuButton asChild tooltip={item.label}>
+                            <NavLink 
+                              to={item.path} 
+                              className={({ isActive }) => isActive ? "font-bold" : ""}
+                            >
+                              <item.icon />
+                              <span>{item.label}</span>
+                            </NavLink>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      ))}
+                    </SidebarMenu>
+                  </SidebarGroupContent>
+                </SidebarGroup>
+              );
+            })}
           </SidebarContent>
           
           <SidebarFooter className="p-4">
