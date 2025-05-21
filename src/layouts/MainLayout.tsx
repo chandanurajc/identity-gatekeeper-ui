@@ -244,7 +244,10 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
                                 >
                                   <NavLink 
                                     to={item.path} 
-                                    className={({ isActive }) => isActive ? "font-bold" : ""}
+                                    className={({ isActive }) => cn(
+                                      "flex items-center w-full",
+                                      isActive ? "font-bold" : ""
+                                    )}
                                   >
                                     <item.icon className="h-5 w-5" />
                                     <span>{item.label}</span>
@@ -260,8 +263,6 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
                 );
               })}
             </SidebarContent>
-            
-            {/* Removed user info from sidebar footer since it's now in the horizontal bar */}
           </Sidebar>
           
           <SidebarInset>
