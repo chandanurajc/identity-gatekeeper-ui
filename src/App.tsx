@@ -18,6 +18,9 @@ import RoleForm from "./pages/admin/RoleForm";
 import RoleDetails from "./pages/admin/RoleDetails";
 import Settings from "./pages/Settings";
 import PermissionsList from "./pages/admin/PermissionsList";
+import CategoriesList from "./pages/inventory/CategoriesList";
+import CategoryCreate from "./pages/inventory/CategoryCreate";
+import CategoryDetail from "./pages/inventory/CategoryDetail";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { MainLayout } from "./layouts/MainLayout";
@@ -135,6 +138,38 @@ const App = () => (
                 <ProtectedRoute requiredRoles={["admin"]}>
                   <MainLayout>
                     <PermissionsList />
+                  </MainLayout>
+                </ProtectedRoute>
+              } 
+            />
+
+            {/* Category Management Routes */}
+            <Route 
+              path="/inventory/categories" 
+              element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <CategoriesList />
+                  </MainLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/inventory/categories/create" 
+              element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <CategoryCreate />
+                  </MainLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/inventory/categories/:categoryId" 
+              element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <CategoryDetail />
                   </MainLayout>
                 </ProtectedRoute>
               } 

@@ -16,9 +16,10 @@ import {
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/context/AuthContext";
 import { NavLink } from "react-router-dom";
-import { Users, LayoutList, Settings, UserRound, Shield, Lock } from "lucide-react";
+import { Users, LayoutList, Settings, UserRound, Shield, Lock, Folder } from "lucide-react";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useRolePermissions } from "@/hooks/useRolePermissions";
+import { useCategoryPermissions } from "@/hooks/useCategoryPermissions";
 import { Button } from "@/components/ui/button";
 
 interface MainLayoutProps {
@@ -29,6 +30,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
   const { user, logout } = useAuth();
   const { canViewUsers } = usePermissions();
   const { canViewRoles, canViewPermissions } = useRolePermissions();
+  const { canViewCategory, canAccessInventory } = useCategoryPermissions();
 
   return (
     <SidebarProvider>
@@ -81,6 +83,17 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
                         <NavLink to="/admin/permissions" className={({ isActive }) => isActive ? "font-bold" : ""}>
                           <Lock />
                           <span>System Permissions</span>
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  )}
+
+                  {canAccessInventory && (
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild tooltip="Categories">
+                        <NavLink to="/inventory/categories" className={({ isActive }) => isActive ? "font-bold" : ""}>
+                          <Folder />
+                          <span>Categories</span>
                         </NavLink>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
