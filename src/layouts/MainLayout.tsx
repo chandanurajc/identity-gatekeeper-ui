@@ -29,7 +29,8 @@ import {
   ChevronUp,
   Menu,
   Search,
-  LogOut
+  LogOut,
+  Building
 } from "lucide-react";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useRolePermissions } from "@/hooks/useRolePermissions";
@@ -61,7 +62,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
   const { user, logout } = useAuth();
   const { canViewUsers } = usePermissions();
   const { canViewRoles, canViewPermissions } = useRolePermissions();
-  const { canViewCategory, canAccessInventory } = useCategoryPermissions();
+  const { canViewCategory, canAccessInventory, canViewSupplier } = useCategoryPermissions();
   const [openGroup, setOpenGroup] = useState<string | null>(null);
   
   // Group menu items by module
@@ -110,7 +111,13 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
           path: "/master-data/item-category",
           label: "Item Category",
           icon: Folder,
-          permission: canAccessInventory
+          permission: canViewCategory
+        },
+        {
+          path: "/master-data/suppliers",
+          label: "Suppliers",
+          icon: Building,
+          permission: canViewSupplier
         }
       ]
     },

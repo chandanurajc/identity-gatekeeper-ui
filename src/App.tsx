@@ -21,6 +21,10 @@ import PermissionsList from "./pages/admin/PermissionsList";
 import CategoriesList from "./pages/inventory/CategoriesList";
 import CategoryCreate from "./pages/inventory/CategoryCreate";
 import CategoryDetail from "./pages/inventory/CategoryDetail";
+import SuppliersList from "./pages/supplier/SuppliersList";
+import SupplierCreate from "./pages/supplier/SupplierCreate";
+import SupplierEdit from "./pages/supplier/SupplierEdit";
+import SupplierDetail from "./pages/supplier/SupplierDetail";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { MainLayout } from "./layouts/MainLayout";
@@ -170,6 +174,48 @@ const App = () => (
                 <ProtectedRoute>
                   <MainLayout>
                     <CategoryDetail />
+                  </MainLayout>
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Supplier Management Routes */}
+            <Route 
+              path="/master-data/suppliers" 
+              element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <SuppliersList />
+                  </MainLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/master-data/suppliers/create" 
+              element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <SupplierCreate />
+                  </MainLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/master-data/suppliers/edit/:supplierId" 
+              element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <SupplierEdit />
+                  </MainLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/master-data/suppliers/:supplierId" 
+              element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <SupplierDetail />
                   </MainLayout>
                 </ProtectedRoute>
               } 
