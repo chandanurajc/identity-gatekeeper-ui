@@ -37,18 +37,18 @@ export const authService = {
   login: async (credentials: LoginCredentials): Promise<User> => {
     await new Promise(resolve => setTimeout(resolve, 1000));
 
-    // Find user by email and organization code
-    const user = MOCK_USERS.find(u => 
-      u.email === credentials.email && 
-      u.organizationCode === credentials.organizationCode
-    );
+    // Find user by email first
+    const user = MOCK_USERS.find(u => u.email === credentials.email);
     
     if (!user || user.password !== credentials.password) {
-      throw new Error("Invalid email, password, or organization code");
+      throw new Error("Invalid email or password");
     }
 
+    // Auto-determine organization code from user data
+    const organizationCode = user.organizationCode;
+
     // Verify organization exists and is active
-    const organization = await organizationService.getOrganizationByCode(credentials.organizationCode);
+    const organization = await organizationService.getOrganizationByCode(organizationCode);
     if (!organization || organization.status !== 'active') {
       throw new Error("Organization not found or inactive");
     }
@@ -61,7 +61,7 @@ export const authService = {
     
     // Store user and organization context
     localStorage.setItem("user", JSON.stringify(userWithOrgDetails));
-    localStorage.setItem("organizationCode", credentials.organizationCode);
+    localStorage.setItem("organizationCode", organizationCode);
     
     return userWithOrgDetails as User;
   },

@@ -14,7 +14,7 @@ export interface User {
 export interface LoginCredentials {
   email: string;
   password: string;
-  organizationCode: string;
+  organizationCode?: string;
 }
 
 export interface AuthState {

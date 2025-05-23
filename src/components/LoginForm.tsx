@@ -14,9 +14,6 @@ import { Loader2 } from "lucide-react";
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
-  organizationCode: z.string()
-    .length(4, "Organization code must be exactly 4 characters")
-    .regex(/^[A-Za-z0-9]+$/, "Organization code must be alphanumeric"),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -30,7 +27,6 @@ const LoginForm = () => {
     defaultValues: {
       email: "",
       password: "",
-      organizationCode: "",
     },
   });
 
@@ -47,33 +43,12 @@ const LoginForm = () => {
       <CardHeader className="space-y-1">
         <CardTitle className="text-2xl font-bold text-center">Sign In</CardTitle>
         <CardDescription className="text-center">
-          Enter your credentials to access your organization
+          Enter your credentials to access your account
         </CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="organizationCode"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Organization Code</FormLabel>
-                  <FormControl>
-                    <Input 
-                      placeholder="4-character code" 
-                      {...field} 
-                      disabled={isLoading}
-                      className="bg-white uppercase"
-                      maxLength={4}
-                      onChange={(e) => field.onChange(e.target.value.toUpperCase())}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
             <FormField
               control={form.control}
               name="email"
@@ -157,8 +132,9 @@ const LoginForm = () => {
           <div className="mt-2">
             <span>Test credentials:</span>
             <div className="text-xs mt-1">
-              <div>Admin: ABCC / admin@example.com / admin123</div>
-              <div>User: XYZI / user@example.com / user123</div>
+              <div>Admin: admin@example.com / admin123</div>
+              <div>User: user@example.com / user123</div>
+              <div>Chandan: chandanurajc@gmail.com / PassPass@123</div>
             </div>
           </div>
         </div>
