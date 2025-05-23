@@ -1,3 +1,4 @@
+
 import { Organization, OrganizationFormData } from "@/types/organization";
 import { v4 as uuidv4 } from "uuid";
 
@@ -102,8 +103,13 @@ export const organizationService = {
   },
 
   createOrganization: (organization: OrganizationFormData, createdBy: string): Promise<Organization> => {
-    if (!validateOrganizationCode(organization.code)) {
-      throw new Error("Organization code must be exactly 4 alphanumeric characters and unique");
+    // Check if an organization with this code already exists
+    const existingOrg = organizations.find(org => 
+      org.code.toLowerCase() === organization.code.toLowerCase()
+    );
+    
+    if (existingOrg) {
+      throw new Error("An organization with this code already exists");
     }
     
     const newOrganization: Organization = {

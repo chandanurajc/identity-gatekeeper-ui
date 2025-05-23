@@ -1,293 +1,307 @@
 
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/context/AuthContext";
-import { Organization, OrganizationFormData } from "@/types/organization";
-import { organizationService } from "@/services/organizationService";
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { OrganizationFormData, Reference, Contact } from "@/types/organization";
 import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { ReferenceForm } from "./ReferenceForm";
-import { ContactForm } from "./ContactForm";
+import { useAuth } from "@/context/AuthContext";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import ReferenceForm from "./ReferenceForm";
+import ContactForm from "./ContactForm";
+import { Trash2, Plus } from "lucide-react";
+
+const formSchema = z.object({
+  name: z.string().min(1, "Organization name is required"),
+  alias: z.string().optional(),
+  type: z.enum(["Supplier", "Retailer", "Wholesale Customer", "Retail Customer"]),
+  status: z.enum(["active", "inactive"]),
+});
 
 interface OrganizationFormProps {
-  organization?: Organization;
-  onSave: (organization: OrganizationFormData) => Promise<void>;
-  readOnly?: boolean;
+  initialData?: Partial<OrganizationFormData>;
   isEditing?: boolean;
+  onSubmit: (data: OrganizationFormData) => Promise<void>;
 }
 
-export const OrganizationForm = ({
-  organization,
-  onSave,
-  readOnly = false,
-  isEditing = false,
-}: OrganizationFormProps) => {
-  const navigate = useNavigate();
-  const { toast } = useToast();
+const OrganizationForm = ({ initialData, isEditing = false, onSubmit }: OrganizationFormProps) => {
   const { user } = useAuth();
+  const { toast } = useToast();
+  const [references, setReferences] = useState<Reference[]>(initialData?.references || []);
+  const [contacts, setContacts] = useState<Contact[]>(initialData?.contacts || []);
 
-  const [formData, setFormData] = useState<OrganizationFormData>({
-    name: organization?.name || "",
-    code: organization?.code || "",
-    alias: organization?.alias || "",
-    type: organization?.type || "Supplier",
-    status: organization?.status || "active",
-    references: organization?.references || [],
-    contacts: organization?.contacts || [],
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: initialData?.name || "",
+      alias: initialData?.alias || "",
+      type: initialData?.type || "Supplier",
+      status: initialData?.status || "active",
+    },
   });
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [codeError, setCodeError] = useState<string>("");
-
-  const handleChange = (field: keyof OrganizationFormData, value: any) => {
-    setFormData({ ...formData, [field]: value });
-    
-    // Clear code error when user starts typing
-    if (field === "code") {
-      setCodeError("");
-    }
-  };
-
-  const validateCode = async (code: string): Promise<boolean> => {
-    if (!code) {
-      setCodeError("Organization code is required");
-      return false;
-    }
-
-    if (!/^[A-Za-z0-9]{4}$/.test(code)) {
-      setCodeError("Code must be exactly 4 alphanumeric characters");
-      return false;
-    }
-
-    try {
-      const isValid = await organizationService.validateOrganizationCode(code, organization?.id);
-      if (!isValid) {
-        setCodeError("This code is already in use");
-        return false;
-      }
-    } catch (error) {
-      setCodeError("Error validating code");
-      return false;
-    }
-
-    setCodeError("");
-    return true;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!formData.name.trim()) {
+  const handleSubmit = async (values: z.infer<typeof formSchema>) => {
+    if (!user?.organizationCode) {
       toast({
-        title: "Validation Error",
-        description: "Organization name is required.",
         variant: "destructive",
-      });
-      return;
-    }
-
-    const isCodeValid = await validateCode(formData.code);
-    if (!isCodeValid) {
-      return;
-    }
-
-    try {
-      setIsSubmitting(true);
-      await onSave(formData);
-      toast({
-        title: "Success",
-        description: `Organization ${isEditing ? "updated" : "created"} successfully`,
-      });
-      navigate("/admin/organizations");
-    } catch (error) {
-      console.error("Error saving organization:", error);
-      toast({
         title: "Error",
-        description: `Failed to ${isEditing ? "update" : "create"} organization.`,
-        variant: "destructive",
+        description: "No organization code found for current user",
       });
-    } finally {
-      setIsSubmitting(false);
+      return;
+    }
+
+    try {
+      const organizationData: OrganizationFormData = {
+        ...values,
+        code: user.organizationCode, // Use current user's organization code
+        references,
+        contacts,
+      };
+
+      await onSubmit(organizationData);
+      
+      toast({
+        title: `Organization ${isEditing ? "updated" : "created"} successfully`,
+        description: `The organization has been ${isEditing ? "updated" : "created"} successfully.`,
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: `Failed to ${isEditing ? "update" : "create"} organization`,
+        description: error instanceof Error ? error.message : "An unknown error occurred",
+      });
     }
   };
 
-  const handleCancel = () => {
-    navigate("/admin/organizations");
+  const addReference = () => {
+    const newReference: Reference = {
+      id: `ref-${Date.now()}`,
+      type: "GST",
+      value: "",
+    };
+    setReferences([...references, newReference]);
   };
 
-  const organizationTypes = ['Supplier', 'Retailer', 'Wholesale Customer', 'Retail Customer'];
+  const updateReference = (id: string, updatedReference: Reference) => {
+    setReferences(references.map(ref => ref.id === id ? updatedReference : ref));
+  };
+
+  const removeReference = (id: string) => {
+    setReferences(references.filter(ref => ref.id !== id));
+  };
+
+  const addContact = () => {
+    const newContact: Contact = {
+      id: `contact-${Date.now()}`,
+      type: "Registered location",
+      firstName: "",
+      lastName: "",
+    };
+    setContacts([...contacts, newContact]);
+  };
+
+  const updateContact = (id: string, updatedContact: Contact) => {
+    setContacts(contacts.map(contact => contact.id === id ? updatedContact : contact));
+  };
+
+  const removeContact = (id: string) => {
+    setContacts(contacts.filter(contact => contact.id !== id));
+  };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="space-y-3">
-          <div className="space-y-1">
-            <Label htmlFor="name">Organization Name*</Label>
-            <Input
-              id="name"
-              value={formData.name}
-              onChange={(e) => handleChange("name", e.target.value)}
-              disabled={readOnly || isEditing}
-              required
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Basic Information</CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-2 gap-6">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Organization Name*</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
 
-          <div className="space-y-1">
-            <Label htmlFor="code">Organization Code*</Label>
-            <Input
-              id="code"
-              value={formData.code}
-              onChange={(e) => {
-                const value = e.target.value.toUpperCase();
-                if (value.length <= 4) {
-                  handleChange("code", value);
-                }
-              }}
-              disabled={readOnly}
-              required
-              maxLength={4}
-              placeholder="4 character code"
-              className={codeError ? "border-red-500" : ""}
+            {/* Display organization code as read-only */}
+            <div>
+              <FormLabel>Organization Code</FormLabel>
+              <Input 
+                value={user?.organizationCode || ""} 
+                disabled 
+                className="bg-gray-100"
+              />
+              <p className="text-sm text-muted-foreground mt-1">
+                Auto-filled from your user profile
+              </p>
+            </div>
+
+            <FormField
+              control={form.control}
+              name="alias"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Alias</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-            {codeError && (
-              <p className="text-sm text-red-500">{codeError}</p>
-            )}
-          </div>
 
-          <div className="space-y-1">
-            <Label htmlFor="type">Organization Type*</Label>
-            <Select
-              value={formData.type}
-              onValueChange={(value) => handleChange("type", value as Organization['type'])}
-              disabled={readOnly}
-            >
-              <SelectTrigger id="type">
-                <SelectValue placeholder="Select organization type" />
-              </SelectTrigger>
-              <SelectContent>
-                {organizationTypes.map((type) => (
-                  <SelectItem key={type} value={type}>
-                    {type}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-1">
-            <Label htmlFor="alias">Alias</Label>
-            <Input
-              id="alias"
-              value={formData.alias || ""}
-              onChange={(e) => handleChange("alias", e.target.value)}
-              disabled={readOnly}
-              placeholder="Organization alias (optional)"
+            <FormField
+              control={form.control}
+              name="type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Type*</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select organization type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="Supplier">Supplier</SelectItem>
+                      <SelectItem value="Retailer">Retailer</SelectItem>
+                      <SelectItem value="Wholesale Customer">Wholesale Customer</SelectItem>
+                      <SelectItem value="Retail Customer">Retail Customer</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
 
-          <div className="flex items-center space-x-2 pt-2">
-            <Switch
-              id="status"
-              checked={formData.status === "active"}
-              onCheckedChange={(checked) => handleChange("status", checked ? "active" : "inactive")}
-              disabled={readOnly}
+            <FormField
+              control={form.control}
+              name="status"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Status*</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="inactive">Inactive</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-            <Label htmlFor="status">
-              {formData.status === "active" ? "Active" : "Inactive"}
-            </Label>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
-        {/* Metadata displayed on right side */}
-        {organization && (
-          <div className="space-y-3 p-4 bg-muted/20 rounded-md">
-            {organization.createdBy && organization.createdOn && (
-              <div>
-                <p className="text-xs text-muted-foreground">Created by: {organization.createdBy}</p>
-                <p className="text-xs text-muted-foreground">
-                  Created on: {new Date(organization.createdOn).toLocaleString()}
-                </p>
+        {/* References Section */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>References</CardTitle>
+            <Button type="button" onClick={addReference} size="sm">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Reference
+            </Button>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {references.map((reference) => (
+              <div key={reference.id} className="flex items-end gap-4">
+                <div className="flex-1">
+                  <ReferenceForm
+                    reference={reference}
+                    onChange={(updatedReference) => updateReference(reference.id, updatedReference)}
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => removeReference(reference.id)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </div>
+            ))}
+            {references.length === 0 && (
+              <p className="text-muted-foreground text-center py-4">
+                No references added yet. Click "Add Reference" to get started.
+              </p>
             )}
-            {organization.updatedBy && organization.updatedOn && (
-              <div className="pt-2">
-                <p className="text-xs text-muted-foreground">Updated by: {organization.updatedBy}</p>
-                <p className="text-xs text-muted-foreground">
-                  Updated on: {new Date(organization.updatedOn).toLocaleString()}
-                </p>
+          </CardContent>
+        </Card>
+
+        {/* Contacts Section */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>Contacts</CardTitle>
+            <Button type="button" onClick={addContact} size="sm">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Contact
+            </Button>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {contacts.map((contact) => (
+              <div key={contact.id} className="border rounded-lg p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="font-medium">Contact {contacts.indexOf(contact) + 1}</h4>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => removeContact(contact.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+                <ContactForm
+                  contact={contact}
+                  onChange={(updatedContact) => updateContact(contact.id, updatedContact)}
+                />
               </div>
+            ))}
+            {contacts.length === 0 && (
+              <p className="text-muted-foreground text-center py-4">
+                No contacts added yet. Click "Add Contact" to get started.
+              </p>
             )}
-          </div>
-        )}
-      </div>
+          </CardContent>
+        </Card>
 
-      <Accordion type="single" collapsible className="w-full">
-        <AccordionItem value="references">
-          <AccordionTrigger className="text-lg font-semibold">Reference Details</AccordionTrigger>
-          <AccordionContent>
-            <ReferenceForm
-              references={formData.references}
-              onChange={(references) => handleChange("references", references)}
-              readOnly={readOnly}
-            />
-          </AccordionContent>
-        </AccordionItem>
-
-        <AccordionItem value="contacts">
-          <AccordionTrigger className="text-lg font-semibold">Contact Details</AccordionTrigger>
-          <AccordionContent>
-            <ContactForm
-              contacts={formData.contacts}
-              onChange={(contacts) => handleChange("contacts", contacts)}
-              readOnly={readOnly}
-            />
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
-
-      {!readOnly && (
-        <div className="flex justify-end space-x-4">
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="outline" type="button">
-                Cancel
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Confirm and Abort</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Are you sure you want to cancel? Any unsaved changes will be lost.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>No, continue editing</AlertDialogCancel>
-                <AlertDialogAction onClick={handleCancel}>Yes, cancel</AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Saving..." : "Save"}
-          </Button>
-        </div>
-      )}
-    </form>
+        <Card>
+          <CardFooter className="flex justify-end gap-2">
+            <Button type="button" variant="outline">
+              Cancel
+            </Button>
+            <Button type="submit">
+              {isEditing ? "Update Organization" : "Create Organization"}
+            </Button>
+          </CardFooter>
+        </Card>
+      </form>
+    </Form>
   );
 };
+
+export default OrganizationForm;
