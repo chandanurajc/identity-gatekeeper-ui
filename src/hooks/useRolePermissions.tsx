@@ -43,7 +43,7 @@ export const useRolePermissions = () => {
   return {
     hasPermission,
     isLoading: loading,
-    // Role management specific permissions
+    // Role management specific permissions - updated to match actual permission names
     canCreateRole: hasPermission("create_role"),
     canEditRoles: hasPermission("edit_roles"),
     canViewRoles: hasPermission("view_roles"),

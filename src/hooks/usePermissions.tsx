@@ -1,4 +1,3 @@
-
 import { useAuth } from "@/context/AuthContext";
 import { getUserPermissions } from "@/services/userService";
 
@@ -14,19 +13,19 @@ export const usePermissions = () => {
 
   return {
     hasPermission,
-    // User Management permissions
-    canViewUsers: hasPermission("view_users"),
-    canCreateUsers: hasPermission("create_users"),
-    canEditUsers: hasPermission("edit_users"),
+    // User Management permissions - updated to match actual permission names
+    canViewUsers: hasPermission("view-user"),
+    canCreateUsers: hasPermission("create-user"),
+    canEditUsers: hasPermission("edit-user"),
     
-    // Module access permissions
+    // Module access permissions - these don't exist in services, so keeping them as false for now
     canAccessAdminModule: hasPermission("access_admin"),
     canAccessSettingsModule: hasPermission("access_settings"),
     
-    // Organization permissions
-    canViewOrganization: hasPermission("view_organization"),
-    canCreateOrganization: hasPermission("create_organization"),
-    canEditOrganization: hasPermission("edit_organization"),
+    // Organization permissions - updated to match actual permission names
+    canViewOrganization: hasPermission("view-organization"),
+    canCreateOrganization: hasPermission("create-organization"),
+    canEditOrganization: hasPermission("edit-organization"),
     
     // For checking any permission dynamically
     checkPermission: hasPermission,
