@@ -1,224 +1,270 @@
 
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { OrganizationFormData, Reference, Contact } from "@/types/organization";
-import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/context/AuthContext";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { OrganizationFormData } from "@/types/organization";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ReferenceForm } from "./ReferenceForm";
-import { ContactForm } from "./ContactForm";
+import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
+import { useAuth } from "@/context/AuthContext";
+import ContactForm from "./ContactForm";
+import ReferenceForm from "./ReferenceForm";
 
-const formSchema = z.object({
-  name: z.string().min(1, "Organization name is required"),
-  alias: z.string().optional(),
-  type: z.enum(["Supplier", "Retailer", "Wholesale Customer", "Retail Customer"]),
-  status: z.enum(["active", "inactive"]),
+// Form schema with validation
+const organizationSchema = z.object({
+  name: z.string().min(3, "Name must be at least 3 characters"),
+  code: z.string().length(4, "Code must be exactly 4 characters").regex(/^[A-Z0-9]+$/, "Code must be uppercase alphanumeric"),
+  status: z.enum(["active", "inactive", "pending"]),
+  website: z.string().url("Must be a valid URL").or(z.string().length(0)),
+  description: z.string().max(500, "Description cannot exceed 500 characters").optional(),
+  address: z.object({
+    street: z.string().min(3, "Street must be at least 3 characters"),
+    city: z.string().min(2, "City must be at least 2 characters"),
+    state: z.string().min(2, "State must be at least 2 characters"),
+    postalCode: z.string().min(5, "Postal code must be at least 5 characters"),
+    country: z.string().min(2, "Country must be at least 2 characters"),
+  }),
+  contacts: z.array(
+    z.object({
+      name: z.string().min(2, "Name must be at least 2 characters"),
+      title: z.string().min(2, "Title must be at least 2 characters"),
+      email: z.string().email("Invalid email address"),
+      phone: z.string().min(10, "Phone must be at least 10 characters"),
+      isPrimary: z.boolean().default(false),
+    })
+  ).min(1, "At least one contact is required"),
+  references: z.array(
+    z.object({
+      name: z.string().min(2, "Name must be at least 2 characters"),
+      company: z.string().min(2, "Company must be at least 2 characters"),
+      email: z.string().email("Invalid email address").or(z.string().length(0)),
+      phone: z.string().min(10, "Phone must be at least 10 characters").or(z.string().length(0)),
+      relationship: z.string().min(2, "Relationship must be at least 2 characters"),
+    })
+  ).optional().default([]),
 });
 
 interface OrganizationFormProps {
   initialData?: Partial<OrganizationFormData>;
+  onSubmit: (data: OrganizationFormData) => void;
   isEditing?: boolean;
-  onSubmit: (data: OrganizationFormData) => Promise<void>;
 }
 
-const OrganizationForm = ({ initialData, isEditing = false, onSubmit }: OrganizationFormProps) => {
+const OrganizationForm = ({ initialData, onSubmit, isEditing = false }: OrganizationFormProps) => {
   const { user } = useAuth();
-  const { toast } = useToast();
-  const [references, setReferences] = useState<Reference[]>(initialData?.references || []);
-  const [contacts, setContacts] = useState<Contact[]>(initialData?.contacts || []);
-
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Initialize form with default values or existing data
+  const form = useForm<OrganizationFormData>({
+    resolver: zodResolver(organizationSchema),
     defaultValues: {
       name: initialData?.name || "",
-      alias: initialData?.alias || "",
-      type: initialData?.type || "Supplier",
+      // In edit mode or when creating, use the user's organization code
+      code: initialData?.code || user?.organizationCode || "",
       status: initialData?.status || "active",
+      website: initialData?.website || "",
+      description: initialData?.description || "",
+      address: initialData?.address || {
+        street: "",
+        city: "",
+        state: "",
+        postalCode: "",
+        country: "",
+      },
+      contacts: initialData?.contacts && initialData.contacts.length > 0 
+        ? initialData.contacts 
+        : [{ name: "", title: "", email: "", phone: "", isPrimary: true }],
+      references: initialData?.references || [],
     },
   });
 
-  const handleSubmit = async (values: z.infer<typeof formSchema>) => {
-    if (!user?.organizationCode) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "No organization code found for current user",
-      });
-      return;
-    }
-
+  const handleSubmit = async (data: OrganizationFormData) => {
+    setIsSubmitting(true);
     try {
-      const organizationData: OrganizationFormData = {
-        name: values.name,
-        code: user.organizationCode,
-        alias: values.alias || undefined,
-        type: values.type,
-        status: values.status,
-        references,
-        contacts,
-      };
-
-      await onSubmit(organizationData);
-      
-      toast({
-        title: `Organization ${isEditing ? "updated" : "created"} successfully`,
-        description: `The organization has been ${isEditing ? "updated" : "created"} successfully.`,
-      });
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: `Failed to ${isEditing ? "update" : "create"} organization`,
-        description: error instanceof Error ? error.message : "An unknown error occurred",
-      });
+      await onSubmit(data);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Basic Information</CardTitle>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Organization Name</FormLabel>
+                <FormControl>
+                  <Input placeholder="Enter organization name" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Hide organization code field - it's handled automatically */}
+          <input type="hidden" {...form.register("code")} />
+          
+          <FormField
+            control={form.control}
+            name="status"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Status</FormLabel>
+                <Select 
+                  disabled={isSubmitting} 
+                  onValueChange={field.onChange} 
+                  defaultValue={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="website"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Website</FormLabel>
+                <FormControl>
+                  <Input placeholder="https://example.com" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <FormField
+          control={form.control}
+          name="description"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Description</FormLabel>
+              <FormControl>
+                <Textarea 
+                  placeholder="Brief description of the organization" 
+                  className="min-h-[100px]" 
+                  {...field} 
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <Separator />
+        
+        <div>
+          <h3 className="text-lg font-medium">Address Information</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
             <FormField
               control={form.control}
-              name="name"
+              name="address.street"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Organization Name*</FormLabel>
+                  <FormLabel>Street Address</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input placeholder="123 Main St" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-
-            {/* Display organization code as read-only */}
-            <div>
-              <FormLabel>Organization Code</FormLabel>
-              <Input 
-                value={user?.organizationCode || ""} 
-                disabled 
-                className="bg-gray-100"
-              />
-              <p className="text-sm text-muted-foreground mt-1">
-                Auto-filled from your user profile
-              </p>
-            </div>
-
+            
             <FormField
               control={form.control}
-              name="alias"
+              name="address.city"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Alias</FormLabel>
+                  <FormLabel>City</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input placeholder="City" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-
+            
             <FormField
               control={form.control}
-              name="type"
+              name="address.state"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Type*</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select organization type" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="Supplier">Supplier</SelectItem>
-                      <SelectItem value="Retailer">Retailer</SelectItem>
-                      <SelectItem value="Wholesale Customer">Wholesale Customer</SelectItem>
-                      <SelectItem value="Retail Customer">Retail Customer</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormLabel>State/Province</FormLabel>
+                  <FormControl>
+                    <Input placeholder="State" {...field} />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-
+            
             <FormField
               control={form.control}
-              name="status"
+              name="address.postalCode"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Status*</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select status" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="inactive">Inactive</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormLabel>Postal Code</FormLabel>
+                  <FormControl>
+                    <Input placeholder="12345" {...field} />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-          </CardContent>
-        </Card>
-
-        {/* References Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle>References</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ReferenceForm
-              references={references}
-              onChange={setReferences}
+            
+            <FormField
+              control={form.control}
+              name="address.country"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Country</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Country" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        {/* Contacts Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Contacts</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ContactForm
-              contacts={contacts}
-              onChange={setContacts}
-            />
-          </CardContent>
-        </Card>
+        <Separator />
+        
+        <ContactForm form={form} />
+        
+        <Separator />
+        
+        <ReferenceForm form={form} />
 
-        <Card>
-          <CardFooter className="flex justify-end gap-2">
-            <Button type="button" variant="outline">
-              Cancel
-            </Button>
-            <Button type="submit">
-              {isEditing ? "Update Organization" : "Create Organization"}
-            </Button>
-          </CardFooter>
-        </Card>
+        <div className="flex justify-end space-x-4">
+          <Button type="button" variant="outline" disabled={isSubmitting}>
+            Cancel
+          </Button>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Saving..." : isEditing ? "Update Organization" : "Create Organization"}
+          </Button>
+        </div>
       </form>
     </Form>
   );
