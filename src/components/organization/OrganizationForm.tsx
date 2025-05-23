@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -64,7 +64,7 @@ const OrganizationForm = ({ initialData, isEditing = false, onSubmit }: Organiza
       const organizationData: OrganizationFormData = {
         name: values.name,
         code: user.organizationCode,
-        alias: values.alias,
+        alias: values.alias || undefined,
         type: values.type,
         status: values.status,
         references,
@@ -93,7 +93,7 @@ const OrganizationForm = ({ initialData, isEditing = false, onSubmit }: Organiza
           <CardHeader>
             <CardTitle>Basic Information</CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-2 gap-6">
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FormField
               control={form.control}
               name="name"

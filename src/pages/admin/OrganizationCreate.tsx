@@ -19,6 +19,7 @@ const OrganizationCreate = () => {
 
     // Create organization with current user as creator
     await organizationService.createOrganization(formData, user?.name || user?.email || "System");
+    navigate("/admin/organizations");
   };
 
   if (!canCreateOrganization) {
