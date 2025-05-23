@@ -16,6 +16,9 @@ export interface User {
   phone?: PhoneNumber;
   designation?: string;
   roles: UserRole[];
+  permissions?: string[];
+  name?: string;
+  status?: string;
   effectiveFrom: Date;
   effectiveTo?: Date;
   createdBy: string;
@@ -42,6 +45,7 @@ export interface UserFormData {
 }
 
 export interface Permission {
+  id: string;
   module: string;
   component: string;
   name: string;
@@ -52,4 +56,11 @@ export interface UserPermission {
   module: string;
   component: string;
   permissions: string[];
+}
+
+export interface Role {
+  id: string;
+  name: string;
+  description: string;
+  permissions: Permission[];
 }

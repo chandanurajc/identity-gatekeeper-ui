@@ -8,7 +8,7 @@ export const usePermissions = () => {
   const hasPermission = (permissionName: string): boolean => {
     if (!user) return false;
     
-    const userPermissions = getUserPermissions(user.roles);
+    const userPermissions = getUserPermissions(user.id);
     return userPermissions.includes(permissionName);
   };
 

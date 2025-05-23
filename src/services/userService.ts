@@ -1,20 +1,21 @@
-import { User, Role, Permission } from "@/types/user";
+
+import { User, UserRole, Permission, Role } from "@/types/user";
 import { v4 as uuidv4 } from "uuid";
 
 // Mock data for permissions
 const mockPermissions: Permission[] = [
-  { id: "1", name: "view-user", description: "Can view users" },
-  { id: "2", name: "create-user", description: "Can create users" },
-  { id: "3", name: "edit-user", description: "Can edit users" },
-  { id: "4", name: "view-role", description: "Can view roles" },
-  { id: "5", name: "create-role", description: "Can create roles" },
-  { id: "6", name: "edit-role", description: "Can edit roles" },
-  { id: "7", name: "view-category", description: "Can view categories" },
-  { id: "8", name: "create-category", description: "Can create categories" },
-  { id: "9", name: "edit-category", description: "Can edit categories" },
-  { id: "10", name: "view-organization", description: "Can view organizations" },
-  { id: "11", name: "create-organization", description: "Can create organizations" },
-  { id: "12", name: "edit-organization", description: "Can edit organizations" },
+  { id: "1", name: "view-user", module: "Administration", component: "Users", description: "Can view users" },
+  { id: "2", name: "create-user", module: "Administration", component: "Users", description: "Can create users" },
+  { id: "3", name: "edit-user", module: "Administration", component: "Users", description: "Can edit users" },
+  { id: "4", name: "view-role", module: "Administration", component: "Roles", description: "Can view roles" },
+  { id: "5", name: "create-role", module: "Administration", component: "Roles", description: "Can create roles" },
+  { id: "6", name: "edit-role", module: "Administration", component: "Roles", description: "Can edit roles" },
+  { id: "7", name: "view-category", module: "Master data", component: "Item category", description: "Can view categories" },
+  { id: "8", name: "create-category", module: "Master data", component: "Item category", description: "Can create categories" },
+  { id: "9", name: "edit-category", module: "Master data", component: "Item category", description: "Can edit categories" },
+  { id: "10", name: "view-organization", module: "Administration", component: "Organizations", description: "Can view organizations" },
+  { id: "11", name: "create-organization", module: "Administration", component: "Organizations", description: "Can create organizations" },
+  { id: "12", name: "edit-organization", module: "Administration", component: "Organizations", description: "Can edit organizations" },
 ];
 
 // Mock data for roles
@@ -37,17 +38,29 @@ const mockRoles: Role[] = [
 const mockUsers: User[] = [
   {
     id: "1",
-    name: "Admin User",
+    username: "admin",
     email: "admin@example.com",
-    roles: [mockRoles[0]],
+    firstName: "Admin",
+    lastName: "User",
+    roles: ["admin"],
+    name: "Admin User",
     status: "active",
+    effectiveFrom: new Date(),
+    createdBy: "System",
+    createdOn: new Date(),
   },
   {
     id: "2",
-    name: "Regular User",
+    username: "user",
     email: "user@example.com",
-    roles: [mockRoles[1]],
+    firstName: "Regular",
+    lastName: "User",
+    roles: ["user"],
+    name: "Regular User",
     status: "active",
+    effectiveFrom: new Date(),
+    createdBy: "System",
+    createdOn: new Date(),
   },
 ];
 
@@ -85,17 +98,20 @@ export const getUserPermissions = (userId: string): string[] => {
   if (!user) return [];
   
   // If user has admin role, return all permissions
-  if (user.roles.some(role => role.name === 'admin')) {
+  if (user.roles.includes('admin')) {
     return ALL_AVAILABLE_PERMISSIONS;
   }
   
   // Otherwise, gather permissions from all user roles
   const permissions = new Set<string>();
   
-  user.roles.forEach(role => {
-    role.permissions?.forEach(permission => {
-      permissions.add(permission.name);
-    });
+  user.roles.forEach(roleName => {
+    const role = mockRoles.find(r => r.name === roleName);
+    if (role) {
+      role.permissions.forEach(permission => {
+        permissions.add(permission.name);
+      });
+    }
   });
   
   return Array.from(permissions);
@@ -106,6 +122,9 @@ export const getAllUsers = (): User[] => {
   return [...mockUsers];
 };
 
+// Export as getUsers as well for compatibility with existing code
+export const getUsers = getAllUsers;
+
 // Get user by ID
 export const getUserById = (id: string): User | undefined => {
   return mockUsers.find(user => user.id === id);
@@ -115,10 +134,16 @@ export const getUserById = (id: string): User | undefined => {
 export const createUser = (userData: Partial<User>): User => {
   const newUser: User = {
     id: uuidv4(),
-    name: userData.name || "",
+    username: userData.username || "",
     email: userData.email || "",
+    firstName: userData.firstName || "",
+    lastName: userData.lastName || "",
+    name: userData.name || `${userData.firstName} ${userData.lastName}`,
     roles: userData.roles || [],
     status: userData.status || "inactive",
+    effectiveFrom: userData.effectiveFrom || new Date(),
+    createdBy: userData.createdBy || "System",
+    createdOn: new Date(),
   };
   
   mockUsers.push(newUser);
