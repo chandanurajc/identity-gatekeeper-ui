@@ -2,7 +2,7 @@
 import { useNavigate } from "react-router-dom";
 import { useOrganizationPermissions } from "@/hooks/useOrganizationPermissions";
 import { organizationService } from "@/services/organizationService";
-import { OrganizationForm } from "@/components/organization/OrganizationForm";
+import OrganizationForm from "@/components/organization/OrganizationForm";
 import { OrganizationFormData } from "@/types/organization";
 import { useAuth } from "@/context/AuthContext";
 
@@ -35,7 +35,7 @@ const OrganizationCreate = () => {
       <h2 className="text-3xl font-bold tracking-tight">Create Organization</h2>
       <p className="text-muted-foreground">Fill in the details to create a new organization.</p>
 
-      <OrganizationForm onSave={handleSave} />
+      <OrganizationForm onSubmit={handleSave} />
     </div>
   );
 };

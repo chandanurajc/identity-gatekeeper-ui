@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useOrganizationPermissions } from "@/hooks/useOrganizationPermissions";
 import { organizationService } from "@/services/organizationService";
-import { OrganizationForm } from "@/components/organization/OrganizationForm";
+import OrganizationForm from "@/components/organization/OrganizationForm";
 import { Organization, OrganizationFormData } from "@/types/organization";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
@@ -93,7 +93,11 @@ const OrganizationEdit = () => {
       <h2 className="text-3xl font-bold tracking-tight">Edit Organization</h2>
       <p className="text-muted-foreground">Update the details for {organization.name}.</p>
 
-      <OrganizationForm organization={organization} onSave={handleSave} isEditing={true} />
+      <OrganizationForm 
+        initialData={organization} 
+        onSubmit={handleSave} 
+        isEditing={true} 
+      />
     </div>
   );
 };

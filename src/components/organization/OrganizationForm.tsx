@@ -18,8 +18,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import ReferenceForm from "./ReferenceForm";
-import ContactForm from "./ContactForm";
+import { ReferenceForm } from "./ReferenceForm";
+import { ContactForm } from "./ContactForm";
 import { Trash2, Plus } from "lucide-react";
 
 const formSchema = z.object({
@@ -63,8 +63,11 @@ const OrganizationForm = ({ initialData, isEditing = false, onSubmit }: Organiza
 
     try {
       const organizationData: OrganizationFormData = {
-        ...values,
-        code: user.organizationCode, // Use current user's organization code
+        name: values.name,
+        code: user.organizationCode,
+        alias: values.alias,
+        type: values.type,
+        status: values.status,
         references,
         contacts,
       };

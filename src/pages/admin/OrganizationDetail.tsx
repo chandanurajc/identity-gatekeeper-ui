@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useOrganizationPermissions } from "@/hooks/useOrganizationPermissions";
 import { organizationService } from "@/services/organizationService";
-import { OrganizationForm } from "@/components/organization/OrganizationForm";
+import OrganizationForm from "@/components/organization/OrganizationForm";
 import { Organization } from "@/types/organization";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -86,7 +86,10 @@ const OrganizationDetail = () => {
           </Button>
         )}
       </div>
-      <OrganizationForm organization={organization} onSave={() => Promise.resolve()} readOnly={true} />
+      <OrganizationForm 
+        initialData={organization} 
+        onSubmit={() => Promise.resolve()} 
+      />
     </div>
   );
 };
