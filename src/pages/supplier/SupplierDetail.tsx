@@ -13,7 +13,7 @@ const SupplierDetail = () => {
   const { supplierId } = useParams<{ supplierId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { canViewSupplier, canEditSupplier } = usePermissions();
+  const { canViewOrganization, canEditOrganization } = usePermissions();
   
   const [supplier, setSupplier] = useState<Supplier | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -48,7 +48,7 @@ const SupplierDetail = () => {
     fetchSupplier();
   }, [supplierId, navigate, toast]);
 
-  if (!canViewSupplier) {
+  if (!canViewOrganization) {
     return (
       <div className="p-8 text-center">
         <h2 className="text-2xl font-bold">Unauthorized</h2>
@@ -78,7 +78,7 @@ const SupplierDetail = () => {
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-3xl font-bold tracking-tight">Supplier Details</h2>
-        {canEditSupplier && (
+        {canEditOrganization && (
           <Button 
             onClick={() => navigate(`/master-data/suppliers/edit/${supplier.id}`)}
           >

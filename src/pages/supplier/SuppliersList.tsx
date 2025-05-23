@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -28,7 +27,7 @@ import {
 const SuppliersList = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { canViewSupplier, canCreateSupplier, canEditSupplier } = usePermissions();
+  const { canViewOrganization, canCreateOrganization, canEditOrganization } = usePermissions();
   
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -107,7 +106,7 @@ const SuppliersList = () => {
       return 0;
     });
 
-  if (!canViewSupplier) {
+  if (!canViewOrganization) {
     return (
       <div className="p-8 text-center">
         <h2 className="text-2xl font-bold">Unauthorized</h2>
@@ -121,7 +120,7 @@ const SuppliersList = () => {
       <div className="flex justify-between items-center">
         <h2 className="text-3xl font-bold tracking-tight">Supplier Management</h2>
         <div className="flex space-x-2">
-          {canEditSupplier && (
+          {canEditOrganization && (
             <Button
               variant="outline"
               size="sm"
@@ -134,7 +133,7 @@ const SuppliersList = () => {
               <Pencil className="h-4 w-4 mr-2" /> Edit Supplier
             </Button>
           )}
-          {canCreateSupplier && (
+          {canCreateOrganization && (
             <Button size="sm" onClick={() => navigate("/master-data/suppliers/create")}>
               <Plus className="h-4 w-4 mr-2" /> Create Supplier
             </Button>
@@ -218,7 +217,7 @@ const SuppliersList = () => {
                     />
                   </TableCell>
                   <TableCell>
-                    {canViewSupplier ? (
+                    {canViewOrganization ? (
                       <Link
                         to={`/master-data/suppliers/${supplier.id}`}
                         className="text-primary hover:underline"

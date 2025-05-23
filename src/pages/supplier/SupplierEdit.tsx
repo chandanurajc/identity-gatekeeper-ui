@@ -13,7 +13,7 @@ const SupplierEdit = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
-  const { canEditSupplier } = usePermissions();
+  const { canEditOrganization } = usePermissions();
   
   const [supplier, setSupplier] = useState<Supplier | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -49,7 +49,7 @@ const SupplierEdit = () => {
   }, [supplierId, navigate, toast]);
 
   const handleSave = async (formData: SupplierFormData) => {
-    if (!canEditSupplier || !supplierId) {
+    if (!canEditOrganization || !supplierId) {
       navigate("/unauthorized");
       return;
     }
@@ -62,7 +62,7 @@ const SupplierEdit = () => {
     );
   };
 
-  if (!canEditSupplier) {
+  if (!canEditOrganization) {
     return (
       <div className="p-8 text-center">
         <h2 className="text-2xl font-bold">Unauthorized</h2>

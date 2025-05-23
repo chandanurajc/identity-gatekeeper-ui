@@ -9,10 +9,10 @@ import { useAuth } from "@/context/AuthContext";
 const SupplierCreate = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { canCreateSupplier } = usePermissions();
+  const { canCreateOrganization } = usePermissions();
 
   const handleSave = async (formData: SupplierFormData) => {
-    if (!canCreateSupplier) {
+    if (!canCreateOrganization) {
       navigate("/unauthorized");
       return;
     }
@@ -21,7 +21,7 @@ const SupplierCreate = () => {
     await supplierService.createSupplier(formData, user?.name || user?.email || "System");
   };
 
-  if (!canCreateSupplier) {
+  if (!canCreateOrganization) {
     return (
       <div className="p-8 text-center">
         <h2 className="text-2xl font-bold">Unauthorized</h2>
