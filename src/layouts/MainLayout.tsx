@@ -157,7 +157,12 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
             </SidebarTrigger>
             {/* App name moved to the right of the hamburger */}
             <h1 className="text-xl font-bold">App Portal</h1>
-            {/* Removed NavigationMenu component from here */}
+            {/* Organization context display */}
+            {user && (
+              <div className="text-sm bg-primary-foreground/20 px-2 py-1 rounded">
+                {user.organizationCode} - {user.organizationName}
+              </div>
+            )}
           </div>
 
           {/* Search Bar */}

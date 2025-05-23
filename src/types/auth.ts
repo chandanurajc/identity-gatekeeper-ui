@@ -6,11 +6,15 @@ export interface User {
   email: string;
   name?: string;
   roles: UserRole[];
+  organizationId: string;
+  organizationCode: string;
+  organizationName: string;
 }
 
 export interface LoginCredentials {
   email: string;
   password: string;
+  organizationCode: string;
 }
 
 export interface AuthState {
@@ -18,4 +22,5 @@ export interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
+  organizationCode: string | null;
 }

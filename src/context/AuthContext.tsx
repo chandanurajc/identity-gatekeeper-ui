@@ -8,6 +8,7 @@ interface AuthContextType extends AuthState {
   login: (credentials: LoginCredentials) => Promise<void>;
   logout: () => Promise<void>;
   hasRole: (role: string) => boolean;
+  getOrganizationCode: () => string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -17,18 +18,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     user: null,
     isAuthenticated: false,
     isLoading: true,
-    error: null
+    error: null,
+    organizationCode: null
   });
   const { toast } = useToast();
 
   useEffect(() => {
     const initAuth = () => {
       const user = authService.getCurrentUser();
+      const organizationCode = authService.getCurrentOrganizationCode();
       setState({
         user,
         isAuthenticated: !!user,
         isLoading: false,
-        error: null
+        error: null,
+        organizationCode
       });
     };
 
@@ -43,7 +47,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         user,
         isAuthenticated: true,
         isLoading: false,
-        error: null
+        error: null,
+        organizationCode: credentials.organizationCode
       });
       toast({
         title: "Login successful",
@@ -54,7 +59,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setState(prev => ({
         ...prev,
         isLoading: false,
-        error: errorMessage
+        error: errorMessage,
+        organizationCode: null
       }));
       toast({
         variant: "destructive",
@@ -73,7 +79,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         user: null,
         isAuthenticated: false,
         isLoading: false,
-        error: null
+        error: null,
+        organizationCode: null
       });
       toast({
         title: "Logged out",
@@ -98,11 +105,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return authService.hasRole(state.user, role);
   };
 
+  const getOrganizationCode = (): string | null => {
+    return state.organizationCode;
+  };
+
   const contextValue: AuthContextType = {
     ...state,
     login,
     logout,
-    hasRole
+    hasRole,
+    getOrganizationCode
   };
 
   return (

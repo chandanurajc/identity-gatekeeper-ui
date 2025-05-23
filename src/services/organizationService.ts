@@ -1,4 +1,3 @@
-
 import { Organization, OrganizationFormData } from "@/types/organization";
 import { v4 as uuidv4 } from "uuid";
 
@@ -88,6 +87,13 @@ export const organizationService = {
 
   getOrganizationById: (id: string): Promise<Organization | undefined> => {
     const organization = organizations.find(organization => organization.id === id);
+    return Promise.resolve(organization);
+  },
+
+  getOrganizationByCode: (code: string): Promise<Organization | undefined> => {
+    const organization = organizations.find(org => 
+      org.code.toLowerCase() === code.toLowerCase()
+    );
     return Promise.resolve(organization);
   },
 
