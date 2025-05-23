@@ -20,7 +20,6 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ReferenceForm } from "./ReferenceForm";
 import { ContactForm } from "./ContactForm";
-import { Trash2, Plus } from "lucide-react";
 
 const formSchema = z.object({
   name: z.string().min(1, "Organization name is required"),
@@ -85,41 +84,6 @@ const OrganizationForm = ({ initialData, isEditing = false, onSubmit }: Organiza
         description: error instanceof Error ? error.message : "An unknown error occurred",
       });
     }
-  };
-
-  const addReference = () => {
-    const newReference: Reference = {
-      id: `ref-${Date.now()}`,
-      type: "GST",
-      value: "",
-    };
-    setReferences([...references, newReference]);
-  };
-
-  const updateReference = (id: string, updatedReference: Reference) => {
-    setReferences(references.map(ref => ref.id === id ? updatedReference : ref));
-  };
-
-  const removeReference = (id: string) => {
-    setReferences(references.filter(ref => ref.id !== id));
-  };
-
-  const addContact = () => {
-    const newContact: Contact = {
-      id: `contact-${Date.now()}`,
-      type: "Registered location",
-      firstName: "",
-      lastName: "",
-    };
-    setContacts([...contacts, newContact]);
-  };
-
-  const updateContact = (id: string, updatedContact: Contact) => {
-    setContacts(contacts.map(contact => contact.id === id ? updatedContact : contact));
-  };
-
-  const removeContact = (id: string) => {
-    setContacts(contacts.filter(contact => contact.id !== id));
   };
 
   return (
@@ -221,74 +185,27 @@ const OrganizationForm = ({ initialData, isEditing = false, onSubmit }: Organiza
 
         {/* References Section */}
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader>
             <CardTitle>References</CardTitle>
-            <Button type="button" onClick={addReference} size="sm">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Reference
-            </Button>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {references.map((reference) => (
-              <div key={reference.id} className="flex items-end gap-4">
-                <div className="flex-1">
-                  <ReferenceForm
-                    reference={reference}
-                    onChange={(updatedReference) => updateReference(reference.id, updatedReference)}
-                  />
-                </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => removeReference(reference.id)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            ))}
-            {references.length === 0 && (
-              <p className="text-muted-foreground text-center py-4">
-                No references added yet. Click "Add Reference" to get started.
-              </p>
-            )}
+          <CardContent>
+            <ReferenceForm
+              references={references}
+              onChange={setReferences}
+            />
           </CardContent>
         </Card>
 
         {/* Contacts Section */}
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader>
             <CardTitle>Contacts</CardTitle>
-            <Button type="button" onClick={addContact} size="sm">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Contact
-            </Button>
           </CardHeader>
-          <CardContent className="space-y-6">
-            {contacts.map((contact) => (
-              <div key={contact.id} className="border rounded-lg p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <h4 className="font-medium">Contact {contacts.indexOf(contact) + 1}</h4>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => removeContact(contact.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-                <ContactForm
-                  contact={contact}
-                  onChange={(updatedContact) => updateContact(contact.id, updatedContact)}
-                />
-              </div>
-            ))}
-            {contacts.length === 0 && (
-              <p className="text-muted-foreground text-center py-4">
-                No contacts added yet. Click "Add Contact" to get started.
-              </p>
-            )}
+          <CardContent>
+            <ContactForm
+              contacts={contacts}
+              onChange={setContacts}
+            />
           </CardContent>
         </Card>
 
