@@ -35,6 +35,7 @@ import {
 import { usePermissions } from "@/hooks/usePermissions";
 import { useRolePermissions } from "@/hooks/useRolePermissions";
 import { useCategoryPermissions } from "@/hooks/useCategoryPermissions";
+import { useOrganizationPermissions } from "@/hooks/useOrganizationPermissions";
 import { Button } from "@/components/ui/button";
 import { 
   Collapsible, 
@@ -63,6 +64,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
   const { canViewUsers } = usePermissions();
   const { canViewRoles, canViewPermissions } = useRolePermissions();
   const { canViewCategory, canAccessInventory, canViewSupplier } = useCategoryPermissions();
+  const { canViewOrganization } = useOrganizationPermissions();
   const [openGroup, setOpenGroup] = useState<string | null>(null);
   
   // Group menu items by module
@@ -100,6 +102,12 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
           label: "System Permissions",
           icon: Lock,
           permission: canViewPermissions
+        },
+        {
+          path: "/admin/organizations",
+          label: "Organization Management",
+          icon: Building,
+          permission: canViewOrganization
         }
       ]
     },

@@ -16,6 +16,10 @@ import UserDetails from "./pages/admin/UserDetails";
 import RolesList from "./pages/admin/RolesList";
 import RoleForm from "./pages/admin/RoleForm";
 import RoleDetails from "./pages/admin/RoleDetails";
+import OrganizationsList from "./pages/admin/OrganizationsList";
+import OrganizationCreate from "./pages/admin/OrganizationCreate";
+import OrganizationEdit from "./pages/admin/OrganizationEdit";
+import OrganizationDetail from "./pages/admin/OrganizationDetail";
 import Settings from "./pages/Settings";
 import PermissionsList from "./pages/admin/PermissionsList";
 import CategoriesList from "./pages/inventory/CategoriesList";
@@ -130,6 +134,48 @@ const App = () => (
                 <ProtectedRoute requiredRoles={["admin"]}>
                   <MainLayout>
                     <RoleDetails />
+                  </MainLayout>
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Organization Management Routes */}
+            <Route 
+              path="/admin/organizations" 
+              element={
+                <ProtectedRoute requiredRoles={["admin"]}>
+                  <MainLayout>
+                    <OrganizationsList />
+                  </MainLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/organizations/create" 
+              element={
+                <ProtectedRoute requiredRoles={["admin"]}>
+                  <MainLayout>
+                    <OrganizationCreate />
+                  </MainLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/organizations/edit/:organizationId" 
+              element={
+                <ProtectedRoute requiredRoles={["admin"]}>
+                  <MainLayout>
+                    <OrganizationEdit />
+                  </MainLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/organizations/:organizationId" 
+              element={
+                <ProtectedRoute requiredRoles={["admin"]}>
+                  <MainLayout>
+                    <OrganizationDetail />
                   </MainLayout>
                 </ProtectedRoute>
               } 
