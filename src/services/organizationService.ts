@@ -7,6 +7,7 @@ const mockOrganizations: Organization[] = [
   {
     id: "1",
     name: "ABC Corporation",
+    code: "ABCC",
     alias: "ABC Corp",
     type: "Supplier",
     status: "active",
@@ -37,6 +38,7 @@ const mockOrganizations: Organization[] = [
   {
     id: "2",
     name: "XYZ Industries",
+    code: "XYZI",
     alias: "XYZ",
     type: "Retailer",
     status: "active",
@@ -65,6 +67,20 @@ const mockOrganizations: Organization[] = [
 // Mock data for organizations
 let organizations = [...mockOrganizations];
 
+const validateOrganizationCode = (code: string, excludeId?: string): boolean => {
+  // Check if code is exactly 4 characters and alphanumeric
+  if (!/^[A-Za-z0-9]{4}$/.test(code)) {
+    return false;
+  }
+  
+  // Check uniqueness
+  const existingOrg = organizations.find(org => 
+    org.code.toLowerCase() === code.toLowerCase() && org.id !== excludeId
+  );
+  
+  return !existingOrg;
+};
+
 export const organizationService = {
   getAllOrganizations: (): Promise<Organization[]> => {
     return Promise.resolve([...organizations]);
@@ -75,7 +91,15 @@ export const organizationService = {
     return Promise.resolve(organization);
   },
 
+  validateOrganizationCode: (code: string, excludeId?: string): Promise<boolean> => {
+    return Promise.resolve(validateOrganizationCode(code, excludeId));
+  },
+
   createOrganization: (organization: OrganizationFormData, createdBy: string): Promise<Organization> => {
+    if (!validateOrganizationCode(organization.code)) {
+      throw new Error("Organization code must be exactly 4 alphanumeric characters and unique");
+    }
+    
     const newOrganization: Organization = {
       ...organization,
       id: uuidv4(),
@@ -87,6 +111,10 @@ export const organizationService = {
   },
 
   updateOrganization: (id: string, organizationData: Partial<OrganizationFormData>, updatedBy: string): Promise<Organization | undefined> => {
+    if (organizationData.code && !validateOrganizationCode(organizationData.code, id)) {
+      throw new Error("Organization code must be exactly 4 alphanumeric characters and unique");
+    }
+    
     let updatedOrganization: Organization | undefined;
     organizations = organizations.map(organization => {
       if (organization.id === id) {

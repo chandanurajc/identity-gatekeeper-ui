@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Organization, OrganizationFormData } from "@/types/organization";
+import { organizationService } from "@/services/organizationService";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,6 +44,7 @@ export const OrganizationForm = ({
 
   const [formData, setFormData] = useState<OrganizationFormData>({
     name: organization?.name || "",
+    code: organization?.code || "",
     alias: organization?.alias || "",
     type: organization?.type || "Supplier",
     status: organization?.status || "active",
@@ -51,9 +53,41 @@ export const OrganizationForm = ({
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [codeError, setCodeError] = useState<string>("");
 
   const handleChange = (field: keyof OrganizationFormData, value: any) => {
     setFormData({ ...formData, [field]: value });
+    
+    // Clear code error when user starts typing
+    if (field === "code") {
+      setCodeError("");
+    }
+  };
+
+  const validateCode = async (code: string): Promise<boolean> => {
+    if (!code) {
+      setCodeError("Organization code is required");
+      return false;
+    }
+
+    if (!/^[A-Za-z0-9]{4}$/.test(code)) {
+      setCodeError("Code must be exactly 4 alphanumeric characters");
+      return false;
+    }
+
+    try {
+      const isValid = await organizationService.validateOrganizationCode(code, organization?.id);
+      if (!isValid) {
+        setCodeError("This code is already in use");
+        return false;
+      }
+    } catch (error) {
+      setCodeError("Error validating code");
+      return false;
+    }
+
+    setCodeError("");
+    return true;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -65,6 +99,11 @@ export const OrganizationForm = ({
         description: "Organization name is required.",
         variant: "destructive",
       });
+      return;
+    }
+
+    const isCodeValid = await validateCode(formData.code);
+    if (!isCodeValid) {
       return;
     }
 
@@ -107,6 +146,28 @@ export const OrganizationForm = ({
               disabled={readOnly || isEditing}
               required
             />
+          </div>
+
+          <div className="space-y-1">
+            <Label htmlFor="code">Organization Code*</Label>
+            <Input
+              id="code"
+              value={formData.code}
+              onChange={(e) => {
+                const value = e.target.value.toUpperCase();
+                if (value.length <= 4) {
+                  handleChange("code", value);
+                }
+              }}
+              disabled={readOnly}
+              required
+              maxLength={4}
+              placeholder="4 character code"
+              className={codeError ? "border-red-500" : ""}
+            />
+            {codeError && (
+              <p className="text-sm text-red-500">{codeError}</p>
+            )}
           </div>
 
           <div className="space-y-1">

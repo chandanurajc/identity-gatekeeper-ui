@@ -24,6 +24,7 @@ export interface Contact {
 export interface Organization {
   id: string;
   name: string;
+  code: string;
   alias?: string;
   type: 'Supplier' | 'Retailer' | 'Wholesale Customer' | 'Retail Customer';
   status: 'active' | 'inactive';
@@ -37,6 +38,7 @@ export interface Organization {
 
 export interface OrganizationFormData {
   name: string;
+  code: string;
   alias?: string;
   type: 'Supplier' | 'Retailer' | 'Wholesale Customer' | 'Retail Customer';
   status: 'active' | 'inactive';

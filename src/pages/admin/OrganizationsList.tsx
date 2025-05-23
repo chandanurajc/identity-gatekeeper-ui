@@ -87,6 +87,7 @@ const OrganizationsList = () => {
   const filteredAndSortedOrganizations = organizations
     .filter(organization => {
       const matchesSearch = organization.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                            organization.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
                             (organization.alias?.toLowerCase().includes(searchTerm.toLowerCase()) || false);
       const matchesStatus = statusFilter === "all" || organization.status === statusFilter;
       const matchesType = typeFilter === "all" || organization.type === typeFilter;
@@ -97,6 +98,10 @@ const OrganizationsList = () => {
         return sortDirection === "asc" 
           ? a.name.localeCompare(b.name)
           : b.name.localeCompare(a.name);
+      } else if (sortField === "code") {
+        return sortDirection === "asc" 
+          ? a.code.localeCompare(b.code)
+          : b.code.localeCompare(a.code);
       } else if (sortField === "createdOn") {
         const dateA = a.createdOn ? new Date(a.createdOn).getTime() : 0;
         const dateB = b.createdOn ? new Date(b.createdOn).getTime() : 0;
@@ -192,6 +197,12 @@ const OrganizationsList = () => {
                   <span className="ml-2">{sortDirection === "asc" ? "↑" : "↓"}</span>
                 )}
               </TableHead>
+              <TableHead className="cursor-pointer" onClick={() => handleSort("code")}>
+                Code
+                {sortField === "code" && (
+                  <span className="ml-2">{sortDirection === "asc" ? "↑" : "↓"}</span>
+                )}
+              </TableHead>
               <TableHead>Type</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Created By</TableHead>
@@ -213,13 +224,13 @@ const OrganizationsList = () => {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-10">
+                <TableCell colSpan={9} className="text-center py-10">
                   Loading organizations...
                 </TableCell>
               </TableRow>
             ) : filteredAndSortedOrganizations.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-10">
+                <TableCell colSpan={9} className="text-center py-10">
                   No organizations found.
                 </TableCell>
               </TableRow>
@@ -243,6 +254,11 @@ const OrganizationsList = () => {
                     ) : (
                       organization.name
                     )}
+                  </TableCell>
+                  <TableCell>
+                    <span className="font-mono text-sm bg-muted px-2 py-1 rounded">
+                      {organization.code}
+                    </span>
                   </TableCell>
                   <TableCell>{organization.type}</TableCell>
                   <TableCell>
