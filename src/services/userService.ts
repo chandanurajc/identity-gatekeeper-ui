@@ -1,201 +1,170 @@
-
-import { User, UserFormData, UserRole } from "@/types/user";
+import { User, Role, Permission } from "@/types/user";
 import { v4 as uuidv4 } from "uuid";
 
-// Mock users data
-const MOCK_USERS: User[] = [
+// Mock data for permissions
+const mockPermissions: Permission[] = [
+  { id: "1", name: "view-user", description: "Can view users" },
+  { id: "2", name: "create-user", description: "Can create users" },
+  { id: "3", name: "edit-user", description: "Can edit users" },
+  { id: "4", name: "view-role", description: "Can view roles" },
+  { id: "5", name: "create-role", description: "Can create roles" },
+  { id: "6", name: "edit-role", description: "Can edit roles" },
+  { id: "7", name: "view-category", description: "Can view categories" },
+  { id: "8", name: "create-category", description: "Can create categories" },
+  { id: "9", name: "edit-category", description: "Can edit categories" },
+  { id: "10", name: "view-organization", description: "Can view organizations" },
+  { id: "11", name: "create-organization", description: "Can create organizations" },
+  { id: "12", name: "edit-organization", description: "Can edit organizations" },
+];
+
+// Mock data for roles
+const mockRoles: Role[] = [
   {
     id: "1",
-    username: "admin@example.com",
-    email: "admin@example.com",
-    firstName: "Admin",
-    lastName: "User",
-    phone: {
-      countryCode: "+1",
-      number: "1234567890",
-    },
-    designation: "System Administrator",
-    roles: ["admin"],
-    effectiveFrom: new Date("2023-01-01"),
-    createdBy: "system",
-    createdOn: new Date("2023-01-01"),
-    updatedBy: "system",
-    updatedOn: new Date("2023-01-01"),
+    name: "admin",
+    description: "Administrator with all permissions",
+    permissions: mockPermissions,
   },
   {
     id: "2",
-    username: "user@example.com",
-    email: "user@example.com",
-    firstName: "Regular",
-    lastName: "User",
-    phone: {
-      countryCode: "+1",
-      number: "9876543210",
-    },
-    designation: "Staff Member",
-    roles: ["user"],
-    effectiveFrom: new Date("2023-02-15"),
-    createdBy: "admin@example.com",
-    createdOn: new Date("2023-02-15"),
+    name: "user",
+    description: "Regular user with limited permissions",
+    permissions: [mockPermissions[0], mockPermissions[3], mockPermissions[6], mockPermissions[9]],
+  },
+];
+
+// Mock data for users
+const mockUsers: User[] = [
+  {
+    id: "1",
+    name: "Admin User",
+    email: "admin@example.com",
+    roles: [mockRoles[0]],
+    status: "active",
   },
   {
-    id: "3",
-    username: "chandanurajc@gmail.com",
-    email: "chandanurajc@gmail.com",
-    firstName: "Chandan",
-    lastName: "User",
-    phone: {
-      countryCode: "+91",
-      number: "9876543210",
-    },
-    designation: "Admin User",
-    roles: ["admin", "user"],
-    effectiveFrom: new Date("2023-05-15"),
-    createdBy: "system",
-    createdOn: new Date("2023-05-15"),
+    id: "2",
+    name: "Regular User",
+    email: "user@example.com",
+    roles: [mockRoles[1]],
+    status: "active",
   },
 ];
 
-// Simulate fetching users from an API
-export const getUsers = async (): Promise<User[]> => {
-  await new Promise(resolve => setTimeout(resolve, 500));
-  return [...MOCK_USERS];
-};
-
-// Simulate getting a single user
-export const getUserById = async (id: string): Promise<User | undefined> => {
-  await new Promise(resolve => setTimeout(resolve, 300));
-  return MOCK_USERS.find(user => user.id === id);
-};
-
-// Get current user info from localStorage (simulating authenticated user)
-const getCurrentUserInfo = () => {
-  try {
-    const userJson = localStorage.getItem("user");
-    if (userJson) {
-      const user = JSON.parse(userJson);
-      return { email: user.email };
-    }
-    return { email: "system" }; // Default fallback
-  } catch (error) {
-    console.error("Error getting current user:", error);
-    return { email: "system" };
-  }
-};
-
-// Simulate creating a new user
-export const createUser = async (userData: UserFormData): Promise<User> => {
-  await new Promise(resolve => setTimeout(resolve, 800));
-  
-  // Check if username already exists
-  if (MOCK_USERS.some(user => user.username === userData.username)) {
-    throw new Error("Username already exists. Please choose a different username.");
-  }
-
-  const currentUser = getCurrentUserInfo();
-  
-  // Ensure roles is an array and filter out any empty values
-  const validRoles = Array.isArray(userData.roles) 
-    ? userData.roles.filter(role => role && role.trim() !== '')
-    : [];
-  
-  const newUser: User = {
-    id: uuidv4(),
-    username: userData.username,
-    email: userData.email,
-    firstName: userData.firstName,
-    lastName: userData.lastName,
-    phone: userData.phone,
-    designation: userData.designation,
-    roles: validRoles,
-    effectiveFrom: userData.effectiveFrom,
-    effectiveTo: userData.effectiveTo,
-    createdBy: currentUser?.email || "system",
-    createdOn: new Date(),
-  };
-
-  console.log("Creating new user:", newUser);
-  
-  // In a real application, we would hash the password before storing it
-  // For this mock, we'll simulate password storage securely by not including it in the return value
-  
-  MOCK_USERS.push(newUser);
-  return { ...newUser, password: undefined };
-};
-
-// Simulate updating a user
-export const updateUser = async (id: string, userData: UserFormData): Promise<User> => {
-  await new Promise(resolve => setTimeout(resolve, 800));
-  
-  const userIndex = MOCK_USERS.findIndex(user => user.id === id);
-  
-  if (userIndex === -1) {
-    throw new Error("User not found");
-  }
-
-  const currentUser = getCurrentUserInfo();
-  
-  // Ensure roles is an array and filter out any empty values
-  const validRoles = Array.isArray(userData.roles) 
-    ? userData.roles.filter(role => role && role.trim() !== '')
-    : [];
-  
-  const updatedUser: User = {
-    ...MOCK_USERS[userIndex],
-    firstName: userData.firstName,
-    lastName: userData.lastName,
-    email: userData.email,
-    phone: userData.phone,
-    designation: userData.designation,
-    roles: validRoles,
-    effectiveFrom: userData.effectiveFrom,
-    effectiveTo: userData.effectiveTo,
-    updatedBy: currentUser?.email || "system",
-    updatedOn: new Date(),
-  };
-
-  MOCK_USERS[userIndex] = updatedUser;
-  return { ...updatedUser, password: undefined };
-};
-
-// Define all available permissions in the system
 const ALL_AVAILABLE_PERMISSIONS = [
-  // Admin permissions
-  "view_users", "create_users", "edit_users", "create_role", "edit_roles", 
-  "view_roles", "access_settings", "access_admin", "view_permissions",
-  // Master data permissions
-  "create_item_category", "edit_item_category", "view_item_category", 
-  "access_master_data", "view_supplier", "create_supplier", "edit_supplier"
+  // User management permissions
+  "view-user",
+  "create-user", 
+  "edit-user",
+  
+  // Role management permissions
+  "view-role",
+  "create-role",
+  "edit-role",
+  
+  // Category management permissions
+  "view-category",
+  "create-category",
+  "edit-category",
+  
+  // Organization management permissions
+  "view-organization",
+  "create-organization",
+  "edit-organization",
 ];
 
-// Permissions
-export const getUserPermissions = (roles: UserRole[]): string[] => {
-  // If roles include 'admin', return all available permissions
-  if (roles.includes('admin')) {
-    return [...ALL_AVAILABLE_PERMISSIONS];
+// Mock authentication function
+export const authenticateUser = (email: string, password: string): User | null => {
+  // In a real app, you would verify the password here
+  const user = mockUsers.find(u => u.email === email);
+  return user || null;
+};
+
+export const getUserPermissions = (userId: string): string[] => {
+  const user = mockUsers.find(u => u.id === userId);
+  if (!user) return [];
+  
+  // If user has admin role, return all permissions
+  if (user.roles.some(role => role.name === 'admin')) {
+    return ALL_AVAILABLE_PERMISSIONS;
   }
   
-  // For other role-based permissions
-  const rolePermissions = {
-    "user": ["view_users", "view_roles", "access_dashboard"],
-    "guest": ["access_dashboard"]
-  };
+  // Otherwise, gather permissions from all user roles
+  const permissions = new Set<string>();
   
-  // Collect all permissions based on user roles
-  const userPermissions = new Set<string>();
-  
-  // If user has no roles, give them at least access to view the dashboard
-  if (!roles.length) {
-    return ["access_dashboard"];
-  }
-  
-  roles.forEach(role => {
-    if (role in rolePermissions) {
-      rolePermissions[role as keyof typeof rolePermissions].forEach(permission => 
-        userPermissions.add(permission)
-      );
-    }
+  user.roles.forEach(role => {
+    role.permissions?.forEach(permission => {
+      permissions.add(permission.name);
+    });
   });
   
-  return Array.from(userPermissions);
+  return Array.from(permissions);
+};
+
+// Get all users
+export const getAllUsers = (): User[] => {
+  return [...mockUsers];
+};
+
+// Get user by ID
+export const getUserById = (id: string): User | undefined => {
+  return mockUsers.find(user => user.id === id);
+};
+
+// Create a new user
+export const createUser = (userData: Partial<User>): User => {
+  const newUser: User = {
+    id: uuidv4(),
+    name: userData.name || "",
+    email: userData.email || "",
+    roles: userData.roles || [],
+    status: userData.status || "inactive",
+  };
+  
+  mockUsers.push(newUser);
+  return newUser;
+};
+
+// Update an existing user
+export const updateUser = (id: string, userData: Partial<User>): User | undefined => {
+  const userIndex = mockUsers.findIndex(user => user.id === id);
+  
+  if (userIndex === -1) {
+    return undefined;
+  }
+  
+  const updatedUser = {
+    ...mockUsers[userIndex],
+    ...userData,
+  };
+  
+  mockUsers[userIndex] = updatedUser;
+  return updatedUser;
+};
+
+// Delete a user
+export const deleteUser = (id: string): boolean => {
+  const initialLength = mockUsers.length;
+  const filteredUsers = mockUsers.filter(user => user.id !== id);
+  
+  if (filteredUsers.length === initialLength) {
+    return false;
+  }
+  
+  // In a real app, you would make an API call here
+  // For this mock, we'll just update our array
+  mockUsers.length = 0;
+  mockUsers.push(...filteredUsers);
+  
+  return true;
+};
+
+// Get all roles
+export const getAllRoles = (): Role[] => {
+  return [...mockRoles];
+};
+
+// Get all permissions
+export const getAllPermissions = (): Permission[] => {
+  return [...mockPermissions];
 };
