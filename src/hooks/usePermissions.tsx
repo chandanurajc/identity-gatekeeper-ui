@@ -23,10 +23,10 @@ export const usePermissions = () => {
     canAccessAdminModule: hasPermission("access_admin"),
     canAccessSettingsModule: hasPermission("access_settings"),
     
-    // Supplier permissions
-    canViewSupplier: hasPermission("view_supplier"),
-    canCreateSupplier: hasPermission("create_supplier"),
-    canEditSupplier: hasPermission("edit_supplier"),
+    // Organization permissions
+    canViewOrganization: hasPermission("view_organization"),
+    canCreateOrganization: hasPermission("create_organization"),
+    canEditOrganization: hasPermission("edit_organization"),
     
     // For checking any permission dynamically
     checkPermission: hasPermission,

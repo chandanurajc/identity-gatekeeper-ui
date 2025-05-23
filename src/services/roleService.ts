@@ -1,4 +1,3 @@
-
 import { Permission, Role } from "@/types/role";
 import { v4 as uuidv4 } from "uuid";
 
@@ -17,9 +16,9 @@ const mockPermissions: Permission[] = [
   { id: "11", name: "edit_item_category", module: "Master data", component: "Item category", description: "Edit existing item categories" },
   { id: "12", name: "view_item_category", module: "Master data", component: "Item category", description: "View item categories and their details" },
   { id: "13", name: "access_master_data", module: "Master data", component: "General", description: "General master data module access" },
-  { id: "14", name: "view_supplier", module: "Master data", component: "Supplier", description: "View suppliers and their details" },
-  { id: "15", name: "create_supplier", module: "Master data", component: "Supplier", description: "Create new suppliers" },
-  { id: "16", name: "edit_supplier", module: "Master data", component: "Supplier", description: "Edit existing suppliers" },
+  { id: "14", name: "view_organization", module: "Administration", component: "Organizations", description: "View organizations and their details" },
+  { id: "15", name: "create_organization", module: "Administration", component: "Organizations", description: "Create new organizations" },
+  { id: "16", name: "edit_organization", module: "Administration", component: "Organizations", description: "Edit existing organizations" },
 ];
 
 // Mock data for roles

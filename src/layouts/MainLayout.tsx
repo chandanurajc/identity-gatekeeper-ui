@@ -1,4 +1,3 @@
-
 import { ReactNode, useState } from "react";
 import { 
   SidebarProvider, 
@@ -63,7 +62,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
   const { user, logout } = useAuth();
   const { canViewUsers } = usePermissions();
   const { canViewRoles, canViewPermissions } = useRolePermissions();
-  const { canViewCategory, canAccessInventory, canViewSupplier } = useCategoryPermissions();
+  const { canViewCategory, canAccessInventory } = useCategoryPermissions();
   const { canViewOrganization } = useOrganizationPermissions();
   const [openGroup, setOpenGroup] = useState<string | null>(null);
   
@@ -120,12 +119,6 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
           label: "Item Category",
           icon: Folder,
           permission: canViewCategory
-        },
-        {
-          path: "/master-data/suppliers",
-          label: "Suppliers",
-          icon: Building,
-          permission: canViewSupplier
         }
       ]
     },
