@@ -2,11 +2,14 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { roleService } from "@/services/roleService";
+import { organizationService } from "@/services/organizationService";
+import { Organization } from "@/types/organization";
 import { Permission, Role, RoleFormData } from "@/types/role";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useRolePermissions } from "@/hooks/useRolePermissions";
 import { toast } from "@/components/ui/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -16,21 +19,31 @@ const RoleForm = () => {
   const { roleId } = useParams<{ roleId: string }>();
   const isEditing = !!roleId;
   const [roleName, setRoleName] = useState("");
+  const [selectedOrganizationId, setSelectedOrganizationId] = useState<string>("");
   const [selectedPermissions, setSelectedPermissions] = useState<Permission[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showCancelAlert, setShowCancelAlert] = useState(false);
+  const [organizations, setOrganizations] = useState<Organization[]>([]);
+  const [isLoadingOrganizations, setIsLoadingOrganizations] = useState(true);
   const navigate = useNavigate();
   const { canCreateRole, canEditRoles } = useRolePermissions();
 
   useEffect(() => {
-    const loadRole = async () => {
-      if (isEditing && roleId) {
-        try {
+    const loadData = async () => {
+      try {
+        // Fetch organizations
+        const orgs = await organizationService.getAllOrganizations();
+        setOrganizations(orgs);
+        setIsLoadingOrganizations(false);
+        
+        // If editing, load role data
+        if (isEditing && roleId) {
           const role = await roleService.getRoleById(roleId);
           if (role) {
             setRoleName(role.name);
             setSelectedPermissions(role.permissions);
+            setSelectedOrganizationId(role.organizationId || "");
           } else {
             toast({
               variant: "destructive",
@@ -39,19 +52,20 @@ const RoleForm = () => {
             });
             navigate("/admin/roles");
           }
-        } catch (error) {
-          toast({
-            variant: "destructive",
-            title: "Error loading role",
-            description: "There was a problem loading the role details.",
-          });
-          console.error("Failed to load role:", error);
         }
+      } catch (error) {
+        toast({
+          variant: "destructive",
+          title: "Error loading data",
+          description: "There was a problem loading the role details or organizations.",
+        });
+        console.error("Failed to load data:", error);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
-    loadRole();
+    loadData();
   }, [roleId, isEditing, navigate]);
 
   const handlePermissionsChange = (permissions: Permission[]) => {
@@ -83,6 +97,7 @@ const RoleForm = () => {
       const roleData: RoleFormData = {
         name: roleName.trim(),
         permissions: selectedPermissions,
+        organizationId: selectedOrganizationId || undefined,
       };
 
       if (isEditing && roleId) {
@@ -152,6 +167,30 @@ const RoleForm = () => {
               className="h-12"
               required
             />
+          </div>
+
+          <div className="space-y-2 max-w-md">
+            <Label htmlFor="organizationId" className="text-base">Organization (Optional)</Label>
+            <Select 
+              value={selectedOrganizationId} 
+              onValueChange={setSelectedOrganizationId}
+            >
+              <SelectTrigger id="organizationId" className="h-12">
+                <SelectValue placeholder="Select organization (optional)" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">None (Global Role)</SelectItem>
+                {isLoadingOrganizations ? (
+                  <SelectItem value="loading" disabled>Loading organizations...</SelectItem>
+                ) : (
+                  organizations.map((org) => (
+                    <SelectItem key={org.id} value={org.id}>
+                      {org.name}
+                    </SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
           </div>
 
           <PermissionSelector

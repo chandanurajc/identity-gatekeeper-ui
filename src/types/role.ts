@@ -11,6 +11,8 @@ export interface Role {
   id: string;
   name: string;
   permissions: Permission[];
+  organizationId?: string;
+  organizationName?: string;
   createdBy?: string;
   createdOn?: Date;
   updatedBy?: string;
@@ -20,4 +22,5 @@ export interface Role {
 export interface RoleFormData {
   name: string;
   permissions: Permission[];
+  organizationId?: string;
 }

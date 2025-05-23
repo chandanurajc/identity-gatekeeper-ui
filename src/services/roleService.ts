@@ -1,5 +1,7 @@
+
 import { Permission, Role } from "@/types/role";
 import { v4 as uuidv4 } from "uuid";
+import { organizationService } from "./organizationService";
 
 // Mock data for permissions
 const mockPermissions: Permission[] = [
@@ -36,6 +38,8 @@ const mockRoles: Role[] = [
     permissions: mockPermissions.filter(p => p.name === "view_users"),
     createdBy: "System",
     createdOn: new Date("2024-05-01"),
+    organizationId: "1",
+    organizationName: "ABC Corporation",
   }
 ];
 
@@ -43,33 +47,97 @@ const mockRoles: Role[] = [
 let roles = [...mockRoles];
 
 export const roleService = {
-  getAllRoles: (): Promise<Role[]> => {
-    return Promise.resolve([...roles]);
+  getAllRoles: async (): Promise<Role[]> => {
+    try {
+      const organizations = await organizationService.getAllOrganizations();
+      
+      // Update roles with organization names
+      const rolesWithOrgNames = roles.map(role => {
+        if (role.organizationId) {
+          const org = organizations.find(o => o.id === role.organizationId);
+          if (org) {
+            return {
+              ...role,
+              organizationName: org.name
+            };
+          }
+        }
+        return role;
+      });
+      
+      return rolesWithOrgNames;
+    } catch (error) {
+      console.error("Error loading roles with organizations:", error);
+      return [...roles];
+    }
   },
 
-  getRoleById: (id: string): Promise<Role | undefined> => {
+  getRoleById: async (id: string): Promise<Role | undefined> => {
     const role = roles.find(role => role.id === id);
-    return Promise.resolve(role);
+    
+    if (role && role.organizationId) {
+      try {
+        const org = await organizationService.getOrganizationById(role.organizationId);
+        if (org) {
+          return {
+            ...role,
+            organizationName: org.name
+          };
+        }
+      } catch (error) {
+        console.error("Error fetching organization for role:", error);
+      }
+    }
+    
+    return role;
   },
 
-  createRole: (role: Omit<Role, "id" | "createdBy" | "createdOn">): Promise<Role> => {
+  createRole: async (role: Omit<Role, "id" | "createdBy" | "createdOn">): Promise<Role> => {
+    let organizationName = "";
+    
+    if (role.organizationId) {
+      try {
+        const org = await organizationService.getOrganizationById(role.organizationId);
+        if (org) {
+          organizationName = org.name;
+        }
+      } catch (error) {
+        console.error("Error fetching organization for new role:", error);
+      }
+    }
+    
     const newRole: Role = {
       ...role,
       id: uuidv4(),
       createdBy: "Current User", // In a real app, this would come from the authenticated user
       createdOn: new Date(),
+      organizationName
     };
     roles.push(newRole);
-    return Promise.resolve(newRole);
+    return newRole;
   },
 
-  updateRole: (id: string, roleData: Partial<Role>): Promise<Role | undefined> => {
+  updateRole: async (id: string, roleData: Partial<Role>): Promise<Role | undefined> => {
     let updatedRole: Role | undefined;
+    let organizationName = undefined;
+    
+    if (roleData.organizationId) {
+      try {
+        const org = await organizationService.getOrganizationById(roleData.organizationId);
+        if (org) {
+          organizationName = org.name;
+        }
+      } catch (error) {
+        console.error("Error fetching organization for updated role:", error);
+      }
+    }
+    
     roles = roles.map(role => {
       if (role.id === id) {
         updatedRole = {
           ...role,
           ...roleData,
+          organizationName: organizationName || role.organizationName,
           updatedBy: "Current User", // In a real app, this would come from the authenticated user
           updatedOn: new Date(),
         };
@@ -77,7 +145,7 @@ export const roleService = {
       }
       return role;
     });
-    return Promise.resolve(updatedRole);
+    return updatedRole;
   },
 
   deleteRole: (id: string): Promise<boolean> => {

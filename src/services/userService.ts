@@ -1,6 +1,7 @@
 
 import { User, UserRole, Permission, Role } from "@/types/user";
 import { v4 as uuidv4 } from "uuid";
+import { organizationService } from "./organizationService";
 
 // Mock data for permissions
 const mockPermissions: Permission[] = [
@@ -38,26 +39,30 @@ const mockRoles: Role[] = [
 const mockUsers: User[] = [
   {
     id: "1",
-    username: "admin",
+    username: "admin@example.com",
     email: "admin@example.com",
     firstName: "Admin",
     lastName: "User",
     roles: ["admin"],
     name: "Admin User",
     status: "active",
+    organizationId: "1",
+    organizationName: "ABC Corporation",
     effectiveFrom: new Date(),
     createdBy: "System",
     createdOn: new Date(),
   },
   {
     id: "2",
-    username: "user",
+    username: "user@example.com",
     email: "user@example.com",
     firstName: "Regular",
     lastName: "User",
     roles: ["user"],
     name: "Regular User",
     status: "active",
+    organizationId: "2",
+    organizationName: "XYZ Industries",
     effectiveFrom: new Date(),
     createdBy: "System",
     createdOn: new Date(),
@@ -118,20 +123,72 @@ export const getUserPermissions = (userId: string): string[] => {
 };
 
 // Get all users
-export const getAllUsers = (): User[] => {
-  return [...mockUsers];
+export const getAllUsers = async (): Promise<User[]> => {
+  try {
+    // In a real app, this would be an API call
+    // For the mock, we'll fetch all organizations to get their names
+    const organizations = await organizationService.getAllOrganizations();
+    
+    // Update users with organization names
+    const usersWithOrgNames = mockUsers.map(user => {
+      if (user.organizationId) {
+        const org = organizations.find(o => o.id === user.organizationId);
+        if (org) {
+          return {
+            ...user,
+            organizationName: org.name
+          };
+        }
+      }
+      return user;
+    });
+    
+    return usersWithOrgNames;
+  } catch (error) {
+    console.error("Error loading users with organizations:", error);
+    return [...mockUsers];
+  }
 };
 
 // Export as getUsers as well for compatibility with existing code
 export const getUsers = getAllUsers;
 
 // Get user by ID
-export const getUserById = (id: string): User | undefined => {
-  return mockUsers.find(user => user.id === id);
+export const getUserById = async (id: string): Promise<User | undefined> => {
+  const user = mockUsers.find(user => user.id === id);
+  
+  if (user && user.organizationId) {
+    try {
+      const org = await organizationService.getOrganizationById(user.organizationId);
+      if (org) {
+        return {
+          ...user,
+          organizationName: org.name
+        };
+      }
+    } catch (error) {
+      console.error("Error fetching organization for user:", error);
+    }
+  }
+  
+  return user;
 };
 
 // Create a new user
-export const createUser = (userData: Partial<User>): User => {
+export const createUser = async (userData: Partial<User>): Promise<User> => {
+  let organizationName = "";
+  
+  if (userData.organizationId) {
+    try {
+      const org = await organizationService.getOrganizationById(userData.organizationId);
+      if (org) {
+        organizationName = org.name;
+      }
+    } catch (error) {
+      console.error("Error fetching organization for new user:", error);
+    }
+  }
+  
   const newUser: User = {
     id: uuidv4(),
     username: userData.username || "",
@@ -141,6 +198,8 @@ export const createUser = (userData: Partial<User>): User => {
     name: userData.name || `${userData.firstName} ${userData.lastName}`,
     roles: userData.roles || [],
     status: userData.status || "inactive",
+    organizationId: userData.organizationId,
+    organizationName: organizationName,
     effectiveFrom: userData.effectiveFrom || new Date(),
     createdBy: userData.createdBy || "System",
     createdOn: new Date(),
@@ -151,16 +210,30 @@ export const createUser = (userData: Partial<User>): User => {
 };
 
 // Update an existing user
-export const updateUser = (id: string, userData: Partial<User>): User | undefined => {
+export const updateUser = async (id: string, userData: Partial<User>): Promise<User | undefined> => {
   const userIndex = mockUsers.findIndex(user => user.id === id);
   
   if (userIndex === -1) {
     return undefined;
   }
   
+  let organizationName = mockUsers[userIndex].organizationName;
+  
+  if (userData.organizationId && userData.organizationId !== mockUsers[userIndex].organizationId) {
+    try {
+      const org = await organizationService.getOrganizationById(userData.organizationId);
+      if (org) {
+        organizationName = org.name;
+      }
+    } catch (error) {
+      console.error("Error fetching organization for updated user:", error);
+    }
+  }
+  
   const updatedUser = {
     ...mockUsers[userIndex],
     ...userData,
+    organizationName,
   };
   
   mockUsers[userIndex] = updatedUser;

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -6,6 +7,8 @@ import * as z from "zod";
 import { UserFormData, UserRole } from "@/types/user";
 import { useToast } from "@/hooks/use-toast";
 import { roleService } from "@/services/roleService";
+import { organizationService } from "@/services/organizationService";
+import { Organization } from "@/types/organization";
 import { Role } from "@/types/role";
 import {
   Form,
@@ -44,6 +47,7 @@ const formSchema = z.object({
     .min(10, "Phone number must be at least 10 digits")
     .regex(/^\d+$/, "Phone number must contain only digits"),
   designation: z.string().optional(),
+  organizationId: z.string().min(1, "Organization is required"),
   roles: z.array(z.string()).min(1, "At least one role must be selected"),
   effectiveFrom: z.string().min(1, "Effective from date is required"),
   effectiveTo: z.string().optional(),
@@ -76,32 +80,41 @@ const UserForm = ({ initialData, isEditing = false, onSubmit }: UserFormProps) =
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [availableRoles, setAvailableRoles] = useState<{ label: string; value: string }[]>([]);
   const [isLoadingRoles, setIsLoadingRoles] = useState(true);
+  const [organizations, setOrganizations] = useState<Organization[]>([]);
+  const [isLoadingOrganizations, setIsLoadingOrganizations] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Fetch available roles from the roleService
+  // Fetch available roles and organizations
   useEffect(() => {
-    const fetchRoles = async () => {
+    const fetchData = async () => {
       try {
-        const roles = await roleService.getAllRoles();
+        const [roles, orgs] = await Promise.all([
+          roleService.getAllRoles(),
+          organizationService.getAllOrganizations()
+        ]);
+        
         const formattedRoles = roles.map(role => ({
           label: role.name,
           value: role.name.toLowerCase(),
         }));
+        
         setAvailableRoles(formattedRoles);
+        setOrganizations(orgs);
       } catch (error) {
         toast({
           variant: "destructive",
-          title: "Failed to load roles",
-          description: "There was a problem loading the available roles."
+          title: "Failed to load data",
+          description: "There was a problem loading the roles or organizations."
         });
-        console.error("Error loading roles:", error);
+        console.error("Error loading data:", error);
       } finally {
         setIsLoadingRoles(false);
+        setIsLoadingOrganizations(false);
       }
     };
 
-    fetchRoles();
+    fetchData();
   }, [toast]);
 
   // Initialize form with default values
@@ -117,6 +130,7 @@ const UserForm = ({ initialData, isEditing = false, onSubmit }: UserFormProps) =
       phoneCountryCode: initialData?.phone?.countryCode || "+1",
       phoneNumber: initialData?.phone?.number || "",
       designation: initialData?.designation || "",
+      organizationId: initialData?.organizationId || "",
       roles: initialData?.roles || [],
       effectiveFrom: initialData?.effectiveFrom 
         ? new Date(initialData.effectiveFrom).toISOString().split('T')[0]
@@ -142,6 +156,7 @@ const UserForm = ({ initialData, isEditing = false, onSubmit }: UserFormProps) =
           number: values.phoneNumber,
         },
         designation: values.designation,
+        organizationId: values.organizationId,
         roles: values.roles,
         effectiveFrom: new Date(values.effectiveFrom),
         effectiveTo: values.effectiveTo ? new Date(values.effectiveTo) : undefined,
@@ -306,7 +321,40 @@ const UserForm = ({ initialData, isEditing = false, onSubmit }: UserFormProps) =
                 )}
               />
 
-              {/* Replace roles checkboxes with multi-select dropdown */}
+              {/* Organization dropdown */}
+              <FormField
+                control={form.control}
+                name="organizationId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Organization*</FormLabel>
+                    <Select 
+                      onValueChange={field.onChange} 
+                      defaultValue={field.value}
+                      value={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select organization" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {isLoadingOrganizations ? (
+                          <SelectItem value="loading" disabled>Loading organizations...</SelectItem>
+                        ) : (
+                          organizations.map((org) => (
+                            <SelectItem key={org.id} value={org.id}>
+                              {org.name}
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               <FormField
                 control={form.control}
                 name="roles"

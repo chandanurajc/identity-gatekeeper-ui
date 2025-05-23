@@ -19,6 +19,8 @@ export interface User {
   permissions?: string[];
   name?: string;
   status?: string;
+  organizationId?: string;
+  organizationName?: string;
   effectiveFrom: Date;
   effectiveTo?: Date;
   createdBy: string;
@@ -39,6 +41,7 @@ export interface UserFormData {
     number: string;
   };
   designation?: string;
+  organizationId: string;
   roles: UserRole[];
   effectiveFrom: Date;
   effectiveTo?: Date;
@@ -63,4 +66,6 @@ export interface Role {
   name: string;
   description: string;
   permissions: Permission[];
+  organizationId?: string;
+  organizationName?: string;
 }

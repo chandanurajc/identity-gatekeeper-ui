@@ -168,7 +168,7 @@ const UsersList = () => {
             </div>
           ) : (
             <div>
-              <div className="mb-4 grid grid-cols-4 gap-4">
+              <div className="mb-4 grid grid-cols-5 gap-4">
                 <div>
                   <Input
                     placeholder="Filter by username"
@@ -195,6 +195,13 @@ const UsersList = () => {
                     placeholder="Filter by designation"
                     onChange={(e) => handleFilterChange("designation", e.target.value)}
                     value={filters.designation || ""}
+                  />
+                </div>
+                <div>
+                  <Input
+                    placeholder="Filter by organization"
+                    onChange={(e) => handleFilterChange("organizationName", e.target.value)}
+                    value={filters.organizationName || ""}
                   />
                 </div>
               </div>
@@ -241,6 +248,14 @@ const UsersList = () => {
                           )}
                         </div>
                       </TableHead>
+                      <TableHead className="cursor-pointer" onClick={() => handleSort("organizationName")}>
+                        <div className="flex items-center">
+                          Organization
+                          {sortField === "organizationName" && (
+                            sortDirection === "asc" ? <ArrowUp className="ml-1 h-4 w-4" /> : <ArrowDown className="ml-1 h-4 w-4" />
+                          )}
+                        </div>
+                      </TableHead>
                       <TableHead className="cursor-pointer" onClick={() => handleSort("createdBy")}>
                         <div className="flex items-center">
                           Created By
@@ -278,7 +293,7 @@ const UsersList = () => {
                   <TableBody>
                     {sortedUsers.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={9} className="text-center">
+                        <TableCell colSpan={10} className="text-center">
                           No users found
                         </TableCell>
                       </TableRow>
@@ -306,6 +321,7 @@ const UsersList = () => {
                           <TableCell>{user.firstName}</TableCell>
                           <TableCell>{user.lastName}</TableCell>
                           <TableCell>{user.designation || "N/A"}</TableCell>
+                          <TableCell>{user.organizationName || "N/A"}</TableCell>
                           <TableCell>{user.createdBy}</TableCell>
                           <TableCell>{new Date(user.createdOn).toLocaleDateString()}</TableCell>
                           <TableCell>{user.updatedBy || "N/A"}</TableCell>
