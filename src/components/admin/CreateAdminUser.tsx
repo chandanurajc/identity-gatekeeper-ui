@@ -14,39 +14,110 @@ const CreateAdminUser = () => {
     try {
       console.log("Starting admin user creation process...");
       
-      // First, get the ADMN organization ID
+      // First, let's see what organizations exist
+      console.log("Checking all organizations...");
+      const { data: allOrgs, error: allOrgsError } = await supabase
+        .from('organizations')
+        .select('id, name, code');
+
+      console.log("All organizations:", { allOrgs, allOrgsError });
+
+      // Try to find ADMN organization with case-insensitive search
       console.log("Looking for ADMN organization...");
-      const { data: adminOrg, error: orgError } = await supabase
+      const { data: adminOrgs, error: orgError } = await supabase
         .from('organizations')
         .select('id, name, code')
-        .eq('code', 'ADMN')
-        .single();
+        .ilike('code', 'ADMN');
 
-      console.log("Organization query result:", { adminOrg, orgError });
+      console.log("ADMN organization search result:", { adminOrgs, orgError });
 
-      if (orgError || !adminOrg) {
-        console.error("ADMN organization not found:", orgError);
-        throw new Error('ADMN organization not found. Please ensure the organization is created in the database.');
+      let adminOrg = null;
+      if (adminOrgs && adminOrgs.length > 0) {
+        adminOrg = adminOrgs[0];
+      } else {
+        // If not found, try to create it
+        console.log("ADMN organization not found, creating it...");
+        const { data: newOrg, error: createOrgError } = await supabase
+          .from('organizations')
+          .insert({
+            name: 'ADMN Organization',
+            code: 'ADMN',
+            status: 'active',
+            description: 'Administrative Organization',
+            organization_references: [{"id": "ref-admin-1", "type": "GST", "value": "ADMIN123456789"}],
+            contacts: [{
+              "id": "contact-admin-1",
+              "type": "Registered location",
+              "firstName": "System",
+              "lastName": "Administrator",
+              "address1": "Admin Office",
+              "address2": "Main Building",
+              "postalCode": "00000",
+              "city": "Admin City",
+              "state": "Admin State",
+              "country": "Admin Country",
+              "phoneNumber": "+1-000-000-0000",
+              "email": "admin@system.com",
+              "website": "www.admin.system"
+            }]
+          })
+          .select('id, name, code')
+          .single();
+
+        console.log("Organization creation result:", { newOrg, createOrgError });
+
+        if (createOrgError) {
+          console.error("Failed to create ADMN organization:", createOrgError);
+          throw new Error(`Failed to create ADMN organization: ${createOrgError.message}`);
+        }
+        adminOrg = newOrg;
       }
 
-      console.log("Found ADMN organization:", adminOrg);
+      if (!adminOrg) {
+        throw new Error('Could not find or create ADMN organization');
+      }
+
+      console.log("Found/Created ADMN organization:", adminOrg);
 
       // Get the Admin-Role ID
       console.log("Looking for Admin-Role...");
-      const { data: adminRole, error: roleError } = await supabase
+      const { data: adminRoles, error: roleError } = await supabase
         .from('roles')
         .select('id, name')
-        .eq('name', 'Admin-Role')
-        .single();
+        .eq('name', 'Admin-Role');
 
-      console.log("Role query result:", { adminRole, roleError });
+      console.log("Admin-Role search result:", { adminRoles, roleError });
 
-      if (roleError || !adminRole) {
-        console.error("Admin-Role not found:", roleError);
-        throw new Error('Admin-Role not found. Please ensure the role is created in the database.');
+      let adminRole = null;
+      if (adminRoles && adminRoles.length > 0) {
+        adminRole = adminRoles[0];
+      } else {
+        // Create Admin-Role if not found
+        console.log("Admin-Role not found, creating it...");
+        const { data: newRole, error: createRoleError } = await supabase
+          .from('roles')
+          .insert({
+            name: 'Admin-Role',
+            description: 'Administrative role with full system access',
+            organization_id: adminOrg.id
+          })
+          .select('id, name')
+          .single();
+
+        console.log("Role creation result:", { newRole, createRoleError });
+
+        if (createRoleError) {
+          console.error("Failed to create Admin-Role:", createRoleError);
+          throw new Error(`Failed to create Admin-Role: ${createRoleError.message}`);
+        }
+        adminRole = newRole;
       }
 
-      console.log("Found Admin-Role:", adminRole);
+      if (!adminRole) {
+        throw new Error('Could not find or create Admin-Role');
+      }
+
+      console.log("Found/Created Admin-Role:", adminRole);
 
       // Create the auth user
       console.log("Creating auth user...");
