@@ -1,3 +1,4 @@
+
 import { ReactNode, useState } from "react";
 import { 
   SidebarProvider, 
@@ -12,25 +13,24 @@ import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarInset,
-  SidebarTrigger
+  SidebarTrigger,
+  useSidebar
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/context/AuthContext";
 import { NavLink } from "react-router-dom";
 import { 
   Users, 
-  LayoutList, 
+  LayoutDashboard, 
   Settings, 
   UserRound, 
   Shield, 
   Lock, 
   Folder,
-  ChevronDown,
-  ChevronUp,
-  Menu,
   Search,
   LogOut,
   Building,
-  GitBranch
+  GitBranch,
+  Menu
 } from "lucide-react";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useRolePermissions } from "@/hooks/useRolePermissions";
@@ -38,10 +38,6 @@ import { useCategoryPermissions } from "@/hooks/useCategoryPermissions";
 import { useOrganizationPermissions } from "@/hooks/useOrganizationPermissions";
 import { useDivisionPermissions } from "@/hooks/useDivisionPermissions";
 import { Button } from "@/components/ui/button";
-import { 
-  Collapsible, 
-  CollapsibleContent
-} from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 
@@ -49,43 +45,41 @@ interface MainLayoutProps {
   children: ReactNode;
 }
 
-interface ModuleGroup {
-  name: string;
+interface MenuItem {
+  path: string;
+  label: string;
   icon: React.ElementType;
-  items: {
-    path: string;
-    label: string;
-    icon: React.ElementType;
-    permission: boolean;
-  }[];
+  permission: boolean;
 }
 
-export const MainLayout = ({ children }: MainLayoutProps) => {
-  const { user, logout } = useAuth();
+interface ModuleGroup {
+  name: string;
+  items: MenuItem[];
+}
+
+// App Sidebar Component
+function AppSidebar() {
   const { canViewUsers } = usePermissions();
   const { canViewRoles, canViewPermissions } = useRolePermissions();
-  const { canViewCategory, canAccessInventory } = useCategoryPermissions();
+  const { canViewCategory } = useCategoryPermissions();
   const { canViewOrganization } = useOrganizationPermissions();
   const { canViewDivision } = useDivisionPermissions();
-  const [openGroup, setOpenGroup] = useState<string | null>(null);
   
   // Group menu items by module
   const moduleGroups: ModuleGroup[] = [
     {
-      name: "Dashboard",
-      icon: LayoutList,
+      name: "Main",
       items: [
         {
           path: "/dashboard",
           label: "Dashboard",
-          icon: LayoutList,
-          permission: true // Always accessible
+          icon: LayoutDashboard,
+          permission: true
         }
       ]
     },
     {
-      name: "Admin",
-      icon: Shield,
+      name: "Administration",
       items: [
         {
           path: "/admin/users",
@@ -107,13 +101,13 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
         },
         {
           path: "/admin/organizations",
-          label: "Organization Management",
+          label: "Organizations",
           icon: Building,
           permission: canViewOrganization
         },
         {
           path: "/admin/divisions",
-          label: "Division Management",
+          label: "Divisions",
           icon: GitBranch,
           permission: canViewDivision
         }
@@ -121,7 +115,6 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
     },
     {
       name: "Master Data",
-      icon: Folder,
       items: [
         {
           path: "/master-data/item-category",
@@ -132,14 +125,13 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
       ]
     },
     {
-      name: "Settings",
-      icon: Settings,
+      name: "System",
       items: [
         {
           path: "/settings",
           label: "Settings",
           icon: Settings,
-          permission: true // Always accessible
+          permission: true
         }
       ]
     }
@@ -150,146 +142,148 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
     group => group.items.some(item => item.permission)
   );
 
-  const handleGroupToggle = (groupName: string) => {
-    setOpenGroup(openGroup === groupName ? null : groupName);
-  };
+  return (
+    <Sidebar variant="sidebar" collapsible="icon">
+      <SidebarHeader className="border-b border-sidebar-border">
+        <div className="flex items-center gap-2 px-2 py-2">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+            <Building className="h-4 w-4" />
+          </div>
+          <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
+            <span className="truncate font-semibold">App Portal</span>
+          </div>
+        </div>
+      </SidebarHeader>
+      
+      <SidebarContent>
+        {filteredGroups.map((group) => {
+          const accessibleItems = group.items.filter(item => item.permission);
+          if (accessibleItems.length === 0) return null;
+
+          return (
+            <SidebarGroup key={group.name}>
+              <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">
+                {group.name}
+              </SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {accessibleItems.map((item) => (
+                    <SidebarMenuItem key={item.path}>
+                      <SidebarMenuButton 
+                        asChild 
+                        tooltip={item.label}
+                      >
+                        <NavLink 
+                          to={item.path} 
+                          className={({ isActive }) => cn(
+                            "flex items-center gap-3",
+                            isActive && "bg-sidebar-accent text-sidebar-accent-foreground"
+                          )}
+                        >
+                          <item.icon className="h-4 w-4" />
+                          <span>{item.label}</span>
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          );
+        })}
+      </SidebarContent>
+      
+      <SidebarFooter className="border-t border-sidebar-border">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <UserMenu />
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+    </Sidebar>
+  );
+}
+
+// User Menu Component
+function UserMenu() {
+  const { user, logout } = useAuth();
+  const { state } = useSidebar();
+
+  if (state === "collapsed") {
+    return (
+      <SidebarMenuButton
+        tooltip="Account"
+        onClick={logout}
+      >
+        <UserRound className="h-4 w-4" />
+        <span className="sr-only">Account</span>
+      </SidebarMenuButton>
+    );
+  }
 
   return (
-    <SidebarProvider defaultOpen={false}>
-      <div className="flex flex-col min-h-screen w-full">
-        {/* Horizontal Navigation Bar - Made sticky */}
-        <div className="flex items-center justify-between bg-primary text-primary-foreground h-14 px-4 shadow-md z-20 sticky top-0">
-          <div className="flex items-center gap-4">
-            {/* Hamburger menu on the left */}
+    <div className="flex items-center gap-2 px-2 py-2">
+      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sidebar-accent text-sidebar-accent-foreground">
+        <UserRound className="h-4 w-4" />
+      </div>
+      <div className="grid flex-1 text-left text-sm leading-tight">
+        <span className="truncate font-semibold">{user?.name || user?.email}</span>
+        <span className="truncate text-xs text-sidebar-foreground/70">
+          {user?.organizationName}
+        </span>
+      </div>
+      <Button 
+        variant="ghost" 
+        size="icon" 
+        onClick={logout}
+        className="h-8 w-8"
+      >
+        <LogOut className="h-4 w-4" />
+        <span className="sr-only">Logout</span>
+      </Button>
+    </div>
+  );
+}
+
+export const MainLayout = ({ children }: MainLayoutProps) => {
+  const { user } = useAuth();
+
+  return (
+    <SidebarProvider defaultOpen={true}>
+      <div className="flex min-h-screen w-full">
+        <AppSidebar />
+        
+        <SidebarInset className="flex flex-col flex-1">
+          {/* Top Navigation Bar */}
+          <header className="flex h-14 items-center gap-4 border-b bg-background px-4 lg:px-6">
             <SidebarTrigger>
               <Menu className="h-5 w-5" />
             </SidebarTrigger>
-            {/* App name moved to the right of the hamburger */}
-            <h1 className="text-xl font-bold">App Portal</h1>
+            
+            {/* Search Bar */}
+            <div className="flex-1 max-w-md">
+              <div className="relative">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input 
+                  className="pl-8" 
+                  placeholder="Search..." 
+                />
+              </div>
+            </div>
+
             {/* Organization context display */}
             {user && (
-              <div className="text-sm bg-primary-foreground/20 px-2 py-1 rounded">
+              <div className="text-sm text-muted-foreground hidden md:block">
                 {user.organizationCode} - {user.organizationName}
               </div>
             )}
-          </div>
+          </header>
 
-          {/* Search Bar */}
-          <div className="flex-1 mx-8 max-w-md hidden md:block">
-            <div className="relative">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-primary-foreground/70" />
-              <Input 
-                className="bg-primary-foreground/20 border-primary-foreground/20 pl-8 text-primary-foreground placeholder:text-primary-foreground/70" 
-                placeholder="Search anything..." 
-              />
-            </div>
-          </div>
-
-          {/* User Info and Logout */}
-          {user && (
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <UserRound className="h-5 w-5" />
-                <span className="text-sm font-medium hidden md:inline">
-                  {user.name || user.email}
-                </span>
-              </div>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={logout} 
-                className="hover:bg-primary/90"
-              >
-                <LogOut className="h-5 w-5" />
-                <span className="sr-only">Logout</span>
-              </Button>
-            </div>
-          )}
-        </div>
-
-        <div className="flex flex-1">
-          {/* Vertical Sidebar - Made sticky */}
-          <Sidebar variant="sidebar" collapsible="icon">
-            {/* Empty header without SidebarTrigger */}
-            <SidebarHeader className="sticky top-14 bg-sidebar z-10">
-              {/* Removed SidebarTrigger from here */}
-            </SidebarHeader>
-            
-            {/* Sidebar content */}
-            <SidebarContent className="sticky top-24">
-              {filteredGroups.map((group) => {
-                // Only show groups with at least one accessible item
-                const accessibleItems = group.items.filter(item => item.permission);
-                if (accessibleItems.length === 0) return null;
-
-                return (
-                  <SidebarGroup key={group.name}>
-                    <SidebarGroupLabel
-                      className="cursor-pointer flex items-center"
-                      onClick={() => handleGroupToggle(group.name)}
-                    >
-                      {/* Icon container with increased visibility */}
-                      <div className="min-w-6 h-6 mr-2 flex items-center justify-center flex-shrink-0">
-                        <group.icon className="h-5 w-5" strokeWidth={2} />
-                      </div>
-                      <span className="flex-1 group-data-[collapsible=icon]:hidden">{group.name}</span>
-                      {/* Display chevron in expanded sidebar view only */}
-                      <span className="group-data-[collapsible=icon]:hidden">
-                        {openGroup === group.name ? (
-                          <ChevronUp className="h-4 w-4 ml-2" />
-                        ) : (
-                          <ChevronDown className="h-4 w-4 ml-2" />
-                        )}
-                      </span>
-                    </SidebarGroupLabel>
-                    <SidebarGroupContent>
-                      <SidebarMenu>
-                        <Collapsible 
-                          open={openGroup === group.name} 
-                          className="w-full"
-                        >
-                          <CollapsibleContent>
-                            {accessibleItems.map((item) => (
-                              <SidebarMenuItem key={item.path}>
-                                <SidebarMenuButton 
-                                  asChild 
-                                  tooltip={item.label}
-                                >
-                                  <NavLink 
-                                    to={item.path} 
-                                    className={({ isActive }) => cn(
-                                      "flex items-center w-full",
-                                      isActive ? "font-bold" : ""
-                                    )}
-                                  >
-                                    {/* Enhanced icon container for improved visibility */}
-                                    <div className="min-w-6 h-6 mr-2 flex items-center justify-center flex-shrink-0">
-                                      <item.icon className="h-5 w-5" strokeWidth={2} />
-                                    </div>
-                                    <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
-                                  </NavLink>
-                                </SidebarMenuButton>
-                              </SidebarMenuItem>
-                            ))}
-                          </CollapsibleContent>
-                        </Collapsible>
-                      </SidebarMenu>
-                    </SidebarGroupContent>
-                  </SidebarGroup>
-                );
-              })}
-            </SidebarContent>
-            
-            {/* Empty footer */}
-            <SidebarFooter className="px-4 py-2"></SidebarFooter>
-          </Sidebar>
-          
-          <SidebarInset>
-            <div className="p-6">
-              {children}
-            </div>
-          </SidebarInset>
-        </div>
+          {/* Main Content */}
+          <main className="flex-1 p-6">
+            {children}
+          </main>
+        </SidebarInset>
       </div>
     </SidebarProvider>
   );
