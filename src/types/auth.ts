@@ -1,20 +1,19 @@
 
-export type UserRole = "admin" | "user" | "guest";
+export type UserRole = "admin" | "user" | "guest" | string;
 
 export interface User {
   id: string;
   email: string;
   name?: string;
   roles: UserRole[];
-  organizationId: string;
-  organizationCode: string;
-  organizationName: string;
+  organizationId?: string;
+  organizationCode?: string;
+  organizationName?: string;
 }
 
 export interface LoginCredentials {
   email: string;
   password: string;
-  organizationCode?: string;
 }
 
 export interface AuthState {
