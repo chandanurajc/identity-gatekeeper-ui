@@ -1,3 +1,4 @@
+
 import { Organization, OrganizationFormData, Reference, Contact } from "@/types/organization";
 import { supabase } from "@/integrations/supabase/client";
 import { Json } from "@/integrations/supabase/types";
@@ -43,20 +44,29 @@ export const organizationService = {
     try {
       console.log("OrganizationService: Starting getAllOrganizations...");
       
+      // Check authentication status
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      console.log("OrganizationService: Current user:", user?.id, "Auth error:", authError);
+      
       const { data, error } = await supabase
         .from('organizations')
         .select('*')
         .order('created_on', { ascending: false });
 
       console.log("OrganizationService: Raw supabase response:", { data, error });
+      console.log("OrganizationService: Query executed successfully, data length:", data?.length || 0);
 
       if (error) {
         console.error("OrganizationService: Supabase error:", error);
         throw new Error(`Failed to fetch organizations: ${error.message}`);
       }
 
-      if (!data) {
-        console.log("OrganizationService: No data returned from supabase");
+      if (!data || data.length === 0) {
+        console.log("OrganizationService: No organizations found in database");
+        console.log("OrganizationService: This could mean:");
+        console.log("1. No organizations have been created yet");
+        console.log("2. RLS policies are blocking access");
+        console.log("3. User doesn't have proper permissions");
         return [];
       }
 
@@ -189,7 +199,9 @@ export const organizationService = {
 
   createOrganization: async (organization: OrganizationFormData, createdBy: string): Promise<Organization> => {
     try {
+      console.log("OrganizationService: Creating organization:", organization);
       const { data: { user } } = await supabase.auth.getUser();
+      console.log("OrganizationService: Current user for creation:", user?.id);
       
       const { data, error } = await supabase
         .from('organizations')
@@ -209,6 +221,8 @@ export const organizationService = {
         console.error("OrganizationService: Error creating organization:", error);
         throw new Error(error.message);
       }
+
+      console.log("OrganizationService: Organization created successfully:", data);
 
       return {
         id: data.id,

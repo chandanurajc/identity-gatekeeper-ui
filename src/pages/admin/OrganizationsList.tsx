@@ -9,7 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Search, Edit } from "lucide-react";
+import { Plus, Search, Edit, Bug } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/components/ui/use-toast";
 
 const OrganizationsList = () => {
   const navigate = useNavigate();
@@ -52,6 +54,47 @@ const OrganizationsList = () => {
       navigate(`/admin/organizations/edit/${selectedOrganizations[0]}`);
     }
   };
+
+  const handleDebugDatabase = async () => {
+    try {
+      console.log("=== DEBUG: Starting database diagnostics ===");
+      
+      // Check authentication
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      console.log("DEBUG: Current user:", user);
+      console.log("DEBUG: Auth error:", authError);
+      
+      // Check raw table access
+      const { data: rawData, error: rawError } = await supabase
+        .from('organizations')
+        .select('*');
+      
+      console.log("DEBUG: Raw organizations data:", rawData);
+      console.log("DEBUG: Raw query error:", rawError);
+      console.log("DEBUG: Number of records:", rawData?.length || 0);
+      
+      // Check if table exists and structure
+      const { data: tableInfo, error: tableError } = await supabase
+        .rpc('get_table_info', { table_name: 'organizations' })
+        .catch(() => ({ data: null, error: 'RPC function not available' }));
+      
+      console.log("DEBUG: Table info:", tableInfo);
+      console.log("DEBUG: Table error:", tableError);
+      
+      toast({
+        title: "Debug Info",
+        description: `Found ${rawData?.length || 0} organizations. Check console for details.`,
+      });
+      
+    } catch (error) {
+      console.error("DEBUG: Error during diagnostics:", error);
+      toast({
+        variant: "destructive",
+        title: "Debug Error",
+        description: "Error during database diagnostics. Check console.",
+      });
+    }
+  };
   
   if (error) {
     return <div className="p-8 text-center text-red-500">Error loading organizations</div>;
@@ -66,6 +109,10 @@ const OrganizationsList = () => {
         </div>
         
         <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={handleDebugDatabase}>
+            <Bug className="mr-2 h-4 w-4" />
+            Debug DB
+          </Button>
           {canEditOrganization && selectedOrganizations.length === 1 && (
             <Button variant="outline" onClick={handleEditClick}>
               <Edit className="mr-2 h-4 w-4" />
@@ -124,7 +171,23 @@ const OrganizationsList = () => {
               </TableRow>
             ) : filteredOrganizations.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={9} className="text-center">No organizations found</TableCell>
+                <TableCell colSpan={9} className="text-center">
+                  <div className="py-8">
+                    <h3 className="text-lg font-medium mb-2">No organizations found</h3>
+                    <p className="text-muted-foreground mb-4">
+                      {organizations.length === 0 
+                        ? "Get started by creating your first organization"
+                        : "Try adjusting your search terms"
+                      }
+                    </p>
+                    {canCreateOrganization && organizations.length === 0 && (
+                      <Button onClick={handleCreateClick}>
+                        <Plus className="mr-2 h-4 w-4" />
+                        Create Your First Organization
+                      </Button>
+                    )}
+                  </div>
+                </TableCell>
               </TableRow>
             ) : (
               filteredOrganizations.map((org: Organization) => {
