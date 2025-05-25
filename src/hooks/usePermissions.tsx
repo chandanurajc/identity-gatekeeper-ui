@@ -1,7 +1,7 @@
 
 import { useAuth } from "@/context/AuthContext";
 import { getUserPermissions } from "@/services/userService";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 
 export const usePermissions = () => {
   const { user, isAuthenticated } = useAuth();
@@ -90,48 +90,70 @@ export const usePermissions = () => {
     return hasPermission;
   }, [user, isAuthenticated, permissions]);
 
-  // Memoize permission values to prevent unnecessary re-renders
-  const canViewUsers = hasPermission("view-user");
-  const canCreateUsers = hasPermission("create-user");
-  const canEditUsers = hasPermission("edit-user");
-  const canAccessAdminModule = hasPermission("access_admin");
-  const canAccessSettingsModule = hasPermission("access_settings");
-  const canViewOrganization = hasPermission("view-organization");
-  const canCreateOrganization = hasPermission("create-organization");
-  const canEditOrganization = hasPermission("edit-organization");
-  const canViewDivision = hasPermission("view-division");
-  const canCreateDivision = hasPermission("create-division");
-  const canEditDivision = hasPermission("edit-division");
+  // Use useMemo to properly memoize permission values and prevent re-computation
+  const memoizedPermissions = useMemo(() => {
+    console.log("=== Computing memoized permissions ===");
+    
+    if (!user || !isAuthenticated) {
+      return {
+        canViewUsers: false,
+        canCreateUsers: false,
+        canEditUsers: false,
+        canAccessAdminModule: false,
+        canAccessSettingsModule: false,
+        canViewOrganization: false,
+        canCreateOrganization: false,
+        canEditOrganization: false,
+        canViewDivision: false,
+        canCreateDivision: false,
+        canEditDivision: false,
+      };
+    }
+
+    // Admin users have all permissions
+    if (user.roles.includes("Admin-Role") || user.roles.includes("admin")) {
+      return {
+        canViewUsers: true,
+        canCreateUsers: true,
+        canEditUsers: true,
+        canAccessAdminModule: true,
+        canAccessSettingsModule: true,
+        canViewOrganization: true,
+        canCreateOrganization: true,
+        canEditOrganization: true,
+        canViewDivision: true,
+        canCreateDivision: true,
+        canEditDivision: true,
+      };
+    }
+
+    // Check individual permissions
+    return {
+      canViewUsers: permissions.includes("view-user"),
+      canCreateUsers: permissions.includes("create-user"),
+      canEditUsers: permissions.includes("edit-user"),
+      canAccessAdminModule: permissions.includes("access_admin"),
+      canAccessSettingsModule: permissions.includes("access_settings"),
+      canViewOrganization: permissions.includes("view-organization"),
+      canCreateOrganization: permissions.includes("create-organization"),
+      canEditOrganization: permissions.includes("edit-organization"),
+      canViewDivision: permissions.includes("view-division"),
+      canCreateDivision: permissions.includes("create-division"),
+      canEditDivision: permissions.includes("edit-division"),
+    };
+  }, [user, isAuthenticated, permissions]);
 
   console.log("=== usePermissions returning ===");
   console.log("Final state:", {
     isLoading: loading,
-    canViewUsers,
-    canCreateUsers,
-    canEditUsers
+    ...memoizedPermissions
   });
 
   return {
     hasPermission,
     isLoading: loading,
-    // User Management permissions
-    canViewUsers,
-    canCreateUsers,
-    canEditUsers,
-    
-    // Module access permissions
-    canAccessAdminModule,
-    canAccessSettingsModule,
-    
-    // Organization permissions
-    canViewOrganization,
-    canCreateOrganization,
-    canEditOrganization,
-    
-    // Division permissions
-    canViewDivision,
-    canCreateDivision,
-    canEditDivision,
+    // Spread memoized permissions
+    ...memoizedPermissions,
     
     // For checking any permission dynamically
     checkPermission: hasPermission,
