@@ -1,7 +1,6 @@
 
 import { useAuth } from "@/context/AuthContext";
 import { Input } from "@/components/ui/input";
-import { SidebarTrigger } from "@/components/ui/sidebar";
 import { HeaderUserMenu } from "./HeaderUserMenu";
 import { Search, Building } from "lucide-react";
 
@@ -19,9 +18,6 @@ export function AppHeader() {
           App Portal
         </div>
       </div>
-
-      {/* Sidebar Toggle */}
-      <SidebarTrigger />
       
       {/* Search Bar */}
       <div className="flex-1 max-w-md">
