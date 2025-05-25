@@ -1,6 +1,29 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { User, UserRole, Permission, Role } from "@/types/user";
+import { User, UserRole, Permission, Role, PhoneNumber } from "@/types/user";
+
+// Helper function to safely parse phone data from JSON
+const parsePhoneNumber = (phoneJson: any): PhoneNumber | undefined => {
+  if (!phoneJson) return undefined;
+  
+  if (typeof phoneJson === 'object' && phoneJson.countryCode && phoneJson.number) {
+    return {
+      countryCode: phoneJson.countryCode,
+      number: phoneJson.number
+    };
+  }
+  
+  return undefined;
+};
+
+// Helper function to convert PhoneNumber to JSON for storage
+const phoneToJson = (phone: PhoneNumber | undefined): any => {
+  if (!phone) return null;
+  return {
+    countryCode: phone.countryCode,
+    number: phone.number
+  };
+};
 
 // Get all users from Supabase
 export const getAllUsers = async (): Promise<User[]> => {
@@ -13,11 +36,6 @@ export const getAllUsers = async (): Promise<User[]> => {
           id,
           name,
           code
-        ),
-        user_roles (
-          roles (
-            name
-          )
         )
       `);
 
@@ -26,26 +44,43 @@ export const getAllUsers = async (): Promise<User[]> => {
       throw error;
     }
 
-    return profiles?.map(profile => ({
-      id: profile.id,
-      username: profile.username,
-      email: profile.username, // Using username as email for now
-      firstName: profile.first_name,
-      lastName: profile.last_name,
-      name: `${profile.first_name} ${profile.last_name}`,
-      phone: profile.phone,
-      designation: profile.designation,
-      roles: profile.user_roles?.map((ur: any) => ur.roles.name) || [],
-      status: profile.status,
-      organizationId: profile.organization_id,
-      organizationName: profile.organizations?.name || "N/A",
-      effectiveFrom: new Date(profile.effective_from),
-      effectiveTo: profile.effective_to ? new Date(profile.effective_to) : undefined,
-      createdBy: "System", // We'll need to enhance this later
-      createdOn: new Date(profile.created_on),
-      updatedBy: profile.updated_by || undefined,
-      updatedOn: profile.updated_on ? new Date(profile.updated_on) : undefined,
-    })) || [];
+    // Get user roles separately to avoid relation issues
+    const userIds = profiles?.map(p => p.id) || [];
+    const { data: userRolesData } = await supabase
+      .from('user_roles')
+      .select(`
+        user_id,
+        roles (
+          name
+        )
+      `)
+      .in('user_id', userIds);
+
+    return profiles?.map(profile => {
+      const userRoles = userRolesData?.filter(ur => ur.user_id === profile.id) || [];
+      const roles = userRoles.map((ur: any) => ur.roles?.name).filter(Boolean) || [];
+
+      return {
+        id: profile.id,
+        username: profile.username,
+        email: profile.username, // Using username as email for now
+        firstName: profile.first_name,
+        lastName: profile.last_name,
+        name: `${profile.first_name} ${profile.last_name}`,
+        phone: parsePhoneNumber(profile.phone),
+        designation: profile.designation,
+        roles: roles,
+        status: profile.status,
+        organizationId: profile.organization_id,
+        organizationName: profile.organizations?.name || "N/A",
+        effectiveFrom: new Date(profile.effective_from),
+        effectiveTo: profile.effective_to ? new Date(profile.effective_to) : undefined,
+        createdBy: "System", // We'll need to enhance this later
+        createdOn: new Date(profile.created_on),
+        updatedBy: profile.updated_by || undefined,
+        updatedOn: profile.updated_on ? new Date(profile.updated_on) : undefined,
+      };
+    }) || [];
   } catch (error) {
     console.error("Error in getAllUsers:", error);
     throw error;
@@ -66,11 +101,6 @@ export const getUserById = async (id: string): Promise<User | undefined> => {
           id,
           name,
           code
-        ),
-        user_roles (
-          roles (
-            name
-          )
         )
       `)
       .eq('id', id)
@@ -83,6 +113,18 @@ export const getUserById = async (id: string): Promise<User | undefined> => {
 
     if (!profile) return undefined;
 
+    // Get user roles separately
+    const { data: userRolesData } = await supabase
+      .from('user_roles')
+      .select(`
+        roles (
+          name
+        )
+      `)
+      .eq('user_id', id);
+
+    const roles = userRolesData?.map((ur: any) => ur.roles?.name).filter(Boolean) || [];
+
     return {
       id: profile.id,
       username: profile.username,
@@ -90,9 +132,9 @@ export const getUserById = async (id: string): Promise<User | undefined> => {
       firstName: profile.first_name,
       lastName: profile.last_name,
       name: `${profile.first_name} ${profile.last_name}`,
-      phone: profile.phone,
+      phone: parsePhoneNumber(profile.phone),
       designation: profile.designation,
-      roles: profile.user_roles?.map((ur: any) => ur.roles.name) || [],
+      roles: roles,
       status: profile.status,
       organizationId: profile.organization_id,
       organizationName: profile.organizations?.name || "N/A",
@@ -134,7 +176,7 @@ export const createUser = async (userData: Partial<User>): Promise<User> => {
       .update({
         first_name: userData.firstName || "",
         last_name: userData.lastName || "",
-        phone: userData.phone,
+        phone: phoneToJson(userData.phone),
         designation: userData.designation,
         organization_id: userData.organizationId,
         status: userData.status || "active",
@@ -165,7 +207,7 @@ export const updateUser = async (id: string, userData: Partial<User>): Promise<U
       .update({
         first_name: userData.firstName,
         last_name: userData.lastName,
-        phone: userData.phone,
+        phone: phoneToJson(userData.phone),
         designation: userData.designation,
         organization_id: userData.organizationId,
         status: userData.status,

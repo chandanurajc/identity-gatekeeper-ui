@@ -1,20 +1,38 @@
 
 import { useAuth } from "@/context/AuthContext";
 import { getUserPermissions } from "@/services/userService";
+import { useState, useEffect } from "react";
 
 export const useOrganizationPermissions = () => {
   const { user } = useAuth();
+  const [permissions, setPermissions] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Use getUserPermissions to get all permissions for the user
-  const userPermissions = user ? getUserPermissions(user.id) : [];
+  useEffect(() => {
+    const fetchPermissions = async () => {
+      if (user) {
+        try {
+          const userPermissions = await getUserPermissions(user.id);
+          setPermissions(userPermissions);
+        } catch (error) {
+          console.error("Error fetching permissions:", error);
+          setPermissions([]);
+        }
+      }
+      setLoading(false);
+    };
 
-  const canViewOrganization = userPermissions.includes("view-organization") || false;
-  const canCreateOrganization = userPermissions.includes("create-organization") || false;
-  const canEditOrganization = userPermissions.includes("edit-organization") || false;
+    fetchPermissions();
+  }, [user]);
+
+  const canViewOrganization = permissions.includes("view-organization");
+  const canCreateOrganization = permissions.includes("create-organization");
+  const canEditOrganization = permissions.includes("edit-organization");
 
   return {
     canViewOrganization,
     canCreateOrganization,
     canEditOrganization,
+    isLoading: loading,
   };
 };

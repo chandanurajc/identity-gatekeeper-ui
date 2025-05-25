@@ -1,20 +1,38 @@
 
 import { useAuth } from "@/context/AuthContext";
 import { getUserPermissions } from "@/services/userService";
+import { useState, useEffect } from "react";
 
 export const useDivisionPermissions = () => {
   const { user } = useAuth();
+  const [permissions, setPermissions] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Use getUserPermissions to get all permissions for the user
-  const userPermissions = user ? getUserPermissions(user.id) : [];
+  useEffect(() => {
+    const fetchPermissions = async () => {
+      if (user) {
+        try {
+          const userPermissions = await getUserPermissions(user.id);
+          setPermissions(userPermissions);
+        } catch (error) {
+          console.error("Error fetching permissions:", error);
+          setPermissions([]);
+        }
+      }
+      setLoading(false);
+    };
 
-  const canViewDivision = userPermissions.includes("view-division") || false;
-  const canCreateDivision = userPermissions.includes("create-division") || false;
-  const canEditDivision = userPermissions.includes("edit-division") || false;
+    fetchPermissions();
+  }, [user]);
+
+  const canViewDivision = permissions.includes("view-division");
+  const canCreateDivision = permissions.includes("create-division");
+  const canEditDivision = permissions.includes("edit-division");
 
   return {
     canViewDivision,
     canCreateDivision,
     canEditDivision,
+    isLoading: loading,
   };
 };
