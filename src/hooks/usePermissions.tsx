@@ -11,15 +11,18 @@ export const usePermissions = () => {
   useEffect(() => {
     const fetchPermissions = async () => {
       setLoading(true);
-      if (user) {
+      if (user && user.id) {
         try {
+          console.log("Fetching permissions for user:", user.id);
           const userPermissions = await getUserPermissions(user.id);
+          console.log("Fetched permissions:", userPermissions);
           setPermissions(userPermissions);
         } catch (error) {
           console.error("Error fetching permissions:", error);
           setPermissions([]);
         }
       } else {
+        console.log("No user or invalid user ID, setting empty permissions");
         setPermissions([]);
       }
       setLoading(false);

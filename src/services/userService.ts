@@ -251,6 +251,13 @@ export const deleteUser = async (id: string): Promise<boolean> => {
 // Get user permissions from Supabase
 export const getUserPermissions = async (userId: string): Promise<string[]> => {
   try {
+    // Check if userId is a valid UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(userId)) {
+      console.error("Invalid UUID format for userId:", userId);
+      return [];
+    }
+
     const { data, error } = await supabase
       .from('user_roles')
       .select(`
@@ -337,7 +344,6 @@ export const getAllRoles = async (): Promise<Role[]> => {
   }
 };
 
-// Get all permissions (placeholder for Supabase implementation)
 export const getAllPermissions = async (): Promise<Permission[]> => {
   try {
     const { data: permissions, error } = await supabase

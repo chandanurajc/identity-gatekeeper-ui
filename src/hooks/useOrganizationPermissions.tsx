@@ -11,8 +11,9 @@ export const useOrganizationPermissions = () => {
   useEffect(() => {
     const fetchPermissions = async () => {
       setLoading(true);
-      if (user) {
+      if (user && user.id) {
         try {
+          console.log("Fetching organization permissions for user:", user.id);
           const userPermissions = await getUserPermissions(user.id);
           setPermissions(userPermissions);
         } catch (error) {
