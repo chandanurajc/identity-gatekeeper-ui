@@ -1,7 +1,6 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { authService } from "@/services/authService";
 import { supabase } from "@/integrations/supabase/client";
 
 interface AuthUser {
@@ -42,6 +41,54 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   });
   const { toast } = useToast();
 
+  const fetchUserData = async (userId: string): Promise<AuthUser | null> => {
+    try {
+      // Fetch user profile from profiles table
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select(`
+          *,
+          organizations:organization_id (
+            id,
+            name,
+            code
+          )
+        `)
+        .eq('id', userId)
+        .single();
+
+      if (profileError) {
+        console.error("Error fetching user profile:", profileError);
+        return null;
+      }
+
+      // Get user roles
+      const { data: userRoles } = await supabase
+        .from('user_roles')
+        .select(`
+          roles (
+            name
+          )
+        `)
+        .eq('user_id', userId);
+
+      const roles = userRoles?.map((ur: any) => ur.roles?.name).filter(Boolean) || ["user"];
+
+      return {
+        id: userId,
+        email: profile.username,
+        name: `${profile.first_name} ${profile.last_name}`,
+        roles: roles,
+        organizationId: profile.organization_id,
+        organizationCode: profile.organizations?.code || null,
+        organizationName: profile.organizations?.name || null
+      };
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+      return null;
+    }
+  };
+
   useEffect(() => {
     // Set up Supabase auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -49,27 +96,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.log("Auth state changed:", event, session?.user?.email);
         
         if (event === 'SIGNED_IN' && session?.user) {
-          try {
-            // Get user data using auth service
-            const user = await authService.login({
-              email: session.user.email || "",
-              password: "" // Password not needed for existing session
-            });
-            
+          const userData = await fetchUserData(session.user.id);
+          
+          if (userData) {
             setState({
-              user,
+              user: userData,
               isAuthenticated: true,
               isLoading: false,
               error: null,
-              organizationCode: user.organizationCode || null
+              organizationCode: userData.organizationCode || null
             });
-          } catch (error) {
-            console.error("Error setting up user session:", error);
-            setState(prev => ({
-              ...prev,
+          } else {
+            // Fallback user object if profile fetch fails
+            const fallbackUser: AuthUser = {
+              id: session.user.id,
+              email: session.user.email || "",
+              name: session.user.user_metadata?.first_name || session.user.email,
+              roles: ["user"],
+              organizationCode: null,
+              organizationName: null
+            };
+            
+            setState({
+              user: fallbackUser,
+              isAuthenticated: true,
               isLoading: false,
-              error: "Failed to load user data"
-            }));
+              error: null,
+              organizationCode: null
+            });
           }
         } else if (event === 'SIGNED_OUT') {
           setState({
@@ -117,20 +171,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     console.log("Attempting login for:", email);
     
     try {
-      const user = await authService.login({ email, password });
-      
-      console.log("Login successful for:", user.email);
-      setState({
-        user,
-        isAuthenticated: true,
-        isLoading: false,
-        error: null,
-        organizationCode: user.organizationCode || null
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
       });
+
+      if (error) {
+        throw error;
+      }
+
+      console.log("Login successful for:", email);
       
       toast({
         title: "Login successful",
-        description: `Welcome back, ${user.name || user.email}!`,
+        description: `Welcome back!`,
       });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Login failed";
@@ -194,15 +248,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = async () => {
     setState(prev => ({ ...prev, isLoading: true }));
     try {
-      await authService.logout();
+      await supabase.auth.signOut();
 
-      setState({
-        user: null,
-        isAuthenticated: false,
-        isLoading: false,
-        error: null,
-        organizationCode: null
-      });
       toast({
         title: "Logged out",
         description: "You have been successfully logged out.",

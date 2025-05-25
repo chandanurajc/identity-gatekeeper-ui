@@ -47,7 +47,6 @@ export const authService = {
           organizationName: null
         };
         
-        localStorage.setItem("user", JSON.stringify(user));
         return user;
       }
 
@@ -73,9 +72,6 @@ export const authService = {
         organizationName: profile.organizations?.name || null
       };
 
-      localStorage.setItem("user", JSON.stringify(user));
-      localStorage.setItem("organizationCode", user.organizationCode || "");
-      
       return user;
     } catch (error) {
       console.error("Login failed:", error);
@@ -86,24 +82,20 @@ export const authService = {
   logout: async (): Promise<void> => {
     try {
       await supabase.auth.signOut();
-      localStorage.removeItem("user");
-      localStorage.removeItem("organizationCode");
     } catch (error) {
       console.error("Logout error:", error);
-      // Still clear local storage even if Supabase logout fails
-      localStorage.removeItem("user");
-      localStorage.removeItem("organizationCode");
       throw error;
     }
   },
 
   getCurrentUser: (): User | null => {
-    const userJson = localStorage.getItem("user");
-    return userJson ? JSON.parse(userJson) : null;
+    // This will be handled by the AuthContext through Supabase session
+    return null;
   },
 
   getCurrentOrganizationCode: (): string | null => {
-    return localStorage.getItem("organizationCode");
+    // This will be handled by the AuthContext
+    return null;
   },
   
   hasRole: (user: User | null, role: string): boolean => {
