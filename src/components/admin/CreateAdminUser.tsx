@@ -12,15 +12,15 @@ const CreateAdminUser = () => {
   const createAdminUser = async () => {
     setIsCreating(true);
     try {
-      // First, get the ADMIN organization ID
+      // First, get the ADMN organization ID (not ADMIN)
       const { data: adminOrg, error: orgError } = await supabase
         .from('organizations')
         .select('id')
-        .eq('code', 'ADMIN')
+        .eq('code', 'ADMN')
         .single();
 
       if (orgError || !adminOrg) {
-        throw new Error('ADMIN organization not found');
+        throw new Error('ADMN organization not found');
       }
 
       // Get the Admin-Role ID
@@ -36,7 +36,7 @@ const CreateAdminUser = () => {
 
       // Create the auth user
       const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        email: 'Admin@admin.com',
+        email: 'admin@admin.com',
         password: 'Password@admin',
         email_confirm: true,
         user_metadata: {
@@ -78,7 +78,7 @@ const CreateAdminUser = () => {
 
       toast({
         title: "Admin user created successfully",
-        description: "Admin@admin.com has been created with Admin-Role in ADMIN organization",
+        description: "admin@admin.com has been created with Admin-Role in ADMN organization",
       });
 
     } catch (error: any) {
@@ -98,7 +98,7 @@ const CreateAdminUser = () => {
       <CardHeader>
         <CardTitle>Create Admin User</CardTitle>
         <CardDescription>
-          Create an admin user with credentials: Admin@admin.com / Password@admin
+          Create an admin user with credentials: admin@admin.com / Password@admin
         </CardDescription>
       </CardHeader>
       <CardContent>
