@@ -23,6 +23,7 @@ import { Filter, Plus, Edit, ArrowUp, ArrowDown } from "lucide-react";
 const UsersList = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
   const [filters, setFilters] = useState<Record<string, string>>({});
   const [sortField, setSortField] = useState<string>("firstName");
@@ -30,16 +31,22 @@ const UsersList = () => {
   
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { canViewUsers, canCreateUsers, canEditUsers } = usePermissions();
+  const { canViewUsers, canCreateUsers, canEditUsers, isLoading: permissionsLoading } = usePermissions();
 
   // Fetch users function
   const fetchUsers = async () => {
+    console.log("Starting to fetch users...");
     try {
       setLoading(true);
+      setError(null);
+      console.log("Calling getAllUsers...");
       const data = await getAllUsers();
+      console.log("Users fetched successfully:", data.length);
       setUsers(data);
     } catch (error) {
       console.error("Error fetching users:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to fetch users";
+      setError(errorMessage);
       toast({
         variant: "destructive",
         title: "Error",
@@ -51,8 +58,12 @@ const UsersList = () => {
   };
 
   useEffect(() => {
-    fetchUsers();
-  }, []);
+    // Wait for permissions to load before fetching data
+    if (!permissionsLoading) {
+      console.log("Permissions loaded, fetching users...");
+      fetchUsers();
+    }
+  }, [permissionsLoading]);
 
   // Set up real-time subscription
   useEffect(() => {
@@ -148,16 +159,52 @@ const UsersList = () => {
     return 0;
   });
 
+  // Show loading state
+  if (loading || permissionsLoading) {
+    return (
+      <div className="container mx-auto py-8">
+        <Card>
+          <CardContent className="py-8">
+            <div className="flex items-center justify-center h-64">
+              <div className="text-lg">Loading users...</div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="container mx-auto py-8">
+        <Card>
+          <CardContent className="py-8">
+            <div className="text-center">
+              <p className="text-red-600 mb-4">Error: {error}</p>
+              <Button onClick={() => fetchUsers()}>
+                Retry
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Check permissions after loading
   if (!canViewUsers) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Access Denied</CardTitle>
-          <CardDescription>
-            You don't have permission to view this page.
-          </CardDescription>
-        </CardHeader>
-      </Card>
+      <div className="container mx-auto py-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>Access Denied</CardTitle>
+            <CardDescription>
+              You don't have permission to view this page.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
     );
   }
 
@@ -189,182 +236,174 @@ const UsersList = () => {
           </div>
         </CardHeader>
         <CardContent>
-          {loading ? (
-            <div className="flex justify-center p-6">
-              <p>Loading users...</p>
-            </div>
-          ) : (
+          <div className="mb-4 grid grid-cols-5 gap-4">
             <div>
-              <div className="mb-4 grid grid-cols-5 gap-4">
-                <div>
-                  <Input
-                    placeholder="Filter by username"
-                    onChange={(e) => handleFilterChange("username", e.target.value)}
-                    value={filters.username || ""}
-                  />
-                </div>
-                <div>
-                  <Input
-                    placeholder="Filter by first name"
-                    onChange={(e) => handleFilterChange("firstName", e.target.value)}
-                    value={filters.firstName || ""}
-                  />
-                </div>
-                <div>
-                  <Input
-                    placeholder="Filter by last name"
-                    onChange={(e) => handleFilterChange("lastName", e.target.value)}
-                    value={filters.lastName || ""}
-                  />
-                </div>
-                <div>
-                  <Input
-                    placeholder="Filter by designation"
-                    onChange={(e) => handleFilterChange("designation", e.target.value)}
-                    value={filters.designation || ""}
-                  />
-                </div>
-                <div>
-                  <Input
-                    placeholder="Filter by organization"
-                    onChange={(e) => handleFilterChange("organizationName", e.target.value)}
-                    value={filters.organizationName || ""}
-                  />
-                </div>
-              </div>
-              
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[50px]">
-                        <Checkbox
-                          checked={selectedUsers.size === users.length && users.length > 0}
-                          onCheckedChange={handleSelectAll}
-                        />
-                      </TableHead>
-                      <TableHead className="cursor-pointer" onClick={() => handleSort("username")}>
-                        <div className="flex items-center">
-                          Username
-                          {sortField === "username" && (
-                            sortDirection === "asc" ? <ArrowUp className="ml-1 h-4 w-4" /> : <ArrowDown className="ml-1 h-4 w-4" />
-                          )}
-                        </div>
-                      </TableHead>
-                      <TableHead className="cursor-pointer" onClick={() => handleSort("firstName")}>
-                        <div className="flex items-center">
-                          First Name
-                          {sortField === "firstName" && (
-                            sortDirection === "asc" ? <ArrowUp className="ml-1 h-4 w-4" /> : <ArrowDown className="ml-1 h-4 w-4" />
-                          )}
-                        </div>
-                      </TableHead>
-                      <TableHead className="cursor-pointer" onClick={() => handleSort("lastName")}>
-                        <div className="flex items-center">
-                          Last Name
-                          {sortField === "lastName" && (
-                            sortDirection === "asc" ? <ArrowUp className="ml-1 h-4 w-4" /> : <ArrowDown className="ml-1 h-4 w-4" />
-                          )}
-                        </div>
-                      </TableHead>
-                      <TableHead className="cursor-pointer" onClick={() => handleSort("designation")}>
-                        <div className="flex items-center">
-                          Designation
-                          {sortField === "designation" && (
-                            sortDirection === "asc" ? <ArrowUp className="ml-1 h-4 w-4" /> : <ArrowDown className="ml-1 h-4 w-4" />
-                          )}
-                        </div>
-                      </TableHead>
-                      <TableHead className="cursor-pointer" onClick={() => handleSort("organizationName")}>
-                        <div className="flex items-center">
-                          Organization
-                          {sortField === "organizationName" && (
-                            sortDirection === "asc" ? <ArrowUp className="ml-1 h-4 w-4" /> : <ArrowDown className="ml-1 h-4 w-4" />
-                          )}
-                        </div>
-                      </TableHead>
-                      <TableHead className="cursor-pointer" onClick={() => handleSort("createdBy")}>
-                        <div className="flex items-center">
-                          Created By
-                          {sortField === "createdBy" && (
-                            sortDirection === "asc" ? <ArrowUp className="ml-1 h-4 w-4" /> : <ArrowDown className="ml-1 h-4 w-4" />
-                          )}
-                        </div>
-                      </TableHead>
-                      <TableHead className="cursor-pointer" onClick={() => handleSort("createdOn")}>
-                        <div className="flex items-center">
-                          Created On
-                          {sortField === "createdOn" && (
-                            sortDirection === "asc" ? <ArrowUp className="ml-1 h-4 w-4" /> : <ArrowDown className="ml-1 h-4 w-4" />
-                          )}
-                        </div>
-                      </TableHead>
-                      <TableHead className="cursor-pointer" onClick={() => handleSort("updatedBy")}>
-                        <div className="flex items-center">
-                          Updated By
-                          {sortField === "updatedBy" && (
-                            sortDirection === "asc" ? <ArrowUp className="ml-1 h-4 w-4" /> : <ArrowDown className="ml-1 h-4 w-4" />
-                          )}
-                        </div>
-                      </TableHead>
-                      <TableHead className="cursor-pointer" onClick={() => handleSort("updatedOn")}>
-                        <div className="flex items-center">
-                          Updated On
-                          {sortField === "updatedOn" && (
-                            sortDirection === "asc" ? <ArrowUp className="ml-1 h-4 w-4" /> : <ArrowDown className="ml-1 h-4 w-4" />
-                          )}
-                        </div>
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {sortedUsers.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={10} className="text-center">
-                          No users found
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      sortedUsers.map((user) => (
-                        <TableRow key={user.id}>
-                          <TableCell>
-                            <Checkbox
-                              checked={selectedUsers.has(user.id)}
-                              onCheckedChange={() => handleRowSelect(user.id)}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            {canViewUsers ? (
-                              <button
-                                onClick={() => handleViewUser(user.id)}
-                                className="text-blue-600 hover:underline focus:outline-none"
-                              >
-                                {user.username}
-                              </button>
-                            ) : (
-                              user.username
-                            )}
-                          </TableCell>
-                          <TableCell>{user.firstName}</TableCell>
-                          <TableCell>{user.lastName}</TableCell>
-                          <TableCell>{user.designation || "N/A"}</TableCell>
-                          <TableCell>{user.organizationName || "N/A"}</TableCell>
-                          <TableCell>{user.createdBy}</TableCell>
-                          <TableCell>{new Date(user.createdOn).toLocaleDateString()}</TableCell>
-                          <TableCell>{user.updatedBy || "N/A"}</TableCell>
-                          <TableCell>
-                            {user.updatedOn 
-                              ? new Date(user.updatedOn).toLocaleDateString() 
-                              : "N/A"}
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
+              <Input
+                placeholder="Filter by username"
+                onChange={(e) => handleFilterChange("username", e.target.value)}
+                value={filters.username || ""}
+              />
             </div>
-          )}
+            <div>
+              <Input
+                placeholder="Filter by first name"
+                onChange={(e) => handleFilterChange("firstName", e.target.value)}
+                value={filters.firstName || ""}
+              />
+            </div>
+            <div>
+              <Input
+                placeholder="Filter by last name"
+                onChange={(e) => handleFilterChange("lastName", e.target.value)}
+                value={filters.lastName || ""}
+              />
+            </div>
+            <div>
+              <Input
+                placeholder="Filter by designation"
+                onChange={(e) => handleFilterChange("designation", e.target.value)}
+                value={filters.designation || ""}
+              />
+            </div>
+            <div>
+              <Input
+                placeholder="Filter by organization"
+                onChange={(e) => handleFilterChange("organizationName", e.target.value)}
+                value={filters.organizationName || ""}
+              />
+            </div>
+          </div>
+          
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[50px]">
+                    <Checkbox
+                      checked={selectedUsers.size === users.length && users.length > 0}
+                      onCheckedChange={handleSelectAll}
+                    />
+                  </TableHead>
+                  <TableHead className="cursor-pointer" onClick={() => handleSort("username")}>
+                    <div className="flex items-center">
+                      Username
+                      {sortField === "username" && (
+                        sortDirection === "asc" ? <ArrowUp className="ml-1 h-4 w-4" /> : <ArrowDown className="ml-1 h-4 w-4" />
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead className="cursor-pointer" onClick={() => handleSort("firstName")}>
+                    <div className="flex items-center">
+                      First Name
+                      {sortField === "firstName" && (
+                        sortDirection === "asc" ? <ArrowUp className="ml-1 h-4 w-4" /> : <ArrowDown className="ml-1 h-4 w-4" />
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead className="cursor-pointer" onClick={() => handleSort("lastName")}>
+                    <div className="flex items-center">
+                      Last Name
+                      {sortField === "lastName" && (
+                        sortDirection === "asc" ? <ArrowUp className="ml-1 h-4 w-4" /> : <ArrowDown className="ml-1 h-4 w-4" />
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead className="cursor-pointer" onClick={() => handleSort("designation")}>
+                    <div className="flex items-center">
+                      Designation
+                      {sortField === "designation" && (
+                        sortDirection === "asc" ? <ArrowUp className="ml-1 h-4 w-4" /> : <ArrowDown className="ml-1 h-4 w-4" />
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead className="cursor-pointer" onClick={() => handleSort("organizationName")}>
+                    <div className="flex items-center">
+                      Organization
+                      {sortField === "organizationName" && (
+                        sortDirection === "asc" ? <ArrowUp className="ml-1 h-4 w-4" /> : <ArrowDown className="ml-1 h-4 w-4" />
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead className="cursor-pointer" onClick={() => handleSort("createdBy")}>
+                    <div className="flex items-center">
+                      Created By
+                      {sortField === "createdBy" && (
+                        sortDirection === "asc" ? <ArrowUp className="ml-1 h-4 w-4" /> : <ArrowDown className="ml-1 h-4 w-4" />
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead className="cursor-pointer" onClick={() => handleSort("createdOn")}>
+                    <div className="flex items-center">
+                      Created On
+                      {sortField === "createdOn" && (
+                        sortDirection === "asc" ? <ArrowUp className="ml-1 h-4 w-4" /> : <ArrowDown className="ml-1 h-4 w-4" />
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead className="cursor-pointer" onClick={() => handleSort("updatedBy")}>
+                    <div className="flex items-center">
+                      Updated By
+                      {sortField === "updatedBy" && (
+                        sortDirection === "asc" ? <ArrowUp className="ml-1 h-4 w-4" /> : <ArrowDown className="ml-1 h-4 w-4" />
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead className="cursor-pointer" onClick={() => handleSort("updatedOn")}>
+                    <div className="flex items-center">
+                      Updated On
+                      {sortField === "updatedOn" && (
+                        sortDirection === "asc" ? <ArrowUp className="ml-1 h-4 w-4" /> : <ArrowDown className="ml-1 h-4 w-4" />
+                      )}
+                    </div>
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {sortedUsers.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={10} className="text-center">
+                      No users found
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  sortedUsers.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedUsers.has(user.id)}
+                          onCheckedChange={() => handleRowSelect(user.id)}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        {canViewUsers ? (
+                          <button
+                            onClick={() => handleViewUser(user.id)}
+                            className="text-blue-600 hover:underline focus:outline-none"
+                          >
+                            {user.username}
+                          </button>
+                        ) : (
+                          user.username
+                        )}
+                      </TableCell>
+                      <TableCell>{user.firstName}</TableCell>
+                      <TableCell>{user.lastName}</TableCell>
+                      <TableCell>{user.designation || "N/A"}</TableCell>
+                      <TableCell>{user.organizationName || "N/A"}</TableCell>
+                      <TableCell>{user.createdBy}</TableCell>
+                      <TableCell>{new Date(user.createdOn).toLocaleDateString()}</TableCell>
+                      <TableCell>{user.updatedBy || "N/A"}</TableCell>
+                      <TableCell>
+                        {user.updatedOn 
+                          ? new Date(user.updatedOn).toLocaleDateString() 
+                          : "N/A"}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </div>
