@@ -1,10 +1,40 @@
 
-import { Organization, OrganizationFormData } from "@/types/organization";
+import { Organization, OrganizationFormData, Reference, Contact } from "@/types/organization";
 import { supabase } from "@/integrations/supabase/client";
+import { Json } from "@/integrations/supabase/types";
 
 const validateOrganizationCode = (code: string): boolean => {
   // Check if code is exactly 4 characters and alphanumeric
   return /^[A-Za-z0-9]{4}$/.test(code);
+};
+
+// Helper functions to safely convert Json to typed arrays
+const parseReferences = (data: Json | null): Reference[] => {
+  if (!data) return [];
+  if (Array.isArray(data)) {
+    return data.filter((item): item is Reference => 
+      typeof item === 'object' && 
+      item !== null && 
+      'id' in item && 
+      'type' in item && 
+      'value' in item
+    );
+  }
+  return [];
+};
+
+const parseContacts = (data: Json | null): Contact[] => {
+  if (!data) return [];
+  if (Array.isArray(data)) {
+    return data.filter((item): item is Contact => 
+      typeof item === 'object' && 
+      item !== null && 
+      'id' in item && 
+      'type' in item && 
+      'firstName' in item
+    );
+  }
+  return [];
 };
 
 export const organizationService = {
@@ -25,10 +55,10 @@ export const organizationService = {
         name: org.name,
         code: org.code,
         alias: org.description || "",
-        type: "Supplier", // Default type since not in DB schema
+        type: "Supplier" as const,
         status: org.status as "active" | "inactive",
-        references: Array.isArray(org.organization_references) ? org.organization_references : [],
-        contacts: Array.isArray(org.contacts) ? org.contacts : [],
+        references: parseReferences(org.organization_references),
+        contacts: parseContacts(org.contacts),
         createdBy: org.created_by || "System",
         createdOn: new Date(org.created_on),
         updatedBy: org.updated_by,
@@ -60,10 +90,10 @@ export const organizationService = {
         name: data.name,
         code: data.code,
         alias: data.description || "",
-        type: "Supplier", // Default type since not in DB schema
+        type: "Supplier" as const,
         status: data.status as "active" | "inactive",
-        references: Array.isArray(data.organization_references) ? data.organization_references : [],
-        contacts: Array.isArray(data.contacts) ? data.contacts : [],
+        references: parseReferences(data.organization_references),
+        contacts: parseContacts(data.contacts),
         createdBy: data.created_by || "System",
         createdOn: new Date(data.created_on),
         updatedBy: data.updated_by,
@@ -95,10 +125,10 @@ export const organizationService = {
         name: data.name,
         code: data.code,
         alias: data.description || "",
-        type: "Supplier", // Default type since not in DB schema
+        type: "Supplier" as const,
         status: data.status as "active" | "inactive",
-        references: Array.isArray(data.organization_references) ? data.organization_references : [],
-        contacts: Array.isArray(data.contacts) ? data.contacts : [],
+        references: parseReferences(data.organization_references),
+        contacts: parseContacts(data.contacts),
         createdBy: data.created_by || "System",
         createdOn: new Date(data.created_on),
         updatedBy: data.updated_by,
@@ -150,8 +180,8 @@ export const organizationService = {
           code: organization.code.toUpperCase(),
           description: organization.alias,
           status: organization.status,
-          contacts: organization.contacts,
-          organization_references: organization.references,
+          contacts: organization.contacts as Json,
+          organization_references: organization.references as Json,
           created_by: user?.id
         })
         .select()
@@ -167,10 +197,10 @@ export const organizationService = {
         name: data.name,
         code: data.code,
         alias: data.description || "",
-        type: "Supplier",
+        type: "Supplier" as const,
         status: data.status as "active" | "inactive",
-        references: Array.isArray(data.organization_references) ? data.organization_references : [],
-        contacts: Array.isArray(data.contacts) ? data.contacts : [],
+        references: parseReferences(data.organization_references),
+        contacts: parseContacts(data.contacts),
         createdBy: data.created_by || "System",
         createdOn: new Date(data.created_on),
       };
@@ -191,8 +221,8 @@ export const organizationService = {
           code: organizationData.code?.toUpperCase(),
           description: organizationData.alias,
           status: organizationData.status,
-          contacts: organizationData.contacts,
-          organization_references: organizationData.references,
+          contacts: organizationData.contacts as Json,
+          organization_references: organizationData.references as Json,
           updated_by: user?.id,
           updated_on: new Date().toISOString()
         })
@@ -210,10 +240,10 @@ export const organizationService = {
         name: data.name,
         code: data.code,
         alias: data.description || "",
-        type: "Supplier",
+        type: "Supplier" as const,
         status: data.status as "active" | "inactive",
-        references: Array.isArray(data.organization_references) ? data.organization_references : [],
-        contacts: Array.isArray(data.contacts) ? data.contacts : [],
+        references: parseReferences(data.organization_references),
+        contacts: parseContacts(data.contacts),
         createdBy: data.created_by || "System",
         createdOn: new Date(data.created_on),
         updatedBy: data.updated_by,
