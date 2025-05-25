@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -9,7 +10,6 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, Eye, EyeOff } from "lucide-react";
-import CreateAdminUser from "@/components/admin/CreateAdminUser";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -101,6 +101,13 @@ const LoginForm = () => {
                     </div>
                   )}
                   
+                  <div className="p-3 text-sm text-blue-600 bg-blue-50 border border-blue-200 rounded">
+                    <p className="font-medium">Demo Credentials:</p>
+                    <p>Email: admin@example.com | Password: admin123</p>
+                    <p>Email: user@example.com | Password: user123</p>
+                    <p>Email: chandanurajc@gmail.com | Password: PassPass@123</p>
+                  </div>
+                  
                   <FormField
                     control={loginForm.control}
                     name="email"
@@ -109,7 +116,7 @@ const LoginForm = () => {
                         <FormLabel>Email</FormLabel>
                         <FormControl>
                           <Input 
-                            placeholder="admin@admin.com" 
+                            placeholder="admin@example.com" 
                             {...field} 
                             disabled={isLoading}
                             className="bg-white"
@@ -317,7 +324,9 @@ const LoginForm = () => {
         </CardContent>
       </Card>
 
-      <CreateAdminUser />
+      <div className="text-center text-sm text-gray-500">
+        <p>Mock authentication - no real account creation</p>
+      </div>
     </div>
   );
 };
