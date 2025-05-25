@@ -10,24 +10,27 @@ export const usePermissions = () => {
 
   console.log("=== usePermissions Hook Debug ===");
   console.log("Hook state:", {
-    user: user ? { id: user.id, roles: user.roles } : null,
+    userId: user?.id,
     isAuthenticated,
     permissions,
     loading
   });
+
+  // Use stable userId to prevent infinite loops
+  const userId = user?.id;
 
   useEffect(() => {
     const fetchPermissions = async () => {
       console.log("=== fetchPermissions called in usePermissions ===");
       setLoading(true);
       
-      if (user && user.id && isAuthenticated) {
+      if (userId && isAuthenticated) {
         try {
-          console.log("Fetching permissions for user:", user.id);
-          console.log("User roles:", user.roles);
+          console.log("Fetching permissions for user:", userId);
+          console.log("User roles:", user?.roles);
           
           // Check if user has admin role - admins should have all permissions
-          if (user.roles.includes("Admin-Role") || user.roles.includes("admin")) {
+          if (user?.roles.includes("Admin-Role") || user?.roles.includes("admin")) {
             console.log("User has admin role, granting all permissions");
             // Grant all possible permissions for admin users
             const allPermissions = [
@@ -43,7 +46,7 @@ export const usePermissions = () => {
           } else {
             console.log("Fetching specific permissions from database...");
             const startTime = Date.now();
-            const userPermissions = await getUserPermissions(user.id);
+            const userPermissions = await getUserPermissions(userId);
             const endTime = Date.now();
             console.log(`getUserPermissions completed in ${endTime - startTime}ms`);
             console.log("Fetched permissions:", userPermissions);
@@ -55,8 +58,7 @@ export const usePermissions = () => {
         }
       } else {
         console.log("No authenticated user, setting empty permissions");
-        console.log("User exists:", !!user);
-        console.log("User has ID:", user?.id);
+        console.log("User ID exists:", !!userId);
         console.log("Is authenticated:", isAuthenticated);
         setPermissions([]);
       }
@@ -67,7 +69,7 @@ export const usePermissions = () => {
 
     console.log("=== usePermissions useEffect triggered ===");
     fetchPermissions();
-  }, [user?.id, isAuthenticated]); // Only depend on user ID and auth status
+  }, [userId, isAuthenticated, user?.roles]); // Use stable userId instead of user?.id
 
   // Stabilize hasPermission function with useCallback
   const hasPermission = useCallback((permissionName: string): boolean => {

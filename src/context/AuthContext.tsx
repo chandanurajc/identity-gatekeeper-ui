@@ -1,5 +1,4 @@
-
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -41,7 +40,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   });
   const { toast } = useToast();
 
-  const fetchUserData = async (userId: string): Promise<AuthUser | null> => {
+  // Use useCallback to memoize fetchUserData and prevent unnecessary recreations
+  const fetchUserData = useCallback(async (userId: string): Promise<AuthUser | null> => {
     try {
       // Fetch user profile from profiles table
       const { data: profile, error: profileError } = await supabase
@@ -87,7 +87,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.error("Error fetching user data:", error);
       return null;
     }
-  };
+  }, []);
 
   useEffect(() => {
     // Set up Supabase auth state listener
@@ -96,35 +96,40 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.log("Auth state changed:", event, session?.user?.email);
         
         if (event === 'SIGNED_IN' && session?.user) {
-          const userData = await fetchUserData(session.user.id);
-          
-          if (userData) {
-            setState({
-              user: userData,
-              isAuthenticated: true,
-              isLoading: false,
-              error: null,
-              organizationCode: userData.organizationCode || null
-            });
-          } else {
-            // Fallback user object if profile fetch fails
-            const fallbackUser: AuthUser = {
-              id: session.user.id,
-              email: session.user.email || "",
-              name: session.user.user_metadata?.first_name || session.user.email,
-              roles: ["user"],
-              organizationCode: null,
-              organizationName: null
-            };
+          // Use setTimeout to prevent blocking the auth state change
+          setTimeout(async () => {
+            const userData = await fetchUserData(session.user.id);
             
-            setState({
-              user: fallbackUser,
-              isAuthenticated: true,
-              isLoading: false,
-              error: null,
-              organizationCode: null
-            });
-          }
+            if (userData) {
+              setState(prev => ({
+                ...prev,
+                user: userData,
+                isAuthenticated: true,
+                isLoading: false,
+                error: null,
+                organizationCode: userData.organizationCode || null
+              }));
+            } else {
+              // Fallback user object if profile fetch fails
+              const fallbackUser: AuthUser = {
+                id: session.user.id,
+                email: session.user.email || "",
+                name: session.user.user_metadata?.first_name || session.user.email,
+                roles: ["user"],
+                organizationCode: null,
+                organizationName: null
+              };
+              
+              setState(prev => ({
+                ...prev,
+                user: fallbackUser,
+                isAuthenticated: true,
+                isLoading: false,
+                error: null,
+                organizationCode: null
+              }));
+            }
+          }, 0);
         } else if (event === 'SIGNED_OUT') {
           setState({
             user: null,
@@ -163,7 +168,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [fetchUserData]);
 
   const login = async (email: string, password: string) => {
     setState(prev => ({ ...prev, isLoading: true, error: null }));
