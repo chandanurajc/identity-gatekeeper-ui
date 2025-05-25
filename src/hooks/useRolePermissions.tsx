@@ -19,8 +19,8 @@ export const useRolePermissions = () => {
           setPermissions(allPermissions);
         } else {
           // For non-admin users, fetch their specific permissions
-          const viewUserPerm = await roleService.getPermissionsByComponent("Users");
-          setPermissions(viewUserPerm.filter(p => p.name === "view_users"));
+          const rolePermissions = await roleService.getPermissionsByComponent("Roles");
+          setPermissions(rolePermissions);
         }
       }
       setLoading(false);
@@ -46,7 +46,7 @@ export const useRolePermissions = () => {
     canCreateRole: hasPermission("create_role"),
     canEditRoles: hasPermission("edit_roles"),
     canViewRoles: hasPermission("view_roles"),
-    // New permission for viewing all system permissions
+    // Permission for viewing all system permissions
     canViewPermissions: hasPermission("view_permissions"),
   };
 };

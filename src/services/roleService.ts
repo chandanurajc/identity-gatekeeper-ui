@@ -36,9 +36,9 @@ export const roleService = {
         permissions: role.role_permissions?.map((rp: any) => rp.permissions).filter(Boolean) || [],
         organizationId: role.organization_id,
         organizationName: role.organizations?.name,
-        createdBy: role.created_by,
+        createdBy: role.created_by || "System",
         createdOn: role.created_on ? new Date(role.created_on) : undefined,
-        updatedBy: role.updated_by,
+        updatedBy: role.updated_by || undefined,
         updatedOn: role.updated_on ? new Date(role.updated_on) : undefined,
       })) || [];
     } catch (error) {
@@ -84,9 +84,9 @@ export const roleService = {
         permissions: role.role_permissions?.map((rp: any) => rp.permissions).filter(Boolean) || [],
         organizationId: role.organization_id,
         organizationName: role.organizations?.name,
-        createdBy: role.created_by,
+        createdBy: role.created_by || "System",
         createdOn: role.created_on ? new Date(role.created_on) : undefined,
-        updatedBy: role.updated_by,
+        updatedBy: role.updated_by || undefined,
         updatedOn: role.updated_on ? new Date(role.updated_on) : undefined,
       };
     } catch (error) {
@@ -97,7 +97,28 @@ export const roleService = {
 
   createRole: async (role: Omit<Role, "id" | "createdBy" | "createdOn">): Promise<Role> => {
     try {
+      console.log("Creating role with data:", role);
+      
+      // Get current user info for created_by field
       const { data: { user } } = await supabase.auth.getUser();
+      console.log("Current user for role creation:", user);
+      
+      if (!user) {
+        throw new Error("No authenticated user found");
+      }
+
+      // Get user profile to get the name
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('first_name, last_name, username')
+        .eq('id', user.id)
+        .single();
+
+      const createdByValue = profile 
+        ? `${profile.first_name} ${profile.last_name}`.trim() || profile.username
+        : user.email || "Unknown User";
+      
+      console.log("Created by value:", createdByValue);
       
       // Insert the role
       const { data: newRole, error: roleError } = await supabase
@@ -105,8 +126,8 @@ export const roleService = {
         .insert({
           name: role.name,
           description: role.description || "",
-          organization_id: role.organizationId,
-          created_by: user?.id
+          organization_id: role.organizationId || null,
+          created_by: createdByValue
         })
         .select()
         .single();
@@ -116,12 +137,16 @@ export const roleService = {
         throw roleError;
       }
 
+      console.log("Role created successfully:", newRole);
+
       // Insert role permissions
       if (role.permissions.length > 0) {
         const rolePermissions = role.permissions.map(permission => ({
           role_id: newRole.id,
           permission_id: permission.id
         }));
+
+        console.log("Inserting role permissions:", rolePermissions);
 
         const { error: permissionsError } = await supabase
           .from('role_permissions')
@@ -131,6 +156,8 @@ export const roleService = {
           console.error("Error creating role permissions:", permissionsError);
           throw permissionsError;
         }
+
+        console.log("Role permissions created successfully");
       }
 
       return {
@@ -139,7 +166,7 @@ export const roleService = {
         description: newRole.description || "",
         permissions: role.permissions,
         organizationId: newRole.organization_id,
-        createdBy: newRole.created_by,
+        createdBy: createdByValue,
         createdOn: new Date(newRole.created_on),
       };
     } catch (error) {
@@ -150,7 +177,25 @@ export const roleService = {
 
   updateRole: async (id: string, roleData: Partial<Role>): Promise<Role | undefined> => {
     try {
+      console.log("Updating role with ID:", id, "Data:", roleData);
+      
+      // Get current user info for updated_by field
       const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error("No authenticated user found");
+      }
+
+      // Get user profile to get the name
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('first_name, last_name, username')
+        .eq('id', user.id)
+        .single();
+
+      const updatedByValue = profile 
+        ? `${profile.first_name} ${profile.last_name}`.trim() || profile.username
+        : user.email || "Unknown User";
 
       // Update the role
       const { data: updatedRole, error: roleError } = await supabase
@@ -158,8 +203,8 @@ export const roleService = {
         .update({
           name: roleData.name,
           description: roleData.description || "",
-          organization_id: roleData.organizationId,
-          updated_by: user?.id,
+          organization_id: roleData.organizationId || null,
+          updated_by: updatedByValue,
           updated_on: new Date().toISOString()
         })
         .eq('id', id)
@@ -210,7 +255,7 @@ export const roleService = {
         organizationId: updatedRole.organization_id,
         createdBy: updatedRole.created_by,
         createdOn: new Date(updatedRole.created_on),
-        updatedBy: updatedRole.updated_by,
+        updatedBy: updatedByValue,
         updatedOn: new Date(updatedRole.updated_on),
       };
     } catch (error) {
