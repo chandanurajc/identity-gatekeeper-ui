@@ -271,7 +271,8 @@ function HeaderUserMenu() {
   );
 }
 
-export const MainLayout = ({ children }: MainLayoutProps) => {
+// Inner Layout Component that consumes sidebar context
+function MainLayoutInner({ children }: MainLayoutProps) {
   const { user } = useAuth();
   const { open, setOpen } = useSidebar();
   const sidebarRef = useRef<HTMLDivElement>(null);
@@ -296,47 +297,54 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
   }, [open, setOpen]);
 
   return (
-    <SidebarProvider defaultOpen={true}>
-      <div className="flex min-h-screen w-full">
-        <div ref={sidebarRef}>
-          <AppSidebar />
-        </div>
-        
-        <SidebarInset className="flex flex-col flex-1">
-          {/* Top Navigation Bar */}
-          <header className="flex h-14 items-center gap-4 border-b bg-background px-4 lg:px-6">
-            <SidebarTrigger>
-              <Menu className="h-5 w-5" />
-            </SidebarTrigger>
-            
-            {/* Search Bar */}
-            <div className="flex-1 max-w-md">
-              <div className="relative">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input 
-                  className="pl-8" 
-                  placeholder="Search..." 
-                />
-              </div>
-            </div>
-
-            {/* Organization context display */}
-            {user && (
-              <div className="text-sm text-muted-foreground hidden lg:block">
-                {user.organizationCode} - {user.organizationName}
-              </div>
-            )}
-
-            {/* User Menu */}
-            <HeaderUserMenu />
-          </header>
-
-          {/* Main Content */}
-          <main className="flex-1 p-6">
-            {children}
-          </main>
-        </SidebarInset>
+    <div className="flex min-h-screen w-full">
+      <div ref={sidebarRef}>
+        <AppSidebar />
       </div>
+      
+      <SidebarInset className="flex flex-col flex-1">
+        {/* Top Navigation Bar */}
+        <header className="flex h-14 items-center gap-4 border-b bg-background px-4 lg:px-6">
+          <SidebarTrigger>
+            <Menu className="h-5 w-5" />
+          </SidebarTrigger>
+          
+          {/* Search Bar */}
+          <div className="flex-1 max-w-md">
+            <div className="relative">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input 
+                className="pl-8" 
+                placeholder="Search..." 
+              />
+            </div>
+          </div>
+
+          {/* Organization context display */}
+          {user && (
+            <div className="text-sm text-muted-foreground hidden lg:block">
+              {user.organizationCode} - {user.organizationName}
+            </div>
+          )}
+
+          {/* User Menu */}
+          <HeaderUserMenu />
+        </header>
+
+        {/* Main Content */}
+        <main className="flex-1 p-6">
+          {children}
+        </main>
+      </SidebarInset>
+    </div>
+  );
+}
+
+// Main Layout wrapper that provides sidebar context
+export const MainLayout = ({ children }: MainLayoutProps) => {
+  return (
+    <SidebarProvider defaultOpen={true}>
+      <MainLayoutInner>{children}</MainLayoutInner>
     </SidebarProvider>
   );
 };
