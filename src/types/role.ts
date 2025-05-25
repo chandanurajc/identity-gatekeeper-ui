@@ -10,6 +10,7 @@ export interface Permission {
 export interface Role {
   id: string;
   name: string;
+  description?: string;
   permissions: Permission[];
   organizationId?: string;
   organizationName?: string;
@@ -21,6 +22,7 @@ export interface Role {
 
 export interface RoleFormData {
   name: string;
+  description?: string;
   permissions: Permission[];
   organizationId?: string;
 }
