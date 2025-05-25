@@ -36,7 +36,7 @@ const CreateAdminUser = () => {
             name: 'ADMN Organization',
             code: 'ADMN',
             status: 'active',
-            description: 'Administrative Organization',
+            description: 'Admin Organization',
             organization_references: [{"id": "ref-admin-1", "type": "GST", "value": "ADMIN123456789"}],
             contacts: [{
               "id": "contact-admin-1",
@@ -105,6 +105,36 @@ const CreateAdminUser = () => {
           throw new Error(`Failed to create Admin-Role: ${createRoleError.message}`);
         }
         adminRole = newRole;
+
+        // Assign all permissions to the Admin-Role
+        console.log("Fetching all permissions...");
+        const { data: allPermissions, error: permissionsError } = await supabase
+          .from('permissions')
+          .select('id');
+
+        if (permissionsError) {
+          console.error("Failed to fetch permissions:", permissionsError);
+          throw new Error(`Failed to fetch permissions: ${permissionsError.message}`);
+        }
+
+        if (allPermissions && allPermissions.length > 0) {
+          console.log(`Assigning ${allPermissions.length} permissions to Admin-Role...`);
+          const rolePermissions = allPermissions.map(permission => ({
+            role_id: adminRole.id,
+            permission_id: permission.id
+          }));
+
+          const { error: rolePermissionsError } = await supabase
+            .from('role_permissions')
+            .insert(rolePermissions);
+
+          if (rolePermissionsError) {
+            console.error("Failed to assign permissions to role:", rolePermissionsError);
+            throw new Error(`Failed to assign permissions to role: ${rolePermissionsError.message}`);
+          }
+
+          console.log("Successfully assigned all permissions to Admin-Role");
+        }
       }
 
       if (!adminRole) {
@@ -116,8 +146,8 @@ const CreateAdminUser = () => {
       // Create the auth user using admin.createUser
       console.log("Creating auth user...");
       const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        email: 'admin@admin.com',
-        password: 'Password@admin',
+        email: 'adminuser@admn.com',
+        password: 'Pass@admin123',
         email_confirm: true,
         user_metadata: {
           first_name: 'Admin',
@@ -169,7 +199,7 @@ const CreateAdminUser = () => {
 
       toast({
         title: "Admin user created successfully",
-        description: "admin@admin.com has been created with Admin-Role in ADMN organization",
+        description: "adminuser@admn.com has been created with Admin-Role (all permissions) in ADMN organization",
       });
 
     } catch (error: any) {
@@ -189,7 +219,7 @@ const CreateAdminUser = () => {
       <CardHeader>
         <CardTitle>Create Admin User</CardTitle>
         <CardDescription>
-          Create an admin user with credentials: admin@admin.com / Password@admin
+          Create ADMN organization and admin user with credentials: adminuser@admn.com / Pass@admin123
         </CardDescription>
       </CardHeader>
       <CardContent>
