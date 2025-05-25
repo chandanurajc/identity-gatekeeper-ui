@@ -26,6 +26,23 @@ const ProtectedRoute = ({
     return <Navigate to="/" replace />;
   }
 
+  // If no specific roles are required, just check authentication
+  if (requiredRoles.length === 0) {
+    return <>{children}</>;
+  }
+
+  // Check if user has admin role (multiple variations)
+  const isAdmin = user?.roles.some(role => 
+    role.toLowerCase().includes('admin') || 
+    role === 'Admin-Role' || 
+    role === 'admin'
+  );
+
+  // Admin users can access everything
+  if (isAdmin) {
+    return <>{children}</>;
+  }
+
   // Check if user has at least one of the required roles
   if (requiredRoles.length > 0 && !requiredRoles.some(role => hasRole(role))) {
     return <Navigate to="/unauthorized" replace />;

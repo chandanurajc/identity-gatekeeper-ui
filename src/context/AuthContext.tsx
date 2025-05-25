@@ -271,7 +271,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const hasRole = (role: string): boolean => {
     if (!state.user) return false;
-    return state.user.roles.includes(role);
+    
+    // Check for admin role variations
+    const isAdmin = state.user.roles.some(userRole => 
+      userRole.toLowerCase().includes('admin') || 
+      userRole === 'Admin-Role' || 
+      userRole === 'admin'
+    );
+    
+    // Admin users have all roles
+    if (isAdmin) return true;
+    
+    // Check for specific role (case-insensitive)
+    return state.user.roles.some(userRole => 
+      userRole.toLowerCase() === role.toLowerCase()
+    );
   };
 
   const getOrganizationCode = (): string | null => {
