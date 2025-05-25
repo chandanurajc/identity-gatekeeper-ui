@@ -26,7 +26,7 @@ export interface Organization {
   name: string;
   code: string;
   alias?: string;
-  type: 'Supplier' | 'Retailer' | 'Wholesale Customer' | 'Retail Customer';
+  type: 'Supplier' | 'Retailer' | 'Wholesale Customer' | 'Retail Customer' | 'Admin';
   status: 'active' | 'inactive';
   references: Reference[];
   contacts: Contact[];
@@ -40,7 +40,7 @@ export interface OrganizationFormData {
   name: string;
   code: string;
   alias?: string;
-  type: 'Supplier' | 'Retailer' | 'Wholesale Customer' | 'Retail Customer';
+  type: 'Supplier' | 'Retailer' | 'Wholesale Customer' | 'Retail Customer' | 'Admin';
   status: 'active' | 'inactive';
   references: Reference[];
   contacts: Contact[];

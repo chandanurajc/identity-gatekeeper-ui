@@ -9,41 +9,39 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/context/AuthContext";
-import ContactForm from "./ContactForm";
-import ReferenceForm from "./ReferenceForm";
+import { ContactForm } from "./ContactForm";
+import { ReferenceForm } from "./ReferenceForm";
 
 // Form schema with validation
 const organizationSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters"),
   code: z.string().length(4, "Code must be exactly 4 characters").regex(/^[A-Z0-9]+$/, "Code must be uppercase alphanumeric"),
-  status: z.enum(["active", "inactive", "pending"]),
-  website: z.string().url("Must be a valid URL").or(z.string().length(0)),
-  description: z.string().max(500, "Description cannot exceed 500 characters").optional(),
-  address: z.object({
-    street: z.string().min(3, "Street must be at least 3 characters"),
-    city: z.string().min(2, "City must be at least 2 characters"),
-    state: z.string().min(2, "State must be at least 2 characters"),
-    postalCode: z.string().min(5, "Postal code must be at least 5 characters"),
-    country: z.string().min(2, "Country must be at least 2 characters"),
-  }),
+  alias: z.string().optional(),
+  type: z.enum(["Supplier", "Retailer", "Wholesale Customer", "Retail Customer", "Admin"]),
+  status: z.enum(["active", "inactive"]),
   contacts: z.array(
     z.object({
-      name: z.string().min(2, "Name must be at least 2 characters"),
-      title: z.string().min(2, "Title must be at least 2 characters"),
-      email: z.string().email("Invalid email address"),
-      phone: z.string().min(10, "Phone must be at least 10 characters"),
-      isPrimary: z.boolean().default(false),
+      id: z.string(),
+      type: z.enum(["Registered location", "Billing", "Shipping", "Owner"]),
+      firstName: z.string().min(2, "First name must be at least 2 characters"),
+      lastName: z.string().optional(),
+      address1: z.string().optional(),
+      address2: z.string().optional(),
+      postalCode: z.string().optional(),
+      city: z.string().optional(),
+      state: z.string().optional(),
+      country: z.string().optional(),
+      phoneNumber: z.string().optional(),
+      email: z.string().email("Invalid email address").optional(),
+      website: z.string().optional(),
     })
   ).min(1, "At least one contact is required"),
   references: z.array(
     z.object({
-      name: z.string().min(2, "Name must be at least 2 characters"),
-      company: z.string().min(2, "Company must be at least 2 characters"),
-      email: z.string().email("Invalid email address").or(z.string().length(0)),
-      phone: z.string().min(10, "Phone must be at least 10 characters").or(z.string().length(0)),
-      relationship: z.string().min(2, "Relationship must be at least 2 characters"),
+      id: z.string(),
+      type: z.enum(["GST", "CIN", "PAN"]),
+      value: z.string().min(1, "Reference value is required"),
     })
   ).optional().default([]),
 });
@@ -63,21 +61,13 @@ const OrganizationForm = ({ initialData, onSubmit, isEditing = false }: Organiza
     resolver: zodResolver(organizationSchema),
     defaultValues: {
       name: initialData?.name || "",
-      // In edit mode or when creating, use the user's organization code
-      code: initialData?.code || user?.organizationCode || "",
+      code: initialData?.code || "",
+      alias: initialData?.alias || "",
+      type: initialData?.type || "Supplier",
       status: initialData?.status || "active",
-      website: initialData?.website || "",
-      description: initialData?.description || "",
-      address: initialData?.address || {
-        street: "",
-        city: "",
-        state: "",
-        postalCode: "",
-        country: "",
-      },
       contacts: initialData?.contacts && initialData.contacts.length > 0 
         ? initialData.contacts 
-        : [{ name: "", title: "", email: "", phone: "", isPrimary: true }],
+        : [],
       references: initialData?.references || [],
     },
   });
@@ -89,6 +79,14 @@ const OrganizationForm = ({ initialData, onSubmit, isEditing = false }: Organiza
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleContactsChange = (contacts: any[]) => {
+    form.setValue("contacts", contacts);
+  };
+
+  const handleReferencesChange = (references: any[]) => {
+    form.setValue("references", references);
   };
 
   return (
@@ -109,9 +107,69 @@ const OrganizationForm = ({ initialData, onSubmit, isEditing = false }: Organiza
             )}
           />
 
-          {/* Hide organization code field - it's handled automatically */}
-          <input type="hidden" {...form.register("code")} />
+          <FormField
+            control={form.control}
+            name="code"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Organization Code</FormLabel>
+                <FormControl>
+                  <Input 
+                    placeholder="Enter 4-character code (e.g., ADMN)" 
+                    {...field} 
+                    maxLength={4}
+                    style={{ textTransform: 'uppercase' }}
+                    onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
           
+          <FormField
+            control={form.control}
+            name="alias"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Alias</FormLabel>
+                <FormControl>
+                  <Input placeholder="Organization alias" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="type"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Organization Type</FormLabel>
+                <Select 
+                  disabled={isSubmitting} 
+                  onValueChange={field.onChange} 
+                  defaultValue={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select organization type" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="Supplier">Supplier</SelectItem>
+                    <SelectItem value="Retailer">Retailer</SelectItem>
+                    <SelectItem value="Wholesale Customer">Wholesale Customer</SelectItem>
+                    <SelectItem value="Retail Customer">Retail Customer</SelectItem>
+                    <SelectItem value="Admin">Admin</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
           <FormField
             control={form.control}
             name="status"
@@ -131,131 +189,33 @@ const OrganizationForm = ({ initialData, onSubmit, isEditing = false }: Organiza
                   <SelectContent>
                     <SelectItem value="active">Active</SelectItem>
                     <SelectItem value="inactive">Inactive</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
               </FormItem>
             )}
           />
-
-          <FormField
-            control={form.control}
-            name="website"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Website</FormLabel>
-                <FormControl>
-                  <Input placeholder="https://example.com" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
         </div>
-
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Description</FormLabel>
-              <FormControl>
-                <Textarea 
-                  placeholder="Brief description of the organization" 
-                  className="min-h-[100px]" 
-                  {...field} 
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
 
         <Separator />
         
         <div>
-          <h3 className="text-lg font-medium">Address Information</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-            <FormField
-              control={form.control}
-              name="address.street"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Street Address</FormLabel>
-                  <FormControl>
-                    <Input placeholder="123 Main St" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="address.city"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>City</FormLabel>
-                  <FormControl>
-                    <Input placeholder="City" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="address.state"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>State/Province</FormLabel>
-                  <FormControl>
-                    <Input placeholder="State" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="address.postalCode"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Postal Code</FormLabel>
-                  <FormControl>
-                    <Input placeholder="12345" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="address.country"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Country</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Country" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
+          <h3 className="text-lg font-medium mb-4">Contacts</h3>
+          <ContactForm 
+            contacts={form.watch("contacts")} 
+            onChange={handleContactsChange}
+          />
         </div>
-
-        <Separator />
-        
-        <ContactForm form={form} />
         
         <Separator />
         
-        <ReferenceForm form={form} />
+        <div>
+          <h3 className="text-lg font-medium mb-4">References</h3>
+          <ReferenceForm 
+            references={form.watch("references")} 
+            onChange={handleReferencesChange}
+          />
+        </div>
 
         <div className="flex justify-end space-x-4">
           <Button type="button" variant="outline" disabled={isSubmitting}>

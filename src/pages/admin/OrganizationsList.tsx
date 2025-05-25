@@ -32,8 +32,23 @@ const OrganizationsList = () => {
         return "bg-green-500";
       case "inactive":
         return "bg-red-500";
-      case "pending":
-        return "bg-yellow-500";
+      default:
+        return "bg-gray-500";
+    }
+  };
+
+  const getTypeColor = (type: string) => {
+    switch (type) {
+      case "Admin":
+        return "bg-purple-500";
+      case "Supplier":
+        return "bg-blue-500";
+      case "Retailer":
+        return "bg-orange-500";
+      case "Wholesale Customer":
+        return "bg-teal-500";
+      case "Retail Customer":
+        return "bg-pink-500";
       default:
         return "bg-gray-500";
     }
@@ -78,8 +93,8 @@ const OrganizationsList = () => {
           <TableHeader>
             <TableRow>
               <TableHead>Organization Name</TableHead>
+              <TableHead>Type</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Website</TableHead>
               <TableHead>Primary Contact</TableHead>
               <TableHead>Created By</TableHead>
               <TableHead>Created On</TableHead>
@@ -96,7 +111,7 @@ const OrganizationsList = () => {
               </TableRow>
             ) : (
               filteredOrganizations.map((org: Organization) => {
-                const primaryContact = org.contacts?.find(contact => contact.isPrimary);
+                const primaryContact = org.contacts?.find(contact => contact.type === 'Registered location') || org.contacts?.[0];
                 
                 return (
                   <TableRow key={org.id}>
@@ -113,34 +128,27 @@ const OrganizationsList = () => {
                       )}
                     </TableCell>
                     <TableCell>
+                      <Badge className={getTypeColor(org.type)}>
+                        {org.type}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
                       <Badge className={getStatusColor(org.status)}>
                         {org.status.charAt(0).toUpperCase() + org.status.slice(1)}
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      {org.website && (
-                        <a 
-                          href={org.website} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:text-blue-800"
-                        >
-                          Visit Website
-                        </a>
-                      )}
-                    </TableCell>
-                    <TableCell>
                       {primaryContact ? (
                         <div>
-                          <div>{primaryContact.name}</div>
+                          <div>{primaryContact.firstName} {primaryContact.lastName}</div>
                           <div className="text-xs text-muted-foreground">{primaryContact.email}</div>
                         </div>
                       ) : (
-                        <span className="text-muted-foreground">No primary contact</span>
+                        <span className="text-muted-foreground">No contact</span>
                       )}
                     </TableCell>
                     <TableCell>{org.createdBy}</TableCell>
-                    <TableCell>{new Date(org.createdAt).toLocaleDateString()}</TableCell>
+                    <TableCell>{new Date(org.createdOn || '').toLocaleDateString()}</TableCell>
                   </TableRow>
                 );
               })

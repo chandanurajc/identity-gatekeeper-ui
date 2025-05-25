@@ -2,8 +2,38 @@
 import { Organization, OrganizationFormData } from "@/types/organization";
 import { v4 as uuidv4 } from "uuid";
 
-// Mock data for organizations
+// Mock data for organizations - including the ADMN admin organization
 const mockOrganizations: Organization[] = [
+  {
+    id: "admin-org-1",
+    name: "ADMN Organization",
+    code: "ADMN",
+    alias: "Admin Org",
+    type: "Admin",
+    status: "active",
+    references: [
+      { id: "ref-admin-1", type: "GST", value: "ADMIN123456789" }
+    ],
+    contacts: [
+      {
+        id: "contact-admin-1",
+        type: "Registered location",
+        firstName: "System",
+        lastName: "Administrator",
+        address1: "Admin Office",
+        address2: "Main Building",
+        postalCode: "00000",
+        city: "Admin City",
+        state: "Admin State",
+        country: "Admin Country",
+        phoneNumber: "+1-000-000-0000",
+        email: "admin@system.com",
+        website: "www.admin.system"
+      }
+    ],
+    createdBy: "System",
+    createdOn: new Date("2024-01-01"),
+  },
   {
     id: "1",
     name: "ABC Corporation",
