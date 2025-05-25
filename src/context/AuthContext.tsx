@@ -2,6 +2,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { authService } from "@/services/authService";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AuthUser {
   id: string;
@@ -42,37 +43,72 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check for existing user session on app initialization
-    const initAuth = () => {
-      try {
-        console.log("Initializing auth...");
-        const currentUser = authService.getCurrentUser();
-        const orgCode = authService.getCurrentOrganizationCode();
+    // Set up Supabase auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log("Auth state changed:", event, session?.user?.email);
         
-        if (currentUser) {
-          console.log("Found existing session for:", currentUser.email);
+        if (event === 'SIGNED_IN' && session?.user) {
+          try {
+            // Get user data using auth service
+            const user = await authService.login({
+              email: session.user.email || "",
+              password: "" // Password not needed for existing session
+            });
+            
+            setState({
+              user,
+              isAuthenticated: true,
+              isLoading: false,
+              error: null,
+              organizationCode: user.organizationCode || null
+            });
+          } catch (error) {
+            console.error("Error setting up user session:", error);
+            setState(prev => ({
+              ...prev,
+              isLoading: false,
+              error: "Failed to load user data"
+            }));
+          }
+        } else if (event === 'SIGNED_OUT') {
           setState({
-            user: currentUser,
-            isAuthenticated: true,
+            user: null,
+            isAuthenticated: false,
             isLoading: false,
             error: null,
-            organizationCode: orgCode
+            organizationCode: null
           });
+        }
+      }
+    );
+
+    // Check for existing session
+    const checkSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          console.log("Found existing session for:", session.user.email);
+          // The onAuthStateChange will handle setting the user state
         } else {
           console.log("No existing session found");
           setState(prev => ({ ...prev, isLoading: false }));
         }
       } catch (error) {
-        console.error('Auth initialization error:', error);
+        console.error('Error checking session:', error);
         setState(prev => ({ 
           ...prev, 
           isLoading: false, 
-          error: 'Failed to initialize authentication' 
+          error: 'Failed to check authentication status' 
         }));
       }
     };
 
-    initAuth();
+    checkSession();
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const login = async (email: string, password: string) => {
@@ -116,12 +152,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signup = async (email: string, password: string, firstName?: string, lastName?: string) => {
     setState(prev => ({ ...prev, isLoading: true, error: null }));
     try {
-      // Mock signup - in a real app this would create a new user
-      console.log("Mock signup for:", email);
+      console.log("Attempting signup for:", email);
       
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            first_name: firstName || "User",
+            last_name: lastName || "Name"
+          }
+        }
+      });
+
+      if (error) {
+        throw error;
+      }
+
       toast({
         title: "Signup successful",
-        description: "Account created successfully. You can now log in.",
+        description: "Please check your email to confirm your account.",
       });
 
       setState(prev => ({ ...prev, isLoading: false }));
