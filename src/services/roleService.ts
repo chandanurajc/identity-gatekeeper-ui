@@ -1,4 +1,3 @@
-
 import { Permission, Role } from "@/types/role";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -33,6 +32,7 @@ export const roleService = {
       return roles?.map(role => ({
         id: role.id,
         name: role.name,
+        description: role.description || "",
         permissions: role.role_permissions?.map((rp: any) => rp.permissions).filter(Boolean) || [],
         organizationId: role.organization_id,
         organizationName: role.organizations?.name,
@@ -80,6 +80,7 @@ export const roleService = {
       return {
         id: role.id,
         name: role.name,
+        description: role.description || "",
         permissions: role.role_permissions?.map((rp: any) => rp.permissions).filter(Boolean) || [],
         organizationId: role.organization_id,
         organizationName: role.organizations?.name,
@@ -103,7 +104,7 @@ export const roleService = {
         .from('roles')
         .insert({
           name: role.name,
-          description: role.description,
+          description: role.description || "",
           organization_id: role.organizationId,
           created_by: user?.id
         })
@@ -135,6 +136,7 @@ export const roleService = {
       return {
         id: newRole.id,
         name: newRole.name,
+        description: newRole.description || "",
         permissions: role.permissions,
         organizationId: newRole.organization_id,
         createdBy: newRole.created_by,
@@ -155,7 +157,7 @@ export const roleService = {
         .from('roles')
         .update({
           name: roleData.name,
-          description: roleData.description,
+          description: roleData.description || "",
           organization_id: roleData.organizationId,
           updated_by: user?.id,
           updated_on: new Date().toISOString()
@@ -203,6 +205,7 @@ export const roleService = {
       return {
         id: updatedRole.id,
         name: updatedRole.name,
+        description: updatedRole.description || "",
         permissions: roleData.permissions || [],
         organizationId: updatedRole.organization_id,
         createdBy: updatedRole.created_by,
