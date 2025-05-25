@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -33,14 +34,8 @@ const UsersList = () => {
   const { toast } = useToast();
   const { canViewUsers, canCreateUsers, canEditUsers, isLoading: permissionsLoading } = usePermissions();
 
-  console.log("=== UsersList Component Debug ===");
-  console.log("Component rendered with state:", {
-    loading,
-    permissionsLoading,
-    canViewUsers,
-    usersCount: users.length,
-    error
-  });
+  console.log("=== UsersList Component Render ===");
+  console.log("State:", { loading, permissionsLoading, canViewUsers, usersCount: users.length });
 
   // Fetch users function
   const fetchUsers = async () => {
@@ -48,20 +43,15 @@ const UsersList = () => {
     try {
       setLoading(true);
       setError(null);
-      console.log("About to call getAllUsers service...");
       
       const startTime = Date.now();
       const data = await getAllUsers();
       const endTime = Date.now();
       
       console.log(`getAllUsers completed in ${endTime - startTime}ms`);
-      console.log("Users data received:", {
-        count: data?.length || 0,
-        firstUser: data?.[0] || null
-      });
+      console.log("Users data received:", { count: data?.length || 0 });
       
       setUsers(data || []);
-      console.log("Users state updated successfully");
     } catch (error) {
       console.error("=== Error in fetchUsers ===", error);
       const errorMessage = error instanceof Error ? error.message : "Failed to fetch users";
@@ -72,24 +62,23 @@ const UsersList = () => {
         description: "Failed to fetch users. Please try again later."
       });
     } finally {
-      console.log("Setting loading to false");
       setLoading(false);
     }
   };
 
+  // Initial data fetch - only when permissions are loaded and user can view
   useEffect(() => {
-    console.log("=== Main useEffect triggered ===");
-    console.log("Permissions loading state:", permissionsLoading);
-    console.log("Can view users:", canViewUsers);
+    console.log("=== Initial useEffect triggered ===");
+    console.log("Permissions loading:", permissionsLoading, "Can view users:", canViewUsers);
     
-    // Wait for permissions to load before fetching data
-    if (!permissionsLoading) {
-      console.log("Permissions loaded, proceeding with fetchUsers...");
+    if (!permissionsLoading && canViewUsers) {
+      console.log("Fetching users...");
       fetchUsers();
-    } else {
-      console.log("Still waiting for permissions to load...");
+    } else if (!permissionsLoading && !canViewUsers) {
+      console.log("User cannot view users, stopping loading");
+      setLoading(false);
     }
-  }, [permissionsLoading]);
+  }, [permissionsLoading, canViewUsers]); // Only depend on permission loading state and permission result
 
   // Set up real-time subscription
   useEffect(() => {
@@ -105,8 +94,10 @@ const UsersList = () => {
         },
         (payload) => {
           console.log('Real-time change detected:', payload);
-          // Refetch users when any change occurs
-          fetchUsers();
+          // Only refetch if we have permission to view users
+          if (canViewUsers && !permissionsLoading) {
+            fetchUsers();
+          }
         }
       )
       .subscribe();
@@ -115,7 +106,7 @@ const UsersList = () => {
       console.log("=== Cleaning up real-time subscription ===");
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [canViewUsers, permissionsLoading]); // Depend on permissions to avoid unnecessary subscriptions
 
   const handleRowSelect = (userId: string) => {
     const newSelectedUsers = new Set(selectedUsers);
@@ -188,28 +179,18 @@ const UsersList = () => {
   });
 
   console.log("=== Render decision ===");
-  console.log("loading:", loading);
-  console.log("permissionsLoading:", permissionsLoading);
-  console.log("canViewUsers:", canViewUsers);
-  console.log("error:", error);
+  console.log("loading:", loading, "permissionsLoading:", permissionsLoading, "canViewUsers:", canViewUsers);
 
-  // Show loading state with more details
+  // Show loading state
   if (loading || permissionsLoading) {
-    console.log("=== Rendering loading state ===");
     return (
       <div className="container mx-auto py-8">
         <Card>
           <CardContent className="py-8">
             <div className="flex items-center justify-center h-64">
               <div className="text-lg">
-                Loading users... 
-                {permissionsLoading && " (checking permissions)"}
-                {loading && !permissionsLoading && " (fetching data)"}
+                {permissionsLoading ? "Checking permissions..." : "Loading users..."}
               </div>
-            </div>
-            <div className="text-center text-sm text-gray-500 mt-4">
-              Debug: permissions loading = {permissionsLoading.toString()}, 
-              data loading = {loading.toString()}
             </div>
           </CardContent>
         </Card>
@@ -219,7 +200,6 @@ const UsersList = () => {
 
   // Show error state
   if (error) {
-    console.log("=== Rendering error state ===");
     return (
       <div className="container mx-auto py-8">
         <Card>
@@ -238,7 +218,6 @@ const UsersList = () => {
 
   // Check permissions after loading
   if (!canViewUsers) {
-    console.log("=== Rendering access denied state ===");
     return (
       <div className="container mx-auto py-8">
         <Card>
@@ -253,16 +232,13 @@ const UsersList = () => {
     );
   }
 
-  console.log("=== Rendering main content ===");
-  console.log("Users to display:", sortedUsers.length);
-
   return (
     <div className="container mx-auto py-8">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <div>
             <CardTitle className="text-2xl font-bold">Users Management</CardTitle>
-            <CardDescription>Manage user accounts and permissions (Real-time enabled)</CardDescription>
+            <CardDescription>Manage user accounts and permissions</CardDescription>
           </div>
           <div className="flex space-x-2">
             {canCreateUsers && (
