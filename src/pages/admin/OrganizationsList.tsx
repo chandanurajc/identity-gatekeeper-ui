@@ -47,8 +47,10 @@ const OrganizationsList = () => {
     }
   };
 
-  const handleEditClick = (organizationId: string) => {
-    navigate(`/admin/organizations/edit/${organizationId}`);
+  const handleEditClick = () => {
+    if (selectedOrganizations.length === 1) {
+      navigate(`/admin/organizations/edit/${selectedOrganizations[0]}`);
+    }
   };
   
   if (error) {
@@ -64,6 +66,12 @@ const OrganizationsList = () => {
         </div>
         
         <div className="flex gap-2">
+          {canEditOrganization && selectedOrganizations.length === 1 && (
+            <Button variant="outline" onClick={handleEditClick}>
+              <Edit className="mr-2 h-4 w-4" />
+              Edit
+            </Button>
+          )}
           {selectedOrganizations.length > 1 && (
             <Button variant="outline" disabled>
               <Edit className="mr-2 h-4 w-4" />
@@ -107,17 +115,16 @@ const OrganizationsList = () => {
               <TableHead>Created On</TableHead>
               <TableHead>Updated By</TableHead>
               <TableHead>Updated On</TableHead>
-              <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={10} className="text-center">Loading...</TableCell>
+                <TableCell colSpan={9} className="text-center">Loading...</TableCell>
               </TableRow>
             ) : filteredOrganizations.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={10} className="text-center">No organizations found</TableCell>
+                <TableCell colSpan={9} className="text-center">No organizations found</TableCell>
               </TableRow>
             ) : (
               filteredOrganizations.map((org: Organization) => {
@@ -159,17 +166,6 @@ const OrganizationsList = () => {
                     <TableCell>{new Date(org.createdOn || '').toLocaleDateString()}</TableCell>
                     <TableCell>{org.updatedBy || '-'}</TableCell>
                     <TableCell>{org.updatedOn ? new Date(org.updatedOn).toLocaleDateString() : '-'}</TableCell>
-                    <TableCell>
-                      {canEditOrganization && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleEditClick(org.id)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </TableCell>
                   </TableRow>
                 );
               })
