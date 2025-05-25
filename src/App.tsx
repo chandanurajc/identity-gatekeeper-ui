@@ -20,6 +20,10 @@ import OrganizationsList from "./pages/admin/OrganizationsList";
 import OrganizationCreate from "./pages/admin/OrganizationCreate";
 import OrganizationEdit from "./pages/admin/OrganizationEdit";
 import OrganizationDetail from "./pages/admin/OrganizationDetail";
+import DivisionsList from "./pages/admin/DivisionsList";
+import DivisionCreate from "./pages/admin/DivisionCreate";
+import DivisionEdit from "./pages/admin/DivisionEdit";
+import DivisionDetail from "./pages/admin/DivisionDetail";
 import Settings from "./pages/Settings";
 import PermissionsList from "./pages/admin/PermissionsList";
 import CategoriesList from "./pages/inventory/CategoriesList";
@@ -176,6 +180,48 @@ const App = () => (
                 <ProtectedRoute requiredRoles={["admin"]}>
                   <MainLayout>
                     <OrganizationDetail />
+                  </MainLayout>
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Division Management Routes */}
+            <Route 
+              path="/admin/divisions" 
+              element={
+                <ProtectedRoute requiredRoles={["admin"]}>
+                  <MainLayout>
+                    <DivisionsList />
+                  </MainLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/divisions/create" 
+              element={
+                <ProtectedRoute requiredRoles={["admin"]}>
+                  <MainLayout>
+                    <DivisionCreate />
+                  </MainLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/divisions/edit/:divisionId" 
+              element={
+                <ProtectedRoute requiredRoles={["admin"]}>
+                  <MainLayout>
+                    <DivisionEdit />
+                  </MainLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/divisions/:divisionId" 
+              element={
+                <ProtectedRoute requiredRoles={["admin"]}>
+                  <MainLayout>
+                    <DivisionDetail />
                   </MainLayout>
                 </ProtectedRoute>
               } 

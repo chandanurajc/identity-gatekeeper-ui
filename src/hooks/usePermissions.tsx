@@ -1,3 +1,4 @@
+
 import { useAuth } from "@/context/AuthContext";
 import { getUserPermissions } from "@/services/userService";
 
@@ -26,6 +27,11 @@ export const usePermissions = () => {
     canViewOrganization: hasPermission("view-organization"),
     canCreateOrganization: hasPermission("create-organization"),
     canEditOrganization: hasPermission("edit-organization"),
+    
+    // Division permissions
+    canViewDivision: hasPermission("view-division"),
+    canCreateDivision: hasPermission("create-division"),
+    canEditDivision: hasPermission("edit-division"),
     
     // For checking any permission dynamically
     checkPermission: hasPermission,

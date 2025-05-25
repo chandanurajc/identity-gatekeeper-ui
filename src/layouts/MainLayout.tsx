@@ -29,12 +29,14 @@ import {
   Menu,
   Search,
   LogOut,
-  Building
+  Building,
+  GitBranch
 } from "lucide-react";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useRolePermissions } from "@/hooks/useRolePermissions";
 import { useCategoryPermissions } from "@/hooks/useCategoryPermissions";
 import { useOrganizationPermissions } from "@/hooks/useOrganizationPermissions";
+import { useDivisionPermissions } from "@/hooks/useDivisionPermissions";
 import { Button } from "@/components/ui/button";
 import { 
   Collapsible, 
@@ -64,6 +66,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
   const { canViewRoles, canViewPermissions } = useRolePermissions();
   const { canViewCategory, canAccessInventory } = useCategoryPermissions();
   const { canViewOrganization } = useOrganizationPermissions();
+  const { canViewDivision } = useDivisionPermissions();
   const [openGroup, setOpenGroup] = useState<string | null>(null);
   
   // Group menu items by module
@@ -107,6 +110,12 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
           label: "Organization Management",
           icon: Building,
           permission: canViewOrganization
+        },
+        {
+          path: "/admin/divisions",
+          label: "Division Management",
+          icon: GitBranch,
+          permission: canViewDivision
         }
       ]
     },
