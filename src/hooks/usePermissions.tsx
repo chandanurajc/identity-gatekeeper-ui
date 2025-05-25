@@ -1,7 +1,7 @@
 
 import { useAuth } from "@/context/AuthContext";
 import { getUserPermissions } from "@/services/userService";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 export const usePermissions = () => {
   const { user, isAuthenticated } = useAuth();
@@ -67,9 +67,10 @@ export const usePermissions = () => {
 
     console.log("=== usePermissions useEffect triggered ===");
     fetchPermissions();
-  }, [user, isAuthenticated]);
+  }, [user?.id, isAuthenticated]); // Only depend on user ID and auth status
 
-  const hasPermission = (permissionName: string): boolean => {
+  // Stabilize hasPermission function with useCallback
+  const hasPermission = useCallback((permissionName: string): boolean => {
     console.log(`=== Checking permission: ${permissionName} ===`);
     console.log("Current state:", { user: !!user, isAuthenticated, permissions });
     
@@ -87,38 +88,50 @@ export const usePermissions = () => {
     const hasPermission = permissions.includes(permissionName);
     console.log(`Permission ${permissionName}: ${hasPermission}`);
     return hasPermission;
-  };
+  }, [user, isAuthenticated, permissions]);
+
+  // Memoize permission values to prevent unnecessary re-renders
+  const canViewUsers = hasPermission("view-user");
+  const canCreateUsers = hasPermission("create-user");
+  const canEditUsers = hasPermission("edit-user");
+  const canAccessAdminModule = hasPermission("access_admin");
+  const canAccessSettingsModule = hasPermission("access_settings");
+  const canViewOrganization = hasPermission("view-organization");
+  const canCreateOrganization = hasPermission("create-organization");
+  const canEditOrganization = hasPermission("edit-organization");
+  const canViewDivision = hasPermission("view-division");
+  const canCreateDivision = hasPermission("create-division");
+  const canEditDivision = hasPermission("edit-division");
 
   console.log("=== usePermissions returning ===");
   console.log("Final state:", {
-    hasPermission: hasPermission.toString(),
     isLoading: loading,
-    canViewUsers: hasPermission("view-user"),
-    canCreateUsers: hasPermission("create-user"),
-    canEditUsers: hasPermission("edit-user")
+    canViewUsers,
+    canCreateUsers,
+    canEditUsers
   });
 
   return {
     hasPermission,
     isLoading: loading,
     // User Management permissions
-    canViewUsers: hasPermission("view-user"),
-    canCreateUsers: hasPermission("create-user"),
-    canEditUsers: hasPermission("edit-user"),
+    canViewUsers,
+    canCreateUsers,
+    canEditUsers,
     
     // Module access permissions
-    canAccessAdminModule: hasPermission("access_admin"),
-    canAccessSettingsModule: hasPermission("access_settings"),
+    canAccessAdminModule,
+    canAccessSettingsModule,
     
     // Organization permissions
-    canViewOrganization: hasPermission("view-organization"),
-    canCreateOrganization: hasPermission("create-organization"),
-    canEditOrganization: hasPermission("edit-organization"),
+    canViewOrganization,
+    canCreateOrganization,
+    canEditOrganization,
     
     // Division permissions
-    canViewDivision: hasPermission("view-division"),
-    canCreateDivision: hasPermission("create-division"),
-    canEditDivision: hasPermission("edit-division"),
+    canViewDivision,
+    canCreateDivision,
+    canEditDivision,
     
     // For checking any permission dynamically
     checkPermission: hasPermission,
