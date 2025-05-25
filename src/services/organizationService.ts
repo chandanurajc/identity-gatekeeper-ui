@@ -43,7 +43,6 @@ export const organizationService = {
     try {
       console.log("OrganizationService: Starting getAllOrganizations...");
       
-      // Check authentication status
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       console.log("OrganizationService: Current user:", user?.id, "Auth error:", authError);
       
@@ -62,10 +61,6 @@ export const organizationService = {
 
       if (!data || data.length === 0) {
         console.log("OrganizationService: No organizations found in database");
-        console.log("OrganizationService: This could mean:");
-        console.log("1. No organizations have been created yet");
-        console.log("2. RLS policies are blocking access");
-        console.log("3. User doesn't have proper permissions");
         return [];
       }
 
@@ -198,76 +193,91 @@ export const organizationService = {
 
   createOrganization: async (organization: OrganizationFormData, createdBy: string): Promise<Organization> => {
     try {
-      console.log("OrganizationService: Creating organization:", organization);
-      console.log("OrganizationService: Created by:", createdBy);
+      console.log("=== OrganizationService: CREATE ORGANIZATION START ===");
+      console.log("OrganizationService: Input organization data:", JSON.stringify(organization, null, 2));
+      console.log("OrganizationService: Input createdBy:", createdBy);
       
+      // Get current authenticated user
       const { data: { user }, error: authError } = await supabase.auth.getUser();
-      console.log("OrganizationService: Current user for creation:", user);
-      console.log("OrganizationService: Auth error:", authError);
+      console.log("OrganizationService: Auth check - user:", user?.id);
+      console.log("OrganizationService: Auth check - error:", authError);
       
-      if (!user) {
-        throw new Error("User not authenticated");
+      if (!user?.id) {
+        console.error("OrganizationService: No authenticated user found");
+        throw new Error("User authentication required");
       }
 
       // Validate organization code format
       if (!validateOrganizationCode(organization.code)) {
+        console.error("OrganizationService: Invalid organization code format:", organization.code);
         throw new Error("Organization code must be exactly 4 alphanumeric characters");
       }
 
       // Check if code already exists
+      console.log("OrganizationService: Checking if code exists:", organization.code);
       const isCodeValid = await organizationService.validateOrganizationCode(organization.code);
       if (!isCodeValid) {
+        console.error("OrganizationService: Code already exists:", organization.code);
         throw new Error(`Organization code '${organization.code}' already exists`);
       }
 
-      console.log("OrganizationService: Validation passed, preparing insert data...");
+      console.log("OrganizationService: Validation passed, preparing insert...");
       
+      // Prepare insert data - ensure all fields match database schema exactly
       const insertData = {
-        name: organization.name,
-        code: organization.code.toUpperCase(),
-        description: organization.alias || null,
+        name: organization.name.trim(),
+        code: organization.code.toUpperCase().trim(),
+        description: organization.alias?.trim() || null,
         status: organization.status,
-        contacts: organization.contacts && organization.contacts.length > 0 ? JSON.parse(JSON.stringify(organization.contacts)) as Json : null,
-        organization_references: organization.references && organization.references.length > 0 ? JSON.parse(JSON.stringify(organization.references)) as Json : null,
-        created_by: user.id
+        contacts: organization.contacts && organization.contacts.length > 0 
+          ? JSON.parse(JSON.stringify(organization.contacts)) as Json 
+          : null,
+        organization_references: organization.references && organization.references.length > 0 
+          ? JSON.parse(JSON.stringify(organization.references)) as Json 
+          : null,
+        created_by: user.id, // This must be a valid UUID from auth.users
+        address: null // Explicitly set to null since it's not provided
       };
 
-      console.log("OrganizationService: Final insert data:", insertData);
-      console.log("OrganizationService: Insert data types:", {
-        name: typeof insertData.name,
-        code: typeof insertData.code,
-        description: typeof insertData.description,
-        status: typeof insertData.status,
-        contacts: typeof insertData.contacts,
-        organization_references: typeof insertData.organization_references,
-        created_by: typeof insertData.created_by
-      });
+      console.log("OrganizationService: Final insert data prepared:", JSON.stringify(insertData, null, 2));
+      console.log("OrganizationService: Data type validation:");
+      console.log("- name:", typeof insertData.name, "value:", insertData.name);
+      console.log("- code:", typeof insertData.code, "value:", insertData.code);
+      console.log("- description:", typeof insertData.description, "value:", insertData.description);
+      console.log("- status:", typeof insertData.status, "value:", insertData.status);
+      console.log("- created_by:", typeof insertData.created_by, "value:", insertData.created_by);
+      console.log("- contacts:", typeof insertData.contacts, "length:", Array.isArray(insertData.contacts) ? insertData.contacts.length : 'null');
+      console.log("- organization_references:", typeof insertData.organization_references, "length:", Array.isArray(insertData.organization_references) ? insertData.organization_references.length : 'null');
       
+      // Perform the insert
+      console.log("OrganizationService: Executing database insert...");
       const { data, error } = await supabase
         .from('organizations')
         .insert(insertData)
-        .select()
+        .select('*')
         .single();
 
-      console.log("OrganizationService: Insert response:", { data, error });
+      console.log("OrganizationService: Database response - data:", data);
+      console.log("OrganizationService: Database response - error:", error);
 
       if (error) {
-        console.error("OrganizationService: Insert error details:", {
-          message: error.message,
-          code: error.code,
-          details: error.details,
-          hint: error.hint
-        });
-        throw new Error(`Failed to create organization: ${error.message}`);
+        console.error("OrganizationService: Database insert failed:");
+        console.error("- Error message:", error.message);
+        console.error("- Error code:", error.code);
+        console.error("- Error details:", error.details);
+        console.error("- Error hint:", error.hint);
+        throw new Error(`Database error: ${error.message}`);
       }
 
       if (!data) {
-        throw new Error("No data returned after organization creation");
+        console.error("OrganizationService: No data returned from insert");
+        throw new Error("Organization created but no data returned");
       }
 
-      console.log("OrganizationService: Organization created successfully:", data);
+      console.log("OrganizationService: Insert successful, processing response...");
 
-      return {
+      // Convert database response to Organization type
+      const createdOrganization: Organization = {
         id: data.id,
         name: data.name,
         code: data.code,
@@ -278,9 +288,20 @@ export const organizationService = {
         contacts: parseContacts(data.contacts),
         createdBy: data.created_by || "System",
         createdOn: new Date(data.created_on),
+        updatedBy: data.updated_by,
+        updatedOn: data.updated_on ? new Date(data.updated_on) : undefined,
       };
+
+      console.log("OrganizationService: Final organization object:", JSON.stringify(createdOrganization, null, 2));
+      console.log("=== OrganizationService: CREATE ORGANIZATION SUCCESS ===");
+      
+      return createdOrganization;
     } catch (error) {
-      console.error("OrganizationService: Error in createOrganization:", error);
+      console.error("=== OrganizationService: CREATE ORGANIZATION ERROR ===");
+      console.error("OrganizationService: Error type:", typeof error);
+      console.error("OrganizationService: Error message:", error instanceof Error ? error.message : 'Unknown error');
+      console.error("OrganizationService: Error stack:", error instanceof Error ? error.stack : 'No stack');
+      console.error("OrganizationService: Full error object:", error);
       throw error;
     }
   },

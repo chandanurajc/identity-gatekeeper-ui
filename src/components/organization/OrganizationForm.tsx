@@ -13,11 +13,20 @@ import { useAuth } from "@/context/AuthContext";
 import { ContactForm } from "./ContactForm";
 import { ReferenceForm } from "./ReferenceForm";
 
-// Form schema with validation
+// Enhanced form schema with stricter validation
 const organizationSchema = z.object({
-  name: z.string().min(3, "Name must be at least 3 characters"),
-  code: z.string().length(4, "Code must be exactly 4 characters").regex(/^[A-Z0-9]+$/, "Code must be uppercase alphanumeric"),
-  alias: z.string().optional(),
+  name: z.string()
+    .min(3, "Name must be at least 3 characters")
+    .max(100, "Name must be less than 100 characters")
+    .trim(),
+  code: z.string()
+    .length(4, "Code must be exactly 4 characters")
+    .regex(/^[A-Z0-9]+$/, "Code must be uppercase alphanumeric")
+    .transform(val => val.toUpperCase()),
+  alias: z.string()
+    .max(200, "Alias must be less than 200 characters")
+    .optional()
+    .transform(val => val?.trim() || undefined),
   type: z.enum(["Supplier", "Retailer", "Wholesale Customer", "Retail Customer", "Admin"]),
   status: z.enum(["active", "inactive"]),
   contacts: z.array(
@@ -33,7 +42,7 @@ const organizationSchema = z.object({
       state: z.string().optional(),
       country: z.string().optional(),
       phoneNumber: z.string().optional(),
-      email: z.string().email("Invalid email address").optional(),
+      email: z.string().email("Invalid email address").optional().or(z.literal("")),
       website: z.string().optional(),
     })
   ).min(1, "At least one contact is required"),
@@ -73,20 +82,51 @@ const OrganizationForm = ({ initialData, onSubmit, isEditing = false }: Organiza
   });
 
   const handleSubmit = async (data: OrganizationFormData) => {
+    console.log("OrganizationForm: Form submission started");
+    console.log("OrganizationForm: Form data:", JSON.stringify(data, null, 2));
+    
     setIsSubmitting(true);
     try {
+      // Validate that we have a user
+      if (!user?.id) {
+        throw new Error("User must be authenticated to create organizations");
+      }
+
+      // Ensure contacts array is not empty
+      if (!data.contacts || data.contacts.length === 0) {
+        throw new Error("At least one contact is required");
+      }
+
+      // Validate organization code format
+      if (!/^[A-Z0-9]{4}$/.test(data.code)) {
+        throw new Error("Organization code must be exactly 4 uppercase alphanumeric characters");
+      }
+
+      console.log("OrganizationForm: Validation passed, calling onSubmit");
       await onSubmit(data);
+      console.log("OrganizationForm: onSubmit completed successfully");
+    } catch (error) {
+      console.error("OrganizationForm: Submission error:", error);
+      // Let the parent component handle the error display
+      throw error;
     } finally {
       setIsSubmitting(false);
+      console.log("OrganizationForm: Submission process completed");
     }
   };
 
   const handleContactsChange = (contacts: any[]) => {
+    console.log("OrganizationForm: Contacts changed:", contacts.length);
     form.setValue("contacts", contacts);
+    // Trigger validation
+    form.trigger("contacts");
   };
 
   const handleReferencesChange = (references: any[]) => {
+    console.log("OrganizationForm: References changed:", references.length);
     form.setValue("references", references);
+    // Trigger validation
+    form.trigger("references");
   };
 
   return (
@@ -98,9 +138,14 @@ const OrganizationForm = ({ initialData, onSubmit, isEditing = false }: Organiza
             name="name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Organization Name</FormLabel>
+                <FormLabel>Organization Name *</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter organization name" {...field} />
+                  <Input 
+                    placeholder="Enter organization name" 
+                    {...field} 
+                    disabled={isSubmitting}
+                    maxLength={100}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -112,14 +157,18 @@ const OrganizationForm = ({ initialData, onSubmit, isEditing = false }: Organiza
             name="code"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Organization Code</FormLabel>
+                <FormLabel>Organization Code *</FormLabel>
                 <FormControl>
                   <Input 
                     placeholder="Enter 4-character code (e.g., ADMN)" 
                     {...field} 
                     maxLength={4}
+                    disabled={isSubmitting}
                     style={{ textTransform: 'uppercase' }}
-                    onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                    onChange={(e) => {
+                      const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                      field.onChange(value);
+                    }}
                   />
                 </FormControl>
                 <FormMessage />
@@ -134,7 +183,12 @@ const OrganizationForm = ({ initialData, onSubmit, isEditing = false }: Organiza
               <FormItem>
                 <FormLabel>Alias</FormLabel>
                 <FormControl>
-                  <Input placeholder="Organization alias" {...field} />
+                  <Input 
+                    placeholder="Organization alias" 
+                    {...field} 
+                    disabled={isSubmitting}
+                    maxLength={200}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -146,11 +200,12 @@ const OrganizationForm = ({ initialData, onSubmit, isEditing = false }: Organiza
             name="type"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Organization Type</FormLabel>
+                <FormLabel>Organization Type *</FormLabel>
                 <Select 
                   disabled={isSubmitting} 
                   onValueChange={field.onChange} 
                   defaultValue={field.value}
+                  value={field.value}
                 >
                   <FormControl>
                     <SelectTrigger>
@@ -175,11 +230,12 @@ const OrganizationForm = ({ initialData, onSubmit, isEditing = false }: Organiza
             name="status"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Status</FormLabel>
+                <FormLabel>Status *</FormLabel>
                 <Select 
                   disabled={isSubmitting} 
                   onValueChange={field.onChange} 
                   defaultValue={field.value}
+                  value={field.value}
                 >
                   <FormControl>
                     <SelectTrigger>
@@ -200,11 +256,16 @@ const OrganizationForm = ({ initialData, onSubmit, isEditing = false }: Organiza
         <Separator />
         
         <div>
-          <h3 className="text-lg font-medium mb-4">Contacts</h3>
+          <h3 className="text-lg font-medium mb-4">Contacts *</h3>
           <ContactForm 
             contacts={form.watch("contacts")} 
             onChange={handleContactsChange}
           />
+          {form.formState.errors.contacts && (
+            <p className="text-sm font-medium text-destructive mt-2">
+              {form.formState.errors.contacts.message}
+            </p>
+          )}
         </div>
         
         <Separator />
