@@ -30,6 +30,9 @@ export function AppHeader() {
         </div>
       </div>
 
+      {/* Spacer to push user menu to the right */}
+      <div className="flex-1"></div>
+
       {/* Organization context display */}
       {user && (
         <div className="text-sm text-muted-foreground hidden lg:block">
@@ -37,7 +40,7 @@ export function AppHeader() {
         </div>
       )}
 
-      {/* User Menu */}
+      {/* User Menu - Right aligned */}
       <HeaderUserMenu />
     </header>
   );

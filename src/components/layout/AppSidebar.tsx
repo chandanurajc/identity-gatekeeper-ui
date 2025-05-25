@@ -147,14 +147,13 @@ export function AppSidebar() {
   };
 
   const handleMenuItemClick = () => {
-    // Close sidebar on mobile when menu item is clicked
     setOpen(false);
   };
 
   return (
     <Sidebar variant="sidebar" collapsible="icon">
-      <SidebarHeader className="border-b border-sidebar-border">
-        <div className="flex items-center justify-center px-2 py-2">
+      <SidebarHeader className="h-14 border-b border-sidebar-border flex items-center">
+        <div className="flex items-start justify-start px-2 py-2">
           <SidebarTrigger />
         </div>
       </SidebarHeader>
