@@ -1,42 +1,26 @@
 
 import { useAuth } from "@/context/AuthContext";
-import { getUserPermissions } from "@/services/userService";
-import { useState, useEffect } from "react";
 
 export const useDivisionPermissions = () => {
-  const { user, isAuthenticated } = useAuth();
-  const [permissions, setPermissions] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
-  useEffect(() => {
-    const fetchPermissions = async () => {
-      setLoading(true);
-      if (user && user.id && isAuthenticated) {
-        try {
-          console.log("Fetching division permissions for user:", user.id);
-          const userPermissions = await getUserPermissions(user.id);
-          setPermissions(userPermissions);
-        } catch (error) {
-          console.error("Error fetching permissions:", error);
-          setPermissions([]);
-        }
-      } else {
-        setPermissions([]);
-      }
-      setLoading(false);
-    };
-
-    fetchPermissions();
-  }, [user, isAuthenticated]);
-
-  const canViewDivision = permissions.includes("view-division");
-  const canCreateDivision = permissions.includes("create-division");
-  const canEditDivision = permissions.includes("edit-division");
+  const hasPermission = (permissionName: string): boolean => {
+    if (!user) return false;
+    
+    // Admin users have all permissions
+    if (user.roles.includes("Admin-Role") || user.roles.includes("admin")) {
+      return true;
+    }
+    
+    // For now, return false for non-admin users
+    // This can be enhanced with proper permission checking
+    return false;
+  };
 
   return {
-    canViewDivision,
-    canCreateDivision,
-    canEditDivision,
-    isLoading: loading,
+    hasPermission,
+    canViewDivision: hasPermission("view-division"),
+    canCreateDivision: hasPermission("create-division"),
+    canEditDivision: hasPermission("edit-division"),
   };
 };
