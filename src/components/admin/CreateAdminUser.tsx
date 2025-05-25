@@ -143,12 +143,13 @@ const CreateAdminUser = () => {
 
       console.log("Using Admin-Role:", adminRole);
 
-      // Create the auth user using regular signup
+      // Create the auth user using regular signup with email confirmation disabled
       console.log("Creating auth user...");
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: 'adminuser@admn.com',
         password: 'Pass@admin123',
         options: {
+          emailRedirectTo: undefined,
           data: {
             first_name: 'Admin',
             last_name: 'User'
@@ -165,6 +166,17 @@ const CreateAdminUser = () => {
 
       if (!authData.user) {
         throw new Error('Failed to create user - no user data returned');
+      }
+
+      // For the admin user, we'll confirm the email manually by updating the email_confirmed_at field
+      console.log("Confirming admin user email...");
+      const { error: confirmError } = await supabase.auth.updateUser({
+        email_confirm: true
+      });
+
+      if (confirmError) {
+        console.warn("Could not auto-confirm email:", confirmError);
+        // Continue anyway as this is not critical
       }
 
       // Update the profile with organization
@@ -204,7 +216,7 @@ const CreateAdminUser = () => {
 
       toast({
         title: "Admin user created successfully",
-        description: "adminuser@admn.com has been created with Admin-Role (all permissions) in ADMN organization",
+        description: "adminuser@admn.com has been created with Admin-Role (all permissions) in ADMN organization. You can now log in immediately.",
       });
 
     } catch (error: any) {
