@@ -41,33 +41,50 @@ const parseContacts = (data: Json | null): Contact[] => {
 export const organizationService = {
   getAllOrganizations: async (): Promise<Organization[]> => {
     try {
+      console.log("OrganizationService: Starting getAllOrganizations...");
+      
       const { data, error } = await supabase
         .from('organizations')
         .select('*')
         .order('created_on', { ascending: false });
 
+      console.log("OrganizationService: Raw supabase response:", { data, error });
+
       if (error) {
-        console.error("Error fetching organizations:", error);
-        throw error;
+        console.error("OrganizationService: Supabase error:", error);
+        throw new Error(`Failed to fetch organizations: ${error.message}`);
       }
 
-      return data?.map(org => ({
-        id: org.id,
-        name: org.name,
-        code: org.code,
-        alias: org.description || "",
-        type: "Supplier" as const,
-        status: org.status as "active" | "inactive",
-        references: parseReferences(org.organization_references),
-        contacts: parseContacts(org.contacts),
-        createdBy: org.created_by || "System",
-        createdOn: new Date(org.created_on),
-        updatedBy: org.updated_by,
-        updatedOn: org.updated_on ? new Date(org.updated_on) : undefined,
-      })) || [];
+      if (!data) {
+        console.log("OrganizationService: No data returned from supabase");
+        return [];
+      }
+
+      console.log("OrganizationService: Processing", data.length, "organizations");
+
+      const processedOrgs = data.map(org => {
+        console.log("OrganizationService: Processing org:", org);
+        return {
+          id: org.id,
+          name: org.name,
+          code: org.code,
+          alias: org.description || "",
+          type: "Supplier" as const,
+          status: org.status as "active" | "inactive",
+          references: parseReferences(org.organization_references),
+          contacts: parseContacts(org.contacts),
+          createdBy: org.created_by || "System",
+          createdOn: new Date(org.created_on),
+          updatedBy: org.updated_by,
+          updatedOn: org.updated_on ? new Date(org.updated_on) : undefined,
+        };
+      });
+
+      console.log("OrganizationService: Processed organizations:", processedOrgs);
+      return processedOrgs;
     } catch (error) {
-      console.error("Error in getAllOrganizations:", error);
-      return [];
+      console.error("OrganizationService: Error in getAllOrganizations:", error);
+      throw error; // Re-throw to let caller handle
     }
   },
 
@@ -80,7 +97,7 @@ export const organizationService = {
         .single();
 
       if (error) {
-        console.error("Error fetching organization:", error);
+        console.error("OrganizationService: Error fetching organization:", error);
         return undefined;
       }
 
@@ -101,7 +118,7 @@ export const organizationService = {
         updatedOn: data.updated_on ? new Date(data.updated_on) : undefined,
       };
     } catch (error) {
-      console.error("Error in getOrganizationById:", error);
+      console.error("OrganizationService: Error in getOrganizationById:", error);
       return undefined;
     }
   },
@@ -115,7 +132,7 @@ export const organizationService = {
         .single();
 
       if (error) {
-        console.error("Error fetching organization by code:", error);
+        console.error("OrganizationService: Error fetching organization by code:", error);
         return undefined;
       }
 
@@ -136,7 +153,7 @@ export const organizationService = {
         updatedOn: data.updated_on ? new Date(data.updated_on) : undefined,
       };
     } catch (error) {
-      console.error("Error in getOrganizationByCode:", error);
+      console.error("OrganizationService: Error in getOrganizationByCode:", error);
       return undefined;
     }
   },
@@ -159,13 +176,13 @@ export const organizationService = {
       const { data, error } = await query;
 
       if (error) {
-        console.error("Error validating organization code:", error);
+        console.error("OrganizationService: Error validating organization code:", error);
         return false;
       }
 
       return !data || data.length === 0;
     } catch (error) {
-      console.error("Error in validateOrganizationCode:", error);
+      console.error("OrganizationService: Error in validateOrganizationCode:", error);
       return false;
     }
   },
@@ -189,7 +206,7 @@ export const organizationService = {
         .single();
 
       if (error) {
-        console.error("Error creating organization:", error);
+        console.error("OrganizationService: Error creating organization:", error);
         throw new Error(error.message);
       }
 
@@ -206,7 +223,7 @@ export const organizationService = {
         createdOn: new Date(data.created_on),
       };
     } catch (error) {
-      console.error("Error in createOrganization:", error);
+      console.error("OrganizationService: Error in createOrganization:", error);
       throw error;
     }
   },
@@ -247,7 +264,7 @@ export const organizationService = {
         .single();
 
       if (error) {
-        console.error("Error updating organization:", error);
+        console.error("OrganizationService: Error updating organization:", error);
         throw new Error(error.message);
       }
 
@@ -266,7 +283,7 @@ export const organizationService = {
         updatedOn: new Date(data.updated_on),
       };
     } catch (error) {
-      console.error("Error in updateOrganization:", error);
+      console.error("OrganizationService: Error in updateOrganization:", error);
       return undefined;
     }
   },
@@ -279,13 +296,13 @@ export const organizationService = {
         .eq('id', id);
 
       if (error) {
-        console.error("Error deleting organization:", error);
+        console.error("OrganizationService: Error deleting organization:", error);
         return false;
       }
 
       return true;
     } catch (error) {
-      console.error("Error in deleteOrganization:", error);
+      console.error("OrganizationService: Error in deleteOrganization:", error);
       return false;
     }
   }

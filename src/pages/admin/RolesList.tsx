@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { roleService } from "@/services/roleService";
@@ -34,58 +35,67 @@ const RolesList = () => {
 
   useEffect(() => {
     const loadData = async () => {
+      if (permissionsLoading) return;
+      
       console.log("Starting to load roles and organizations data...");
       try {
         setLoading(true);
         setError(null);
         
-        // Try to load roles first
-        console.log("Fetching roles...");
-        const allRoles = await roleService.getAllRoles();
-        console.log("Roles fetched:", allRoles.length);
+        // Load both roles and organizations in parallel
+        console.log("Fetching roles and organizations...");
+        const [allRoles, allOrgs] = await Promise.all([
+          roleService.getAllRoles(),
+          organizationService.getAllOrganizations()
+        ]);
         
-        // Try to load organizations
-        console.log("Fetching organizations...");
-        const allOrgs = await organizationService.getAllOrganizations();
+        console.log("Roles fetched:", allRoles.length);
         console.log("Organizations fetched:", allOrgs.length);
+        console.log("Organizations data:", allOrgs);
         
         // Map organizations by ID for easy lookup
         const orgsMap: Record<string, Organization> = {};
         allOrgs.forEach(org => {
           orgsMap[org.id] = org;
+          console.log(`Mapped organization: ${org.id} -> ${org.name}`);
         });
         
         // Enhance roles with organization names
         const enhancedRoles = allRoles.map(role => {
+          console.log(`Processing role: ${role.name}, orgId: ${role.organizationId}`);
           if (role.organizationId && orgsMap[role.organizationId]) {
+            const orgName = orgsMap[role.organizationId].name;
+            console.log(`Found organization for role ${role.name}: ${orgName}`);
             return {
               ...role,
-              organizationName: orgsMap[role.organizationId].name
+              organizationName: orgName
             };
           }
-          return role;
+          console.log(`No organization found for role ${role.name}`);
+          return {
+            ...role,
+            organizationName: undefined
+          };
         });
         
-        console.log("Enhanced roles:", enhancedRoles.length);
+        console.log("Enhanced roles:", enhancedRoles);
         setRoles(enhancedRoles);
         setOrganizations(orgsMap);
       } catch (error) {
         console.error("Error loading data:", error);
-        setError(error instanceof Error ? error.message : "Failed to load data");
+        const errorMessage = error instanceof Error ? error.message : "Failed to load data";
+        setError(errorMessage);
         toast({
           variant: "destructive",
           title: "Error loading data",
-          description: "There was a problem loading the roles or organizations.",
+          description: errorMessage,
         });
       } finally {
         setLoading(false);
       }
     };
 
-    // Wait for permissions to load before fetching data
-    if (!permissionsLoading) {
-      loadData();
-    }
+    loadData();
   }, [permissionsLoading]);
 
   const handleCheckboxChange = (roleId: string) => {
