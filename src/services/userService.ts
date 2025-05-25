@@ -1,4 +1,3 @@
-
 import { User, UserRole, Permission, Role } from "@/types/user";
 import { v4 as uuidv4 } from "uuid";
 import { organizationService } from "./organizationService";
@@ -17,6 +16,9 @@ const mockPermissions: Permission[] = [
   { id: "10", name: "view-organization", module: "Administration", component: "Organizations", description: "Can view organizations" },
   { id: "11", name: "create-organization", module: "Administration", component: "Organizations", description: "Can create organizations" },
   { id: "12", name: "edit-organization", module: "Administration", component: "Organizations", description: "Can edit organizations" },
+  { id: "13", name: "view-division", module: "Administration", component: "Divisions", description: "Can view divisions" },
+  { id: "14", name: "create-division", module: "Administration", component: "Divisions", description: "Can create divisions" },
+  { id: "15", name: "edit-division", module: "Administration", component: "Divisions", description: "Can edit divisions" },
 ];
 
 // Mock data for roles
@@ -89,6 +91,11 @@ const ALL_AVAILABLE_PERMISSIONS = [
   "view-organization",
   "create-organization",
   "edit-organization",
+  
+  // Division management permissions
+  "view-division",
+  "create-division",
+  "edit-division",
 ];
 
 // Mock authentication function

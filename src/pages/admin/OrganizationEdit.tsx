@@ -54,12 +54,30 @@ const OrganizationEdit = () => {
       return;
     }
 
-    // Update organization with current user as updater
-    await organizationService.updateOrganization(
-      organizationId, 
-      formData, 
-      user?.name || user?.email || "System"
-    );
+    try {
+      // Update organization with current user as updater
+      await organizationService.updateOrganization(
+        organizationId, 
+        formData, 
+        user?.name || user?.email || "System"
+      );
+      
+      toast({
+        title: "Success",
+        description: "Organization updated successfully",
+      });
+      navigate("/admin/organizations");
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update organization",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCancel = () => {
+    navigate("/admin/organizations");
   };
 
   if (!canEditOrganization) {
@@ -96,6 +114,7 @@ const OrganizationEdit = () => {
       <OrganizationForm 
         initialData={organization} 
         onSubmit={handleSave} 
+        onCancel={handleCancel}
         isEditing={true} 
       />
     </div>
