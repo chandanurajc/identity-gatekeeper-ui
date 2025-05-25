@@ -25,8 +25,12 @@ const PermissionSelector: React.FC<PermissionSelectorProps> = ({
   useEffect(() => {
     const loadPermissions = async () => {
       try {
+        console.log("Loading permissions and modules...");
         const permissions = await roleService.getAllPermissions();
         const uniqueModules = await roleService.getUniqueModules();
+        
+        console.log("Loaded permissions:", permissions);
+        console.log("Loaded modules:", uniqueModules);
         
         setAllPermissions(permissions);
         setModules(uniqueModules);
@@ -46,14 +50,20 @@ const PermissionSelector: React.FC<PermissionSelectorProps> = ({
   }, []);
 
   const handlePermissionChange = (checked: boolean | "indeterminate", permission: Permission) => {
+    console.log("Permission change:", permission.name, checked);
+    
     if (checked === true) {
       // Add permission if not already selected
       if (!selectedPermissions.some(p => p.id === permission.id)) {
-        onPermissionsChange([...selectedPermissions, permission]);
+        const newPermissions = [...selectedPermissions, permission];
+        console.log("Adding permission, new list:", newPermissions.map(p => p.name));
+        onPermissionsChange(newPermissions);
       }
     } else {
       // Remove permission
-      onPermissionsChange(selectedPermissions.filter(p => p.id !== permission.id));
+      const newPermissions = selectedPermissions.filter(p => p.id !== permission.id);
+      console.log("Removing permission, new list:", newPermissions.map(p => p.name));
+      onPermissionsChange(newPermissions);
     }
   };
 
@@ -67,7 +77,7 @@ const PermissionSelector: React.FC<PermissionSelectorProps> = ({
         return acc;
       }, []);
     
-    return components;
+    return components.sort();
   };
 
   const isPermissionSelected = (permissionId: string) => {
@@ -126,6 +136,11 @@ const PermissionSelector: React.FC<PermissionSelectorProps> = ({
                               >
                                 {permission.name.replace(/_/g, ' ')}
                               </Label>
+                              {permission.description && (
+                                <span className="text-sm text-gray-500 ml-2">
+                                  - {permission.description}
+                                </span>
+                              )}
                             </div>
                           ))}
                       </div>

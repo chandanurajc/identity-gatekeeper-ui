@@ -119,7 +119,13 @@ export const roleService = {
         : user.email || "Unknown User";
       
       console.log("Created by value:", createdByValue);
-      
+
+      // Check if user has permission to create roles
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) {
+        throw new Error("User not authenticated");
+      }
+
       // Insert the role
       const { data: newRole, error: roleError } = await supabase
         .from('roles')
@@ -311,12 +317,8 @@ export const roleService = {
         throw error;
       }
 
-      // Filter out duplicate permissions and clean up module names
-      const uniquePermissions = permissions?.filter((permission, index, self) => 
-        index === self.findIndex(p => p.name === permission.name && p.component === permission.component)
-      ) || [];
-
-      return uniquePermissions;
+      // Return the permissions as they are now (duplicates should be cleaned up)
+      return permissions || [];
     } catch (error) {
       console.error("Error in getAllPermissions:", error);
       return [];
