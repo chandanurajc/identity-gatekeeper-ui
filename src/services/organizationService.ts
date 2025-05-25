@@ -20,7 +20,7 @@ const parseReferences = (data: Json | null): Reference[] => {
       typeof item.value === 'string' &&
       ['GST', 'CIN', 'PAN'].includes(item.type)
     );
-  }) as Reference[];
+  }) as unknown as Reference[];
 };
 
 const parseContacts = (data: Json | null): Contact[] => {
@@ -35,7 +35,7 @@ const parseContacts = (data: Json | null): Contact[] => {
       typeof item.firstName === 'string' &&
       ['Registered location', 'Billing', 'Shipping', 'Owner'].includes(item.type)
     );
-  }) as Contact[];
+  }) as unknown as Contact[];
 };
 
 export const organizationService = {
