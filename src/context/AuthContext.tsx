@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
@@ -44,8 +43,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Convert Supabase user to our AuthUser format
   const convertUser = async (supabaseUser: User): Promise<AuthUser> => {
+    console.log("Converting user:", supabaseUser.email);
+    
     // Get user profile from profiles table
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select(`
         *,
@@ -58,8 +59,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       .eq('id', supabaseUser.id)
       .single();
 
+    if (profileError) {
+      console.error("Error fetching profile:", profileError);
+    }
+
     // Get user roles
-    const { data: userRoles } = await supabase
+    const { data: userRoles, error: rolesError } = await supabase
       .from('user_roles')
       .select(`
         roles (
@@ -68,7 +73,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       `)
       .eq('user_id', supabaseUser.id);
 
+    if (rolesError) {
+      console.error("Error fetching roles:", rolesError);
+    }
+
     const roles = userRoles?.map((ur: any) => ur.roles?.name).filter(Boolean) || [];
+    console.log("User roles:", roles);
 
     return {
       id: supabaseUser.id,
@@ -85,10 +95,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Configure Supabase client
     const initAuth = async () => {
       try {
+        console.log("Initializing auth...");
         // Get initial session
         const { data: { session } } = await supabase.auth.getSession();
         
         if (session?.user) {
+          console.log("Found existing session for:", session.user.email);
           const authUser = await convertUser(session.user);
           setState({
             user: authUser,
@@ -98,6 +110,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             organizationCode: authUser.organizationCode || null
           });
         } else {
+          console.log("No existing session found");
           setState(prev => ({ ...prev, isLoading: false }));
         }
       } catch (error) {
@@ -115,7 +128,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state change:', event, session);
+        console.log('Auth state change:', event, session?.user?.email);
         
         if (session?.user) {
           // Defer user data fetching to prevent deadlocks
@@ -155,15 +168,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (email: string, password: string) => {
     setState(prev => ({ ...prev, isLoading: true, error: null }));
+    
+    console.log("Attempting login for:", email);
+    
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error) throw error;
+      console.log("Login response:", { data: data.user?.email, error });
+
+      if (error) {
+        console.error("Login error details:", error);
+        throw error;
+      }
 
       if (data.user) {
+        console.log("Login successful for:", data.user.email);
         const authUser = await convertUser(data.user);
         setState({
           user: authUser,
@@ -179,6 +201,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Login failed";
+      console.error("Login failed:", errorMessage);
       setState(prev => ({
         ...prev,
         isLoading: false,
