@@ -73,14 +73,32 @@ const OrganizationsList = () => {
       console.log("DEBUG: Raw query error:", rawError);
       console.log("DEBUG: Number of records:", rawData?.length || 0);
       
-      // Check RLS policies
-      const { data: policies } = await supabase
-        .from('pg_policies')
-        .select('*')
-        .eq('tablename', 'organizations')
-        .catch(() => ({ data: null }));
-      
-      console.log("DEBUG: RLS policies:", policies);
+      // Check if we can insert a test record (to test permissions)
+      try {
+        const { error: insertTestError } = await supabase
+          .from('organizations')
+          .insert({
+            name: 'DEBUG_TEST_ORG',
+            code: 'TEST',
+            description: 'Test organization for debugging',
+            status: 'active'
+          })
+          .select()
+          .single();
+        
+        console.log("DEBUG: Insert test error:", insertTestError);
+        
+        if (!insertTestError) {
+          // Clean up test record
+          await supabase
+            .from('organizations')
+            .delete()
+            .eq('code', 'TEST');
+          console.log("DEBUG: Test record cleaned up");
+        }
+      } catch (insertError) {
+        console.log("DEBUG: Insert test failed:", insertError);
+      }
       
       toast({
         title: "Debug Info",
