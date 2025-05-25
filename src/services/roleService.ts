@@ -115,7 +115,7 @@ export const roleService = {
         .single();
 
       const createdByValue = profile 
-        ? `${profile.first_name} ${profile.last_name}`.trim() || profile.username
+        ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || profile.username || user.email
         : user.email || "Unknown User";
       
       console.log("Created by value:", createdByValue);
@@ -125,7 +125,7 @@ export const roleService = {
         .from('roles')
         .insert({
           name: role.name,
-          description: role.description || "",
+          description: role.description || null,
           organization_id: role.organizationId || null,
           created_by: createdByValue
         })
@@ -134,13 +134,13 @@ export const roleService = {
 
       if (roleError) {
         console.error("Error creating role:", roleError);
-        throw roleError;
+        throw new Error(`Failed to create role: ${roleError.message}`);
       }
 
       console.log("Role created successfully:", newRole);
 
       // Insert role permissions
-      if (role.permissions.length > 0) {
+      if (role.permissions && role.permissions.length > 0) {
         const rolePermissions = role.permissions.map(permission => ({
           role_id: newRole.id,
           permission_id: permission.id
@@ -154,7 +154,9 @@ export const roleService = {
 
         if (permissionsError) {
           console.error("Error creating role permissions:", permissionsError);
-          throw permissionsError;
+          // Try to clean up the role if permissions failed
+          await supabase.from('roles').delete().eq('id', newRole.id);
+          throw new Error(`Failed to assign permissions: ${permissionsError.message}`);
         }
 
         console.log("Role permissions created successfully");
@@ -164,7 +166,7 @@ export const roleService = {
         id: newRole.id,
         name: newRole.name,
         description: newRole.description || "",
-        permissions: role.permissions,
+        permissions: role.permissions || [],
         organizationId: newRole.organization_id,
         createdBy: createdByValue,
         createdOn: new Date(newRole.created_on),
@@ -194,7 +196,7 @@ export const roleService = {
         .single();
 
       const updatedByValue = profile 
-        ? `${profile.first_name} ${profile.last_name}`.trim() || profile.username
+        ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || profile.username || user.email
         : user.email || "Unknown User";
 
       // Update the role
@@ -202,7 +204,7 @@ export const roleService = {
         .from('roles')
         .update({
           name: roleData.name,
-          description: roleData.description || "",
+          description: roleData.description || null,
           organization_id: roleData.organizationId || null,
           updated_by: updatedByValue,
           updated_on: new Date().toISOString()
@@ -213,7 +215,7 @@ export const roleService = {
 
       if (roleError) {
         console.error("Error updating role:", roleError);
-        throw roleError;
+        throw new Error(`Failed to update role: ${roleError.message}`);
       }
 
       // Update permissions if provided
@@ -226,7 +228,7 @@ export const roleService = {
 
         if (deleteError) {
           console.error("Error deleting role permissions:", deleteError);
-          throw deleteError;
+          throw new Error(`Failed to update permissions: ${deleteError.message}`);
         }
 
         // Insert new permissions
@@ -242,7 +244,7 @@ export const roleService = {
 
           if (insertError) {
             console.error("Error inserting role permissions:", insertError);
-            throw insertError;
+            throw new Error(`Failed to assign new permissions: ${insertError.message}`);
           }
         }
       }
@@ -260,7 +262,7 @@ export const roleService = {
       };
     } catch (error) {
       console.error("Error in updateRole:", error);
-      return undefined;
+      throw error;
     }
   },
 
@@ -309,7 +311,12 @@ export const roleService = {
         throw error;
       }
 
-      return permissions || [];
+      // Filter out duplicate permissions and clean up module names
+      const uniquePermissions = permissions?.filter((permission, index, self) => 
+        index === self.findIndex(p => p.name === permission.name && p.component === permission.component)
+      ) || [];
+
+      return uniquePermissions;
     } catch (error) {
       console.error("Error in getAllPermissions:", error);
       return [];
