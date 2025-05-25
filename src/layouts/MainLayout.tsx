@@ -1,5 +1,5 @@
 
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, useRef, useEffect } from "react";
 import { 
   SidebarProvider, 
   Sidebar, 
@@ -30,7 +30,9 @@ import {
   LogOut,
   Building,
   GitBranch,
-  Menu
+  Menu,
+  ChevronDown,
+  ChevronRight
 } from "lucide-react";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useRolePermissions } from "@/hooks/useRolePermissions";
@@ -40,6 +42,7 @@ import { useDivisionPermissions } from "@/hooks/useDivisionPermissions";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -64,6 +67,15 @@ function AppSidebar() {
   const { canViewCategory } = useCategoryPermissions();
   const { canViewOrganization } = useOrganizationPermissions();
   const { canViewDivision } = useDivisionPermissions();
+  const { setOpen } = useSidebar();
+  
+  // State for collapsible groups
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
+    "Main": true,
+    "Administration": false,
+    "Master Data": false,
+    "System": false
+  });
   
   // Group menu items by module
   const moduleGroups: ModuleGroup[] = [
@@ -142,6 +154,18 @@ function AppSidebar() {
     group => group.items.some(item => item.permission)
   );
 
+  const toggleGroup = (groupName: string) => {
+    setOpenGroups(prev => ({
+      ...prev,
+      [groupName]: !prev[groupName]
+    }));
+  };
+
+  const handleMenuItemClick = () => {
+    // Close sidebar on mobile when menu item is clicked
+    setOpen(false);
+  };
+
   return (
     <Sidebar variant="sidebar" collapsible="icon">
       <SidebarHeader className="border-b border-sidebar-border">
@@ -161,76 +185,78 @@ function AppSidebar() {
           if (accessibleItems.length === 0) return null;
 
           return (
-            <SidebarGroup key={group.name}>
-              <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">
-                {group.name}
-              </SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {accessibleItems.map((item) => (
-                    <SidebarMenuItem key={item.path}>
-                      <SidebarMenuButton 
-                        asChild 
-                        tooltip={item.label}
-                      >
-                        <NavLink 
-                          to={item.path} 
-                          className={({ isActive }) => cn(
-                            "flex items-center gap-3",
-                            isActive && "bg-sidebar-accent text-sidebar-accent-foreground"
-                          )}
-                        >
-                          <item.icon className="h-4 w-4" />
-                          <span>{item.label}</span>
-                        </NavLink>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
+            <Collapsible
+              key={group.name}
+              open={openGroups[group.name]}
+              onOpenChange={() => toggleGroup(group.name)}
+            >
+              <SidebarGroup>
+                <CollapsibleTrigger asChild>
+                  <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden cursor-pointer hover:bg-sidebar-accent rounded-md flex items-center justify-between">
+                    <span>{group.name}</span>
+                    <div className="group-data-[collapsible=icon]:hidden">
+                      {openGroups[group.name] ? (
+                        <ChevronDown className="h-4 w-4" />
+                      ) : (
+                        <ChevronRight className="h-4 w-4" />
+                      )}
+                    </div>
+                  </SidebarGroupLabel>
+                </CollapsibleTrigger>
+                
+                <CollapsibleContent>
+                  <SidebarGroupContent>
+                    <SidebarMenu>
+                      {accessibleItems.map((item) => (
+                        <SidebarMenuItem key={item.path}>
+                          <SidebarMenuButton 
+                            asChild 
+                            tooltip={item.label}
+                          >
+                            <NavLink 
+                              to={item.path} 
+                              onClick={handleMenuItemClick}
+                              className={({ isActive }) => cn(
+                                "flex items-center gap-3",
+                                isActive && "bg-sidebar-accent text-sidebar-accent-foreground"
+                              )}
+                            >
+                              <item.icon className="h-4 w-4" />
+                              <span>{item.label}</span>
+                            </NavLink>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      ))}
+                    </SidebarMenu>
+                  </SidebarGroupContent>
+                </CollapsibleContent>
+              </SidebarGroup>
+            </Collapsible>
           );
         })}
       </SidebarContent>
       
-      <SidebarFooter className="border-t border-sidebar-border">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <UserMenu />
-          </SidebarMenuItem>
-        </SidebarMenu>
+      <SidebarFooter className="border-t border-sidebar-border group-data-[collapsible=icon]:hidden">
+        <div className="px-2 py-2 text-xs text-sidebar-foreground/70">
+          © 2024 App Portal
+        </div>
       </SidebarFooter>
     </Sidebar>
   );
 }
 
-// User Menu Component
-function UserMenu() {
+// User Menu Component for Header
+function HeaderUserMenu() {
   const { user, logout } = useAuth();
-  const { state } = useSidebar();
-
-  if (state === "collapsed") {
-    return (
-      <SidebarMenuButton
-        tooltip="Account"
-        onClick={logout}
-      >
-        <UserRound className="h-4 w-4" />
-        <span className="sr-only">Account</span>
-      </SidebarMenuButton>
-    );
-  }
 
   return (
-    <div className="flex items-center gap-2 px-2 py-2">
+    <div className="flex items-center gap-2">
+      <div className="hidden md:block text-right">
+        <div className="text-sm font-medium">{user?.name || user?.email}</div>
+        <div className="text-xs text-muted-foreground">{user?.organizationName}</div>
+      </div>
       <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sidebar-accent text-sidebar-accent-foreground">
         <UserRound className="h-4 w-4" />
-      </div>
-      <div className="grid flex-1 text-left text-sm leading-tight">
-        <span className="truncate font-semibold">{user?.name || user?.email}</span>
-        <span className="truncate text-xs text-sidebar-foreground/70">
-          {user?.organizationName}
-        </span>
       </div>
       <Button 
         variant="ghost" 
@@ -247,11 +273,34 @@ function UserMenu() {
 
 export const MainLayout = ({ children }: MainLayoutProps) => {
   const { user } = useAuth();
+  const { open, setOpen } = useSidebar();
+  const sidebarRef = useRef<HTMLDivElement>(null);
+
+  // Handle clicks outside sidebar to close it
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        open && 
+        sidebarRef.current && 
+        !sidebarRef.current.contains(event.target as Node) &&
+        !(event.target as Element)?.closest('[data-sidebar="trigger"]')
+      ) {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [open, setOpen]);
 
   return (
     <SidebarProvider defaultOpen={true}>
       <div className="flex min-h-screen w-full">
-        <AppSidebar />
+        <div ref={sidebarRef}>
+          <AppSidebar />
+        </div>
         
         <SidebarInset className="flex flex-col flex-1">
           {/* Top Navigation Bar */}
@@ -273,10 +322,13 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
 
             {/* Organization context display */}
             {user && (
-              <div className="text-sm text-muted-foreground hidden md:block">
+              <div className="text-sm text-muted-foreground hidden lg:block">
                 {user.organizationCode} - {user.organizationName}
               </div>
             )}
+
+            {/* User Menu */}
+            <HeaderUserMenu />
           </header>
 
           {/* Main Content */}
