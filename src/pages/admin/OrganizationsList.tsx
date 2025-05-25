@@ -73,13 +73,14 @@ const OrganizationsList = () => {
       console.log("DEBUG: Raw query error:", rawError);
       console.log("DEBUG: Number of records:", rawData?.length || 0);
       
-      // Check if table exists and structure
-      const { data: tableInfo, error: tableError } = await supabase
-        .rpc('get_table_info', { table_name: 'organizations' })
-        .catch(() => ({ data: null, error: 'RPC function not available' }));
+      // Check RLS policies
+      const { data: policies } = await supabase
+        .from('pg_policies')
+        .select('*')
+        .eq('tablename', 'organizations')
+        .catch(() => ({ data: null }));
       
-      console.log("DEBUG: Table info:", tableInfo);
-      console.log("DEBUG: Table error:", tableError);
+      console.log("DEBUG: RLS policies:", policies);
       
       toast({
         title: "Debug Info",

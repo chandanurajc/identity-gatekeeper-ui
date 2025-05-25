@@ -5,6 +5,7 @@ import { organizationService } from "@/services/organizationService";
 import OrganizationForm from "@/components/organization/OrganizationForm";
 import { OrganizationFormData } from "@/types/organization";
 import { useAuth } from "@/context/AuthContext";
+import { toast } from "@/components/ui/use-toast";
 
 const OrganizationCreate = () => {
   const navigate = useNavigate();
@@ -13,13 +14,41 @@ const OrganizationCreate = () => {
 
   const handleSave = async (formData: OrganizationFormData) => {
     if (!canCreateOrganization) {
+      toast({
+        variant: "destructive",
+        title: "Unauthorized",
+        description: "You do not have permission to create organizations.",
+      });
       navigate("/unauthorized");
       return;
     }
 
-    // Create organization with current user as creator
-    await organizationService.createOrganization(formData, user?.name || user?.email || "System");
-    navigate("/admin/organizations");
+    try {
+      console.log("OrganizationCreate: Attempting to create organization with data:", formData);
+      
+      // Create organization with current user as creator
+      const result = await organizationService.createOrganization(
+        formData, 
+        user?.name || user?.email || "System"
+      );
+      
+      console.log("OrganizationCreate: Organization created successfully:", result);
+      
+      toast({
+        title: "Success",
+        description: "Organization created successfully!",
+      });
+      
+      navigate("/admin/organizations");
+    } catch (error) {
+      console.error("OrganizationCreate: Error creating organization:", error);
+      
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to create organization",
+      });
+    }
   };
 
   if (!canCreateOrganization) {

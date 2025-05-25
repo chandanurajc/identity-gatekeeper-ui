@@ -203,23 +203,49 @@ export const organizationService = {
       const { data: { user } } = await supabase.auth.getUser();
       console.log("OrganizationService: Current user for creation:", user?.id);
       
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
+
+      // Validate organization code format
+      if (!validateOrganizationCode(organization.code)) {
+        throw new Error("Organization code must be exactly 4 alphanumeric characters");
+      }
+
+      // Check if code already exists
+      const isCodeValid = await organizationService.validateOrganizationCode(organization.code);
+      if (!isCodeValid) {
+        throw new Error(`Organization code '${organization.code}' already exists`);
+      }
+
+      console.log("OrganizationService: Validation passed, inserting data...");
+      
+      const insertData = {
+        name: organization.name,
+        code: organization.code.toUpperCase(),
+        description: organization.alias,
+        status: organization.status,
+        contacts: JSON.parse(JSON.stringify(organization.contacts)) as Json,
+        organization_references: JSON.parse(JSON.stringify(organization.references)) as Json,
+        created_by: user.id
+      };
+
+      console.log("OrganizationService: Insert data:", insertData);
+      
       const { data, error } = await supabase
         .from('organizations')
-        .insert({
-          name: organization.name,
-          code: organization.code.toUpperCase(),
-          description: organization.alias,
-          status: organization.status,
-          contacts: JSON.parse(JSON.stringify(organization.contacts)) as Json,
-          organization_references: JSON.parse(JSON.stringify(organization.references)) as Json,
-          created_by: user?.id
-        })
+        .insert(insertData)
         .select()
         .single();
 
       if (error) {
         console.error("OrganizationService: Error creating organization:", error);
-        throw new Error(error.message);
+        console.error("OrganizationService: Error details:", error.message, error.code, error.details);
+        throw new Error(`Failed to create organization: ${error.message}`);
+      }
+
+      if (!data) {
+        throw new Error("No data returned after organization creation");
       }
 
       console.log("OrganizationService: Organization created successfully:", data);
