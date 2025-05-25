@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { roleService } from "@/services/roleService";
@@ -25,20 +24,30 @@ const RolesList = () => {
   const [roles, setRoles] = useState<Role[]>([]);
   const [organizations, setOrganizations] = useState<Record<string, Organization>>({});
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
   const [filters, setFilters] = useState<Record<string, string>>({});
   const [sortField, setSortField] = useState<string>("name");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const navigate = useNavigate();
-  const { canCreateRole, canEditRoles, canViewRoles } = useRolePermissions();
+  const { canCreateRole, canEditRoles, canViewRoles, isLoading: permissionsLoading } = useRolePermissions();
 
   useEffect(() => {
     const loadData = async () => {
+      console.log("Starting to load roles and organizations data...");
       try {
-        const [allRoles, allOrgs] = await Promise.all([
-          roleService.getAllRoles(),
-          organizationService.getAllOrganizations()
-        ]);
+        setLoading(true);
+        setError(null);
+        
+        // Try to load roles first
+        console.log("Fetching roles...");
+        const allRoles = await roleService.getAllRoles();
+        console.log("Roles fetched:", allRoles.length);
+        
+        // Try to load organizations
+        console.log("Fetching organizations...");
+        const allOrgs = await organizationService.getAllOrganizations();
+        console.log("Organizations fetched:", allOrgs.length);
         
         // Map organizations by ID for easy lookup
         const orgsMap: Record<string, Organization> = {};
@@ -57,22 +66,27 @@ const RolesList = () => {
           return role;
         });
         
+        console.log("Enhanced roles:", enhancedRoles.length);
         setRoles(enhancedRoles);
         setOrganizations(orgsMap);
       } catch (error) {
+        console.error("Error loading data:", error);
+        setError(error instanceof Error ? error.message : "Failed to load data");
         toast({
           variant: "destructive",
           title: "Error loading data",
           description: "There was a problem loading the roles or organizations.",
         });
-        console.error("Failed to load data:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    loadData();
-  }, []);
+    // Wait for permissions to load before fetching data
+    if (!permissionsLoading) {
+      loadData();
+    }
+  }, [permissionsLoading]);
 
   const handleCheckboxChange = (roleId: string) => {
     setSelectedRoles(prev => {
@@ -132,8 +146,48 @@ const RolesList = () => {
     return 0;
   });
 
-  if (loading) {
-    return <div className="container mx-auto py-8">Loading roles...</div>;
+  // Show loading state
+  if (loading || permissionsLoading) {
+    return (
+      <div className="container mx-auto py-8">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-lg">Loading roles...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="container mx-auto py-8">
+        <Card>
+          <CardContent className="py-8">
+            <div className="text-center">
+              <p className="text-red-600 mb-4">Error: {error}</p>
+              <Button onClick={() => window.location.reload()}>
+                Reload Page
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Check permissions after loading
+  if (!canViewRoles) {
+    return (
+      <div className="container mx-auto py-8">
+        <Card>
+          <CardContent className="py-8">
+            <div className="text-center">
+              <p className="text-gray-600">You don't have permission to view roles.</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
