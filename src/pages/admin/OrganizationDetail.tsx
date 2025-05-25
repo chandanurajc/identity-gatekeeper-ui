@@ -225,7 +225,7 @@ const OrganizationDetail = () => {
               ))}
             </div>
           </CardContent>
-        )}
+        </Card>
       )}
 
       <Card>
