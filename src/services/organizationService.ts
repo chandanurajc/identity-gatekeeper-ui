@@ -1,3 +1,4 @@
+
 import { Organization, OrganizationFormData, Reference, Contact } from "@/types/organization";
 import { supabase } from "@/integrations/supabase/client";
 import { Json } from "@/integrations/supabase/types";
@@ -223,7 +224,7 @@ export const organizationService = {
 
       console.log("OrganizationService: Validation passed, preparing insert...");
       
-      // Prepare insert data - ensure all fields match database schema exactly
+      // Prepare insert data - store username instead of UUID for created_by
       const insertData = {
         name: organization.name.trim(),
         code: organization.code.toUpperCase().trim(),
@@ -235,19 +236,11 @@ export const organizationService = {
         organization_references: organization.references && organization.references.length > 0 
           ? JSON.parse(JSON.stringify(organization.references)) as Json 
           : null,
-        created_by: user.id, // This must be a valid UUID from auth.users
-        address: null // Explicitly set to null since it's not provided
+        created_by: createdBy, // Store username directly instead of UUID
+        address: null
       };
 
       console.log("OrganizationService: Final insert data prepared:", JSON.stringify(insertData, null, 2));
-      console.log("OrganizationService: Data type validation:");
-      console.log("- name:", typeof insertData.name, "value:", insertData.name);
-      console.log("- code:", typeof insertData.code, "value:", insertData.code);
-      console.log("- description:", typeof insertData.description, "value:", insertData.description);
-      console.log("- status:", typeof insertData.status, "value:", insertData.status);
-      console.log("- created_by:", typeof insertData.created_by, "value:", insertData.created_by);
-      console.log("- contacts:", typeof insertData.contacts, "length:", Array.isArray(insertData.contacts) ? insertData.contacts.length : 'null');
-      console.log("- organization_references:", typeof insertData.organization_references, "length:", Array.isArray(insertData.organization_references) ? insertData.organization_references.length : 'null');
       
       // Perform the insert
       console.log("OrganizationService: Executing database insert...");
@@ -308,10 +301,8 @@ export const organizationService = {
 
   updateOrganization: async (id: string, organizationData: Partial<OrganizationFormData>, updatedBy: string): Promise<Organization | undefined> => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
       const updateData: any = {
-        updated_by: user?.id,
+        updated_by: updatedBy, // Store username directly instead of UUID
         updated_on: new Date().toISOString()
       };
 

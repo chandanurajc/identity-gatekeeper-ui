@@ -40,10 +40,12 @@ const OrganizationCreate = () => {
       console.log("OrganizationCreate: Calling organizationService.createOrganization");
       console.log("OrganizationCreate: User info - ID:", user.id, "Name:", user.name, "Email:", user.email);
       
-      // Create organization with current user as creator
+      // Use username/email as created_by instead of user ID
+      const createdByValue = user.name || user.email || "Unknown User";
+      
       const result = await organizationService.createOrganization(
         formData, 
-        user?.name || user?.email || "System"
+        createdByValue
       );
       
       console.log("OrganizationCreate: Organization created successfully:", result);

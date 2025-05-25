@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { User, UserRole, Permission, Role, PhoneNumber } from "@/types/user";
 
@@ -93,9 +94,9 @@ export const getAllUsers = async (): Promise<User[]> => {
         organizationName: profile.organizations?.name || "N/A",
         effectiveFrom: new Date(profile.effective_from),
         effectiveTo: profile.effective_to ? new Date(profile.effective_to) : undefined,
-        createdBy: "System", // We'll need to enhance this later
+        createdBy: profile.created_by || "System", // This is now a username/string
         createdOn: new Date(profile.created_on),
-        updatedBy: profile.updated_by || undefined,
+        updatedBy: profile.updated_by || undefined, // This is now a username/string
         updatedOn: profile.updated_on ? new Date(profile.updated_on) : undefined,
       };
     }) || [];
@@ -167,9 +168,9 @@ export const getUserById = async (id: string): Promise<User | undefined> => {
       organizationName: profile.organizations?.name || "N/A",
       effectiveFrom: new Date(profile.effective_from),
       effectiveTo: profile.effective_to ? new Date(profile.effective_to) : undefined,
-      createdBy: "System",
+      createdBy: profile.created_by || "System", // This is now a username/string
       createdOn: new Date(profile.created_on),
-      updatedBy: profile.updated_by || undefined,
+      updatedBy: profile.updated_by || undefined, // This is now a username/string
       updatedOn: profile.updated_on ? new Date(profile.updated_on) : undefined,
     };
   } catch (error) {
@@ -181,6 +182,9 @@ export const getUserById = async (id: string): Promise<User | undefined> => {
 // Create a new user in Supabase
 export const createUser = async (userData: Partial<User>): Promise<User> => {
   try {
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    const createdByValue = currentUser ? `${userData.firstName} ${userData.lastName}` : "System";
+
     // First create the auth user
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email: userData.email || userData.username || "",
@@ -208,7 +212,8 @@ export const createUser = async (userData: Partial<User>): Promise<User> => {
         organization_id: userData.organizationId,
         status: userData.status || "active",
         effective_from: userData.effectiveFrom?.toISOString() || new Date().toISOString(),
-        effective_to: userData.effectiveTo?.toISOString()
+        effective_to: userData.effectiveTo?.toISOString(),
+        created_by: createdByValue // Store username instead of UUID
       })
       .eq('id', authData.user.id)
       .select()
@@ -229,6 +234,9 @@ export const createUser = async (userData: Partial<User>): Promise<User> => {
 // Update an existing user in Supabase
 export const updateUser = async (id: string, userData: Partial<User>): Promise<User | undefined> => {
   try {
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    const updatedByValue = currentUser ? `${userData.firstName} ${userData.lastName}` : "System";
+
     const { data: profile, error } = await supabase
       .from('profiles')
       .update({
@@ -240,7 +248,8 @@ export const updateUser = async (id: string, userData: Partial<User>): Promise<U
         status: userData.status,
         effective_from: userData.effectiveFrom?.toISOString(),
         effective_to: userData.effectiveTo?.toISOString(),
-        updated_on: new Date().toISOString()
+        updated_on: new Date().toISOString(),
+        updated_by: updatedByValue // Store username instead of UUID
       })
       .eq('id', id)
       .select()

@@ -55,11 +55,13 @@ const OrganizationEdit = () => {
     }
 
     try {
-      // Update organization with current user as updater
+      // Use username/email as updated_by instead of user ID
+      const updatedByValue = user?.name || user?.email || "Unknown User";
+      
       await organizationService.updateOrganization(
         organizationId, 
         formData, 
-        user?.name || user?.email || "System"
+        updatedByValue
       );
       
       toast({
