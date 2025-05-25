@@ -9,16 +9,259 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      organizations: {
+        Row: {
+          address: Json | null
+          code: string
+          contacts: Json | null
+          created_by: string | null
+          created_on: string
+          description: string | null
+          id: string
+          name: string
+          organization_references: Json | null
+          status: string
+          updated_by: string | null
+          updated_on: string | null
+        }
+        Insert: {
+          address?: Json | null
+          code: string
+          contacts?: Json | null
+          created_by?: string | null
+          created_on?: string
+          description?: string | null
+          id?: string
+          name: string
+          organization_references?: Json | null
+          status?: string
+          updated_by?: string | null
+          updated_on?: string | null
+        }
+        Update: {
+          address?: Json | null
+          code?: string
+          contacts?: Json | null
+          created_by?: string | null
+          created_on?: string
+          description?: string | null
+          id?: string
+          name?: string
+          organization_references?: Json | null
+          status?: string
+          updated_by?: string | null
+          updated_on?: string | null
+        }
+        Relationships: []
+      }
+      permissions: {
+        Row: {
+          component: string
+          created_on: string
+          description: string | null
+          id: string
+          module: string
+          name: string
+        }
+        Insert: {
+          component: string
+          created_on?: string
+          description?: string | null
+          id?: string
+          module: string
+          name: string
+        }
+        Update: {
+          component?: string
+          created_on?: string
+          description?: string | null
+          id?: string
+          module?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_by: string | null
+          created_on: string
+          designation: string | null
+          effective_from: string
+          effective_to: string | null
+          first_name: string
+          id: string
+          last_name: string
+          organization_id: string | null
+          phone: Json | null
+          status: string
+          updated_by: string | null
+          updated_on: string | null
+          username: string
+        }
+        Insert: {
+          created_by?: string | null
+          created_on?: string
+          designation?: string | null
+          effective_from?: string
+          effective_to?: string | null
+          first_name: string
+          id: string
+          last_name: string
+          organization_id?: string | null
+          phone?: Json | null
+          status?: string
+          updated_by?: string | null
+          updated_on?: string | null
+          username: string
+        }
+        Update: {
+          created_by?: string | null
+          created_on?: string
+          designation?: string | null
+          effective_from?: string
+          effective_to?: string | null
+          first_name?: string
+          id?: string
+          last_name?: string
+          organization_id?: string | null
+          phone?: Json | null
+          status?: string
+          updated_by?: string | null
+          updated_on?: string | null
+          username?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      role_permissions: {
+        Row: {
+          id: string
+          permission_id: string | null
+          role_id: string | null
+        }
+        Insert: {
+          id?: string
+          permission_id?: string | null
+          role_id?: string | null
+        }
+        Update: {
+          id?: string
+          permission_id?: string | null
+          role_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_permissions_permission_id_fkey"
+            columns: ["permission_id"]
+            isOneToOne: false
+            referencedRelation: "permissions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "role_permissions_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      roles: {
+        Row: {
+          created_by: string | null
+          created_on: string
+          description: string | null
+          id: string
+          name: string
+          organization_id: string | null
+          updated_by: string | null
+          updated_on: string | null
+        }
+        Insert: {
+          created_by?: string | null
+          created_on?: string
+          description?: string | null
+          id?: string
+          name: string
+          organization_id?: string | null
+          updated_by?: string | null
+          updated_on?: string | null
+        }
+        Update: {
+          created_by?: string | null
+          created_on?: string
+          description?: string | null
+          id?: string
+          name?: string
+          organization_id?: string | null
+          updated_by?: string | null
+          updated_on?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "roles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          assigned_by: string | null
+          assigned_on: string
+          id: string
+          role_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          assigned_by?: string | null
+          assigned_on?: string
+          id?: string
+          role_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          assigned_by?: string | null
+          assigned_on?: string
+          id?: string
+          role_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_organization_id: {
+        Args: { user_id: string }
+        Returns: string
+      }
+      user_has_role: {
+        Args: { user_id: string; role_name: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user" | "guest"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -133,6 +376,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user", "guest"],
+    },
   },
 } as const

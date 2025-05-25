@@ -1,9 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { usePermissions } from "@/hooks/usePermissions";
-import { getUsers } from "@/services/userService";
+import { getAllUsers } from "@/services/userService";
+import { supabase } from "@/integrations/supabase/client";
 import { User } from "@/types/user";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -32,24 +32,51 @@ const UsersList = () => {
   const { toast } = useToast();
   const { canViewUsers, canCreateUsers, canEditUsers } = usePermissions();
 
+  // Fetch users function
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const data = await getAllUsers();
+      setUsers(data);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to fetch users. Please try again later."
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const data = await getUsers();
-        setUsers(data);
-      } catch (error) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to fetch users. Please try again later."
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-    
     fetchUsers();
-  }, [toast]);
+  }, []);
+
+  // Set up real-time subscription
+  useEffect(() => {
+    const channel = supabase
+      .channel('profiles-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'profiles'
+        },
+        (payload) => {
+          console.log('Real-time change detected:', payload);
+          // Refetch users when any change occurs
+          fetchUsers();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   const handleRowSelect = (userId: string) => {
     const newSelectedUsers = new Set(selectedUsers);
@@ -140,7 +167,7 @@ const UsersList = () => {
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <div>
             <CardTitle className="text-2xl font-bold">Users Management</CardTitle>
-            <CardDescription>Manage user accounts and permissions</CardDescription>
+            <CardDescription>Manage user accounts and permissions (Real-time enabled)</CardDescription>
           </div>
           <div className="flex space-x-2">
             {canCreateUsers && (

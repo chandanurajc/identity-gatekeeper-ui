@@ -1,275 +1,315 @@
+
+import { supabase } from "@/integrations/supabase/client";
 import { User, UserRole, Permission, Role } from "@/types/user";
-import { v4 as uuidv4 } from "uuid";
-import { organizationService } from "./organizationService";
 
-// Mock data for permissions
-const mockPermissions: Permission[] = [
-  { id: "1", name: "view-user", module: "Administration", component: "Users", description: "Can view users" },
-  { id: "2", name: "create-user", module: "Administration", component: "Users", description: "Can create users" },
-  { id: "3", name: "edit-user", module: "Administration", component: "Users", description: "Can edit users" },
-  { id: "4", name: "view-role", module: "Administration", component: "Roles", description: "Can view roles" },
-  { id: "5", name: "create-role", module: "Administration", component: "Roles", description: "Can create roles" },
-  { id: "6", name: "edit-role", module: "Administration", component: "Roles", description: "Can edit roles" },
-  { id: "7", name: "view-category", module: "Master data", component: "Item category", description: "Can view categories" },
-  { id: "8", name: "create-category", module: "Master data", component: "Item category", description: "Can create categories" },
-  { id: "9", name: "edit-category", module: "Master data", component: "Item category", description: "Can edit categories" },
-  { id: "10", name: "view-organization", module: "Administration", component: "Organizations", description: "Can view organizations" },
-  { id: "11", name: "create-organization", module: "Administration", component: "Organizations", description: "Can create organizations" },
-  { id: "12", name: "edit-organization", module: "Administration", component: "Organizations", description: "Can edit organizations" },
-  { id: "13", name: "view-division", module: "Administration", component: "Divisions", description: "Can view divisions" },
-  { id: "14", name: "create-division", module: "Administration", component: "Divisions", description: "Can create divisions" },
-  { id: "15", name: "edit-division", module: "Administration", component: "Divisions", description: "Can edit divisions" },
-];
-
-// Mock data for roles
-const mockRoles: Role[] = [
-  {
-    id: "1",
-    name: "admin",
-    description: "Administrator with all permissions",
-    permissions: mockPermissions,
-  },
-  {
-    id: "2",
-    name: "user",
-    description: "Regular user with limited permissions",
-    permissions: [mockPermissions[0], mockPermissions[3], mockPermissions[6], mockPermissions[9]],
-  },
-];
-
-// Mock data for users
-const mockUsers: User[] = [
-  {
-    id: "1",
-    username: "admin@example.com",
-    email: "admin@example.com",
-    firstName: "Admin",
-    lastName: "User",
-    roles: ["admin"],
-    name: "Admin User",
-    status: "active",
-    organizationId: "1",
-    organizationName: "ABC Corporation",
-    effectiveFrom: new Date(),
-    createdBy: "System",
-    createdOn: new Date(),
-  },
-  {
-    id: "2",
-    username: "user@example.com",
-    email: "user@example.com",
-    firstName: "Regular",
-    lastName: "User",
-    roles: ["user"],
-    name: "Regular User",
-    status: "active",
-    organizationId: "2",
-    organizationName: "XYZ Industries",
-    effectiveFrom: new Date(),
-    createdBy: "System",
-    createdOn: new Date(),
-  },
-];
-
-const ALL_AVAILABLE_PERMISSIONS = [
-  // User management permissions
-  "view-user",
-  "create-user", 
-  "edit-user",
-  
-  // Role management permissions
-  "view-role",
-  "create-role",
-  "edit-role",
-  
-  // Category management permissions
-  "view-category",
-  "create-category",
-  "edit-category",
-  
-  // Organization management permissions
-  "view-organization",
-  "create-organization",
-  "edit-organization",
-  
-  // Division management permissions
-  "view-division",
-  "create-division",
-  "edit-division",
-];
-
-// Mock authentication function
-export const authenticateUser = (email: string, password: string): User | null => {
-  // In a real app, you would verify the password here
-  const user = mockUsers.find(u => u.email === email);
-  return user || null;
-};
-
-export const getUserPermissions = (userId: string): string[] => {
-  const user = mockUsers.find(u => u.id === userId);
-  if (!user) return [];
-  
-  // If user has admin role, return all permissions
-  if (user.roles.includes('admin')) {
-    return ALL_AVAILABLE_PERMISSIONS;
-  }
-  
-  // Otherwise, gather permissions from all user roles
-  const permissions = new Set<string>();
-  
-  user.roles.forEach(roleName => {
-    const role = mockRoles.find(r => r.name === roleName);
-    if (role) {
-      role.permissions.forEach(permission => {
-        permissions.add(permission.name);
-      });
-    }
-  });
-  
-  return Array.from(permissions);
-};
-
-// Get all users
+// Get all users from Supabase
 export const getAllUsers = async (): Promise<User[]> => {
   try {
-    // In a real app, this would be an API call
-    // For the mock, we'll fetch all organizations to get their names
-    const organizations = await organizationService.getAllOrganizations();
-    
-    // Update users with organization names
-    const usersWithOrgNames = mockUsers.map(user => {
-      if (user.organizationId) {
-        const org = organizations.find(o => o.id === user.organizationId);
-        if (org) {
-          return {
-            ...user,
-            organizationName: org.name
-          };
-        }
-      }
-      return user;
-    });
-    
-    return usersWithOrgNames;
+    const { data: profiles, error } = await supabase
+      .from('profiles')
+      .select(`
+        *,
+        organizations:organization_id (
+          id,
+          name,
+          code
+        ),
+        user_roles (
+          roles (
+            name
+          )
+        )
+      `);
+
+    if (error) {
+      console.error("Error fetching users:", error);
+      throw error;
+    }
+
+    return profiles?.map(profile => ({
+      id: profile.id,
+      username: profile.username,
+      email: profile.username, // Using username as email for now
+      firstName: profile.first_name,
+      lastName: profile.last_name,
+      name: `${profile.first_name} ${profile.last_name}`,
+      phone: profile.phone,
+      designation: profile.designation,
+      roles: profile.user_roles?.map((ur: any) => ur.roles.name) || [],
+      status: profile.status,
+      organizationId: profile.organization_id,
+      organizationName: profile.organizations?.name || "N/A",
+      effectiveFrom: new Date(profile.effective_from),
+      effectiveTo: profile.effective_to ? new Date(profile.effective_to) : undefined,
+      createdBy: "System", // We'll need to enhance this later
+      createdOn: new Date(profile.created_on),
+      updatedBy: profile.updated_by || undefined,
+      updatedOn: profile.updated_on ? new Date(profile.updated_on) : undefined,
+    })) || [];
   } catch (error) {
-    console.error("Error loading users with organizations:", error);
-    return [...mockUsers];
+    console.error("Error in getAllUsers:", error);
+    throw error;
   }
 };
 
-// Export as getUsers as well for compatibility with existing code
+// Export as getUsers as well for compatibility
 export const getUsers = getAllUsers;
 
-// Get user by ID
+// Get user by ID from Supabase
 export const getUserById = async (id: string): Promise<User | undefined> => {
-  const user = mockUsers.find(user => user.id === id);
-  
-  if (user && user.organizationId) {
-    try {
-      const org = await organizationService.getOrganizationById(user.organizationId);
-      if (org) {
-        return {
-          ...user,
-          organizationName: org.name
-        };
-      }
-    } catch (error) {
-      console.error("Error fetching organization for user:", error);
-    }
-  }
-  
-  return user;
-};
+  try {
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select(`
+        *,
+        organizations:organization_id (
+          id,
+          name,
+          code
+        ),
+        user_roles (
+          roles (
+            name
+          )
+        )
+      `)
+      .eq('id', id)
+      .single();
 
-// Create a new user
-export const createUser = async (userData: Partial<User>): Promise<User> => {
-  let organizationName = "";
-  
-  if (userData.organizationId) {
-    try {
-      const org = await organizationService.getOrganizationById(userData.organizationId);
-      if (org) {
-        organizationName = org.name;
-      }
-    } catch (error) {
-      console.error("Error fetching organization for new user:", error);
+    if (error) {
+      console.error("Error fetching user:", error);
+      return undefined;
     }
-  }
-  
-  const newUser: User = {
-    id: uuidv4(),
-    username: userData.username || "",
-    email: userData.email || "",
-    firstName: userData.firstName || "",
-    lastName: userData.lastName || "",
-    name: userData.name || `${userData.firstName} ${userData.lastName}`,
-    roles: userData.roles || [],
-    status: userData.status || "inactive",
-    organizationId: userData.organizationId,
-    organizationName: organizationName,
-    effectiveFrom: userData.effectiveFrom || new Date(),
-    createdBy: userData.createdBy || "System",
-    createdOn: new Date(),
-  };
-  
-  mockUsers.push(newUser);
-  return newUser;
-};
 
-// Update an existing user
-export const updateUser = async (id: string, userData: Partial<User>): Promise<User | undefined> => {
-  const userIndex = mockUsers.findIndex(user => user.id === id);
-  
-  if (userIndex === -1) {
+    if (!profile) return undefined;
+
+    return {
+      id: profile.id,
+      username: profile.username,
+      email: profile.username,
+      firstName: profile.first_name,
+      lastName: profile.last_name,
+      name: `${profile.first_name} ${profile.last_name}`,
+      phone: profile.phone,
+      designation: profile.designation,
+      roles: profile.user_roles?.map((ur: any) => ur.roles.name) || [],
+      status: profile.status,
+      organizationId: profile.organization_id,
+      organizationName: profile.organizations?.name || "N/A",
+      effectiveFrom: new Date(profile.effective_from),
+      effectiveTo: profile.effective_to ? new Date(profile.effective_to) : undefined,
+      createdBy: "System",
+      createdOn: new Date(profile.created_on),
+      updatedBy: profile.updated_by || undefined,
+      updatedOn: profile.updated_on ? new Date(profile.updated_on) : undefined,
+    };
+  } catch (error) {
+    console.error("Error in getUserById:", error);
     return undefined;
   }
-  
-  let organizationName = mockUsers[userIndex].organizationName;
-  
-  if (userData.organizationId && userData.organizationId !== mockUsers[userIndex].organizationId) {
-    try {
-      const org = await organizationService.getOrganizationById(userData.organizationId);
-      if (org) {
-        organizationName = org.name;
-      }
-    } catch (error) {
-      console.error("Error fetching organization for updated user:", error);
-    }
-  }
-  
-  const updatedUser = {
-    ...mockUsers[userIndex],
-    ...userData,
-    organizationName,
-  };
-  
-  mockUsers[userIndex] = updatedUser;
-  return updatedUser;
 };
 
-// Delete a user
-export const deleteUser = (id: string): boolean => {
-  const initialLength = mockUsers.length;
-  const filteredUsers = mockUsers.filter(user => user.id !== id);
-  
-  if (filteredUsers.length === initialLength) {
+// Create a new user in Supabase
+export const createUser = async (userData: Partial<User>): Promise<User> => {
+  try {
+    // First create the auth user
+    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      email: userData.email || userData.username || "",
+      password: "TempPassword123!",
+      email_confirm: true,
+      user_metadata: {
+        first_name: userData.firstName,
+        last_name: userData.lastName
+      }
+    });
+
+    if (authError) {
+      console.error("Error creating auth user:", authError);
+      throw authError;
+    }
+
+    // Update the profile with additional information
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .update({
+        first_name: userData.firstName || "",
+        last_name: userData.lastName || "",
+        phone: userData.phone,
+        designation: userData.designation,
+        organization_id: userData.organizationId,
+        status: userData.status || "active",
+        effective_from: userData.effectiveFrom?.toISOString() || new Date().toISOString(),
+        effective_to: userData.effectiveTo?.toISOString()
+      })
+      .eq('id', authData.user.id)
+      .select()
+      .single();
+
+    if (profileError) {
+      console.error("Error updating profile:", profileError);
+      throw profileError;
+    }
+
+    return await getUserById(authData.user.id) as User;
+  } catch (error) {
+    console.error("Error in createUser:", error);
+    throw error;
+  }
+};
+
+// Update an existing user in Supabase
+export const updateUser = async (id: string, userData: Partial<User>): Promise<User | undefined> => {
+  try {
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .update({
+        first_name: userData.firstName,
+        last_name: userData.lastName,
+        phone: userData.phone,
+        designation: userData.designation,
+        organization_id: userData.organizationId,
+        status: userData.status,
+        effective_from: userData.effectiveFrom?.toISOString(),
+        effective_to: userData.effectiveTo?.toISOString(),
+        updated_on: new Date().toISOString()
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error updating user:", error);
+      throw error;
+    }
+
+    return await getUserById(id);
+  } catch (error) {
+    console.error("Error in updateUser:", error);
+    throw error;
+  }
+};
+
+// Delete a user from Supabase
+export const deleteUser = async (id: string): Promise<boolean> => {
+  try {
+    const { error } = await supabase.auth.admin.deleteUser(id);
+    
+    if (error) {
+      console.error("Error deleting user:", error);
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Error in deleteUser:", error);
     return false;
   }
-  
-  // In a real app, you would make an API call here
-  // For this mock, we'll just update our array
-  mockUsers.length = 0;
-  mockUsers.push(...filteredUsers);
-  
-  return true;
 };
 
-// Get all roles
-export const getAllRoles = (): Role[] => {
-  return [...mockRoles];
+// Get user permissions from Supabase
+export const getUserPermissions = async (userId: string): Promise<string[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('user_roles')
+      .select(`
+        roles (
+          role_permissions (
+            permissions (
+              name
+            )
+          )
+        )
+      `)
+      .eq('user_id', userId);
+
+    if (error) {
+      console.error("Error fetching user permissions:", error);
+      return [];
+    }
+
+    const permissions = new Set<string>();
+    data?.forEach((userRole: any) => {
+      userRole.roles?.role_permissions?.forEach((rolePermission: any) => {
+        permissions.add(rolePermission.permissions.name);
+      });
+    });
+
+    return Array.from(permissions);
+  } catch (error) {
+    console.error("Error in getUserPermissions:", error);
+    return [];
+  }
 };
 
-// Get all permissions
-export const getAllPermissions = (): Permission[] => {
-  return [...mockPermissions];
+// Mock authentication function (updated to work with Supabase)
+export const authenticateUser = async (email: string, password: string): Promise<User | null> => {
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if (error || !data.user) {
+      return null;
+    }
+
+    return await getUserById(data.user.id) || null;
+  } catch (error) {
+    console.error("Error in authenticateUser:", error);
+    return null;
+  }
+};
+
+// Get all roles (placeholder for Supabase implementation)
+export const getAllRoles = async (): Promise<Role[]> => {
+  try {
+    const { data: roles, error } = await supabase
+      .from('roles')
+      .select(`
+        *,
+        role_permissions (
+          permissions (
+            id,
+            name,
+            module,
+            component,
+            description
+          )
+        )
+      `);
+
+    if (error) {
+      console.error("Error fetching roles:", error);
+      return [];
+    }
+
+    return roles?.map(role => ({
+      id: role.id,
+      name: role.name,
+      description: role.description || "",
+      permissions: role.role_permissions?.map((rp: any) => rp.permissions) || []
+    })) || [];
+  } catch (error) {
+    console.error("Error in getAllRoles:", error);
+    return [];
+  }
+};
+
+// Get all permissions (placeholder for Supabase implementation)
+export const getAllPermissions = async (): Promise<Permission[]> => {
+  try {
+    const { data: permissions, error } = await supabase
+      .from('permissions')
+      .select('*');
+
+    if (error) {
+      console.error("Error fetching permissions:", error);
+      return [];
+    }
+
+    return permissions || [];
+  } catch (error) {
+    console.error("Error in getAllPermissions:", error);
+    return [];
+  }
 };

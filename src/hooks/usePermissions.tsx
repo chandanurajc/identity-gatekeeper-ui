@@ -1,29 +1,50 @@
 
 import { useAuth } from "@/context/AuthContext";
 import { getUserPermissions } from "@/services/userService";
+import { useState, useEffect } from "react";
 
 export const usePermissions = () => {
   const { user } = useAuth();
+  const [permissions, setPermissions] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPermissions = async () => {
+      if (user) {
+        try {
+          const userPermissions = await getUserPermissions(user.id);
+          setPermissions(userPermissions);
+        } catch (error) {
+          console.error("Error fetching permissions:", error);
+          setPermissions([]);
+        }
+      }
+      setLoading(false);
+    };
+
+    fetchPermissions();
+  }, [user]);
 
   const hasPermission = (permissionName: string): boolean => {
     if (!user) return false;
     
-    const userPermissions = getUserPermissions(user.id);
-    return userPermissions.includes(permissionName);
+    // Check if user has the specific permission
+    return permissions.includes(permissionName);
   };
 
   return {
     hasPermission,
-    // User Management permissions - updated to match actual permission names
+    isLoading: loading,
+    // User Management permissions
     canViewUsers: hasPermission("view-user"),
     canCreateUsers: hasPermission("create-user"),
     canEditUsers: hasPermission("edit-user"),
     
-    // Module access permissions - these don't exist in services, so keeping them as false for now
+    // Module access permissions
     canAccessAdminModule: hasPermission("access_admin"),
     canAccessSettingsModule: hasPermission("access_settings"),
     
-    // Organization permissions - updated to match actual permission names
+    // Organization permissions
     canViewOrganization: hasPermission("view-organization"),
     canCreateOrganization: hasPermission("create-organization"),
     canEditOrganization: hasPermission("edit-organization"),
