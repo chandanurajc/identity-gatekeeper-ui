@@ -76,10 +76,6 @@ const OrganizationEdit = () => {
     }
   };
 
-  const handleCancel = () => {
-    navigate("/admin/organizations");
-  };
-
   if (!canEditOrganization) {
     return (
       <div className="p-8 text-center">
@@ -113,8 +109,7 @@ const OrganizationEdit = () => {
 
       <OrganizationForm 
         initialData={organization} 
-        onSubmit={handleSave} 
-        onCancel={handleCancel}
+        onSubmit={handleSave}
         isEditing={true} 
       />
     </div>

@@ -39,10 +39,6 @@ const DivisionEdit = () => {
     }
   };
 
-  const handleCancel = () => {
-    navigate("/admin/divisions");
-  };
-
   if (isLoading) {
     return <div>Loading division...</div>;
   }
@@ -79,8 +75,7 @@ const DivisionEdit = () => {
         <CardContent>
           <DivisionForm 
             initialData={initialData}
-            onSubmit={handleSubmit} 
-            onCancel={handleCancel}
+            onSubmit={handleSubmit}
             isEditing={true}
           />
         </CardContent>

@@ -8,7 +8,6 @@ import { useOrganizationPermissions } from "@/hooks/useOrganizationPermissions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Search, Edit } from "lucide-react";
 
@@ -106,17 +105,19 @@ const OrganizationsList = () => {
               <TableHead>Primary Contact</TableHead>
               <TableHead>Created By</TableHead>
               <TableHead>Created On</TableHead>
-              {canEditOrganization && <TableHead>Actions</TableHead>}
+              <TableHead>Updated By</TableHead>
+              <TableHead>Updated On</TableHead>
+              <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center">Loading...</TableCell>
+                <TableCell colSpan={10} className="text-center">Loading...</TableCell>
               </TableRow>
             ) : filteredOrganizations.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center">No organizations found</TableCell>
+                <TableCell colSpan={10} className="text-center">No organizations found</TableCell>
               </TableRow>
             ) : (
               filteredOrganizations.map((org: Organization) => {
@@ -142,16 +143,8 @@ const OrganizationsList = () => {
                         <span>{org.name}</span>
                       )}
                     </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">
-                        {org.type}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">
-                        {org.status.charAt(0).toUpperCase() + org.status.slice(1)}
-                      </Badge>
-                    </TableCell>
+                    <TableCell>{org.type}</TableCell>
+                    <TableCell>{org.status.charAt(0).toUpperCase() + org.status.slice(1)}</TableCell>
                     <TableCell>
                       {primaryContact ? (
                         <div>
@@ -164,8 +157,10 @@ const OrganizationsList = () => {
                     </TableCell>
                     <TableCell>{org.createdBy}</TableCell>
                     <TableCell>{new Date(org.createdOn || '').toLocaleDateString()}</TableCell>
-                    {canEditOrganization && (
-                      <TableCell>
+                    <TableCell>{org.updatedBy || '-'}</TableCell>
+                    <TableCell>{org.updatedOn ? new Date(org.updatedOn).toLocaleDateString() : '-'}</TableCell>
+                    <TableCell>
+                      {canEditOrganization && (
                         <Button
                           variant="outline"
                           size="sm"
@@ -173,8 +168,8 @@ const OrganizationsList = () => {
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
-                      </TableCell>
-                    )}
+                      )}
+                    </TableCell>
                   </TableRow>
                 );
               })

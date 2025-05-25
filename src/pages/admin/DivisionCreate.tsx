@@ -29,10 +29,6 @@ const DivisionCreate = () => {
     }
   };
 
-  const handleCancel = () => {
-    navigate("/admin/divisions");
-  };
-
   return (
     <div className="space-y-6">
       <div>
@@ -48,7 +44,7 @@ const DivisionCreate = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <DivisionForm onSubmit={handleSubmit} onCancel={handleCancel} />
+          <DivisionForm onSubmit={handleSubmit} />
         </CardContent>
       </Card>
     </div>
