@@ -1,4 +1,3 @@
-
 import { Organization, OrganizationFormData, Reference, Contact } from "@/types/organization";
 import { supabase } from "@/integrations/supabase/client";
 import { Json } from "@/integrations/supabase/types";
@@ -94,7 +93,7 @@ export const organizationService = {
       return processedOrgs;
     } catch (error) {
       console.error("OrganizationService: Error in getAllOrganizations:", error);
-      throw error; // Re-throw to let caller handle
+      throw error;
     }
   },
 
@@ -200,8 +199,11 @@ export const organizationService = {
   createOrganization: async (organization: OrganizationFormData, createdBy: string): Promise<Organization> => {
     try {
       console.log("OrganizationService: Creating organization:", organization);
-      const { data: { user } } = await supabase.auth.getUser();
-      console.log("OrganizationService: Current user for creation:", user?.id);
+      console.log("OrganizationService: Created by:", createdBy);
+      
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      console.log("OrganizationService: Current user for creation:", user);
+      console.log("OrganizationService: Auth error:", authError);
       
       if (!user) {
         throw new Error("User not authenticated");
@@ -218,19 +220,28 @@ export const organizationService = {
         throw new Error(`Organization code '${organization.code}' already exists`);
       }
 
-      console.log("OrganizationService: Validation passed, inserting data...");
+      console.log("OrganizationService: Validation passed, preparing insert data...");
       
       const insertData = {
         name: organization.name,
         code: organization.code.toUpperCase(),
-        description: organization.alias,
+        description: organization.alias || null,
         status: organization.status,
-        contacts: JSON.parse(JSON.stringify(organization.contacts)) as Json,
-        organization_references: JSON.parse(JSON.stringify(organization.references)) as Json,
+        contacts: organization.contacts && organization.contacts.length > 0 ? JSON.parse(JSON.stringify(organization.contacts)) as Json : null,
+        organization_references: organization.references && organization.references.length > 0 ? JSON.parse(JSON.stringify(organization.references)) as Json : null,
         created_by: user.id
       };
 
-      console.log("OrganizationService: Insert data:", insertData);
+      console.log("OrganizationService: Final insert data:", insertData);
+      console.log("OrganizationService: Insert data types:", {
+        name: typeof insertData.name,
+        code: typeof insertData.code,
+        description: typeof insertData.description,
+        status: typeof insertData.status,
+        contacts: typeof insertData.contacts,
+        organization_references: typeof insertData.organization_references,
+        created_by: typeof insertData.created_by
+      });
       
       const { data, error } = await supabase
         .from('organizations')
@@ -238,9 +249,15 @@ export const organizationService = {
         .select()
         .single();
 
+      console.log("OrganizationService: Insert response:", { data, error });
+
       if (error) {
-        console.error("OrganizationService: Error creating organization:", error);
-        console.error("OrganizationService: Error details:", error.message, error.code, error.details);
+        console.error("OrganizationService: Insert error details:", {
+          message: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint
+        });
         throw new Error(`Failed to create organization: ${error.message}`);
       }
 
