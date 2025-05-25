@@ -143,15 +143,16 @@ const CreateAdminUser = () => {
 
       console.log("Using Admin-Role:", adminRole);
 
-      // Create the auth user using admin.createUser
+      // Create the auth user using regular signup
       console.log("Creating auth user...");
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email: 'adminuser@admn.com',
         password: 'Pass@admin123',
-        email_confirm: true,
-        user_metadata: {
-          first_name: 'Admin',
-          last_name: 'User'
+        options: {
+          data: {
+            first_name: 'Admin',
+            last_name: 'User'
+          }
         }
       });
 
@@ -160,6 +161,10 @@ const CreateAdminUser = () => {
       if (authError) {
         console.error("Auth user creation error:", authError);
         throw authError;
+      }
+
+      if (!authData.user) {
+        throw new Error('Failed to create user - no user data returned');
       }
 
       // Update the profile with organization
