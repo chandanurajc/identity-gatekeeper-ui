@@ -60,8 +60,6 @@ const OrganizationDetail = () => {
     }
   };
   
-  const primaryContact = organization.contacts?.find(contact => contact.isPrimary);
-  
   return (
     <div className="container p-6 space-y-8">
       <div className="flex items-center justify-between">
@@ -101,57 +99,29 @@ const OrganizationDetail = () => {
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <h3 className="text-sm font-medium text-muted-foreground">Organization</h3>
+              <h3 className="text-sm font-medium text-muted-foreground">Name</h3>
               <p className="text-lg font-semibold">{organization.name}</p>
             </div>
             
-            {organization.website && (
+            <div>
+              <h3 className="text-sm font-medium text-muted-foreground">Code</h3>
+              <p className="text-lg font-semibold">{organization.code}</p>
+            </div>
+
+            {organization.alias && (
               <div>
-                <h3 className="text-sm font-medium text-muted-foreground flex items-center">
-                  <Globe className="mr-2 h-4 w-4" /> Website
-                </h3>
-                <p className="text-lg">
-                  <a 
-                    href={organization.website} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:text-blue-800"
-                  >
-                    {organization.website}
-                  </a>
-                </p>
+                <h3 className="text-sm font-medium text-muted-foreground">Alias</h3>
+                <p className="text-lg">{organization.alias}</p>
               </div>
             )}
-          </div>
-          
-          {organization.description && (
+
             <div>
-              <h3 className="text-sm font-medium text-muted-foreground">Description</h3>
-              <p className="mt-1">{organization.description}</p>
+              <h3 className="text-sm font-medium text-muted-foreground">Type</h3>
+              <p className="text-lg">{organization.type}</p>
             </div>
-          )}
+          </div>
         </CardContent>
       </Card>
-
-      {organization.address && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <MapPin className="mr-2 h-5 w-5" />
-              Address
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-1">
-              <p>{organization.address.street}</p>
-              <p>
-                {organization.address.city}, {organization.address.state} {organization.address.postalCode}
-              </p>
-              <p>{organization.address.country}</p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       <Card>
         <CardHeader>
@@ -164,36 +134,64 @@ const OrganizationDetail = () => {
           {organization.contacts && organization.contacts.length > 0 ? (
             <div className="space-y-6">
               {organization.contacts.map((contact, index) => (
-                <div key={index} className="border-b pb-4 last:border-0 last:pb-0">
-                  <div className="flex items-start justify-between">
+                <div key={contact.id} className="border-b pb-4 last:border-0 last:pb-0">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <div className="flex items-center">
-                        <h4 className="font-semibold">{contact.name}</h4>
-                        {contact.isPrimary && (
-                          <Badge variant="outline" className="ml-2">Primary</Badge>
-                        )}
-                      </div>
-                      <p className="text-sm text-muted-foreground">{contact.title}</p>
+                      <h4 className="font-semibold">{contact.firstName} {contact.lastName}</h4>
+                      <p className="text-sm text-muted-foreground">{contact.type}</p>
+                      {contact.address1 && (
+                        <div className="mt-2 text-sm">
+                          <p>{contact.address1}</p>
+                          {contact.address2 && <p>{contact.address2}</p>}
+                          {(contact.city || contact.state || contact.postalCode) && (
+                            <p>
+                              {contact.city && contact.city}
+                              {contact.city && contact.state && ", "}
+                              {contact.state && contact.state}
+                              {(contact.city || contact.state) && contact.postalCode && " "}
+                              {contact.postalCode && contact.postalCode}
+                            </p>
+                          )}
+                          {contact.country && <p>{contact.country}</p>}
+                        </div>
+                      )}
                     </div>
                     <div className="space-y-1 text-right">
-                      <div className="flex items-center justify-end">
-                        <Mail className="mr-1 h-4 w-4 text-muted-foreground" />
-                        <a 
-                          href={`mailto:${contact.email}`}
-                          className="text-blue-600 hover:text-blue-800"
-                        >
-                          {contact.email}
-                        </a>
-                      </div>
-                      <div className="flex items-center justify-end">
-                        <Phone className="mr-1 h-4 w-4 text-muted-foreground" />
-                        <a 
-                          href={`tel:${contact.phone}`}
-                          className="text-blue-600 hover:text-blue-800"
-                        >
-                          {contact.phone}
-                        </a>
-                      </div>
+                      {contact.email && (
+                        <div className="flex items-center justify-end">
+                          <Mail className="mr-1 h-4 w-4 text-muted-foreground" />
+                          <a 
+                            href={`mailto:${contact.email}`}
+                            className="text-blue-600 hover:text-blue-800"
+                          >
+                            {contact.email}
+                          </a>
+                        </div>
+                      )}
+                      {contact.phoneNumber && (
+                        <div className="flex items-center justify-end">
+                          <Phone className="mr-1 h-4 w-4 text-muted-foreground" />
+                          <a 
+                            href={`tel:${contact.phoneNumber}`}
+                            className="text-blue-600 hover:text-blue-800"
+                          >
+                            {contact.phoneNumber}
+                          </a>
+                        </div>
+                      )}
+                      {contact.website && (
+                        <div className="flex items-center justify-end">
+                          <Globe className="mr-1 h-4 w-4 text-muted-foreground" />
+                          <a 
+                            href={contact.website}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:text-blue-800"
+                          >
+                            {contact.website}
+                          </a>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -216,60 +214,41 @@ const OrganizationDetail = () => {
           <CardContent>
             <div className="space-y-6">
               {organization.references.map((reference, index) => (
-                <div key={index} className="border-b pb-4 last:border-0 last:pb-0">
+                <div key={reference.id} className="border-b pb-4 last:border-0 last:pb-0">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <h4 className="font-semibold">{reference.name}</h4>
-                      <p className="text-sm text-muted-foreground">{reference.company}</p>
-                      <p className="text-sm">{reference.relationship}</p>
-                    </div>
-                    <div className="space-y-1 text-right">
-                      {reference.email && (
-                        <div className="flex items-center justify-end">
-                          <Mail className="mr-1 h-4 w-4 text-muted-foreground" />
-                          <a 
-                            href={`mailto:${reference.email}`}
-                            className="text-blue-600 hover:text-blue-800"
-                          >
-                            {reference.email}
-                          </a>
-                        </div>
-                      )}
-                      {reference.phone && (
-                        <div className="flex items-center justify-end">
-                          <Phone className="mr-1 h-4 w-4 text-muted-foreground" />
-                          <a 
-                            href={`tel:${reference.phone}`}
-                            className="text-blue-600 hover:text-blue-800"
-                          >
-                            {reference.phone}
-                          </a>
-                        </div>
-                      )}
+                      <h4 className="font-semibold">{reference.type}</h4>
+                      <p className="text-sm">{reference.value}</p>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
           </CardContent>
-        </Card>
+        )}
       )}
 
       <Card>
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-            <div>
-              <p className="text-muted-foreground">Created By</p>
-              <p className="font-medium">{organization.createdBy}</p>
-            </div>
-            <div>
-              <p className="text-muted-foreground">Created On</p>
-              <p className="font-medium">{new Date(organization.createdAt).toLocaleDateString()}</p>
-            </div>
-            {organization.updatedAt && (
+            {organization.createdBy && (
+              <div>
+                <p className="text-muted-foreground">Created By</p>
+                <p className="font-medium">{organization.createdBy}</p>
+              </div>
+            )}
+            {organization.createdOn && (
+              <div>
+                <p className="text-muted-foreground">Created On</p>
+                <p className="font-medium">{new Date(organization.createdOn).toLocaleDateString()}</p>
+              </div>
+            )}
+            {organization.updatedBy && organization.updatedOn && (
               <div>
                 <p className="text-muted-foreground">Last Updated</p>
-                <p className="font-medium">{new Date(organization.updatedAt).toLocaleDateString()}</p>
+                <p className="font-medium">
+                  {new Date(organization.updatedOn).toLocaleDateString()} by {organization.updatedBy}
+                </p>
               </div>
             )}
           </div>
