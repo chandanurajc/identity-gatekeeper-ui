@@ -1,189 +1,394 @@
 
 import { Permission, Role } from "@/types/role";
-import { v4 as uuidv4 } from "uuid";
-import { organizationService } from "./organizationService";
-
-// Mock data for permissions
-const mockPermissions: Permission[] = [
-  { id: "1", name: "create_users", module: "Administration", component: "Users", description: "Create new user accounts in the system" },
-  { id: "2", name: "edit_users", module: "Administration", component: "Users", description: "Edit existing user account details" },
-  { id: "3", name: "view_users", module: "Administration", component: "Users", description: "View user accounts and their details" },
-  { id: "4", name: "create_role", module: "Administration", component: "Roles", description: "Create new roles with custom permissions" },
-  { id: "5", name: "edit_roles", module: "Administration", component: "Roles", description: "Edit existing role details and permissions" },
-  { id: "6", name: "view_roles", module: "Administration", component: "Roles", description: "View roles and their assigned permissions" },
-  { id: "7", name: "access_settings", module: "Administration", component: "Settings", description: "Access application settings configuration" },
-  { id: "8", name: "access_admin", module: "Administration", component: "General", description: "General administration module access" },
-  { id: "9", name: "view_permissions", module: "Administration", component: "Permissions", description: "View all system permissions" },
-  { id: "10", name: "create_item_category", module: "Master data", component: "Item category", description: "Create new item categories" },
-  { id: "11", name: "edit_item_category", module: "Master data", component: "Item category", description: "Edit existing item categories" },
-  { id: "12", name: "view_item_category", module: "Master data", component: "Item category", description: "View item categories and their details" },
-  { id: "13", name: "access_master_data", module: "Master data", component: "General", description: "General master data module access" },
-  { id: "14", name: "view_organization", module: "Administration", component: "Organizations", description: "View organizations and their details" },
-  { id: "15", name: "create_organization", module: "Administration", component: "Organizations", description: "Create new organizations" },
-  { id: "16", name: "edit_organization", module: "Administration", component: "Organizations", description: "Edit existing organizations" },
-];
-
-// Mock data for roles
-const mockRoles: Role[] = [
-  {
-    id: "1",
-    name: "Admin",
-    permissions: mockPermissions,
-    createdBy: "System",
-    createdOn: new Date("2024-05-01"),
-  },
-  {
-    id: "2",
-    name: "User",
-    permissions: mockPermissions.filter(p => p.name === "view_users"),
-    createdBy: "System",
-    createdOn: new Date("2024-05-01"),
-    organizationId: "1",
-    organizationName: "ABC Corporation",
-  }
-];
-
-// Mock data for roles
-let roles = [...mockRoles];
+import { supabase } from "@/integrations/supabase/client";
 
 export const roleService = {
   getAllRoles: async (): Promise<Role[]> => {
     try {
-      const organizations = await organizationService.getAllOrganizations();
-      
-      // Update roles with organization names
-      const rolesWithOrgNames = roles.map(role => {
-        if (role.organizationId) {
-          const org = organizations.find(o => o.id === role.organizationId);
-          if (org) {
-            return {
-              ...role,
-              organizationName: org.name
-            };
-          }
-        }
-        return role;
-      });
-      
-      return rolesWithOrgNames;
+      const { data: roles, error } = await supabase
+        .from('roles')
+        .select(`
+          *,
+          organizations:organization_id (
+            id,
+            name
+          ),
+          role_permissions (
+            permissions (
+              id,
+              name,
+              module,
+              component,
+              description
+            )
+          )
+        `)
+        .order('created_on', { ascending: false });
+
+      if (error) {
+        console.error("Error fetching roles:", error);
+        throw error;
+      }
+
+      return roles?.map(role => ({
+        id: role.id,
+        name: role.name,
+        permissions: role.role_permissions?.map((rp: any) => rp.permissions).filter(Boolean) || [],
+        organizationId: role.organization_id,
+        organizationName: role.organizations?.name,
+        createdBy: role.created_by,
+        createdOn: role.created_on ? new Date(role.created_on) : undefined,
+        updatedBy: role.updated_by,
+        updatedOn: role.updated_on ? new Date(role.updated_on) : undefined,
+      })) || [];
     } catch (error) {
-      console.error("Error loading roles with organizations:", error);
-      return [...roles];
+      console.error("Error in getAllRoles:", error);
+      return [];
     }
   },
 
   getRoleById: async (id: string): Promise<Role | undefined> => {
-    const role = roles.find(role => role.id === id);
-    
-    if (role && role.organizationId) {
-      try {
-        const org = await organizationService.getOrganizationById(role.organizationId);
-        if (org) {
-          return {
-            ...role,
-            organizationName: org.name
-          };
-        }
-      } catch (error) {
-        console.error("Error fetching organization for role:", error);
+    try {
+      const { data: role, error } = await supabase
+        .from('roles')
+        .select(`
+          *,
+          organizations:organization_id (
+            id,
+            name
+          ),
+          role_permissions (
+            permissions (
+              id,
+              name,
+              module,
+              component,
+              description
+            )
+          )
+        `)
+        .eq('id', id)
+        .single();
+
+      if (error) {
+        console.error("Error fetching role:", error);
+        return undefined;
       }
+
+      if (!role) return undefined;
+
+      return {
+        id: role.id,
+        name: role.name,
+        permissions: role.role_permissions?.map((rp: any) => rp.permissions).filter(Boolean) || [],
+        organizationId: role.organization_id,
+        organizationName: role.organizations?.name,
+        createdBy: role.created_by,
+        createdOn: role.created_on ? new Date(role.created_on) : undefined,
+        updatedBy: role.updated_by,
+        updatedOn: role.updated_on ? new Date(role.updated_on) : undefined,
+      };
+    } catch (error) {
+      console.error("Error in getRoleById:", error);
+      return undefined;
     }
-    
-    return role;
   },
 
   createRole: async (role: Omit<Role, "id" | "createdBy" | "createdOn">): Promise<Role> => {
-    let organizationName = "";
-    
-    if (role.organizationId) {
-      try {
-        const org = await organizationService.getOrganizationById(role.organizationId);
-        if (org) {
-          organizationName = org.name;
-        }
-      } catch (error) {
-        console.error("Error fetching organization for new role:", error);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      // Insert the role
+      const { data: newRole, error: roleError } = await supabase
+        .from('roles')
+        .insert({
+          name: role.name,
+          description: role.description,
+          organization_id: role.organizationId,
+          created_by: user?.id
+        })
+        .select()
+        .single();
+
+      if (roleError) {
+        console.error("Error creating role:", roleError);
+        throw roleError;
       }
+
+      // Insert role permissions
+      if (role.permissions.length > 0) {
+        const rolePermissions = role.permissions.map(permission => ({
+          role_id: newRole.id,
+          permission_id: permission.id
+        }));
+
+        const { error: permissionsError } = await supabase
+          .from('role_permissions')
+          .insert(rolePermissions);
+
+        if (permissionsError) {
+          console.error("Error creating role permissions:", permissionsError);
+          throw permissionsError;
+        }
+      }
+
+      return {
+        id: newRole.id,
+        name: newRole.name,
+        permissions: role.permissions,
+        organizationId: newRole.organization_id,
+        createdBy: newRole.created_by,
+        createdOn: new Date(newRole.created_on),
+      };
+    } catch (error) {
+      console.error("Error in createRole:", error);
+      throw error;
     }
-    
-    const newRole: Role = {
-      ...role,
-      id: uuidv4(),
-      createdBy: "Current User", // In a real app, this would come from the authenticated user
-      createdOn: new Date(),
-      organizationName
-    };
-    roles.push(newRole);
-    return newRole;
   },
 
   updateRole: async (id: string, roleData: Partial<Role>): Promise<Role | undefined> => {
-    let updatedRole: Role | undefined;
-    let organizationName = undefined;
-    
-    if (roleData.organizationId) {
-      try {
-        const org = await organizationService.getOrganizationById(roleData.organizationId);
-        if (org) {
-          organizationName = org.name;
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      // Update the role
+      const { data: updatedRole, error: roleError } = await supabase
+        .from('roles')
+        .update({
+          name: roleData.name,
+          description: roleData.description,
+          organization_id: roleData.organizationId,
+          updated_by: user?.id,
+          updated_on: new Date().toISOString()
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (roleError) {
+        console.error("Error updating role:", roleError);
+        throw roleError;
+      }
+
+      // Update permissions if provided
+      if (roleData.permissions) {
+        // Delete existing permissions
+        const { error: deleteError } = await supabase
+          .from('role_permissions')
+          .delete()
+          .eq('role_id', id);
+
+        if (deleteError) {
+          console.error("Error deleting role permissions:", deleteError);
+          throw deleteError;
         }
-      } catch (error) {
-        console.error("Error fetching organization for updated role:", error);
+
+        // Insert new permissions
+        if (roleData.permissions.length > 0) {
+          const rolePermissions = roleData.permissions.map(permission => ({
+            role_id: id,
+            permission_id: permission.id
+          }));
+
+          const { error: insertError } = await supabase
+            .from('role_permissions')
+            .insert(rolePermissions);
+
+          if (insertError) {
+            console.error("Error inserting role permissions:", insertError);
+            throw insertError;
+          }
+        }
       }
+
+      return {
+        id: updatedRole.id,
+        name: updatedRole.name,
+        permissions: roleData.permissions || [],
+        organizationId: updatedRole.organization_id,
+        createdBy: updatedRole.created_by,
+        createdOn: new Date(updatedRole.created_on),
+        updatedBy: updatedRole.updated_by,
+        updatedOn: new Date(updatedRole.updated_on),
+      };
+    } catch (error) {
+      console.error("Error in updateRole:", error);
+      return undefined;
     }
-    
-    roles = roles.map(role => {
-      if (role.id === id) {
-        updatedRole = {
-          ...role,
-          ...roleData,
-          organizationName: organizationName || role.organizationName,
-          updatedBy: "Current User", // In a real app, this would come from the authenticated user
-          updatedOn: new Date(),
-        };
-        return updatedRole;
+  },
+
+  deleteRole: async (id: string): Promise<boolean> => {
+    try {
+      // Delete role permissions first (foreign key constraint)
+      const { error: permissionsError } = await supabase
+        .from('role_permissions')
+        .delete()
+        .eq('role_id', id);
+
+      if (permissionsError) {
+        console.error("Error deleting role permissions:", permissionsError);
+        throw permissionsError;
       }
-      return role;
-    });
-    return updatedRole;
+
+      // Delete the role
+      const { error: roleError } = await supabase
+        .from('roles')
+        .delete()
+        .eq('id', id);
+
+      if (roleError) {
+        console.error("Error deleting role:", roleError);
+        throw roleError;
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Error in deleteRole:", error);
+      return false;
+    }
   },
 
-  deleteRole: (id: string): Promise<boolean> => {
-    const initialLength = roles.length;
-    roles = roles.filter(role => role.id !== id);
-    return Promise.resolve(roles.length !== initialLength);
+  getAllPermissions: async (): Promise<Permission[]> => {
+    try {
+      const { data: permissions, error } = await supabase
+        .from('permissions')
+        .select('*')
+        .order('module', { ascending: true })
+        .order('component', { ascending: true })
+        .order('name', { ascending: true });
+
+      if (error) {
+        console.error("Error fetching permissions:", error);
+        throw error;
+      }
+
+      return permissions || [];
+    } catch (error) {
+      console.error("Error in getAllPermissions:", error);
+      return [];
+    }
   },
 
-  getAllPermissions: (): Promise<Permission[]> => {
-    return Promise.resolve([...mockPermissions]);
+  getPermissionsByModule: async (module: string): Promise<Permission[]> => {
+    try {
+      const { data: permissions, error } = await supabase
+        .from('permissions')
+        .select('*')
+        .eq('module', module)
+        .order('component', { ascending: true })
+        .order('name', { ascending: true });
+
+      if (error) {
+        console.error("Error fetching permissions by module:", error);
+        throw error;
+      }
+
+      return permissions || [];
+    } catch (error) {
+      console.error("Error in getPermissionsByModule:", error);
+      return [];
+    }
   },
 
-  getPermissionsByModule: (module: string): Promise<Permission[]> => {
-    return Promise.resolve(mockPermissions.filter(p => p.module === module));
+  getPermissionsByComponent: async (component: string): Promise<Permission[]> => {
+    try {
+      const { data: permissions, error } = await supabase
+        .from('permissions')
+        .select('*')
+        .eq('component', component)
+        .order('module', { ascending: true })
+        .order('name', { ascending: true });
+
+      if (error) {
+        console.error("Error fetching permissions by component:", error);
+        throw error;
+      }
+
+      return permissions || [];
+    } catch (error) {
+      console.error("Error in getPermissionsByComponent:", error);
+      return [];
+    }
   },
 
-  getPermissionsByComponent: (component: string): Promise<Permission[]> => {
-    return Promise.resolve(mockPermissions.filter(p => p.component === component));
+  getPermissionsByModuleAndComponent: async (module: string, component: string): Promise<Permission[]> => {
+    try {
+      const { data: permissions, error } = await supabase
+        .from('permissions')
+        .select('*')
+        .eq('module', module)
+        .eq('component', component)
+        .order('name', { ascending: true });
+
+      if (error) {
+        console.error("Error fetching permissions by module and component:", error);
+        throw error;
+      }
+
+      return permissions || [];
+    } catch (error) {
+      console.error("Error in getPermissionsByModuleAndComponent:", error);
+      return [];
+    }
   },
 
-  getPermissionsByModuleAndComponent: (module: string, component: string): Promise<Permission[]> => {
-    return Promise.resolve(mockPermissions.filter(p => p.module === module && p.component === component));
+  getUniqueModules: async (): Promise<string[]> => {
+    try {
+      const { data: permissions, error } = await supabase
+        .from('permissions')
+        .select('module')
+        .order('module', { ascending: true });
+
+      if (error) {
+        console.error("Error fetching unique modules:", error);
+        throw error;
+      }
+
+      const modules = [...new Set(permissions?.map(p => p.module) || [])];
+      return modules;
+    } catch (error) {
+      console.error("Error in getUniqueModules:", error);
+      return [];
+    }
   },
 
-  getUniqueModules: (): Promise<string[]> => {
-    const modules = [...new Set(mockPermissions.map(p => p.module))];
-    return Promise.resolve(modules);
+  getUniqueComponents: async (): Promise<string[]> => {
+    try {
+      const { data: permissions, error } = await supabase
+        .from('permissions')
+        .select('component')
+        .order('component', { ascending: true });
+
+      if (error) {
+        console.error("Error fetching unique components:", error);
+        throw error;
+      }
+
+      const components = [...new Set(permissions?.map(p => p.component) || [])];
+      return components;
+    } catch (error) {
+      console.error("Error in getUniqueComponents:", error);
+      return [];
+    }
   },
 
-  getUniqueComponents: (): Promise<string[]> => {
-    const components = [...new Set(mockPermissions.map(p => p.component))];
-    return Promise.resolve(components);
-  },
+  getComponentsByModule: async (module: string): Promise<string[]> => {
+    try {
+      const { data: permissions, error } = await supabase
+        .from('permissions')
+        .select('component')
+        .eq('module', module)
+        .order('component', { ascending: true });
 
-  getComponentsByModule: (module: string): Promise<string[]> => {
-    const components = [...new Set(mockPermissions
-      .filter(p => p.module === module)
-      .map(p => p.component))];
-    return Promise.resolve(components);
+      if (error) {
+        console.error("Error fetching components by module:", error);
+        throw error;
+      }
+
+      const components = [...new Set(permissions?.map(p => p.component) || [])];
+      return components;
+    } catch (error) {
+      console.error("Error in getComponentsByModule:", error);
+      return [];
+    }
   }
 };
