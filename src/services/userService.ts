@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { User, UserRole, Permission, Role, PhoneNumber } from "@/types/user";
 
@@ -27,7 +26,11 @@ const phoneToJson = (phone: PhoneNumber | undefined): any => {
 
 // Get all users from Supabase
 export const getAllUsers = async (): Promise<User[]> => {
+  console.log("=== getAllUsers service called ===");
   try {
+    console.log("Starting Supabase query for profiles...");
+    const startTime = Date.now();
+    
     const { data: profiles, error } = await supabase
       .from('profiles')
       .select(`
@@ -39,13 +42,24 @@ export const getAllUsers = async (): Promise<User[]> => {
         )
       `);
 
+    const queryTime = Date.now() - startTime;
+    console.log(`Profiles query completed in ${queryTime}ms`);
+
     if (error) {
       console.error("Error fetching users:", error);
       throw error;
     }
 
+    console.log("Profiles fetched:", {
+      count: profiles?.length || 0,
+      firstProfile: profiles?.[0] || null
+    });
+
     // Get user roles separately to avoid relation issues
     const userIds = profiles?.map(p => p.id) || [];
+    console.log("Fetching roles for user IDs:", userIds.length);
+    
+    const rolesStartTime = Date.now();
     const { data: userRolesData } = await supabase
       .from('user_roles')
       .select(`
@@ -56,7 +70,11 @@ export const getAllUsers = async (): Promise<User[]> => {
       `)
       .in('user_id', userIds);
 
-    return profiles?.map(profile => {
+    const rolesQueryTime = Date.now() - rolesStartTime;
+    console.log(`User roles query completed in ${rolesQueryTime}ms`);
+    console.log("User roles data:", userRolesData);
+
+    const mappedUsers = profiles?.map(profile => {
       const userRoles = userRolesData?.filter(ur => ur.user_id === profile.id) || [];
       const roles = userRoles.map((ur: any) => ur.roles?.name).filter(Boolean) || [];
 
@@ -81,6 +99,15 @@ export const getAllUsers = async (): Promise<User[]> => {
         updatedOn: profile.updated_on ? new Date(profile.updated_on) : undefined,
       };
     }) || [];
+
+    const totalTime = Date.now() - startTime;
+    console.log(`getAllUsers completed successfully in ${totalTime}ms`);
+    console.log("Returning users:", {
+      count: mappedUsers.length,
+      firstUser: mappedUsers[0] || null
+    });
+
+    return mappedUsers;
   } catch (error) {
     console.error("Error in getAllUsers:", error);
     throw error;
@@ -250,6 +277,9 @@ export const deleteUser = async (id: string): Promise<boolean> => {
 
 // Get user permissions from Supabase
 export const getUserPermissions = async (userId: string): Promise<string[]> => {
+  console.log("=== getUserPermissions called ===");
+  console.log("User ID:", userId);
+  
   try {
     // Check if userId is a valid UUID format
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -258,6 +288,9 @@ export const getUserPermissions = async (userId: string): Promise<string[]> => {
       return [];
     }
 
+    console.log("Fetching user permissions from Supabase...");
+    const startTime = Date.now();
+    
     const { data, error } = await supabase
       .from('user_roles')
       .select(`
@@ -271,10 +304,15 @@ export const getUserPermissions = async (userId: string): Promise<string[]> => {
       `)
       .eq('user_id', userId);
 
+    const queryTime = Date.now() - startTime;
+    console.log(`User permissions query completed in ${queryTime}ms`);
+
     if (error) {
       console.error("Error fetching user permissions:", error);
       return [];
     }
+
+    console.log("Raw permissions data:", data);
 
     const permissions = new Set<string>();
     data?.forEach((userRole: any) => {
@@ -283,7 +321,10 @@ export const getUserPermissions = async (userId: string): Promise<string[]> => {
       });
     });
 
-    return Array.from(permissions);
+    const permissionsArray = Array.from(permissions);
+    console.log("Processed permissions:", permissionsArray);
+    
+    return permissionsArray;
   } catch (error) {
     console.error("Error in getUserPermissions:", error);
     return [];

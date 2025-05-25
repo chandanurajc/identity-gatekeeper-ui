@@ -33,18 +33,37 @@ const UsersList = () => {
   const { toast } = useToast();
   const { canViewUsers, canCreateUsers, canEditUsers, isLoading: permissionsLoading } = usePermissions();
 
+  console.log("=== UsersList Component Debug ===");
+  console.log("Component rendered with state:", {
+    loading,
+    permissionsLoading,
+    canViewUsers,
+    usersCount: users.length,
+    error
+  });
+
   // Fetch users function
   const fetchUsers = async () => {
-    console.log("Starting to fetch users...");
+    console.log("=== fetchUsers called ===");
     try {
       setLoading(true);
       setError(null);
-      console.log("Calling getAllUsers...");
+      console.log("About to call getAllUsers service...");
+      
+      const startTime = Date.now();
       const data = await getAllUsers();
-      console.log("Users fetched successfully:", data.length);
-      setUsers(data);
+      const endTime = Date.now();
+      
+      console.log(`getAllUsers completed in ${endTime - startTime}ms`);
+      console.log("Users data received:", {
+        count: data?.length || 0,
+        firstUser: data?.[0] || null
+      });
+      
+      setUsers(data || []);
+      console.log("Users state updated successfully");
     } catch (error) {
-      console.error("Error fetching users:", error);
+      console.error("=== Error in fetchUsers ===", error);
       const errorMessage = error instanceof Error ? error.message : "Failed to fetch users";
       setError(errorMessage);
       toast({
@@ -53,20 +72,28 @@ const UsersList = () => {
         description: "Failed to fetch users. Please try again later."
       });
     } finally {
+      console.log("Setting loading to false");
       setLoading(false);
     }
   };
 
   useEffect(() => {
+    console.log("=== Main useEffect triggered ===");
+    console.log("Permissions loading state:", permissionsLoading);
+    console.log("Can view users:", canViewUsers);
+    
     // Wait for permissions to load before fetching data
     if (!permissionsLoading) {
-      console.log("Permissions loaded, fetching users...");
+      console.log("Permissions loaded, proceeding with fetchUsers...");
       fetchUsers();
+    } else {
+      console.log("Still waiting for permissions to load...");
     }
   }, [permissionsLoading]);
 
   // Set up real-time subscription
   useEffect(() => {
+    console.log("=== Setting up real-time subscription ===");
     const channel = supabase
       .channel('profiles-changes')
       .on(
@@ -85,6 +112,7 @@ const UsersList = () => {
       .subscribe();
 
     return () => {
+      console.log("=== Cleaning up real-time subscription ===");
       supabase.removeChannel(channel);
     };
   }, []);
@@ -159,14 +187,29 @@ const UsersList = () => {
     return 0;
   });
 
-  // Show loading state
+  console.log("=== Render decision ===");
+  console.log("loading:", loading);
+  console.log("permissionsLoading:", permissionsLoading);
+  console.log("canViewUsers:", canViewUsers);
+  console.log("error:", error);
+
+  // Show loading state with more details
   if (loading || permissionsLoading) {
+    console.log("=== Rendering loading state ===");
     return (
       <div className="container mx-auto py-8">
         <Card>
           <CardContent className="py-8">
             <div className="flex items-center justify-center h-64">
-              <div className="text-lg">Loading users...</div>
+              <div className="text-lg">
+                Loading users... 
+                {permissionsLoading && " (checking permissions)"}
+                {loading && !permissionsLoading && " (fetching data)"}
+              </div>
+            </div>
+            <div className="text-center text-sm text-gray-500 mt-4">
+              Debug: permissions loading = {permissionsLoading.toString()}, 
+              data loading = {loading.toString()}
             </div>
           </CardContent>
         </Card>
@@ -176,6 +219,7 @@ const UsersList = () => {
 
   // Show error state
   if (error) {
+    console.log("=== Rendering error state ===");
     return (
       <div className="container mx-auto py-8">
         <Card>
@@ -194,6 +238,7 @@ const UsersList = () => {
 
   // Check permissions after loading
   if (!canViewUsers) {
+    console.log("=== Rendering access denied state ===");
     return (
       <div className="container mx-auto py-8">
         <Card>
@@ -207,6 +252,9 @@ const UsersList = () => {
       </div>
     );
   }
+
+  console.log("=== Rendering main content ===");
+  console.log("Users to display:", sortedUsers.length);
 
   return (
     <div className="container mx-auto py-8">
