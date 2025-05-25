@@ -10,31 +10,33 @@ const validateOrganizationCode = (code: string): boolean => {
 
 // Helper functions to safely convert Json to typed arrays
 const parseReferences = (data: Json | null): Reference[] => {
-  if (!data) return [];
-  if (Array.isArray(data)) {
-    return data.filter((item): item is Reference => 
+  if (!data || !Array.isArray(data)) return [];
+  
+  return data.filter((item: any): item is Reference => {
+    return (
       typeof item === 'object' && 
       item !== null && 
-      'id' in item && 
-      'type' in item && 
-      'value' in item
+      typeof item.id === 'string' &&
+      typeof item.type === 'string' && 
+      typeof item.value === 'string' &&
+      ['GST', 'CIN', 'PAN'].includes(item.type)
     );
-  }
-  return [];
+  });
 };
 
 const parseContacts = (data: Json | null): Contact[] => {
-  if (!data) return [];
-  if (Array.isArray(data)) {
-    return data.filter((item): item is Contact => 
+  if (!data || !Array.isArray(data)) return [];
+  
+  return data.filter((item: any): item is Contact => {
+    return (
       typeof item === 'object' && 
       item !== null && 
-      'id' in item && 
-      'type' in item && 
-      'firstName' in item
+      typeof item.id === 'string' &&
+      typeof item.type === 'string' && 
+      typeof item.firstName === 'string' &&
+      ['Registered location', 'Billing', 'Shipping', 'Owner'].includes(item.type)
     );
-  }
-  return [];
+  });
 };
 
 export const organizationService = {
@@ -180,8 +182,8 @@ export const organizationService = {
           code: organization.code.toUpperCase(),
           description: organization.alias,
           status: organization.status,
-          contacts: organization.contacts as Json,
-          organization_references: organization.references as Json,
+          contacts: JSON.parse(JSON.stringify(organization.contacts)) as Json,
+          organization_references: JSON.parse(JSON.stringify(organization.references)) as Json,
           created_by: user?.id
         })
         .select()
@@ -214,18 +216,33 @@ export const organizationService = {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
+      const updateData: any = {
+        updated_by: user?.id,
+        updated_on: new Date().toISOString()
+      };
+
+      if (organizationData.name !== undefined) {
+        updateData.name = organizationData.name;
+      }
+      if (organizationData.code !== undefined) {
+        updateData.code = organizationData.code.toUpperCase();
+      }
+      if (organizationData.alias !== undefined) {
+        updateData.description = organizationData.alias;
+      }
+      if (organizationData.status !== undefined) {
+        updateData.status = organizationData.status;
+      }
+      if (organizationData.contacts !== undefined) {
+        updateData.contacts = JSON.parse(JSON.stringify(organizationData.contacts)) as Json;
+      }
+      if (organizationData.references !== undefined) {
+        updateData.organization_references = JSON.parse(JSON.stringify(organizationData.references)) as Json;
+      }
+      
       const { data, error } = await supabase
         .from('organizations')
-        .update({
-          name: organizationData.name,
-          code: organizationData.code?.toUpperCase(),
-          description: organizationData.alias,
-          status: organizationData.status,
-          contacts: organizationData.contacts as Json,
-          organization_references: organizationData.references as Json,
-          updated_by: user?.id,
-          updated_on: new Date().toISOString()
-        })
+        .update(updateData)
         .eq('id', id)
         .select()
         .single();
