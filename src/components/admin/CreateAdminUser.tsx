@@ -12,29 +12,44 @@ const CreateAdminUser = () => {
   const createAdminUser = async () => {
     setIsCreating(true);
     try {
-      // First, get the ADMN organization ID (not ADMIN)
+      console.log("Starting admin user creation process...");
+      
+      // First, get the ADMN organization ID
+      console.log("Looking for ADMN organization...");
       const { data: adminOrg, error: orgError } = await supabase
         .from('organizations')
-        .select('id')
+        .select('id, name, code')
         .eq('code', 'ADMN')
         .single();
 
+      console.log("Organization query result:", { adminOrg, orgError });
+
       if (orgError || !adminOrg) {
-        throw new Error('ADMN organization not found');
+        console.error("ADMN organization not found:", orgError);
+        throw new Error('ADMN organization not found. Please ensure the organization is created in the database.');
       }
 
+      console.log("Found ADMN organization:", adminOrg);
+
       // Get the Admin-Role ID
+      console.log("Looking for Admin-Role...");
       const { data: adminRole, error: roleError } = await supabase
         .from('roles')
-        .select('id')
+        .select('id, name')
         .eq('name', 'Admin-Role')
         .single();
 
+      console.log("Role query result:", { adminRole, roleError });
+
       if (roleError || !adminRole) {
-        throw new Error('Admin-Role not found');
+        console.error("Admin-Role not found:", roleError);
+        throw new Error('Admin-Role not found. Please ensure the role is created in the database.');
       }
 
+      console.log("Found Admin-Role:", adminRole);
+
       // Create the auth user
+      console.log("Creating auth user...");
       const { data: authData, error: authError } = await supabase.auth.admin.createUser({
         email: 'admin@admin.com',
         password: 'Password@admin',
@@ -45,11 +60,15 @@ const CreateAdminUser = () => {
         }
       });
 
+      console.log("Auth user creation result:", { user: authData?.user?.email, error: authError });
+
       if (authError) {
+        console.error("Auth user creation error:", authError);
         throw authError;
       }
 
       // Update the profile with organization
+      console.log("Updating user profile...");
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
@@ -61,10 +80,14 @@ const CreateAdminUser = () => {
         .eq('id', authData.user.id);
 
       if (profileError) {
+        console.error("Profile update error:", profileError);
         throw profileError;
       }
 
+      console.log("Profile updated successfully");
+
       // Assign the Admin-Role to the user
+      console.log("Assigning Admin-Role to user...");
       const { error: userRoleError } = await supabase
         .from('user_roles')
         .insert({
@@ -73,8 +96,11 @@ const CreateAdminUser = () => {
         });
 
       if (userRoleError) {
+        console.error("User role assignment error:", userRoleError);
         throw userRoleError;
       }
+
+      console.log("Admin user created successfully!");
 
       toast({
         title: "Admin user created successfully",
