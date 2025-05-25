@@ -9,9 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Search, Edit, Bug } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/components/ui/use-toast";
+import { Plus, Search, Edit } from "lucide-react";
 
 const OrganizationsList = () => {
   const navigate = useNavigate();
@@ -54,66 +52,6 @@ const OrganizationsList = () => {
       navigate(`/admin/organizations/edit/${selectedOrganizations[0]}`);
     }
   };
-
-  const handleDebugDatabase = async () => {
-    try {
-      console.log("=== DEBUG: Starting database diagnostics ===");
-      
-      // Check authentication
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      console.log("DEBUG: Current user:", user);
-      console.log("DEBUG: Auth error:", authError);
-      
-      // Check raw table access
-      const { data: rawData, error: rawError } = await supabase
-        .from('organizations')
-        .select('*');
-      
-      console.log("DEBUG: Raw organizations data:", rawData);
-      console.log("DEBUG: Raw query error:", rawError);
-      console.log("DEBUG: Number of records:", rawData?.length || 0);
-      
-      // Check if we can insert a test record (to test permissions)
-      try {
-        const { error: insertTestError } = await supabase
-          .from('organizations')
-          .insert({
-            name: 'DEBUG_TEST_ORG',
-            code: 'TEST',
-            description: 'Test organization for debugging',
-            status: 'active'
-          })
-          .select()
-          .single();
-        
-        console.log("DEBUG: Insert test error:", insertTestError);
-        
-        if (!insertTestError) {
-          // Clean up test record
-          await supabase
-            .from('organizations')
-            .delete()
-            .eq('code', 'TEST');
-          console.log("DEBUG: Test record cleaned up");
-        }
-      } catch (insertError) {
-        console.log("DEBUG: Insert test failed:", insertError);
-      }
-      
-      toast({
-        title: "Debug Info",
-        description: `Found ${rawData?.length || 0} organizations. Check console for details.`,
-      });
-      
-    } catch (error) {
-      console.error("DEBUG: Error during diagnostics:", error);
-      toast({
-        variant: "destructive",
-        title: "Debug Error",
-        description: "Error during database diagnostics. Check console.",
-      });
-    }
-  };
   
   if (error) {
     return <div className="p-8 text-center text-red-500">Error loading organizations</div>;
@@ -128,10 +66,6 @@ const OrganizationsList = () => {
         </div>
         
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={handleDebugDatabase}>
-            <Bug className="mr-2 h-4 w-4" />
-            Debug DB
-          </Button>
           {canEditOrganization && selectedOrganizations.length === 1 && (
             <Button variant="outline" onClick={handleEditClick}>
               <Edit className="mr-2 h-4 w-4" />
