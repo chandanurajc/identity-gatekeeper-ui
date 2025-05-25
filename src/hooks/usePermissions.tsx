@@ -10,6 +10,7 @@ export const usePermissions = () => {
 
   useEffect(() => {
     const fetchPermissions = async () => {
+      setLoading(true);
       if (user) {
         try {
           const userPermissions = await getUserPermissions(user.id);
@@ -18,6 +19,8 @@ export const usePermissions = () => {
           console.error("Error fetching permissions:", error);
           setPermissions([]);
         }
+      } else {
+        setPermissions([]);
       }
       setLoading(false);
     };
@@ -27,8 +30,6 @@ export const usePermissions = () => {
 
   const hasPermission = (permissionName: string): boolean => {
     if (!user) return false;
-    
-    // Check if user has the specific permission
     return permissions.includes(permissionName);
   };
 

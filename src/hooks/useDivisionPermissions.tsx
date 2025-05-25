@@ -10,6 +10,7 @@ export const useDivisionPermissions = () => {
 
   useEffect(() => {
     const fetchPermissions = async () => {
+      setLoading(true);
       if (user) {
         try {
           const userPermissions = await getUserPermissions(user.id);
@@ -18,6 +19,8 @@ export const useDivisionPermissions = () => {
           console.error("Error fetching permissions:", error);
           setPermissions([]);
         }
+      } else {
+        setPermissions([]);
       }
       setLoading(false);
     };
