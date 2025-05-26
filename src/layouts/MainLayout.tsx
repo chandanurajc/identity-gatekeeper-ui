@@ -14,13 +14,14 @@ interface MainLayoutProps {
 
 // Inner Layout Component that consumes sidebar context
 function MainLayoutInner({ children }: MainLayoutProps) {
-  const { open, setOpen } = useSidebar();
+  const { open, setOpen, isMobile } = useSidebar();
   const sidebarRef = useRef<HTMLDivElement>(null);
 
-  // Handle clicks outside sidebar to close it
+  // Handle clicks outside sidebar to close it on mobile
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
+        isMobile &&
         open && 
         sidebarRef.current && 
         !sidebarRef.current.contains(event.target as Node) &&
@@ -34,7 +35,7 @@ function MainLayoutInner({ children }: MainLayoutProps) {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [open, setOpen]);
+  }, [open, setOpen, isMobile]);
 
   return (
     <div className="flex min-h-screen w-full">
@@ -44,12 +45,12 @@ function MainLayoutInner({ children }: MainLayoutProps) {
       
       <SidebarInset className="flex flex-col flex-1">
         {/* Fixed Header */}
-        <div className="fixed top-0 right-0 left-0 z-50 bg-background border-b">
+        <div className="sticky top-0 z-50 bg-background">
           <AppHeader />
         </div>
 
-        {/* Main Content with top padding to account for fixed header */}
-        <main className="flex-1 p-6 pt-20">
+        {/* Main Content */}
+        <main className="flex-1 p-6">
           {children}
         </main>
       </SidebarInset>

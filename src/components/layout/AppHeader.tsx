@@ -2,13 +2,22 @@
 import { useAuth } from "@/context/AuthContext";
 import { Input } from "@/components/ui/input";
 import { HeaderUserMenu } from "./HeaderUserMenu";
-import { Search, Building } from "lucide-react";
+import { Search, Building, Menu } from "lucide-react";
+import { SidebarTrigger } from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
 
 export function AppHeader() {
   const { user } = useAuth();
 
   return (
-    <header className="flex h-14 items-center gap-4 bg-background px-4 lg:px-6 w-full">
+    <header className="flex h-14 items-center gap-4 bg-background px-4 lg:px-6 w-full border-b">
+      {/* Sidebar Toggle */}
+      <SidebarTrigger asChild>
+        <Button variant="ghost" size="icon" className="md:hidden">
+          <Menu className="h-4 w-4" />
+        </Button>
+      </SidebarTrigger>
+
       {/* App Logo */}
       <div className="flex items-center gap-2">
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
