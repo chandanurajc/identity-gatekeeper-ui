@@ -1,5 +1,6 @@
 
 import { SidebarContent } from "@/components/ui/sidebar";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { SidebarNavGroup } from "./SidebarNavGroup";
 import { ModuleGroup } from "./sidebarConfig";
 
@@ -15,15 +16,19 @@ export function SidebarNavContent({ moduleGroups, onItemClick }: SidebarNavConte
   );
 
   return (
-    <SidebarContent>
-      {filteredGroups.map((group, index) => (
-        <SidebarNavGroup 
-          key={group.name} 
-          group={group} 
-          defaultOpen={index === 0} // First group open by default
-          onItemClick={onItemClick}
-        />
-      ))}
+    <SidebarContent className="flex-1 overflow-hidden">
+      <ScrollArea className="h-full w-full">
+        <div className="space-y-2 p-2">
+          {filteredGroups.map((group, index) => (
+            <SidebarNavGroup 
+              key={group.name} 
+              group={group} 
+              defaultOpen={true} // Expand all groups by default
+              onItemClick={onItemClick}
+            />
+          ))}
+        </div>
+      </ScrollArea>
     </SidebarContent>
   );
 }
