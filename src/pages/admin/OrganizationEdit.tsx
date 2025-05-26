@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useOrganizationPermissions } from "@/hooks/useOrganizationPermissions";
@@ -55,8 +54,10 @@ const OrganizationEdit = () => {
     }
 
     try {
-      // Get user profile to get the proper name for updated_by
-      const updatedByValue = user?.name || user?.email || "Unknown User";
+      // Use user ID instead of name for updated_by field
+      const updatedByValue = user?.id || "unknown";
+      
+      console.log("Using updatedBy value:", updatedByValue);
       
       await organizationService.updateOrganization(
         organizationId, 
