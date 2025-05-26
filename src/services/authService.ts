@@ -21,17 +21,10 @@ export const authService = {
         throw new Error("No user data returned from login");
       }
 
-      // Fetch user profile from profiles table
+      // Fetch user profile from profiles table without join
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select(`
-          *,
-          organizations:organization_id (
-            id,
-            name,
-            code
-          )
-        `)
+        .select('*')
         .eq('id', data.user.id)
         .single();
 
@@ -48,6 +41,22 @@ export const authService = {
         };
         
         return user;
+      }
+
+      // Fetch organization name if user has organization_id
+      let organizationCode = null;
+      let organizationName = null;
+      if (profile.organization_id) {
+        const { data: orgData, error: orgError } = await supabase
+          .from('organizations')
+          .select('code, name')
+          .eq('id', profile.organization_id)
+          .single();
+        
+        if (!orgError && orgData) {
+          organizationCode = orgData.code;
+          organizationName = orgData.name;
+        }
       }
 
       // Get user roles
@@ -68,8 +77,8 @@ export const authService = {
         name: `${profile.first_name} ${profile.last_name}`,
         roles: roles,
         organizationId: profile.organization_id,
-        organizationCode: profile.organizations?.code || null,
-        organizationName: profile.organizations?.name || null
+        organizationCode: organizationCode,
+        organizationName: organizationName
       };
 
       return user;

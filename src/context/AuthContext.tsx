@@ -43,23 +43,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Use useCallback to memoize fetchUserData and prevent unnecessary recreations
   const fetchUserData = useCallback(async (userId: string): Promise<AuthUser | null> => {
     try {
-      // Fetch user profile from profiles table
+      // Fetch user profile from profiles table without join
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select(`
-          *,
-          organizations:organization_id (
-            id,
-            name,
-            code
-          )
-        `)
+        .select('*')
         .eq('id', userId)
         .single();
 
       if (profileError) {
         console.error("Error fetching user profile:", profileError);
         return null;
+      }
+
+      // Fetch organization name if user has organization_id
+      let organizationCode = null;
+      let organizationName = null;
+      if (profile.organization_id) {
+        const { data: orgData, error: orgError } = await supabase
+          .from('organizations')
+          .select('code, name')
+          .eq('id', profile.organization_id)
+          .single();
+        
+        if (!orgError && orgData) {
+          organizationCode = orgData.code;
+          organizationName = orgData.name;
+        }
       }
 
       // Get user roles
@@ -80,8 +89,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         name: `${profile.first_name} ${profile.last_name}`,
         roles: roles,
         organizationId: profile.organization_id,
-        organizationCode: profile.organizations?.code || null,
-        organizationName: profile.organizations?.name || null
+        organizationCode: organizationCode,
+        organizationName: organizationName
       };
     } catch (error) {
       console.error("Error fetching user data:", error);
