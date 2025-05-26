@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { User, UserFormData, PhoneNumber } from "@/types/user";
 
@@ -12,10 +11,6 @@ export const userService = {
         *,
         organizations (
           name
-        ),
-        phone_numbers (
-          country_code,
-          number
         )
       `)
       .order('created_on', { ascending: false });
@@ -27,7 +22,7 @@ export const userService = {
 
     console.log("Raw profiles data:", profiles);
 
-    // Transform profiles to users with roles
+    // Transform profiles to users with roles and phone numbers
     const usersWithRoles = await Promise.all(
       (profiles || []).map(async (profile) => {
         console.log("Processing profile:", profile.id);
@@ -50,9 +45,19 @@ export const userService = {
         console.log("Roles for user", profile.id, ":", roles);
 
         // Get phone data from separate table
-        const phoneData = profile.phone_numbers?.[0] ? {
-          countryCode: profile.phone_numbers[0].country_code,
-          number: profile.phone_numbers[0].number
+        const { data: phoneData, error: phoneError } = await supabase
+          .from('phone_numbers')
+          .select('country_code, number')
+          .eq('profile_id', profile.id)
+          .single();
+
+        if (phoneError && phoneError.code !== 'PGRST116') {
+          console.error("Error fetching phone for user:", profile.id, phoneError);
+        }
+
+        const phone = phoneData ? {
+          countryCode: phoneData.country_code,
+          number: phoneData.number
         } : undefined;
 
         return {
@@ -60,8 +65,8 @@ export const userService = {
           firstName: profile.first_name,
           lastName: profile.last_name,
           username: profile.username,
-          email: profile.username, // Using username as email
-          phone: phoneData,
+          email: profile.username,
+          phone: phone,
           designation: profile.designation,
           organizationId: profile.organization_id,
           organizationName: profile.organizations?.name || '',
@@ -89,10 +94,6 @@ export const userService = {
         *,
         organizations (
           name
-        ),
-        phone_numbers (
-          country_code,
-          number
         )
       `)
       .eq('id', id)
@@ -101,7 +102,7 @@ export const userService = {
     if (error) {
       console.error("Error fetching user:", error);
       if (error.code === 'PGRST116') {
-        return null; // User not found
+        return null;
       }
       throw new Error(`Failed to fetch user: ${error.message}`);
     }
@@ -126,9 +127,19 @@ export const userService = {
     console.log("User roles:", roles);
 
     // Get phone data from separate table
-    const phoneData = profile.phone_numbers?.[0] ? {
-      countryCode: profile.phone_numbers[0].country_code,
-      number: profile.phone_numbers[0].number
+    const { data: phoneData, error: phoneError } = await supabase
+      .from('phone_numbers')
+      .select('country_code, number')
+      .eq('profile_id', profile.id)
+      .single();
+
+    if (phoneError && phoneError.code !== 'PGRST116') {
+      console.error("Error fetching phone for user:", profile.id, phoneError);
+    }
+
+    const phone = phoneData ? {
+      countryCode: phoneData.country_code,
+      number: phoneData.number
     } : undefined;
 
     return {
@@ -137,7 +148,7 @@ export const userService = {
       lastName: profile.last_name,
       username: profile.username,
       email: profile.username,
-      phone: phoneData,
+      phone: phone,
       designation: profile.designation,
       organizationId: profile.organization_id,
       organizationName: profile.organizations?.name || '',
@@ -198,7 +209,6 @@ export const userService = {
 
     if (profileError) {
       console.error("Error creating profile:", profileError);
-      // Clean up auth user if profile creation fails
       await supabase.auth.admin.deleteUser(authData.user.id);
       throw new Error(`Failed to create user profile: ${profileError.message}`);
     }
@@ -217,7 +227,6 @@ export const userService = {
 
       if (phoneError) {
         console.error("Error creating phone number:", phoneError);
-        // Continue even if phone creation fails, but log the error
       }
     }
 
@@ -284,7 +293,6 @@ export const userService = {
 
     // Update phone number if provided
     if (userData.phone && userData.phone.countryCode && userData.phone.number) {
-      // First, try to update existing phone number
       const { data: existingPhone } = await supabase
         .from('phone_numbers')
         .select('id')
@@ -292,7 +300,6 @@ export const userService = {
         .single();
 
       if (existingPhone) {
-        // Update existing phone number
         const { error: phoneUpdateError } = await supabase
           .from('phone_numbers')
           .update({
@@ -306,7 +313,6 @@ export const userService = {
           console.error("Error updating phone number:", phoneUpdateError);
         }
       } else {
-        // Create new phone number
         const { error: phoneCreateError } = await supabase
           .from('phone_numbers')
           .insert([{
@@ -352,28 +358,47 @@ export const userService = {
   },
 
   async assignRolesToUser(userId: string, roleNames: string[], assignedBy: string): Promise<void> {
-    console.log("Assigning roles to user:", userId, roleNames);
+    console.log("=== assignRolesToUser called ===");
+    console.log("User ID:", userId);
+    console.log("Role names:", roleNames);
+    console.log("Assigned by:", assignedBy);
     
-    // Get role IDs from role names
+    // Get role IDs from role names - handle case-insensitive matching
     const { data: roles, error: rolesError } = await supabase
       .from('roles')
-      .select('id, name')
-      .in('name', roleNames);
+      .select('id, name');
 
     if (rolesError) {
-      console.error("Error fetching roles:", rolesError);
+      console.error("Error fetching all roles:", rolesError);
       throw new Error(`Failed to fetch roles: ${rolesError.message}`);
     }
 
-    if (!roles || roles.length === 0) {
+    console.log("All available roles:", roles);
+
+    // Match roles case-insensitively
+    const matchedRoles = roles?.filter(role => 
+      roleNames.some(roleName => 
+        role.name.toLowerCase() === roleName.toLowerCase()
+      )
+    ) || [];
+
+    console.log("Matched roles:", matchedRoles);
+
+    if (!matchedRoles || matchedRoles.length === 0) {
       console.error("No roles found for names:", roleNames);
-      throw new Error("No valid roles found");
+      throw new Error(`No valid roles found for: ${roleNames.join(', ')}`);
     }
 
-    console.log("Found roles:", roles);
+    if (matchedRoles.length !== roleNames.length) {
+      const foundRoleNames = matchedRoles.map(r => r.name);
+      const missingRoles = roleNames.filter(name => 
+        !foundRoleNames.some(found => found.toLowerCase() === name.toLowerCase())
+      );
+      console.warn("Some roles not found:", missingRoles);
+    }
 
     // Create user_roles entries
-    const userRoleData = roles.map(role => ({
+    const userRoleData = matchedRoles.map(role => ({
       user_id: userId,
       role_id: role.id,
       assigned_by: assignedBy,

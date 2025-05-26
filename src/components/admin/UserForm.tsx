@@ -93,10 +93,15 @@ const UserForm = ({ initialData, isEditing = false, onSubmit }: UserFormProps) =
           organizationService.getOrganizations()
         ]);
         
+        console.log("Fetched roles for form:", roles);
+        
+        // Use the exact role names from database, not lowercase
         const formattedRoles = roles.map(role => ({
           label: role.name,
-          value: role.name.toLowerCase(),
+          value: role.name, // Use the actual role name, not lowercase
         }));
+        
+        console.log("Formatted roles for multi-select:", formattedRoles);
         
         setAvailableRoles(formattedRoles);
         setOrganizations(orgs);
@@ -142,6 +147,8 @@ const UserForm = ({ initialData, isEditing = false, onSubmit }: UserFormProps) =
 
   const handleSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
+      console.log("Form submission values:", values);
+      
       // Transform form data to match UserFormData structure
       const userData: UserFormData = {
         firstName: values.firstName,
@@ -156,10 +163,12 @@ const UserForm = ({ initialData, isEditing = false, onSubmit }: UserFormProps) =
         },
         designation: values.designation,
         organizationId: values.organizationId,
-        roles: values.roles,
+        roles: values.roles, // Keep the exact role names from the form
         effectiveFrom: new Date(values.effectiveFrom),
         effectiveTo: values.effectiveTo ? new Date(values.effectiveTo) : undefined,
       };
+
+      console.log("Transformed user data for submission:", userData);
 
       await onSubmit(userData);
 
@@ -170,6 +179,7 @@ const UserForm = ({ initialData, isEditing = false, onSubmit }: UserFormProps) =
       
       navigate("/admin/users");
     } catch (error) {
+      console.error("Form submission error:", error);
       toast({
         variant: "destructive",
         title: `Failed to ${isEditing ? "update" : "create"} user`,
