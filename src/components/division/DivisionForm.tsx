@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -61,7 +60,7 @@ const DivisionForm = ({ initialData, onSubmit, isEditing = false }: DivisionForm
   // Fetch organizations for dropdown
   const { data: organizations = [] } = useQuery({
     queryKey: ['organizations'],
-    queryFn: organizationService.getAllOrganizations,
+    queryFn: organizationService.getOrganizations,
   });
 
   // Initialize form with default values or existing data
@@ -81,7 +80,9 @@ const DivisionForm = ({ initialData, onSubmit, isEditing = false }: DivisionForm
   });
 
   const selectedOrgId = form.watch("organizationId");
-  const selectedOrg = organizations.find(org => org.id === selectedOrgId);
+  const selectedOrg = Array.isArray(organizations) 
+    ? organizations.find(org => org.id === selectedOrgId)
+    : undefined;
 
   const handleSubmit = async (data: DivisionFormData) => {
     setIsSubmitting(true);
@@ -121,7 +122,7 @@ const DivisionForm = ({ initialData, onSubmit, isEditing = false }: DivisionForm
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {organizations.map((org) => (
+                    {Array.isArray(organizations) && organizations.map((org) => (
                       <SelectItem key={org.id} value={org.id}>
                         {org.code} - {org.name}
                       </SelectItem>

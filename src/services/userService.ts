@@ -7,7 +7,7 @@ export const userService = {
     console.log("Fetching users...");
     
     const { data, error } = await supabase
-      .from('users')
+      .from('profiles')
       .select(`
         *,
         user_roles (
@@ -15,7 +15,7 @@ export const userService = {
           roles (*)
         )
       `)
-      .order('created_at', { ascending: false });
+      .order('created_on', { ascending: false });
 
     if (error) {
       console.error("Error fetching users:", error);
@@ -26,11 +26,16 @@ export const userService = {
     return data || [];
   },
 
+  // Alias for backward compatibility
+  async getAllUsers(): Promise<User[]> {
+    return this.getUsers();
+  },
+
   async getUserById(id: string): Promise<User | null> {
     console.log("Fetching user by ID:", id);
     
     const { data, error } = await supabase
-      .from('users')
+      .from('profiles')
       .select(`
         *,
         user_roles (
@@ -63,7 +68,7 @@ export const userService = {
     };
 
     const { data, error } = await supabase
-      .from('users')
+      .from('profiles')
       .insert([newUser])
       .select()
       .single();
@@ -83,11 +88,11 @@ export const userService = {
     const updateData = {
       ...userData,
       updated_by: updatedBy,
-      updated_at: new Date().toISOString(),
+      updated_on: new Date().toISOString(),
     };
 
     const { data, error } = await supabase
-      .from('users')
+      .from('profiles')
       .update(updateData)
       .eq('id', id)
       .select()
@@ -106,7 +111,7 @@ export const userService = {
     console.log("Deleting user:", id);
     
     const { error } = await supabase
-      .from('users')
+      .from('profiles')
       .delete()
       .eq('id', id);
 
@@ -116,5 +121,36 @@ export const userService = {
     }
 
     console.log("User deleted successfully");
+  },
+
+  async getUserPermissions(userId: string): Promise<any[]> {
+    console.log("Fetching user permissions for user:", userId);
+    
+    const { data, error } = await supabase
+      .from('user_roles')
+      .select(`
+        roles (
+          role_permissions (
+            permissions (*)
+          )
+        )
+      `)
+      .eq('user_id', userId);
+
+    if (error) {
+      console.error("Error fetching user permissions:", error);
+      throw new Error(`Failed to fetch user permissions: ${error.message}`);
+    }
+
+    // Flatten the permissions
+    const permissions = data?.flatMap(ur => 
+      ur.roles?.role_permissions?.map(rp => rp.permissions) || []
+    ) || [];
+
+    console.log("User permissions fetched successfully:", permissions);
+    return permissions;
   }
 };
+
+// Export individual functions for backward compatibility
+export const { getUserPermissions, createUser, getUserById, updateUser, getAllUsers } = userService;
