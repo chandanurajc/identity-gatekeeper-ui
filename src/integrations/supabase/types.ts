@@ -130,15 +130,7 @@ export type Database = {
           updated_on?: string | null
           username?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "profiles_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       role_permissions: {
         Row: {

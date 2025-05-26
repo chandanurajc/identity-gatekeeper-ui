@@ -7,26 +7,38 @@ export const userService = {
     console.log("Fetching users...");
     
     try {
-      const { data, error } = await supabase
+      // First fetch users without organization join
+      const { data: usersData, error: usersError } = await supabase
         .from('profiles')
-        .select(`
-          *,
-          organizations:organization_id (
-            id,
-            name
-          )
-        `)
+        .select('*')
         .order('created_on', { ascending: false });
 
-      if (error) {
-        console.error("Error fetching users:", error);
-        throw new Error(`Failed to fetch users: ${error.message}`);
+      if (usersError) {
+        console.error("Error fetching users:", usersError);
+        throw new Error(`Failed to fetch users: ${usersError.message}`);
       }
 
-      console.log("Users fetched successfully:", data);
+      // Then fetch organizations separately
+      const { data: orgsData, error: orgsError } = await supabase
+        .from('organizations')
+        .select('id, name');
+
+      if (orgsError) {
+        console.error("Error fetching organizations:", orgsError);
+        // Don't throw error here, just log it and continue without org names
+        console.warn("Organizations data not available");
+      }
+
+      // Create a map of organization id to name for quick lookup
+      const orgMap = new Map();
+      if (orgsData) {
+        orgsData.forEach(org => orgMap.set(org.id, org.name));
+      }
+
+      console.log("Users fetched successfully:", usersData);
       
       // Transform database data to match User interface
-      return (data || []).map(user => ({
+      return (usersData || []).map(user => ({
         id: user.id,
         username: user.username,
         email: user.username, // Using username as email since they're the same
@@ -37,7 +49,7 @@ export const userService = {
         roles: [], // Will be populated by separate query if needed
         status: user.status,
         organizationId: user.organization_id,
-        organizationName: user.organizations?.name,
+        organizationName: user.organization_id ? orgMap.get(user.organization_id) : undefined,
         effectiveFrom: new Date(user.effective_from),
         effectiveTo: user.effective_to ? new Date(user.effective_to) : undefined,
         createdBy: user.created_by,
@@ -60,47 +72,56 @@ export const userService = {
     console.log("Fetching user by ID:", id);
     
     try {
-      const { data, error } = await supabase
+      // Fetch user without organization join
+      const { data: userData, error: userError } = await supabase
         .from('profiles')
-        .select(`
-          *,
-          organizations:organization_id (
-            id,
-            name
-          )
-        `)
+        .select('*')
         .eq('id', id)
         .single();
 
-      if (error) {
-        console.error("Error fetching user:", error);
-        if (error.code === 'PGRST116') {
+      if (userError) {
+        console.error("Error fetching user:", userError);
+        if (userError.code === 'PGRST116') {
           return null;
         }
-        throw new Error(`Failed to fetch user: ${error.message}`);
+        throw new Error(`Failed to fetch user: ${userError.message}`);
       }
 
-      console.log("User fetched successfully:", data);
+      // Fetch organization name if user has organization_id
+      let organizationName = undefined;
+      if (userData.organization_id) {
+        const { data: orgData, error: orgError } = await supabase
+          .from('organizations')
+          .select('name')
+          .eq('id', userData.organization_id)
+          .single();
+        
+        if (!orgError && orgData) {
+          organizationName = orgData.name;
+        }
+      }
+
+      console.log("User fetched successfully:", userData);
       
       // Transform database data to match User interface
       return {
-        id: data.id,
-        username: data.username,
-        email: data.username, // Using username as email since they're the same
-        firstName: data.first_name,
-        lastName: data.last_name,
-        phone: data.phone ? data.phone as unknown as PhoneNumber : undefined,
-        designation: data.designation,
+        id: userData.id,
+        username: userData.username,
+        email: userData.username, // Using username as email since they're the same
+        firstName: userData.first_name,
+        lastName: userData.last_name,
+        phone: userData.phone ? userData.phone as unknown as PhoneNumber : undefined,
+        designation: userData.designation,
         roles: [], // Will be populated by separate query if needed
-        status: data.status,
-        organizationId: data.organization_id,
-        organizationName: data.organizations?.name,
-        effectiveFrom: new Date(data.effective_from),
-        effectiveTo: data.effective_to ? new Date(data.effective_to) : undefined,
-        createdBy: data.created_by,
-        createdOn: new Date(data.created_on),
-        updatedBy: data.updated_by,
-        updatedOn: data.updated_on ? new Date(data.updated_on) : undefined,
+        status: userData.status,
+        organizationId: userData.organization_id,
+        organizationName: organizationName,
+        effectiveFrom: new Date(userData.effective_from),
+        effectiveTo: userData.effective_to ? new Date(userData.effective_to) : undefined,
+        createdBy: userData.created_by,
+        createdOn: new Date(userData.created_on),
+        updatedBy: userData.updated_by,
+        updatedOn: userData.updated_on ? new Date(userData.updated_on) : undefined,
       };
     } catch (error) {
       console.error("Error in getUserById:", error);
