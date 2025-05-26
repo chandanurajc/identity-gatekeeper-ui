@@ -1,6 +1,7 @@
 
 import { LoginCredentials, User } from "@/types/auth";
 import { supabase } from "@/integrations/supabase/client";
+import { forceLogout } from "@/utils/authCleanup";
 
 export const authService = {
   login: async (credentials: LoginCredentials): Promise<User> => {
@@ -89,29 +90,8 @@ export const authService = {
   },
 
   logout: async (): Promise<void> => {
-    try {
-      console.log("AuthService: Starting logout...");
-      
-      // Sign out from Supabase
-      const { error } = await supabase.auth.signOut();
-      
-      if (error) {
-        console.error("AuthService: Supabase logout error:", error);
-        throw error;
-      }
-      
-      console.log("AuthService: Logout successful");
-      
-      // Force page reload to ensure clean state
-      window.location.href = "/";
-      
-    } catch (error) {
-      console.error("AuthService: Logout error:", error);
-      
-      // Even on error, try to redirect to clear state
-      window.location.href = "/";
-      throw error;
-    }
+    console.log("AuthService: Using force logout...");
+    await forceLogout();
   },
 
   getCurrentUser: (): User | null => {

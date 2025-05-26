@@ -2,6 +2,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { forceLogout, cleanupAuthState } from "@/utils/authCleanup";
 
 interface AuthUser {
   id: string;
@@ -100,17 +101,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   useEffect(() => {
+    console.log("Setting up auth state listener...");
+    
     // Set up Supabase auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log("Auth state changed:", event, session?.user?.email);
         
         if (event === 'SIGNED_IN' && session?.user) {
+          console.log("User signed in, fetching user data...");
           // Use setTimeout to prevent blocking the auth state change
           setTimeout(async () => {
             const userData = await fetchUserData(session.user.id);
             
             if (userData) {
+              console.log("Setting authenticated user:", userData.email);
               setState(prev => ({
                 ...prev,
                 user: userData,
@@ -130,6 +135,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 organizationName: null
               };
               
+              console.log("Using fallback user data:", fallbackUser.email);
               setState(prev => ({
                 ...prev,
                 user: fallbackUser,
@@ -156,6 +162,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Check for existing session
     const checkSession = async () => {
       try {
+        console.log("Checking for existing session...");
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) {
           console.log("Found existing session for:", session.user.email);
@@ -184,9 +191,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (email: string, password: string) => {
     setState(prev => ({ ...prev, isLoading: true, error: null }));
     
-    console.log("Attempting login for:", email);
+    console.log("Starting login process for:", email);
     
     try {
+      // Clean up any existing auth state before login
+      cleanupAuthState();
+      
+      // Attempt to sign out any existing session first
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch (error) {
+        console.log("Pre-login signout failed (continuing):", error);
+      }
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
@@ -262,58 +279,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = async () => {
-    console.log("Starting logout process...");
-    setState(prev => ({ ...prev, isLoading: true }));
+    console.log("Logout requested - using force logout");
     
     try {
-      // Clear local state immediately
-      setState({
-        user: null,
-        isAuthenticated: false,
-        isLoading: true,
-        error: null,
-        organizationCode: null
-      });
-
-      // Sign out from Supabase
-      const { error } = await supabase.auth.signOut();
-      
-      if (error) {
-        console.error("Supabase signOut error:", error);
-        // Even if there's an error, we'll continue with the logout process
-      }
-
-      console.log("Logout completed successfully");
-      
       toast({
-        title: "Logged out",
-        description: "You have been successfully logged out.",
+        title: "Logging out...",
+        description: "Clearing your session.",
       });
 
-      // Force a page reload to ensure clean state
-      window.location.href = "/";
+      // Use the robust force logout utility
+      await forceLogout();
       
     } catch (error) {
       console.error("Logout error:", error);
-      const errorMessage = error instanceof Error ? error.message : "Logout failed";
-      
-      // Even if logout fails, clear the local state
-      setState({
-        user: null,
-        isAuthenticated: false,
-        isLoading: false,
-        error: errorMessage,
-        organizationCode: null
-      });
       
       toast({
         variant: "destructive",
         title: "Logout error",
-        description: errorMessage,
+        description: "There was an issue logging out, but we'll clear your session anyway.",
       });
 
-      // Force redirect even on error
-      window.location.href = "/";
+      // Force logout even on error
+      await forceLogout();
     }
   };
 
