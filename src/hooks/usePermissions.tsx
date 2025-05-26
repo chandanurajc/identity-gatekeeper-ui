@@ -56,15 +56,39 @@ export const usePermissions = () => {
             console.log(`getUserPermissions completed in ${endTime - startTime}ms`);
             console.log("Fetched permissions from database:", userPermissions);
             
-            // If no specific permissions found but user has user management role, add basic permissions
-            if (userPermissions.length === 0 && user?.roles.some(role => role.toLowerCase().includes('user') || role.toLowerCase().includes('management'))) {
-              console.log("No specific permissions found, but user has management role - adding basic permissions");
-              const basicPermissions = ["view-user", "create-user", "edit-user", "view-roles"];
-              setPermissions(basicPermissions);
-              console.log("Basic permissions set:", basicPermissions);
-            } else {
-              setPermissions(userPermissions);
+            // Enhanced role-based permission mapping
+            let finalPermissions = [...userPermissions];
+            
+            // Check if user has user management related roles
+            const hasUserManagementRole = user?.roles.some(role => 
+              role.toLowerCase().includes('user') || 
+              role.toLowerCase().includes('management') ||
+              role === 'User Management'
+            );
+            
+            if (hasUserManagementRole) {
+              console.log("User has user management role, adding admin access and user permissions");
+              // Add admin module access for user management roles
+              const userManagementPermissions = [
+                "view-user", "create-user", "edit-user", 
+                "view-roles", "create_role", "edit_roles", "view_permissions",
+                "access_admin" // Key permission for accessing admin module
+              ];
+              
+              // Merge with existing permissions and remove duplicates
+              finalPermissions = [...new Set([...finalPermissions, ...userManagementPermissions])];
+              console.log("Enhanced permissions with user management access:", finalPermissions);
             }
+            
+            // If still no permissions found, provide minimal access based on roles
+            if (finalPermissions.length === 0 && user?.roles.length > 0) {
+              console.log("No specific permissions found, but user has roles - adding minimal permissions");
+              const minimalPermissions = ["access_admin"]; // At minimum, allow admin access if they have any role
+              finalPermissions = minimalPermissions;
+              console.log("Minimal permissions set:", minimalPermissions);
+            }
+            
+            setPermissions(finalPermissions);
           }
         } catch (error) {
           console.error("Error fetching permissions:", error);
