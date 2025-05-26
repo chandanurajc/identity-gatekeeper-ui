@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -36,6 +35,7 @@ const UsersList = () => {
 
   console.log("=== UsersList Component Render ===");
   console.log("State:", { loading, permissionsLoading, canViewUsers, usersCount: users.length });
+  console.log("Current route should be /admin/users");
 
   // Fetch users function
   const fetchUsers = async () => {
@@ -78,7 +78,7 @@ const UsersList = () => {
       console.log("User cannot view users, stopping loading");
       setLoading(false);
     }
-  }, [permissionsLoading, canViewUsers]); // Only depend on permission loading state and permission result
+  }, [permissionsLoading, canViewUsers]);
 
   // Set up real-time subscription
   useEffect(() => {
@@ -106,7 +106,7 @@ const UsersList = () => {
       console.log("=== Cleaning up real-time subscription ===");
       supabase.removeChannel(channel);
     };
-  }, [canViewUsers, permissionsLoading]); // Depend on permissions to avoid unnecessary subscriptions
+  }, [canViewUsers, permissionsLoading]);
 
   const handleRowSelect = (userId: string) => {
     const newSelectedUsers = new Set(selectedUsers);
@@ -183,6 +183,7 @@ const UsersList = () => {
 
   // Show loading state
   if (loading || permissionsLoading) {
+    console.log("=== Rendering loading state ===");
     return (
       <div className="container mx-auto py-8">
         <Card>
@@ -200,6 +201,7 @@ const UsersList = () => {
 
   // Show error state
   if (error) {
+    console.log("=== Rendering error state ===", error);
     return (
       <div className="container mx-auto py-8">
         <Card>
@@ -218,6 +220,7 @@ const UsersList = () => {
 
   // Check permissions after loading
   if (!canViewUsers) {
+    console.log("=== Rendering access denied ===");
     return (
       <div className="container mx-auto py-8">
         <Card>
@@ -231,6 +234,8 @@ const UsersList = () => {
       </div>
     );
   }
+
+  console.log("=== Rendering main users list ===", { userCount: sortedUsers.length });
 
   return (
     <div className="container mx-auto py-8">

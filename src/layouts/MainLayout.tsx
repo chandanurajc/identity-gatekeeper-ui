@@ -25,16 +25,19 @@ function MainLayoutInner({ children }: MainLayoutProps) {
         open && 
         sidebarRef.current && 
         !sidebarRef.current.contains(event.target as Node) &&
-        !(event.target as Element)?.closest('[data-sidebar="trigger"]')
+        !(event.target as Element)?.closest('button[data-sidebar="trigger"]') &&
+        !(event.target as Element)?.closest('[data-sidebar="sidebar"]')
       ) {
         setOpen(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+    if (isMobile && open) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
   }, [open, setOpen, isMobile]);
 
   return (

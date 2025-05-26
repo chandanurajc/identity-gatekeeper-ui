@@ -2,7 +2,7 @@
 import { useAuth } from "@/context/AuthContext";
 import { Input } from "@/components/ui/input";
 import { HeaderUserMenu } from "./HeaderUserMenu";
-import { Search, Building, Menu } from "lucide-react";
+import { Search, Building } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 
 export function AppHeader() {
@@ -11,7 +11,7 @@ export function AppHeader() {
   return (
     <header className="flex h-14 items-center gap-4 bg-background px-4 lg:px-6 w-full border-b">
       {/* Sidebar Toggle */}
-      <SidebarTrigger className="md:hidden" />
+      <SidebarTrigger />
 
       {/* App Logo */}
       <div className="flex items-center gap-2">
