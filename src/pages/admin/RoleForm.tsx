@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { roleService } from "@/services/roleService";
@@ -14,6 +13,7 @@ import { useRolePermissions } from "@/hooks/useRolePermissions";
 import { toast } from "@/components/ui/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import PermissionSelector from "@/components/admin/PermissionSelector";
+import { useAuth } from "@/context/AuthContext";
 
 const RoleForm = () => {
   const { roleId } = useParams<{ roleId: string }>();
@@ -28,6 +28,7 @@ const RoleForm = () => {
   const [isLoadingOrganizations, setIsLoadingOrganizations] = useState(true);
   const navigate = useNavigate();
   const { canCreateRole, canEditRoles } = useRolePermissions();
+  const { user } = useAuth();
 
   useEffect(() => {
     const loadData = async () => {
@@ -91,6 +92,15 @@ const RoleForm = () => {
       return;
     }
 
+    if (!user?.id) {
+      toast({
+        variant: "destructive",
+        title: "Authentication Error",
+        description: "User not authenticated.",
+      });
+      return;
+    }
+
     setSaving(true);
     
     try {
@@ -100,14 +110,16 @@ const RoleForm = () => {
         organizationId: selectedOrganizationId || undefined,
       };
 
+      console.log("Using user ID for role operation:", user.id);
+
       if (isEditing && roleId) {
-        await roleService.updateRole(roleId, roleData, "system");
+        await roleService.updateRole(roleId, roleData, user.id);
         toast({
           title: "Role Updated",
           description: `The role "${roleName}" has been updated successfully.`,
         });
       } else {
-        await roleService.createRole(roleData, "system", selectedOrganizationId || "");
+        await roleService.createRole(roleData, user.id, selectedOrganizationId || "");
         toast({
           title: "Role Created",
           description: `The role "${roleName}" has been created successfully.`,
