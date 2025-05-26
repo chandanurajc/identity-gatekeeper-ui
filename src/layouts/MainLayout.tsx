@@ -43,10 +43,13 @@ function MainLayoutInner({ children }: MainLayoutProps) {
       </div>
       
       <SidebarInset className="flex flex-col flex-1">
-        <AppHeader />
+        {/* Fixed Header */}
+        <div className="fixed top-0 right-0 left-0 z-50 bg-background border-b">
+          <AppHeader />
+        </div>
 
-        {/* Main Content */}
-        <main className="flex-1 p-6">
+        {/* Main Content with top padding to account for fixed header */}
+        <main className="flex-1 p-6 pt-20">
           {children}
         </main>
       </SidebarInset>

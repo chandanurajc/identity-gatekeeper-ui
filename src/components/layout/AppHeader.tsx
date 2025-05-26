@@ -8,7 +8,7 @@ export function AppHeader() {
   const { user } = useAuth();
 
   return (
-    <header className="flex h-14 items-center gap-4 border-b bg-background px-4 lg:px-6">
+    <header className="flex h-14 items-center gap-4 bg-background px-4 lg:px-6 w-full">
       {/* App Logo */}
       <div className="flex items-center gap-2">
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
