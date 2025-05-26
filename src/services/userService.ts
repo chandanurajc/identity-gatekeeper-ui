@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { User, UserFormData, PhoneNumber } from "@/types/user";
 
@@ -50,7 +49,7 @@ export const userService = {
           .from('phone_numbers')
           .select('country_code, number')
           .eq('profile_id', profile.id)
-          .single();
+          .maybeSingle();
 
         if (phoneError && phoneError.code !== 'PGRST116') {
           console.error("Error fetching phone for user:", profile.id, phoneError);
@@ -98,14 +97,16 @@ export const userService = {
         )
       `)
       .eq('id', id)
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error("Error fetching user:", error);
-      if (error.code === 'PGRST116') {
-        return null;
-      }
       throw new Error(`Failed to fetch user: ${error.message}`);
+    }
+
+    if (!profile) {
+      console.log("No user found with ID:", id);
+      return null;
     }
 
     console.log("Profile data:", profile);
@@ -132,7 +133,7 @@ export const userService = {
       .from('phone_numbers')
       .select('country_code, number')
       .eq('profile_id', profile.id)
-      .single();
+      .maybeSingle();
 
     if (phoneError && phoneError.code !== 'PGRST116') {
       console.error("Error fetching phone for user:", profile.id, phoneError);
@@ -317,7 +318,7 @@ export const userService = {
       .from('profiles')
       .select('id')
       .eq('id', id)
-      .single();
+      .maybeSingle();
 
     if (profileCheckError || !existingProfile) {
       console.error("User profile not found:", profileCheckError);
@@ -361,7 +362,7 @@ export const userService = {
         .from('phone_numbers')
         .select('id')
         .eq('profile_id', id)
-        .single();
+        .maybeSingle();
 
       if (existingPhone) {
         const { error: phoneUpdateError } = await supabase
@@ -536,7 +537,7 @@ export const userService = {
         .from('profiles')
         .select('id')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
       if (profileCheckError || !userProfile) {
         console.error("User profile verification failed:", profileCheckError);
