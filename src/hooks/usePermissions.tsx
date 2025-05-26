@@ -1,6 +1,6 @@
 
 import { useAuth } from "@/context/AuthContext";
-import { getUserPermissions } from "@/services/userService";
+import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect, useCallback, useMemo } from "react";
 
 export const usePermissions = () => {
@@ -47,48 +47,45 @@ export const usePermissions = () => {
             setPermissions(allPermissions);
             console.log("Admin permissions set:", allPermissions);
           } else {
-            console.log("Fetching specific permissions from database...");
-            console.log("User roles to check permissions for:", user?.roles);
+            console.log("User is not admin, fetching permissions from database for user roles");
+            console.log("User roles to check:", user?.roles);
             
-            const startTime = Date.now();
-            const userPermissions = await getUserPermissions(userId);
-            const endTime = Date.now();
-            console.log(`getUserPermissions completed in ${endTime - startTime}ms`);
-            console.log("Fetched permissions from database:", userPermissions);
-            
-            // Enhanced role-based permission mapping
-            let finalPermissions = [...userPermissions];
-            
-            // Check if user has user management related roles
-            const hasUserManagementRole = user?.roles.some(role => 
-              role.toLowerCase().includes('user') || 
-              role.toLowerCase().includes('management') ||
-              role === 'User Management'
-            );
-            
-            if (hasUserManagementRole) {
-              console.log("User has user management role, adding admin access and user permissions");
-              // Add admin module access for user management roles
-              const userManagementPermissions = [
-                "view-user", "create-user", "edit-user", 
-                "view_roles", "create_role", "edit_roles", "view_permissions",
-                "access_admin" // Key permission for accessing admin module
-              ];
+            // For non-admin users, fetch actual permissions assigned to their roles
+            const { data: rolePermissions, error } = await supabase
+              .from('roles')
+              .select(`
+                name,
+                role_permissions (
+                  permissions (*)
+                )
+              `)
+              .in('name', user?.roles);
+
+            if (error) {
+              console.error("Error fetching role permissions:", error);
+              setPermissions([]);
+            } else {
+              console.log("Raw role permissions data:", rolePermissions);
               
-              // Merge with existing permissions and remove duplicates
-              finalPermissions = [...new Set([...finalPermissions, ...userManagementPermissions])];
-              console.log("Enhanced permissions with user management access:", finalPermissions);
+              // Extract all permissions from all user roles
+              const userPermissions: string[] = [];
+              
+              rolePermissions?.forEach(role => {
+                console.log(`Processing permissions for role: ${role.name}`);
+                role.role_permissions?.forEach((rp: any) => {
+                  if (rp.permissions) {
+                    console.log("Adding permission:", rp.permissions);
+                    userPermissions.push(rp.permissions.name);
+                  }
+                });
+              });
+              
+              // Remove duplicates
+              const uniquePermissions = [...new Set(userPermissions)];
+              
+              console.log("Final permissions for user:", uniquePermissions);
+              setPermissions(uniquePermissions);
             }
-            
-            // If still no permissions found, provide minimal access based on roles
-            if (finalPermissions.length === 0 && user?.roles.length > 0) {
-              console.log("No specific permissions found, but user has roles - adding minimal permissions");
-              const minimalPermissions = ["access_admin"]; // At minimum, allow admin access if they have any role
-              finalPermissions = minimalPermissions;
-              console.log("Minimal permissions set:", minimalPermissions);
-            }
-            
-            setPermissions(finalPermissions);
           }
         } catch (error) {
           console.error("Error fetching permissions:", error);
@@ -174,12 +171,12 @@ export const usePermissions = () => {
       };
     }
 
-    // Check individual permissions
+    // Check individual permissions from database
     const computed = {
       canViewUsers: permissions.includes("view-user"),
       canCreateUsers: permissions.includes("create-user"),
       canEditUsers: permissions.includes("edit-user"),
-      canAccessAdminModule: permissions.includes("access_admin"),
+      canAccessAdminModule: permissions.includes("access_admin") || permissions.length > 0, // Allow admin access if user has any permissions
       canAccessSettingsModule: permissions.includes("access_settings"),
       canViewOrganization: permissions.includes("view-organization"),
       canCreateOrganization: permissions.includes("create-organization"),
