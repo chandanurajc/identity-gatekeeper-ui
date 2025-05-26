@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -140,6 +141,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             }
           }, 0);
         } else if (event === 'SIGNED_OUT') {
+          console.log("User signed out, clearing state");
           setState({
             user: null,
             isAuthenticated: false,
@@ -260,26 +262,58 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = async () => {
+    console.log("Starting logout process...");
     setState(prev => ({ ...prev, isLoading: true }));
+    
     try {
-      await supabase.auth.signOut();
+      // Clear local state immediately
+      setState({
+        user: null,
+        isAuthenticated: false,
+        isLoading: true,
+        error: null,
+        organizationCode: null
+      });
 
+      // Sign out from Supabase
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error("Supabase signOut error:", error);
+        // Even if there's an error, we'll continue with the logout process
+      }
+
+      console.log("Logout completed successfully");
+      
       toast({
         title: "Logged out",
         description: "You have been successfully logged out.",
       });
+
+      // Force a page reload to ensure clean state
+      window.location.href = "/";
+      
     } catch (error) {
+      console.error("Logout error:", error);
       const errorMessage = error instanceof Error ? error.message : "Logout failed";
-      setState(prev => ({
-        ...prev,
+      
+      // Even if logout fails, clear the local state
+      setState({
+        user: null,
+        isAuthenticated: false,
         isLoading: false,
-        error: errorMessage
-      }));
+        error: errorMessage,
+        organizationCode: null
+      });
+      
       toast({
         variant: "destructive",
-        title: "Logout failed",
+        title: "Logout error",
         description: errorMessage,
       });
+
+      // Force redirect even on error
+      window.location.href = "/";
     }
   };
 
