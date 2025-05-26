@@ -19,12 +19,18 @@ const OrganizationsList = () => {
   
   const { data: organizations = [], isLoading, error } = useQuery({
     queryKey: ["organizations"],
-    queryFn: organizationService.getAllOrganizations,
+    queryFn: () => {
+      console.log("Fetching organizations from service...");
+      return organizationService.getOrganizations();
+    },
   });
+  
+  console.log("Organizations query result:", { organizations, isLoading, error });
   
   // Filter organizations based on search term
   const filteredOrganizations = organizations.filter(org =>
-    org.name.toLowerCase().includes(searchTerm.toLowerCase())
+    org.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    org.code.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleCreateClick = () => {
@@ -54,7 +60,20 @@ const OrganizationsList = () => {
   };
   
   if (error) {
-    return <div className="p-8 text-center text-red-500">Error loading organizations</div>;
+    console.error("Error loading organizations:", error);
+    return (
+      <div className="p-8 text-center">
+        <div className="text-red-500 mb-4">Error loading organizations</div>
+        <p className="text-sm text-muted-foreground">{error instanceof Error ? error.message : "Unknown error occurred"}</p>
+        <Button 
+          onClick={() => window.location.reload()} 
+          variant="outline" 
+          className="mt-4"
+        >
+          Retry
+        </Button>
+      </div>
+    );
   }
 
   return (
@@ -108,6 +127,7 @@ const OrganizationsList = () => {
                 />
               </TableHead>
               <TableHead>Organization Name</TableHead>
+              <TableHead>Code</TableHead>
               <TableHead>Type</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Primary Contact</TableHead>
@@ -120,11 +140,11 @@ const OrganizationsList = () => {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={9} className="text-center">Loading...</TableCell>
+                <TableCell colSpan={10} className="text-center py-8">Loading organizations...</TableCell>
               </TableRow>
             ) : filteredOrganizations.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={9} className="text-center">
+                <TableCell colSpan={10} className="text-center">
                   <div className="py-8">
                     <h3 className="text-lg font-medium mb-2">No organizations found</h3>
                     <p className="text-muted-foreground mb-4">
@@ -163,25 +183,40 @@ const OrganizationsList = () => {
                           {org.name}
                         </Link>
                       ) : (
-                        <span>{org.name}</span>
+                        <span className="font-medium">{org.name}</span>
                       )}
                     </TableCell>
-                    <TableCell>{org.type}</TableCell>
-                    <TableCell>{org.status.charAt(0).toUpperCase() + org.status.slice(1)}</TableCell>
+                    <TableCell className="font-mono text-sm">{org.code}</TableCell>
+                    <TableCell>{org.type || 'Admin'}</TableCell>
+                    <TableCell>
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        org.status === 'active' 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        {org.status.charAt(0).toUpperCase() + org.status.slice(1)}
+                      </span>
+                    </TableCell>
                     <TableCell>
                       {primaryContact ? (
                         <div>
-                          <div>{primaryContact.firstName} {primaryContact.lastName}</div>
-                          <div className="text-xs text-muted-foreground">{primaryContact.email}</div>
+                          <div className="font-medium">{primaryContact.firstName} {primaryContact.lastName}</div>
+                          {primaryContact.email && (
+                            <div className="text-xs text-muted-foreground">{primaryContact.email}</div>
+                          )}
                         </div>
                       ) : (
                         <span className="text-muted-foreground">No contact</span>
                       )}
                     </TableCell>
-                    <TableCell>{org.createdBy}</TableCell>
-                    <TableCell>{new Date(org.createdOn || '').toLocaleDateString()}</TableCell>
+                    <TableCell>{org.createdBy || '-'}</TableCell>
+                    <TableCell>
+                      {org.createdOn ? new Date(org.createdOn).toLocaleDateString() : '-'}
+                    </TableCell>
                     <TableCell>{org.updatedBy || '-'}</TableCell>
-                    <TableCell>{org.updatedOn ? new Date(org.updatedOn).toLocaleDateString() : '-'}</TableCell>
+                    <TableCell>
+                      {org.updatedOn ? new Date(org.updatedOn).toLocaleDateString() : '-'}
+                    </TableCell>
                   </TableRow>
                 );
               })

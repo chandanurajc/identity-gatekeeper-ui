@@ -1,38 +1,59 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Organization, OrganizationFormData, Reference, Contact } from "@/types/organization";
 
 export const organizationService = {
   async getOrganizations(): Promise<Organization[]> {
-    console.log("Fetching organizations...");
+    console.log("Fetching organizations from Supabase...");
     
-    const { data, error } = await supabase
-      .from('organizations')
-      .select('*')
-      .order('created_on', { ascending: false });
+    try {
+      const { data, error } = await supabase
+        .from('organizations')
+        .select('*')
+        .order('created_on', { ascending: false });
 
-    if (error) {
-      console.error("Error fetching organizations:", error);
-      throw new Error(`Failed to fetch organizations: ${error.message}`);
+      if (error) {
+        console.error("Supabase error fetching organizations:", error);
+        throw new Error(`Failed to fetch organizations: ${error.message}`);
+      }
+
+      console.log("Raw organizations data from Supabase:", data);
+      
+      if (!data) {
+        console.log("No organizations data returned");
+        return [];
+      }
+
+      // Transform database data to match Organization interface
+      const transformedData = data.map(org => {
+        console.log("Transforming organization:", org);
+        
+        return {
+          id: org.id,
+          name: org.name,
+          code: org.code,
+          alias: org.description,
+          type: 'Admin' as const, // Default type since it's not stored in DB
+          status: org.status as 'active' | 'inactive',
+          references: Array.isArray(org.organization_references) 
+            ? org.organization_references as unknown as Reference[] 
+            : [],
+          contacts: Array.isArray(org.contacts) 
+            ? org.contacts as unknown as Contact[] 
+            : [],
+          createdBy: org.created_by,
+          createdOn: org.created_on ? new Date(org.created_on) : undefined,
+          updatedBy: org.updated_by,
+          updatedOn: org.updated_on ? new Date(org.updated_on) : undefined,
+        };
+      });
+
+      console.log("Transformed organizations data:", transformedData);
+      return transformedData;
+      
+    } catch (error) {
+      console.error("Service error fetching organizations:", error);
+      throw error;
     }
-
-    console.log("Organizations fetched successfully:", data);
-    
-    // Transform database data to match Organization interface
-    return (data || []).map(org => ({
-      id: org.id,
-      name: org.name,
-      code: org.code,
-      alias: org.description,
-      type: 'Admin' as const,
-      status: org.status as 'active' | 'inactive',
-      references: Array.isArray(org.organization_references) ? org.organization_references as unknown as Reference[] : [],
-      contacts: Array.isArray(org.contacts) ? org.contacts as unknown as Contact[] : [],
-      createdBy: org.created_by,
-      createdOn: org.created_on ? new Date(org.created_on) : undefined,
-      updatedBy: org.updated_by,
-      updatedOn: org.updated_on ? new Date(org.updated_on) : undefined,
-    }));
   },
 
   // Alias for backward compatibility
@@ -43,36 +64,47 @@ export const organizationService = {
   async getOrganizationById(id: string): Promise<Organization | null> {
     console.log("Fetching organization by ID:", id);
     
-    const { data, error } = await supabase
-      .from('organizations')
-      .select('*')
-      .eq('id', id)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('organizations')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle();
 
-    if (error) {
-      console.error("Error fetching organization:", error);
-      if (error.code === 'PGRST116') {
+      if (error) {
+        console.error("Error fetching organization:", error);
+        throw new Error(`Failed to fetch organization: ${error.message}`);
+      }
+
+      if (!data) {
+        console.log("Organization not found");
         return null;
       }
-      throw new Error(`Failed to fetch organization: ${error.message}`);
-    }
 
-    console.log("Organization fetched successfully:", data);
-    
-    return {
-      id: data.id,
-      name: data.name,
-      code: data.code,
-      alias: data.description,
-      type: 'Admin' as const,
-      status: data.status as 'active' | 'inactive',
-      references: Array.isArray(data.organization_references) ? data.organization_references as unknown as Reference[] : [],
-      contacts: Array.isArray(data.contacts) ? data.contacts as unknown as Contact[] : [],
-      createdBy: data.created_by,
-      createdOn: data.created_on ? new Date(data.created_on) : undefined,
-      updatedBy: data.updated_by,
-      updatedOn: data.updated_on ? new Date(data.updated_on) : undefined,
-    };
+      console.log("Organization fetched successfully:", data);
+      
+      return {
+        id: data.id,
+        name: data.name,
+        code: data.code,
+        alias: data.description,
+        type: 'Admin' as const,
+        status: data.status as 'active' | 'inactive',
+        references: Array.isArray(data.organization_references) 
+          ? data.organization_references as unknown as Reference[] 
+          : [],
+        contacts: Array.isArray(data.contacts) 
+          ? data.contacts as unknown as Contact[] 
+          : [],
+        createdBy: data.created_by,
+        createdOn: data.created_on ? new Date(data.created_on) : undefined,
+        updatedBy: data.updated_by,
+        updatedOn: data.updated_on ? new Date(data.updated_on) : undefined,
+      };
+    } catch (error) {
+      console.error("Service error fetching organization:", error);
+      throw error;
+    }
   },
 
   async createOrganization(organizationData: OrganizationFormData, createdBy: string): Promise<Organization> {
