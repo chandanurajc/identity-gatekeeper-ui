@@ -1,6 +1,23 @@
 import { supabase } from "@/integrations/supabase/client";
 import { User, UserFormData, PhoneNumber } from "@/types/user";
 
+// Helper function to safely parse phone data
+const parsePhoneData = (phoneJson: any): PhoneNumber | undefined => {
+  if (!phoneJson || typeof phoneJson !== 'object') {
+    return undefined;
+  }
+  
+  // Check if it has the required properties for PhoneNumber
+  if (typeof phoneJson.countryCode === 'string' && typeof phoneJson.number === 'string') {
+    return {
+      countryCode: phoneJson.countryCode,
+      number: phoneJson.number
+    };
+  }
+  
+  return undefined;
+};
+
 export const userService = {
   async getUsers(): Promise<User[]> {
     console.log("Fetching users...");
@@ -45,10 +62,7 @@ export const userService = {
         console.log("Roles for user", profile.id, ":", roles);
 
         // Parse phone data safely
-        let phoneData: PhoneNumber | undefined;
-        if (profile.phone && typeof profile.phone === 'object') {
-          phoneData = profile.phone as PhoneNumber;
-        }
+        const phoneData = parsePhoneData(profile.phone);
 
         return {
           id: profile.id,
@@ -59,7 +73,7 @@ export const userService = {
           phone: phoneData,
           designation: profile.designation,
           organizationId: profile.organization_id,
-          organizationName: (profile.organizations as any)?.name,
+          organizationName: profile.organizations?.name || '',
           roles: roles,
           effectiveFrom: profile.effective_from ? new Date(profile.effective_from) : new Date(),
           effectiveTo: profile.effective_to ? new Date(profile.effective_to) : undefined,
@@ -117,10 +131,7 @@ export const userService = {
     console.log("User roles:", roles);
 
     // Parse phone data safely
-    let phoneData: PhoneNumber | undefined;
-    if (profile.phone && typeof profile.phone === 'object') {
-      phoneData = profile.phone as PhoneNumber;
-    }
+    const phoneData = parsePhoneData(profile.phone);
 
     return {
       id: profile.id,
@@ -131,7 +142,7 @@ export const userService = {
       phone: phoneData,
       designation: profile.designation,
       organizationId: profile.organization_id,
-      organizationName: (profile.organizations as any)?.name,
+      organizationName: profile.organizations?.name || '',
       roles: roles,
       effectiveFrom: profile.effective_from ? new Date(profile.effective_from) : new Date(),
       effectiveTo: profile.effective_to ? new Date(profile.effective_to) : undefined,
@@ -204,10 +215,7 @@ export const userService = {
     }
 
     // Parse phone data safely
-    let phoneData: PhoneNumber | undefined;
-    if (profile.phone && typeof profile.phone === 'object') {
-      phoneData = profile.phone as PhoneNumber;
-    }
+    const phoneData = parsePhoneData(profile.phone);
 
     return {
       id: profile.id,
