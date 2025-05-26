@@ -42,30 +42,38 @@ export const useRolePermissions = () => {
             let userPermissions: Permission[] = [];
             
             for (const roleName of user.roles) {
-              console.log(`Fetching permissions for role: ${roleName}`);
+              console.log(`Checking permissions for role: ${roleName}`);
               try {
-                // We need to get permissions by role name, not component
-                // This might be the issue - let's get all permissions and filter by role
-                const allPerms = await roleService.getAllPermissions();
-                console.log("All available permissions:", allPerms);
-                
-                // For now, let's check if the role name indicates user management permissions
+                // Check if the role name indicates user management permissions
                 if (roleName.toLowerCase().includes('user') || roleName.toLowerCase().includes('management')) {
-                  console.log("Role seems to be related to user management, adding user permissions");
-                  const userManagementPerms = allPerms.filter(p => 
+                  console.log("Role is related to user management, adding both user and role permissions");
+                  const allPerms = await roleService.getAllPermissions();
+                  console.log("All available permissions:", allPerms);
+                  
+                  // Add both user and role management permissions
+                  const managementPerms = allPerms.filter(p => 
+                    // User permissions
                     p.component.toLowerCase().includes('user') || 
                     p.name.toLowerCase().includes('user') ||
+                    // Role permissions
+                    p.component.toLowerCase().includes('role') || 
                     p.name.includes('view_roles') ||
                     p.name.includes('create_role') ||
-                    p.name.includes('edit_roles')
+                    p.name.includes('edit_roles') ||
+                    p.name === 'view_permissions'
                   );
-                  console.log("User management permissions found:", userManagementPerms);
-                  userPermissions = [...userPermissions, ...userManagementPerms];
+                  console.log("Management permissions found:", managementPerms);
+                  userPermissions = [...userPermissions, ...managementPerms];
                 }
               } catch (error) {
                 console.error(`Error fetching permissions for role ${roleName}:`, error);
               }
             }
+            
+            // Remove duplicates
+            userPermissions = userPermissions.filter((permission, index, self) => 
+              index === self.findIndex(p => p.id === permission.id)
+            );
             
             console.log("Final user permissions:", userPermissions);
             setPermissions(userPermissions);
