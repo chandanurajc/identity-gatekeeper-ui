@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Role, RoleFormData } from "@/types/role";
 
@@ -129,16 +128,19 @@ export const roleService = {
     };
   },
 
-  async createRole(roleData: RoleFormData, createdBy: string, organizationId: string): Promise<Role> {
+  async createRole(roleData: RoleFormData, createdBy: string, organizationId: string | null): Promise<Role> {
     console.log("Creating role with data:", roleData);
+    console.log("Organization ID parameter:", organizationId);
     
     const newRole = {
       name: roleData.name,
       description: roleData.description,
       created_by: createdBy,
       updated_by: createdBy,
-      organization_id: organizationId,
+      organization_id: organizationId, // This will be null if no organization is selected
     };
+
+    console.log("Final role object being inserted:", newRole);
 
     const { data, error } = await supabase
       .from('roles')

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { roleService } from "@/services/roleService";
@@ -111,6 +112,7 @@ const RoleForm = () => {
       };
 
       console.log("Using user ID for role operation:", user.id);
+      console.log("Organization ID being passed:", selectedOrganizationId || null);
 
       if (isEditing && roleId) {
         await roleService.updateRole(roleId, roleData, user.id);
@@ -119,7 +121,9 @@ const RoleForm = () => {
           description: `The role "${roleName}" has been updated successfully.`,
         });
       } else {
-        await roleService.createRole(roleData, user.id, selectedOrganizationId || "");
+        // Pass null instead of empty string for organization_id
+        const orgId = selectedOrganizationId || null;
+        await roleService.createRole(roleData, user.id, orgId);
         toast({
           title: "Role Created",
           description: `The role "${roleName}" has been created successfully.`,
