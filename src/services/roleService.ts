@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Role, RoleFormData } from "@/types/role";
 
@@ -128,16 +129,17 @@ export const roleService = {
     };
   },
 
-  async createRole(roleData: RoleFormData, createdBy: string, organizationId: string | null): Promise<Role> {
+  async createRole(roleData: RoleFormData, createdByUserName: string, organizationId: string | null): Promise<Role> {
     console.log("Creating role with data:", roleData);
     console.log("Organization ID parameter:", organizationId);
+    console.log("Created by user name:", createdByUserName);
     
     const newRole = {
       name: roleData.name,
       description: roleData.description,
-      created_by: createdBy,
-      updated_by: createdBy,
-      organization_id: organizationId, // This will be null if no organization is selected
+      created_by: createdByUserName,
+      updated_by: createdByUserName,
+      organization_id: organizationId,
     };
 
     console.log("Final role object being inserted:", newRole);
@@ -154,6 +156,25 @@ export const roleService = {
     }
 
     console.log("Role created successfully:", data);
+
+    // Now handle role permissions
+    if (roleData.permissions && roleData.permissions.length > 0) {
+      const rolePermissions = roleData.permissions.map(permission => ({
+        role_id: data.id,
+        permission_id: permission.id
+      }));
+
+      const { error: permissionError } = await supabase
+        .from('role_permissions')
+        .insert(rolePermissions);
+
+      if (permissionError) {
+        console.error("Error creating role permissions:", permissionError);
+        // Clean up the role if permission assignment fails
+        await supabase.from('roles').delete().eq('id', data.id);
+        throw new Error(`Failed to assign permissions to role: ${permissionError.message}`);
+      }
+    }
     
     return {
       id: data.id,
@@ -168,13 +189,14 @@ export const roleService = {
     };
   },
 
-  async updateRole(id: string, roleData: RoleFormData, updatedBy: string): Promise<Role> {
+  async updateRole(id: string, roleData: RoleFormData, updatedByUserName: string): Promise<Role> {
     console.log("Updating role:", id, "with data:", roleData);
+    console.log("Updated by user name:", updatedByUserName);
     
     const updateData = {
       name: roleData.name,
       description: roleData.description,
-      updated_by: updatedBy,
+      updated_by: updatedByUserName,
       updated_on: new Date().toISOString(),
     };
 
@@ -188,6 +210,30 @@ export const roleService = {
     if (error) {
       console.error("Error updating role:", error);
       throw new Error(`Failed to update role: ${error.message}`);
+    }
+
+    // Update role permissions
+    // First delete existing permissions
+    await supabase
+      .from('role_permissions')
+      .delete()
+      .eq('role_id', id);
+
+    // Then insert new permissions
+    if (roleData.permissions && roleData.permissions.length > 0) {
+      const rolePermissions = roleData.permissions.map(permission => ({
+        role_id: id,
+        permission_id: permission.id
+      }));
+
+      const { error: permissionError } = await supabase
+        .from('role_permissions')
+        .insert(rolePermissions);
+
+      if (permissionError) {
+        console.error("Error updating role permissions:", permissionError);
+        throw new Error(`Failed to update permissions for role: ${permissionError.message}`);
+      }
     }
 
     console.log("Role updated successfully:", data);
@@ -208,6 +254,13 @@ export const roleService = {
   async deleteRole(id: string): Promise<void> {
     console.log("Deleting role:", id);
     
+    // First delete role permissions
+    await supabase
+      .from('role_permissions')
+      .delete()
+      .eq('role_id', id);
+    
+    // Then delete the role
     const { error } = await supabase
       .from('roles')
       .delete()
