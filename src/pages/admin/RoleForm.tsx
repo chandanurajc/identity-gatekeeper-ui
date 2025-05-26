@@ -101,13 +101,13 @@ const RoleForm = () => {
       };
 
       if (isEditing && roleId) {
-        await roleService.updateRole(roleId, roleData);
+        await roleService.updateRole(roleId, roleData, "system");
         toast({
           title: "Role Updated",
           description: `The role "${roleName}" has been updated successfully.`,
         });
       } else {
-        await roleService.createRole(roleData as Omit<Role, "id" | "createdBy" | "createdOn">);
+        await roleService.createRole(roleData, "system", selectedOrganizationId || "");
         toast({
           title: "Role Created",
           description: `The role "${roleName}" has been created successfully.`,

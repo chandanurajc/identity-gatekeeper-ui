@@ -26,8 +26,8 @@ export const organizationService = {
       alias: org.description,
       type: 'Admin' as const,
       status: org.status as 'active' | 'inactive',
-      references: Array.isArray(org.organization_references) ? org.organization_references as Reference[] : [],
-      contacts: Array.isArray(org.contacts) ? org.contacts as Contact[] : [],
+      references: Array.isArray(org.organization_references) ? org.organization_references as unknown as Reference[] : [],
+      contacts: Array.isArray(org.contacts) ? org.contacts as unknown as Contact[] : [],
       createdBy: org.created_by,
       createdOn: org.created_on ? new Date(org.created_on) : undefined,
       updatedBy: org.updated_by,
@@ -66,8 +66,8 @@ export const organizationService = {
       alias: data.description,
       type: 'Admin' as const,
       status: data.status as 'active' | 'inactive',
-      references: Array.isArray(data.organization_references) ? data.organization_references as Reference[] : [],
-      contacts: Array.isArray(data.contacts) ? data.contacts as Contact[] : [],
+      references: Array.isArray(data.organization_references) ? data.organization_references as unknown as Reference[] : [],
+      contacts: Array.isArray(data.contacts) ? data.contacts as unknown as Contact[] : [],
       createdBy: data.created_by,
       createdOn: data.created_on ? new Date(data.created_on) : undefined,
       updatedBy: data.updated_by,
@@ -91,7 +91,7 @@ export const organizationService = {
 
     const { data, error } = await supabase
       .from('organizations')
-      .insert(newOrganization)
+      .insert([newOrganization])
       .select()
       .single();
 
