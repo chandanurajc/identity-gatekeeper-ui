@@ -1,6 +1,7 @@
 
 import { useAuth } from "@/context/AuthContext";
 import { roleService } from "@/services/roleService";
+import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
 import { Permission } from "@/types/role";
 
@@ -35,11 +36,47 @@ export const useRolePermissions = () => {
             console.log("All permissions fetched for admin:", allPermissions);
             setPermissions(allPermissions);
           } else {
-            console.log("User is not admin, they should not have role permissions unless specifically assigned");
-            // For non-admin users, they should not have role permissions unless specifically assigned
-            // This ensures that users like 'usermanager@admn.com' with 'User Management' role
-            // only get the permissions that are actually assigned to their role in the database
-            setPermissions([]);
+            console.log("User is not admin, fetching permissions from database for user roles");
+            console.log("User roles to check:", user.roles);
+            
+            // For non-admin users, fetch actual permissions assigned to their roles
+            const { data: rolePermissions, error } = await supabase
+              .from('roles')
+              .select(`
+                name,
+                role_permissions (
+                  permissions (*)
+                )
+              `)
+              .in('name', user.roles);
+
+            if (error) {
+              console.error("Error fetching role permissions:", error);
+              setPermissions([]);
+            } else {
+              console.log("Raw role permissions data:", rolePermissions);
+              
+              // Extract all permissions from all user roles
+              const userPermissions: Permission[] = [];
+              
+              rolePermissions?.forEach(role => {
+                console.log(`Processing permissions for role: ${role.name}`);
+                role.role_permissions?.forEach((rp: any) => {
+                  if (rp.permissions) {
+                    console.log("Adding permission:", rp.permissions);
+                    userPermissions.push(rp.permissions);
+                  }
+                });
+              });
+              
+              // Remove duplicates based on permission ID
+              const uniquePermissions = userPermissions.filter((permission, index, self) => 
+                index === self.findIndex(p => p.id === permission.id)
+              );
+              
+              console.log("Final permissions for user:", uniquePermissions);
+              setPermissions(uniquePermissions);
+            }
           }
         } catch (error) {
           console.error("Error fetching permissions:", error);
