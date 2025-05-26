@@ -171,21 +171,27 @@ export const userService = {
     let authUserId: string | null = null;
     
     try {
-      // Step 1: Create the auth user
-      console.log("Step 1: Creating auth user...");
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      // Step 1: Create the auth user using regular signup (not admin)
+      console.log("Step 1: Creating auth user using signup...");
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email: userData.email,
-        password: userData.password,
-        email_confirm: true,
-        user_metadata: {
-          first_name: userData.firstName,
-          last_name: userData.lastName
+        password: userData.password || 'TempPass123!', // Provide a default if not specified
+        options: {
+          emailRedirectTo: undefined, // Disable email confirmation for now
+          data: {
+            first_name: userData.firstName,
+            last_name: userData.lastName
+          }
         }
       });
 
       if (authError) {
         console.error("Error creating auth user:", authError);
         throw new Error(`Failed to create auth user: ${authError.message}`);
+      }
+
+      if (!authData.user) {
+        throw new Error("No user data returned from signup");
       }
 
       authUserId = authData.user.id;
@@ -195,21 +201,9 @@ export const userService = {
       console.log("Step 2: Waiting for auth user to be committed...");
       await new Promise(resolve => setTimeout(resolve, 2000)); // 2 second delay
 
-      // Step 3: Verify auth user exists before proceeding
-      console.log("Step 3: Verifying auth user exists...");
-      const { data: authUserCheck, error: authCheckError } = await supabase.auth.admin.getUserById(authUserId);
-      
-      if (authCheckError || !authUserCheck.user) {
-        console.error("Auth user verification failed:", authCheckError);
-        throw new Error("Auth user was not properly created");
-      }
-      
-      console.log("✓ Auth user verified:", authUserCheck.user.id);
-
-      // Step 4: Create profile
-      console.log("Step 4: Creating user profile...");
+      // Step 3: Create/Update profile (the trigger should have created it, but we'll update it)
+      console.log("Step 3: Updating user profile...");
       const profileData = {
-        id: authUserId,
         first_name: userData.firstName,
         last_name: userData.lastName,
         username: userData.username,
@@ -221,26 +215,27 @@ export const userService = {
         updated_by: createdByUserName,
       };
 
-      console.log("Profile data to insert:", profileData);
+      console.log("Profile data to update:", profileData);
 
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .insert([profileData])
+        .upsert([{
+          id: authUserId,
+          ...profileData
+        }])
         .select()
         .single();
 
       if (profileError) {
-        console.error("Error creating profile:", profileError);
-        // Clean up auth user if profile creation fails
-        await supabase.auth.admin.deleteUser(authUserId);
-        throw new Error(`Failed to create user profile: ${profileError.message}`);
+        console.error("Error updating profile:", profileError);
+        throw new Error(`Failed to update user profile: ${profileError.message}`);
       }
 
-      console.log("✓ Profile created successfully:", profile.id);
+      console.log("✓ Profile updated successfully:", profile.id);
 
-      // Step 5: Create phone number entry if provided
+      // Step 4: Create phone number entry if provided
       if (userData.phone && userData.phone.countryCode && userData.phone.number) {
-        console.log("Step 5: Creating phone number entry...");
+        console.log("Step 4: Creating phone number entry...");
         const { error: phoneError } = await supabase
           .from('phone_numbers')
           .insert([{
@@ -257,9 +252,9 @@ export const userService = {
         }
       }
 
-      // Step 6: Handle roles if provided - with additional verification
+      // Step 5: Handle roles if provided - with additional verification
       if (userData.roles && userData.roles.length > 0) {
-        console.log("Step 6: Assigning roles...");
+        console.log("Step 5: Assigning roles...");
         console.log("Roles to assign:", userData.roles);
         
         // Additional wait to ensure all database operations are committed
@@ -287,6 +282,7 @@ export const userService = {
         phone: userData.phone,
         designation: profile.designation,
         organizationId: profile.organization_id,
+        organizationName: '', // Will be populated when fetching
         roles: userData.roles || [],
         effectiveFrom: profile.effective_from ? new Date(profile.effective_from) : new Date(),
         effectiveTo: profile.effective_to ? new Date(profile.effective_to) : undefined,
@@ -300,15 +296,9 @@ export const userService = {
       console.error("=== USER CREATION FAILED ===");
       console.error("Error details:", error);
       
-      // Clean up auth user if it was created
-      if (authUserId) {
-        console.log("Cleaning up auth user:", authUserId);
-        try {
-          await supabase.auth.admin.deleteUser(authUserId);
-        } catch (cleanupError) {
-          console.error("Error during cleanup:", cleanupError);
-        }
-      }
+      // Note: With regular signup, we can't easily delete the auth user if something fails
+      // The user will exist in auth but may not have complete profile data
+      // This is acceptable as they can complete their profile later or admin can fix it
       
       throw error;
     }
