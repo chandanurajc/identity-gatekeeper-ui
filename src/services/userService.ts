@@ -1,6 +1,5 @@
-
 import { supabase } from "@/integrations/supabase/client";
-import { User, UserFormData } from "@/types/user";
+import { User, UserFormData, PhoneNumber } from "@/types/user";
 
 export const userService = {
   async getUsers(): Promise<User[]> {
@@ -45,21 +44,27 @@ export const userService = {
         const roles = userRoles?.map((ur: any) => ur.roles?.name).filter(Boolean) || [];
         console.log("Roles for user", profile.id, ":", roles);
 
+        // Parse phone data safely
+        let phoneData: PhoneNumber | undefined;
+        if (profile.phone && typeof profile.phone === 'object') {
+          phoneData = profile.phone as PhoneNumber;
+        }
+
         return {
           id: profile.id,
           firstName: profile.first_name,
           lastName: profile.last_name,
           username: profile.username,
           email: profile.username, // Using username as email
-          phone: profile.phone,
+          phone: phoneData,
           designation: profile.designation,
           organizationId: profile.organization_id,
-          organizationName: profile.organizations?.name,
+          organizationName: (profile.organizations as any)?.name,
           roles: roles,
-          effectiveFrom: profile.effective_from ? new Date(profile.effective_from) : undefined,
+          effectiveFrom: profile.effective_from ? new Date(profile.effective_from) : new Date(),
           effectiveTo: profile.effective_to ? new Date(profile.effective_to) : undefined,
           createdBy: profile.created_by,
-          createdOn: profile.created_on ? new Date(profile.created_on) : undefined,
+          createdOn: profile.created_on ? new Date(profile.created_on) : new Date(),
           updatedBy: profile.updated_by,
           updatedOn: profile.updated_on ? new Date(profile.updated_on) : undefined,
         };
@@ -111,21 +116,27 @@ export const userService = {
     const roles = userRoles?.map((ur: any) => ur.roles?.name).filter(Boolean) || [];
     console.log("User roles:", roles);
 
+    // Parse phone data safely
+    let phoneData: PhoneNumber | undefined;
+    if (profile.phone && typeof profile.phone === 'object') {
+      phoneData = profile.phone as PhoneNumber;
+    }
+
     return {
       id: profile.id,
       firstName: profile.first_name,
       lastName: profile.last_name,
       username: profile.username,
       email: profile.username,
-      phone: profile.phone,
+      phone: phoneData,
       designation: profile.designation,
       organizationId: profile.organization_id,
-      organizationName: profile.organizations?.name,
+      organizationName: (profile.organizations as any)?.name,
       roles: roles,
-      effectiveFrom: profile.effective_from ? new Date(profile.effective_from) : undefined,
+      effectiveFrom: profile.effective_from ? new Date(profile.effective_from) : new Date(),
       effectiveTo: profile.effective_to ? new Date(profile.effective_to) : undefined,
       createdBy: profile.created_by,
-      createdOn: profile.created_on ? new Date(profile.created_on) : undefined,
+      createdOn: profile.created_on ? new Date(profile.created_on) : new Date(),
       updatedBy: profile.updated_by,
       updatedOn: profile.updated_on ? new Date(profile.updated_on) : undefined,
     };
@@ -192,20 +203,26 @@ export const userService = {
       await this.assignRolesToUser(authData.user.id, userData.roles, createdByUserName);
     }
 
+    // Parse phone data safely
+    let phoneData: PhoneNumber | undefined;
+    if (profile.phone && typeof profile.phone === 'object') {
+      phoneData = profile.phone as PhoneNumber;
+    }
+
     return {
       id: profile.id,
       firstName: profile.first_name,
       lastName: profile.last_name,
       username: profile.username,
       email: profile.username,
-      phone: profile.phone,
+      phone: phoneData,
       designation: profile.designation,
       organizationId: profile.organization_id,
       roles: userData.roles || [],
-      effectiveFrom: profile.effective_from ? new Date(profile.effective_from) : undefined,
+      effectiveFrom: profile.effective_from ? new Date(profile.effective_from) : new Date(),
       effectiveTo: profile.effective_to ? new Date(profile.effective_to) : undefined,
       createdBy: profile.created_by,
-      createdOn: profile.created_on ? new Date(profile.created_on) : undefined,
+      createdOn: profile.created_on ? new Date(profile.created_on) : new Date(),
       updatedBy: profile.updated_by,
       updatedOn: profile.updated_on ? new Date(profile.updated_on) : undefined,
     };

@@ -18,8 +18,9 @@ const CreateUser = () => {
       const createdByValue = user?.name || "unknown";
       
       console.log("Using createdBy value:", createdByValue);
+      console.log("Organization ID:", user?.organizationId);
       
-      await userService.createUser(userData, createdByValue);
+      await userService.createUser(userData, createdByValue, user?.organizationId || null);
     } catch (error) {
       console.error("Error creating user:", error);
       throw error;
