@@ -140,50 +140,89 @@ export const usePermissions = () => {
     
     if (!user || !isAuthenticated) {
       return {
+        // User permissions
         canViewUsers: false,
         canCreateUsers: false,
         canEditUsers: false,
-        canAccessAdminModule: false,
-        canAccessSettingsModule: false,
+        // Role permissions
+        canViewRoles: false,
+        canCreateRole: false,
+        canEditRoles: false,
+        canViewPermissions: false,
+        // Organization permissions
         canViewOrganization: false,
         canCreateOrganization: false,
         canEditOrganization: false,
+        // Division permissions
         canViewDivision: false,
         canCreateDivision: false,
         canEditDivision: false,
+        // Category permissions
+        canViewCategory: false,
+        canCreateCategory: false,
+        canEditCategory: false,
+        // Module access
+        canAccessAdminModule: false,
+        canAccessSettingsModule: false,
       };
     }
 
     // Admin users have all permissions
     if (user.roles.includes("Admin-Role") || user.roles.includes("admin")) {
       return {
+        // User permissions
         canViewUsers: true,
         canCreateUsers: true,
         canEditUsers: true,
-        canAccessAdminModule: true,
-        canAccessSettingsModule: true,
+        // Role permissions
+        canViewRoles: true,
+        canCreateRole: true,
+        canEditRoles: true,
+        canViewPermissions: true,
+        // Organization permissions
         canViewOrganization: true,
         canCreateOrganization: true,
         canEditOrganization: true,
+        // Division permissions
         canViewDivision: true,
         canCreateDivision: true,
         canEditDivision: true,
+        // Category permissions
+        canViewCategory: true,
+        canCreateCategory: true,
+        canEditCategory: true,
+        // Module access
+        canAccessAdminModule: true,
+        canAccessSettingsModule: true,
       };
     }
 
     // Check individual permissions from database
     const computed = {
+      // User permissions
       canViewUsers: permissions.includes("view-user"),
       canCreateUsers: permissions.includes("create-user"),
       canEditUsers: permissions.includes("edit-user"),
-      canAccessAdminModule: permissions.includes("access_admin") || permissions.length > 0, // Allow admin access if user has any permissions
-      canAccessSettingsModule: permissions.includes("access_settings"),
+      // Role permissions
+      canViewRoles: permissions.includes("view_roles"),
+      canCreateRole: permissions.includes("create_role"),
+      canEditRoles: permissions.includes("edit_roles"),
+      canViewPermissions: permissions.includes("view_permissions"),
+      // Organization permissions
       canViewOrganization: permissions.includes("view-organization"),
       canCreateOrganization: permissions.includes("create-organization"),
       canEditOrganization: permissions.includes("edit-organization"),
+      // Division permissions
       canViewDivision: permissions.includes("view-division"),
       canCreateDivision: permissions.includes("create-division"),
       canEditDivision: permissions.includes("edit-division"),
+      // Category permissions
+      canViewCategory: permissions.includes("view-category"),
+      canCreateCategory: permissions.includes("create-category"),
+      canEditCategory: permissions.includes("edit-category"),
+      // Module access
+      canAccessAdminModule: permissions.includes("access_admin") || permissions.length > 0,
+      canAccessSettingsModule: permissions.includes("access_settings"),
     };
     
     console.log("Computed permissions:", computed);

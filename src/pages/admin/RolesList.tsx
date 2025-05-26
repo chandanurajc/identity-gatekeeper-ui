@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { roleService } from "@/services/roleService";
@@ -10,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { useRolePermissions } from "@/hooks/useRolePermissions";
+import { usePermissions } from "@/hooks/usePermissions";
 import { format } from "date-fns";
 import { Plus, Edit, Eye, Filter, ArrowDown, ArrowUp } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
@@ -31,7 +30,7 @@ const RolesList = () => {
   const [sortField, setSortField] = useState<string>("name");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const navigate = useNavigate();
-  const { canCreateRole, canEditRoles, canViewRoles, isLoading: permissionsLoading } = useRolePermissions();
+  const { canCreateRole, canEditRoles, canViewRoles, isLoading: permissionsLoading } = usePermissions();
 
   useEffect(() => {
     const loadData = async () => {
@@ -109,17 +108,21 @@ const RolesList = () => {
   };
 
   const handleCreateRole = () => {
-    navigate("/admin/roles/create");
+    if (canCreateRole) {
+      navigate("/admin/roles/create");
+    }
   };
 
   const handleEditRole = () => {
-    if (selectedRoles.length === 1) {
+    if (canEditRoles && selectedRoles.length === 1) {
       navigate(`/admin/roles/edit/${selectedRoles[0]}`);
     }
   };
 
   const handleViewRole = (roleId: string) => {
-    navigate(`/admin/roles/${roleId}`);
+    if (canViewRoles) {
+      navigate(`/admin/roles/${roleId}`);
+    }
   };
 
   const handleSort = (field: string) => {
@@ -224,23 +227,24 @@ const RolesList = () => {
               </DropdownMenuContent>
             </DropdownMenu>
             
-            {canCreateRole && (
-              <Button onClick={handleCreateRole}>
-                <Plus className="mr-2 h-4 w-4" />
-                Create Role
-              </Button>
-            )}
+            <Button 
+              onClick={handleCreateRole}
+              disabled={!canCreateRole}
+              className={!canCreateRole ? "opacity-50 cursor-not-allowed" : ""}
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Create Role
+            </Button>
             
-            {canEditRoles && (
-              <Button 
-                onClick={handleEditRole} 
-                variant="outline"
-                disabled={selectedRoles.length !== 1}
-              >
-                <Edit className="mr-2 h-4 w-4" />
-                Edit Role
-              </Button>
-            )}
+            <Button 
+              onClick={handleEditRole} 
+              variant="outline"
+              disabled={!canEditRoles || selectedRoles.length !== 1}
+              className={(!canEditRoles || selectedRoles.length !== 1) ? "opacity-50 cursor-not-allowed" : ""}
+            >
+              <Edit className="mr-2 h-4 w-4" />
+              Edit Role
+            </Button>
           </div>
         </CardHeader>
         <CardContent>
@@ -313,7 +317,7 @@ const RolesList = () => {
                           {role.name}
                         </button>
                       ) : (
-                        role.name
+                        <span className="text-gray-500">{role.name}</span>
                       )}
                     </TableCell>
                     <TableCell>{role.organizationName || "Global"}</TableCell>
@@ -326,16 +330,16 @@ const RolesList = () => {
                       {role.updatedOn ? format(new Date(role.updatedOn), 'PPP') : 'N/A'}
                     </TableCell>
                     <TableCell>
-                      {canViewRoles && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleViewRole(role.id)}
-                          title="View role details"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      )}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleViewRole(role.id)}
+                        disabled={!canViewRoles}
+                        className={!canViewRoles ? "opacity-50 cursor-not-allowed" : ""}
+                        title={canViewRoles ? "View role details" : "No permission to view"}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))

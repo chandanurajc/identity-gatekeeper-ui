@@ -5,7 +5,7 @@ import { Role } from "@/types/role";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useRolePermissions } from "@/hooks/useRolePermissions";
+import { usePermissions } from "@/hooks/usePermissions";
 import { format } from "date-fns";
 import { Edit } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
@@ -15,7 +15,7 @@ const RoleDetails = () => {
   const [role, setRole] = useState<Role | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const { canEditRoles, canViewRoles } = useRolePermissions();
+  const { canEditRoles, canViewRoles } = usePermissions();
 
   useEffect(() => {
     const loadRoleDetails = async () => {
@@ -52,7 +52,9 @@ const RoleDetails = () => {
   }, [roleId, navigate]);
 
   const handleEdit = () => {
-    navigate(`/admin/roles/edit/${roleId}`);
+    if (canEditRoles) {
+      navigate(`/admin/roles/edit/${roleId}`);
+    }
   };
 
   const handleGoBack = () => {
@@ -145,12 +147,15 @@ const RoleDetails = () => {
             Go Back
           </Button>
           
-          {canEditRoles && (
-            <Button onClick={handleEdit}>
-              <Edit className="mr-2 h-4 w-4" />
-              Edit Role
-            </Button>
-          )}
+          <Button 
+            onClick={handleEdit}
+            disabled={!canEditRoles}
+            className={!canEditRoles ? "opacity-50 cursor-not-allowed" : ""}
+            title={canEditRoles ? "Edit role" : "No permission to edit"}
+          >
+            <Edit className="mr-2 h-4 w-4" />
+            Edit Role
+          </Button>
         </CardFooter>
       </Card>
     </div>
