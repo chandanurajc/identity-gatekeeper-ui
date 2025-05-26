@@ -391,17 +391,121 @@ export const userService = {
       }
     }
 
-    // Handle roles update if provided
-    if (userData.roles) {
-      console.log("Updating user roles to:", userData.roles);
-      await this.updateUserRoles(id, userData.roles, updatedByUserName);
-    }
+    // Handle roles update if provided - IMPROVED VERSION
+    if (userData.roles && Array.isArray(userData.roles)) {
+      console.log("=== STARTING ROLE UPDATE PROCESS ===");
+      console.log("Roles to assign:", userData.roles);
+      
+      try {
+        // First, delete all existing roles for this user
+        console.log("Step 1: Deleting existing user roles...");
+        const { error: deleteError } = await supabase
+          .from('user_roles')
+          .delete()
+          .eq('user_id', id);
 
-    // Handle password update if provided - removed admin API call
-    if (userData.password && userData.password.trim() !== '') {
-      console.log("Password update requested but skipped (requires admin privileges)");
-      // Note: Password updates require admin privileges which regular users don't have
-      // This would need to be handled differently, perhaps through a separate admin endpoint
+        if (deleteError) {
+          console.error("Error deleting existing roles:", deleteError);
+          throw new Error(`Failed to delete existing roles: ${deleteError.message}`);
+        }
+
+        console.log("✓ Existing roles deleted successfully");
+
+        // If roles are provided, assign them
+        if (userData.roles.length > 0) {
+          console.log("Step 2: Fetching available roles from database...");
+          
+          // Get all available roles
+          const { data: availableRoles, error: rolesError } = await supabase
+            .from('roles')
+            .select('id, name');
+
+          if (rolesError) {
+            console.error("Error fetching available roles:", rolesError);
+            throw new Error(`Failed to fetch available roles: ${rolesError.message}`);
+          }
+
+          console.log("Available roles in database:", availableRoles?.map(r => r.name));
+
+          // Match the role names with database roles (case-insensitive)
+          const rolesToAssign = userData.roles
+            .map(roleName => {
+              const foundRole = availableRoles?.find(role => 
+                role.name.toLowerCase() === roleName.toLowerCase()
+              );
+              if (!foundRole) {
+                console.warn(`Role not found in database: ${roleName}`);
+              }
+              return foundRole;
+            })
+            .filter(Boolean);
+
+          console.log("Roles matched for assignment:", rolesToAssign?.map(r => r?.name));
+
+          if (rolesToAssign && rolesToAssign.length > 0) {
+            console.log("Step 3: Inserting new user roles...");
+            
+            const userRoleInserts = rolesToAssign.map(role => ({
+              user_id: id,
+              role_id: role!.id,
+              assigned_by: updatedByUserName,
+              assigned_on: new Date().toISOString()
+            }));
+
+            console.log("User role data to insert:", userRoleInserts);
+
+            const { data: insertedRoles, error: insertError } = await supabase
+              .from('user_roles')
+              .insert(userRoleInserts)
+              .select(`
+                id,
+                user_id,
+                role_id,
+                roles (
+                  name
+                )
+              `);
+
+            if (insertError) {
+              console.error("Error inserting new roles:", insertError);
+              throw new Error(`Failed to assign new roles: ${insertError.message}`);
+            }
+
+            console.log("✓ New roles assigned successfully:", insertedRoles);
+
+            // Verification step
+            console.log("Step 4: Verifying role assignment...");
+            const { data: verifyRoles, error: verifyError } = await supabase
+              .from('user_roles')
+              .select(`
+                roles (
+                  name
+                )
+              `)
+              .eq('user_id', id);
+
+            if (verifyError) {
+              console.error("Error verifying roles:", verifyError);
+            } else {
+              const assignedRoleNames = verifyRoles?.map(ur => ur.roles?.name).filter(Boolean) || [];
+              console.log("✓ Final verification - User now has roles:", assignedRoleNames);
+            }
+
+          } else {
+            console.log("No valid roles found to assign");
+          }
+        } else {
+          console.log("No roles to assign - user will have no roles");
+        }
+
+        console.log("=== ROLE UPDATE COMPLETED SUCCESSFULLY ===");
+
+      } catch (roleError) {
+        console.error("=== ROLE UPDATE FAILED ===");
+        console.error("Role assignment error:", roleError);
+        // Don't fail the entire user update if role assignment fails
+        console.log("Continuing with user update despite role assignment failure");
+      }
     }
 
     // Fetch updated user with roles
