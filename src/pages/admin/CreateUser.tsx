@@ -14,7 +14,12 @@ const CreateUser = () => {
 
   const handleCreateUser = async (userData: UserFormData) => {
     try {
-      await userService.createUser(userData, user?.id || 'system');
+      // Use user name instead of ID for created_by field
+      const createdByValue = user?.name || "unknown";
+      
+      console.log("Using createdBy value:", createdByValue);
+      
+      await userService.createUser(userData, createdByValue);
     } catch (error) {
       console.error("Error creating user:", error);
       throw error;

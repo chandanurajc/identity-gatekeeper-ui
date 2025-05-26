@@ -66,7 +66,12 @@ const EditUser = () => {
     if (!userId) return;
     
     try {
-      await userService.updateUser(userId, userData, currentUser?.id || 'system');
+      // Use user name instead of ID for updated_by field
+      const updatedByValue = currentUser?.name || "unknown";
+      
+      console.log("Using updatedBy value:", updatedByValue);
+      
+      await userService.updateUser(userId, userData, updatedByValue);
     } catch (error) {
       console.error("Error updating user:", error);
       throw error;
