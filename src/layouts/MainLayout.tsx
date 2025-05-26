@@ -19,33 +19,40 @@ function MainLayoutInner({ children }: MainLayoutProps) {
 
   // Handle clicks outside sidebar to close it on mobile
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+    const handleClickOutside = (event: MouseEvent) => {
+      // Only handle on mobile when sidebar is open
+      if (!isMobile || !open) return;
+
       const target = event.target as Element;
       
-      if (
-        isMobile &&
-        open && 
-        sidebarRef.current && 
-        !sidebarRef.current.contains(event.target as Node) &&
-        !target?.closest('button[data-sidebar="trigger"]') &&
-        !target?.closest('[data-sidebar="sidebar"]') &&
-        !target?.closest('[data-sidebar="menu-button"]') &&
-        !target?.closest('[data-sidebar="menu-item"]') &&
-        !target?.closest('[data-sidebar="group-label"]') &&
-        !target?.closest('[data-sidebar="content"]')
-      ) {
-        setOpen(false);
+      // Check if click is on sidebar trigger button
+      if (target?.closest('[data-sidebar="trigger"]')) {
+        return; // Let the trigger handle it
       }
+
+      // Check if click is inside the sidebar content
+      if (target?.closest('[data-sidebar="sidebar"]')) {
+        return; // Click is inside sidebar, don't close
+      }
+
+      // Check if click is inside any sidebar-related modal or dropdown
+      if (target?.closest('[data-radix-popper-content-wrapper]') || 
+          target?.closest('[role="dialog"]') || 
+          target?.closest('[role="menu"]')) {
+        return; // Click is in a modal/dropdown, don't close
+      }
+
+      // If we get here, the click is outside the sidebar
+      console.log('Click outside sidebar detected, closing sidebar');
+      setOpen(false);
     };
 
     if (isMobile && open) {
-      // Use passive listeners for better performance
-      document.addEventListener('mousedown', handleClickOutside, { passive: true });
-      document.addEventListener('touchstart', handleClickOutside, { passive: true });
+      // Add event listener to document
+      document.addEventListener('mousedown', handleClickOutside, true);
       
       return () => {
-        document.removeEventListener('mousedown', handleClickOutside);
-        document.removeEventListener('touchstart', handleClickOutside);
+        document.removeEventListener('mousedown', handleClickOutside, true);
       };
     }
   }, [open, setOpen, isMobile]);
@@ -62,7 +69,7 @@ function MainLayoutInner({ children }: MainLayoutProps) {
           <AppHeader />
         </div>
 
-        {/* Main Content with error boundary */}
+        {/* Main Content */}
         <main className="flex-1 p-6 overflow-auto">
           {children}
         </main>
@@ -74,7 +81,7 @@ function MainLayoutInner({ children }: MainLayoutProps) {
 // Main Layout wrapper that provides sidebar context
 export const MainLayout = ({ children }: MainLayoutProps) => {
   return (
-    <SidebarProvider defaultOpen={true}>
+    <SidebarProvider defaultOpen={false}>
       <MainLayoutInner>{children}</MainLayoutInner>
     </SidebarProvider>
   );
