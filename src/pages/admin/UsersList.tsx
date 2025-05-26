@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -18,7 +19,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Filter, Plus, Edit, ArrowUp, ArrowDown } from "lucide-react";
+import { Filter, Plus, Edit, ArrowUp, ArrowDown, RefreshCw } from "lucide-react";
 
 const UsersList = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -33,56 +34,43 @@ const UsersList = () => {
   const { toast } = useToast();
   const { canViewUsers, canCreateUsers, canEditUsers, isLoading: permissionsLoading } = usePermissions();
 
-  console.log("=== UsersList Component Render ===");
-  console.log("State:", { loading, permissionsLoading, canViewUsers, usersCount: users.length });
-  console.log("Current route should be /admin/users");
-
-  // Fetch users function
-  const fetchUsers = async () => {
-    console.log("=== fetchUsers called ===");
+  // Fetch users function with proper error handling
+  const fetchUsers = useCallback(async () => {
+    if (!canViewUsers) return;
+    
     try {
       setLoading(true);
       setError(null);
       
-      const startTime = Date.now();
       const data = await userService.getUsers();
-      const endTime = Date.now();
-      
-      console.log(`userService.getUsers completed in ${endTime - startTime}ms`);
-      console.log("Users data received:", { count: data?.length || 0 });
-      
       setUsers(data || []);
     } catch (error) {
-      console.error("=== Error in fetchUsers ===", error);
+      console.error("Error fetching users:", error);
       const errorMessage = error instanceof Error ? error.message : "Failed to fetch users";
       setError(errorMessage);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to fetch users. Please try again later."
+        description: "Failed to fetch users. Please try again."
       });
     } finally {
       setLoading(false);
     }
-  };
+  }, [canViewUsers, toast]);
 
-  // Initial data fetch - only when permissions are loaded and user can view
+  // Initial data fetch
   useEffect(() => {
-    console.log("=== Initial useEffect triggered ===");
-    console.log("Permissions loading:", permissionsLoading, "Can view users:", canViewUsers);
-    
     if (!permissionsLoading && canViewUsers) {
-      console.log("Fetching users...");
       fetchUsers();
     } else if (!permissionsLoading && !canViewUsers) {
-      console.log("User cannot view users, stopping loading");
       setLoading(false);
     }
-  }, [permissionsLoading, canViewUsers]);
+  }, [permissionsLoading, canViewUsers, fetchUsers]);
 
-  // Set up real-time subscription
+  // Set up real-time subscription with cleanup
   useEffect(() => {
-    console.log("=== Setting up real-time subscription ===");
+    if (!canViewUsers) return;
+
     const channel = supabase
       .channel('profiles-changes')
       .on(
@@ -94,103 +82,105 @@ const UsersList = () => {
         },
         (payload) => {
           console.log('Real-time change detected:', payload);
-          // Only refetch if we have permission to view users
-          if (canViewUsers && !permissionsLoading) {
-            fetchUsers();
-          }
+          fetchUsers();
         }
       )
       .subscribe();
 
     return () => {
-      console.log("=== Cleaning up real-time subscription ===");
       supabase.removeChannel(channel);
     };
-  }, [canViewUsers, permissionsLoading]);
+  }, [canViewUsers, fetchUsers]);
 
-  const handleRowSelect = (userId: string) => {
-    const newSelectedUsers = new Set(selectedUsers);
-    
-    if (newSelectedUsers.has(userId)) {
-      newSelectedUsers.delete(userId);
-    } else {
-      newSelectedUsers.add(userId);
-    }
-    
-    setSelectedUsers(newSelectedUsers);
-  };
+  const handleRowSelect = useCallback((userId: string) => {
+    setSelectedUsers(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(userId)) {
+        newSet.delete(userId);
+      } else {
+        newSet.add(userId);
+      }
+      return newSet;
+    });
+  }, []);
   
-  const handleSelectAll = (checked: boolean) => {
+  const handleSelectAll = useCallback((checked: boolean) => {
     if (checked) {
       const allIds = users.map(user => user.id);
       setSelectedUsers(new Set(allIds));
     } else {
       setSelectedUsers(new Set());
     }
-  };
+  }, [users]);
 
-  const handleCreateUser = () => {
+  const handleCreateUser = useCallback(() => {
     navigate("/admin/users/create");
-  };
+  }, [navigate]);
 
-  const handleEditUser = () => {
+  const handleEditUser = useCallback(() => {
     if (selectedUsers.size === 1) {
       const userId = Array.from(selectedUsers)[0];
       navigate(`/admin/users/edit/${userId}`);
     }
-  };
+  }, [selectedUsers, navigate]);
 
-  const handleViewUser = (userId: string) => {
+  const handleViewUser = useCallback((userId: string) => {
     navigate(`/admin/users/${userId}`);
-  };
+  }, [navigate]);
 
-  const handleSort = (field: string) => {
+  const handleSort = useCallback((field: string) => {
     if (sortField === field) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+      setSortDirection(prev => prev === "asc" ? "desc" : "asc");
     } else {
       setSortField(field);
       setSortDirection("asc");
     }
-  };
+  }, [sortField]);
 
-  const handleFilterChange = (field: string, value: string) => {
-    setFilters({
-      ...filters,
+  const handleFilterChange = useCallback((field: string, value: string) => {
+    setFilters(prev => ({
+      ...prev,
       [field]: value,
-    });
-  };
+    }));
+  }, []);
 
-  const filteredUsers = users.filter(user => {
-    return Object.entries(filters).every(([field, value]) => {
-      if (!value) return true;
+  const handleRefresh = useCallback(() => {
+    fetchUsers();
+  }, [fetchUsers]);
+
+  // Memoized filtered and sorted users
+  const processedUsers = useMemo(() => {
+    let filtered = users.filter(user => {
+      return Object.entries(filters).every(([field, value]) => {
+        if (!value) return true;
+        
+        const fieldValue = String(user[field as keyof User] || "").toLowerCase();
+        return fieldValue.includes(value.toLowerCase());
+      });
+    });
+
+    return filtered.sort((a, b) => {
+      const fieldA = String(a[sortField as keyof User] || "").toLowerCase();
+      const fieldB = String(b[sortField as keyof User] || "").toLowerCase();
       
-      const fieldValue = String(user[field as keyof User] || "").toLowerCase();
-      return fieldValue.includes(value.toLowerCase());
+      if (fieldA < fieldB) return sortDirection === "asc" ? -1 : 1;
+      if (fieldA > fieldB) return sortDirection === "asc" ? 1 : -1;
+      return 0;
     });
-  });
-
-  const sortedUsers = [...filteredUsers].sort((a, b) => {
-    const fieldA = String(a[sortField as keyof User] || "").toLowerCase();
-    const fieldB = String(b[sortField as keyof User] || "").toLowerCase();
-    
-    if (fieldA < fieldB) return sortDirection === "asc" ? -1 : 1;
-    if (fieldA > fieldB) return sortDirection === "asc" ? 1 : -1;
-    return 0;
-  });
-
-  console.log("=== Render decision ===");
-  console.log("loading:", loading, "permissionsLoading:", permissionsLoading, "canViewUsers:", canViewUsers);
+  }, [users, filters, sortField, sortDirection]);
 
   // Show loading state
   if (loading || permissionsLoading) {
-    console.log("=== Rendering loading state ===");
     return (
       <div className="container mx-auto py-8">
         <Card>
           <CardContent className="py-8">
             <div className="flex items-center justify-center h-64">
-              <div className="text-lg">
-                {permissionsLoading ? "Checking permissions..." : "Loading users..."}
+              <div className="flex items-center space-x-2">
+                <RefreshCw className="h-6 w-6 animate-spin" />
+                <div className="text-lg">
+                  {permissionsLoading ? "Checking permissions..." : "Loading users..."}
+                </div>
               </div>
             </div>
           </CardContent>
@@ -201,14 +191,14 @@ const UsersList = () => {
 
   // Show error state
   if (error) {
-    console.log("=== Rendering error state ===", error);
     return (
       <div className="container mx-auto py-8">
         <Card>
           <CardContent className="py-8">
             <div className="text-center">
               <p className="text-red-600 mb-4">Error: {error}</p>
-              <Button onClick={() => fetchUsers()}>
+              <Button onClick={handleRefresh} variant="outline">
+                <RefreshCw className="mr-2 h-4 w-4" />
                 Retry
               </Button>
             </div>
@@ -220,7 +210,6 @@ const UsersList = () => {
 
   // Check permissions after loading
   if (!canViewUsers) {
-    console.log("=== Rendering access denied ===");
     return (
       <div className="container mx-auto py-8">
         <Card>
@@ -235,8 +224,6 @@ const UsersList = () => {
     );
   }
 
-  console.log("=== Rendering main users list ===", { userCount: sortedUsers.length });
-
   return (
     <div className="container mx-auto py-8">
       <Card>
@@ -246,6 +233,10 @@ const UsersList = () => {
             <CardDescription>Manage user accounts and permissions</CardDescription>
           </div>
           <div className="flex space-x-2">
+            <Button onClick={handleRefresh} variant="outline" size="sm">
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Refresh
+            </Button>
             {canCreateUsers && (
               <Button onClick={handleCreateUser}>
                 <Plus className="mr-2 h-4 w-4" />
@@ -388,14 +379,14 @@ const UsersList = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sortedUsers.length === 0 ? (
+                {processedUsers.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={10} className="text-center">
-                      No users found
+                      {users.length === 0 ? "No users found" : "No users match the current filters"}
                     </TableCell>
                   </TableRow>
                 ) : (
-                  sortedUsers.map((user) => (
+                  processedUsers.map((user) => (
                     <TableRow key={user.id}>
                       <TableCell>
                         <Checkbox

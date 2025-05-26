@@ -2,12 +2,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { User } from "@/types/user";
-import { getUserById } from "@/services/userService";
+import { userService } from "@/services/userService";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { usePermissions } from "@/hooks/usePermissions";
-import { Edit } from "lucide-react";
+import { Edit, ArrowLeft, RefreshCw } from "lucide-react";
 
 const UserDetails = () => {
   const { userId } = useParams<{ userId: string }>();
@@ -30,7 +30,8 @@ const UserDetails = () => {
           return;
         }
 
-        const userData = await getUserById(userId);
+        setLoading(true);
+        const userData = await userService.getUserById(userId);
         
         if (!userData) {
           toast({
@@ -44,6 +45,7 @@ const UserDetails = () => {
         
         setUser(userData);
       } catch (error) {
+        console.error("Error fetching user:", error);
         toast({
           variant: "destructive",
           title: "Error",
@@ -93,7 +95,10 @@ const UserDetails = () => {
       <div className="container mx-auto py-8">
         <Card>
           <CardHeader>
-            <CardTitle>Loading</CardTitle>
+            <CardTitle className="flex items-center space-x-2">
+              <RefreshCw className="h-5 w-5 animate-spin" />
+              <span>Loading</span>
+            </CardTitle>
             <p className="text-gray-600">Loading user details...</p>
           </CardHeader>
         </Card>
@@ -192,6 +197,7 @@ const UserDetails = () => {
         </CardContent>
         <CardFooter className="flex justify-between">
           <Button variant="outline" onClick={handleGoBack}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
             Go Back
           </Button>
           {canViewUsers && (

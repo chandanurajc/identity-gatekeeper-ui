@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useAuth } from "@/context/AuthContext";
+import { RefreshCw } from "lucide-react";
 
 const EditUser = () => {
   const { userId } = useParams<{ userId: string }>();
@@ -31,6 +32,7 @@ const EditUser = () => {
           return;
         }
 
+        setLoading(true);
         const userData = await userService.getUserById(userId);
         
         if (!userData) {
@@ -45,6 +47,7 @@ const EditUser = () => {
         
         setUser(userData);
       } catch (error) {
+        console.error("Error fetching user:", error);
         toast({
           variant: "destructive",
           title: "Error",
@@ -90,7 +93,10 @@ const EditUser = () => {
       <div className="container mx-auto py-8">
         <Card>
           <CardHeader>
-            <CardTitle>Loading</CardTitle>
+            <CardTitle className="flex items-center space-x-2">
+              <RefreshCw className="h-5 w-5 animate-spin" />
+              <span>Loading</span>
+            </CardTitle>
             <CardDescription>
               Loading user data...
             </CardDescription>

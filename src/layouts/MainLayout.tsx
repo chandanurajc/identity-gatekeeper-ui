@@ -19,7 +19,7 @@ function MainLayoutInner({ children }: MainLayoutProps) {
 
   // Handle clicks outside sidebar to close it on mobile
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
       const target = event.target as Element;
       
       if (
@@ -30,15 +30,19 @@ function MainLayoutInner({ children }: MainLayoutProps) {
         !target?.closest('button[data-sidebar="trigger"]') &&
         !target?.closest('[data-sidebar="sidebar"]') &&
         !target?.closest('[data-sidebar="menu-button"]') &&
-        !target?.closest('[data-sidebar="menu-item"]')
+        !target?.closest('[data-sidebar="menu-item"]') &&
+        !target?.closest('[data-sidebar="group-label"]') &&
+        !target?.closest('[data-sidebar="content"]')
       ) {
         setOpen(false);
       }
     };
 
     if (isMobile && open) {
-      document.addEventListener('mousedown', handleClickOutside);
-      document.addEventListener('touchstart', handleClickOutside);
+      // Use passive listeners for better performance
+      document.addEventListener('mousedown', handleClickOutside, { passive: true });
+      document.addEventListener('touchstart', handleClickOutside, { passive: true });
+      
       return () => {
         document.removeEventListener('mousedown', handleClickOutside);
         document.removeEventListener('touchstart', handleClickOutside);
@@ -54,12 +58,12 @@ function MainLayoutInner({ children }: MainLayoutProps) {
       
       <SidebarInset className="flex flex-col flex-1">
         {/* Fixed Header */}
-        <div className="sticky top-0 z-50 bg-background">
+        <div className="sticky top-0 z-50 bg-background border-b">
           <AppHeader />
         </div>
 
-        {/* Main Content */}
-        <main className="flex-1 p-6">
+        {/* Main Content with error boundary */}
+        <main className="flex-1 p-6 overflow-auto">
           {children}
         </main>
       </SidebarInset>
