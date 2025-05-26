@@ -93,7 +93,7 @@ const RoleForm = () => {
       return;
     }
 
-    if (!user?.id) {
+    if (!user?.name) {
       toast({
         variant: "destructive",
         title: "Authentication Error",
@@ -111,11 +111,11 @@ const RoleForm = () => {
         organizationId: selectedOrganizationId || undefined,
       };
 
-      console.log("Using user ID for role operation:", user.id);
+      console.log("Using user name for role operation:", user.name);
       console.log("Organization ID being passed:", selectedOrganizationId || null);
 
       if (isEditing && roleId) {
-        await roleService.updateRole(roleId, roleData, user.id);
+        await roleService.updateRole(roleId, roleData, user.name);
         toast({
           title: "Role Updated",
           description: `The role "${roleName}" has been updated successfully.`,
@@ -123,7 +123,7 @@ const RoleForm = () => {
       } else {
         // Pass null instead of empty string for organization_id
         const orgId = selectedOrganizationId || null;
-        await roleService.createRole(roleData, user.id, orgId);
+        await roleService.createRole(roleData, user.name, orgId);
         toast({
           title: "Role Created",
           description: `The role "${roleName}" has been created successfully.`,

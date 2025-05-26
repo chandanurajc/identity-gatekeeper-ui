@@ -54,8 +54,8 @@ const OrganizationEdit = () => {
     }
 
     try {
-      // Use user ID instead of name for updated_by field
-      const updatedByValue = user?.id || "unknown";
+      // Use user name instead of ID for updated_by field
+      const updatedByValue = user?.name || "unknown";
       
       console.log("Using updatedBy value:", updatedByValue);
       
