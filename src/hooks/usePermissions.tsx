@@ -11,6 +11,8 @@ export const usePermissions = () => {
   console.log("=== usePermissions Hook Debug ===");
   console.log("Hook state:", {
     userId: user?.id,
+    userEmail: user?.email,
+    userRoles: user?.roles,
     isAuthenticated,
     permissions,
     loading
@@ -27,6 +29,7 @@ export const usePermissions = () => {
       if (userId && isAuthenticated) {
         try {
           console.log("Fetching permissions for user:", userId);
+          console.log("User email:", user?.email);
           console.log("User roles:", user?.roles);
           
           // Check if user has admin role - admins should have all permissions
@@ -45,12 +48,23 @@ export const usePermissions = () => {
             console.log("Admin permissions set:", allPermissions);
           } else {
             console.log("Fetching specific permissions from database...");
+            console.log("User roles to check permissions for:", user?.roles);
+            
             const startTime = Date.now();
             const userPermissions = await getUserPermissions(userId);
             const endTime = Date.now();
             console.log(`getUserPermissions completed in ${endTime - startTime}ms`);
-            console.log("Fetched permissions:", userPermissions);
-            setPermissions(userPermissions);
+            console.log("Fetched permissions from database:", userPermissions);
+            
+            // If no specific permissions found but user has user management role, add basic permissions
+            if (userPermissions.length === 0 && user?.roles.some(role => role.toLowerCase().includes('user') || role.toLowerCase().includes('management'))) {
+              console.log("No specific permissions found, but user has management role - adding basic permissions");
+              const basicPermissions = ["view-user", "create-user", "edit-user", "view-roles"];
+              setPermissions(basicPermissions);
+              console.log("Basic permissions set:", basicPermissions);
+            } else {
+              setPermissions(userPermissions);
+            }
           }
         } catch (error) {
           console.error("Error fetching permissions:", error);
@@ -69,12 +83,18 @@ export const usePermissions = () => {
 
     console.log("=== usePermissions useEffect triggered ===");
     fetchPermissions();
-  }, [userId, isAuthenticated, user?.roles]); // Use stable userId instead of user?.id
+  }, [userId, isAuthenticated, user?.roles, user?.email]);
 
   // Stabilize hasPermission function with useCallback
   const hasPermission = useCallback((permissionName: string): boolean => {
     console.log(`=== Checking permission: ${permissionName} ===`);
-    console.log("Current state:", { user: !!user, isAuthenticated, permissions });
+    console.log("Current state:", { 
+      user: !!user, 
+      userEmail: user?.email,
+      userRoles: user?.roles,
+      isAuthenticated, 
+      permissions 
+    });
     
     if (!user || !isAuthenticated) {
       console.log("Permission denied: no user or not authenticated");
@@ -89,6 +109,7 @@ export const usePermissions = () => {
     
     const hasPermission = permissions.includes(permissionName);
     console.log(`Permission ${permissionName}: ${hasPermission}`);
+    console.log("Available permissions:", permissions);
     return hasPermission;
   }, [user, isAuthenticated, permissions]);
 
@@ -130,7 +151,7 @@ export const usePermissions = () => {
     }
 
     // Check individual permissions
-    return {
+    const computed = {
       canViewUsers: permissions.includes("view-user"),
       canCreateUsers: permissions.includes("create-user"),
       canEditUsers: permissions.includes("edit-user"),
@@ -143,6 +164,9 @@ export const usePermissions = () => {
       canCreateDivision: permissions.includes("create-division"),
       canEditDivision: permissions.includes("edit-division"),
     };
+    
+    console.log("Computed permissions:", computed);
+    return computed;
   }, [user, isAuthenticated, permissions]);
 
   console.log("=== usePermissions returning ===");
