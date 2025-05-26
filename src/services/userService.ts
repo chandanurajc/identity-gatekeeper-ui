@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { User, UserFormData, PhoneNumber } from "@/types/user";
 
@@ -164,98 +163,155 @@ export const userService = {
   },
 
   async createUser(userData: UserFormData, createdByUserName: string, organizationId: string | null): Promise<User> {
+    console.log("=== STARTING USER CREATION PROCESS ===");
     console.log("Creating user with data:", userData);
     console.log("Organization ID:", organizationId);
     console.log("Created by:", createdByUserName);
     
-    // First create the auth user
-    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-      email: userData.email,
-      password: userData.password,
-      email_confirm: true,
-      user_metadata: {
+    let authUserId: string | null = null;
+    
+    try {
+      // Step 1: Create the auth user
+      console.log("Step 1: Creating auth user...");
+      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+        email: userData.email,
+        password: userData.password,
+        email_confirm: true,
+        user_metadata: {
+          first_name: userData.firstName,
+          last_name: userData.lastName
+        }
+      });
+
+      if (authError) {
+        console.error("Error creating auth user:", authError);
+        throw new Error(`Failed to create auth user: ${authError.message}`);
+      }
+
+      authUserId = authData.user.id;
+      console.log("✓ Auth user created successfully:", authUserId);
+
+      // Step 2: Wait for auth user to be fully committed
+      console.log("Step 2: Waiting for auth user to be committed...");
+      await new Promise(resolve => setTimeout(resolve, 2000)); // 2 second delay
+
+      // Step 3: Verify auth user exists before proceeding
+      console.log("Step 3: Verifying auth user exists...");
+      const { data: authUserCheck, error: authCheckError } = await supabase.auth.admin.getUserById(authUserId);
+      
+      if (authCheckError || !authUserCheck.user) {
+        console.error("Auth user verification failed:", authCheckError);
+        throw new Error("Auth user was not properly created");
+      }
+      
+      console.log("✓ Auth user verified:", authUserCheck.user.id);
+
+      // Step 4: Create profile
+      console.log("Step 4: Creating user profile...");
+      const profileData = {
+        id: authUserId,
         first_name: userData.firstName,
-        last_name: userData.lastName
+        last_name: userData.lastName,
+        username: userData.username,
+        designation: userData.designation,
+        organization_id: organizationId,
+        effective_from: userData.effectiveFrom?.toISOString(),
+        effective_to: userData.effectiveTo?.toISOString(),
+        created_by: createdByUserName,
+        updated_by: createdByUserName,
+      };
+
+      console.log("Profile data to insert:", profileData);
+
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .insert([profileData])
+        .select()
+        .single();
+
+      if (profileError) {
+        console.error("Error creating profile:", profileError);
+        // Clean up auth user if profile creation fails
+        await supabase.auth.admin.deleteUser(authUserId);
+        throw new Error(`Failed to create user profile: ${profileError.message}`);
       }
-    });
 
-    if (authError) {
-      console.error("Error creating auth user:", authError);
-      throw new Error(`Failed to create user: ${authError.message}`);
-    }
+      console.log("✓ Profile created successfully:", profile.id);
 
-    console.log("Auth user created:", authData.user.id);
+      // Step 5: Create phone number entry if provided
+      if (userData.phone && userData.phone.countryCode && userData.phone.number) {
+        console.log("Step 5: Creating phone number entry...");
+        const { error: phoneError } = await supabase
+          .from('phone_numbers')
+          .insert([{
+            profile_id: authUserId,
+            country_code: userData.phone.countryCode,
+            number: userData.phone.number
+          }]);
 
-    // Create profile
-    const profileData = {
-      id: authData.user.id,
-      first_name: userData.firstName,
-      last_name: userData.lastName,
-      username: userData.username,
-      designation: userData.designation,
-      organization_id: organizationId,
-      effective_from: userData.effectiveFrom?.toISOString(),
-      effective_to: userData.effectiveTo?.toISOString(),
-      created_by: createdByUserName,
-      updated_by: createdByUserName,
-    };
-
-    console.log("Creating profile with data:", profileData);
-
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .insert([profileData])
-      .select()
-      .single();
-
-    if (profileError) {
-      console.error("Error creating profile:", profileError);
-      await supabase.auth.admin.deleteUser(authData.user.id);
-      throw new Error(`Failed to create user profile: ${profileError.message}`);
-    }
-
-    console.log("Profile created:", profile);
-
-    // Create phone number entry if provided
-    if (userData.phone && userData.phone.countryCode && userData.phone.number) {
-      const { error: phoneError } = await supabase
-        .from('phone_numbers')
-        .insert([{
-          profile_id: authData.user.id,
-          country_code: userData.phone.countryCode,
-          number: userData.phone.number
-        }]);
-
-      if (phoneError) {
-        console.error("Error creating phone number:", phoneError);
+        if (phoneError) {
+          console.error("Error creating phone number:", phoneError);
+          // Don't fail the entire process for phone number issues
+        } else {
+          console.log("✓ Phone number created successfully");
+        }
       }
-    }
 
-    // Handle roles if provided - WAIT for profile creation to complete
-    if (userData.roles && userData.roles.length > 0) {
-      console.log("Assigning roles:", userData.roles);
-      // Add delay to ensure profile is fully created
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      await this.assignRolesToUser(authData.user.id, userData.roles, createdByUserName);
-    }
+      // Step 6: Handle roles if provided - with additional verification
+      if (userData.roles && userData.roles.length > 0) {
+        console.log("Step 6: Assigning roles...");
+        console.log("Roles to assign:", userData.roles);
+        
+        // Additional wait to ensure all database operations are committed
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        try {
+          await this.assignRolesToUser(authUserId, userData.roles, createdByUserName);
+          console.log("✓ Roles assigned successfully");
+        } catch (roleError) {
+          console.error("Error assigning roles (non-fatal):", roleError);
+          // Don't fail user creation if role assignment fails
+          // The user can be created and roles assigned later
+        }
+      }
 
-    return {
-      id: profile.id,
-      firstName: profile.first_name,
-      lastName: profile.last_name,
-      username: profile.username,
-      email: profile.username,
-      phone: userData.phone,
-      designation: profile.designation,
-      organizationId: profile.organization_id,
-      roles: userData.roles || [],
-      effectiveFrom: profile.effective_from ? new Date(profile.effective_from) : new Date(),
-      effectiveTo: profile.effective_to ? new Date(profile.effective_to) : undefined,
-      createdBy: profile.created_by,
-      createdOn: profile.created_on ? new Date(profile.created_on) : new Date(),
-      updatedBy: profile.updated_by,
-      updatedOn: profile.updated_on ? new Date(profile.updated_on) : undefined,
-    };
+      console.log("=== USER CREATION COMPLETED SUCCESSFULLY ===");
+
+      // Return the created user
+      return {
+        id: profile.id,
+        firstName: profile.first_name,
+        lastName: profile.last_name,
+        username: profile.username,
+        email: profile.username,
+        phone: userData.phone,
+        designation: profile.designation,
+        organizationId: profile.organization_id,
+        roles: userData.roles || [],
+        effectiveFrom: profile.effective_from ? new Date(profile.effective_from) : new Date(),
+        effectiveTo: profile.effective_to ? new Date(profile.effective_to) : undefined,
+        createdBy: profile.created_by,
+        createdOn: profile.created_on ? new Date(profile.created_on) : new Date(),
+        updatedBy: profile.updated_by,
+        updatedOn: profile.updated_on ? new Date(profile.updated_on) : undefined,
+      };
+
+    } catch (error) {
+      console.error("=== USER CREATION FAILED ===");
+      console.error("Error details:", error);
+      
+      // Clean up auth user if it was created
+      if (authUserId) {
+        console.log("Cleaning up auth user:", authUserId);
+        try {
+          await supabase.auth.admin.deleteUser(authUserId);
+        } catch (cleanupError) {
+          console.error("Error during cleanup:", cleanupError);
+        }
+      }
+      
+      throw error;
+    }
   },
 
   async updateUser(id: string, userData: UserFormData, updatedByUserName: string, organizationId?: string | null): Promise<User> {
@@ -375,7 +431,7 @@ export const userService = {
   },
 
   async assignRolesToUser(userId: string, roleNames: string[], assignedBy: string): Promise<void> {
-    console.log("=== assignRolesToUser called ===");
+    console.log("=== ASSIGN ROLES TO USER ===");
     console.log("User ID:", userId);
     console.log("Role names to assign:", roleNames);
     console.log("Assigned by:", assignedBy);
@@ -385,101 +441,135 @@ export const userService = {
       return;
     }
 
-    // First verify user exists in profiles table (which should match auth.users)
-    const { data: userProfile, error: userCheckError } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('id', userId)
-      .single();
-
-    if (userCheckError || !userProfile) {
-      console.error("User not found in profiles:", userCheckError);
-      throw new Error(`User not found: ${userCheckError?.message || 'User does not exist'}`);
-    }
-
-    console.log("User verified in profiles table:", userProfile);
-    
-    // Get ALL roles from database first
-    const { data: allRoles, error: allRolesError } = await supabase
-      .from('roles')
-      .select('id, name')
-      .order('name');
-
-    if (allRolesError) {
-      console.error("Error fetching all roles:", allRolesError);
-      throw new Error(`Failed to fetch roles: ${allRolesError.message}`);
-    }
-
-    console.log("All available roles in database:", allRoles);
-    
-    // Match roles by exact name (case-sensitive)
-    const matchedRoles = allRoles?.filter(role => 
-      roleNames.includes(role.name)
-    ) || [];
-
-    console.log("Exact matched roles:", matchedRoles);
-
-    if (matchedRoles.length === 0) {
-      console.error("No roles found for exact names:", roleNames);
-      console.log("Available role names:", allRoles?.map(r => r.name));
-      throw new Error(`No valid roles found for: ${roleNames.join(', ')}`);
-    }
-
-    if (matchedRoles.length !== roleNames.length) {
-      const foundRoleNames = matchedRoles.map(r => r.name);
-      const missingRoles = roleNames.filter(name => !foundRoleNames.includes(name));
-      console.warn("Some roles not found (exact match):", missingRoles);
-      console.log("Available roles:", allRoles?.map(r => r.name));
-    }
-
-    // Delete existing roles for this user first to avoid conflicts
-    console.log("Deleting existing user roles...");
-    const { error: deleteError } = await supabase
-      .from('user_roles')
-      .delete()
-      .eq('user_id', userId);
-
-    if (deleteError) {
-      console.error("Error deleting existing roles:", deleteError);
-      // Continue anyway - they might not have had roles before
-    }
-
-    // Create user_roles entries
-    const userRoleData = matchedRoles.map(role => ({
-      user_id: userId,
-      role_id: role.id,
-      assigned_by: assignedBy,
-    }));
-
-    console.log("Inserting user roles data:", userRoleData);
-
-    const { data: insertedRoles, error: userRolesError } = await supabase
-      .from('user_roles')
-      .insert(userRoleData)
-      .select();
-
-    if (userRolesError) {
-      console.error("Error assigning roles:", userRolesError);
-      throw new Error(`Failed to assign roles: ${userRolesError.message}`);
-    }
-
-    console.log("Roles assigned successfully:", insertedRoles);
-    
-    // Verify roles were actually inserted
-    const { data: verifyRoles, error: verifyError } = await supabase
-      .from('user_roles')
-      .select(`
-        role_id,
-        roles (
-          name
-        )
-      `)
-      .eq('user_id', userId);
+    try {
+      // Step 1: Verify user exists in auth.users by checking if we can get their data
+      console.log("Step 1: Verifying user exists in auth system...");
+      const { data: authUser, error: authCheckError } = await supabase.auth.admin.getUserById(userId);
       
-    if (verifyError) {
-      console.error("Error verifying role assignment:", verifyError);
-    } else {
-      console.log("Verification - User now has roles:", verifyRoles);
+      if (authCheckError || !authUser.user) {
+        console.error("Auth user verification failed:", authCheckError);
+        throw new Error(`Auth user not found: ${authCheckError?.message || 'User does not exist in auth system'}`);
+      }
+      
+      console.log("✓ Auth user verified:", authUser.user.id);
+
+      // Step 2: Verify user exists in profiles table
+      console.log("Step 2: Verifying user exists in profiles table...");
+      const { data: userProfile, error: profileCheckError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', userId)
+        .single();
+
+      if (profileCheckError || !userProfile) {
+        console.error("User profile verification failed:", profileCheckError);
+        throw new Error(`User profile not found: ${profileCheckError?.message || 'User profile does not exist'}`);
+      }
+
+      console.log("✓ User profile verified:", userProfile.id);
+      
+      // Step 3: Get ALL roles from database
+      console.log("Step 3: Fetching available roles...");
+      const { data: allRoles, error: allRolesError } = await supabase
+        .from('roles')
+        .select('id, name')
+        .order('name');
+
+      if (allRolesError) {
+        console.error("Error fetching roles:", allRolesError);
+        throw new Error(`Failed to fetch roles: ${allRolesError.message}`);
+      }
+
+      console.log("Available roles in database:", allRoles?.map(r => r.name));
+      
+      // Step 4: Match roles by exact name
+      const matchedRoles = allRoles?.filter(role => 
+        roleNames.includes(role.name)
+      ) || [];
+
+      console.log("Matched roles for assignment:", matchedRoles);
+
+      if (matchedRoles.length === 0) {
+        console.error("No roles found for exact names:", roleNames);
+        console.log("Available role names:", allRoles?.map(r => r.name));
+        throw new Error(`No valid roles found for: ${roleNames.join(', ')}`);
+      }
+
+      if (matchedRoles.length !== roleNames.length) {
+        const foundRoleNames = matchedRoles.map(r => r.name);
+        const missingRoles = roleNames.filter(name => !foundRoleNames.includes(name));
+        console.warn("Some roles not found:", missingRoles);
+        console.log("Available roles:", allRoles?.map(r => r.name));
+      }
+
+      // Step 5: Delete existing roles to avoid conflicts
+      console.log("Step 5: Cleaning up existing user roles...");
+      const { error: deleteError } = await supabase
+        .from('user_roles')
+        .delete()
+        .eq('user_id', userId);
+
+      if (deleteError) {
+        console.error("Error deleting existing roles:", deleteError);
+        // Continue anyway - user might not have had roles before
+      } else {
+        console.log("✓ Existing roles cleaned up");
+      }
+
+      // Step 6: Create new user_roles entries
+      console.log("Step 6: Creating new user role assignments...");
+      const userRoleData = matchedRoles.map(role => ({
+        user_id: userId,
+        role_id: role.id,
+        assigned_by: assignedBy,
+      }));
+
+      console.log("User role data to insert:", userRoleData);
+
+      const { data: insertedRoles, error: userRolesError } = await supabase
+        .from('user_roles')
+        .insert(userRoleData)
+        .select(`
+          id,
+          user_id,
+          role_id,
+          roles (
+            name
+          )
+        `);
+
+      if (userRolesError) {
+        console.error("Error inserting user roles:", userRolesError);
+        throw new Error(`Failed to assign roles: ${userRolesError.message}`);
+      }
+
+      console.log("✓ Roles assigned successfully:", insertedRoles);
+      
+      // Step 7: Verify assignment worked
+      console.log("Step 7: Verifying role assignment...");
+      const { data: verifyRoles, error: verifyError } = await supabase
+        .from('user_roles')
+        .select(`
+          role_id,
+          roles (
+            name
+          )
+        `)
+        .eq('user_id', userId);
+        
+      if (verifyError) {
+        console.error("Error verifying role assignment:", verifyError);
+      } else {
+        const assignedRoleNames = verifyRoles?.map(ur => ur.roles?.name).filter(Boolean) || [];
+        console.log("✓ Final verification - User now has roles:", assignedRoleNames);
+      }
+
+      console.log("=== ROLE ASSIGNMENT COMPLETED ===");
+
+    } catch (error) {
+      console.error("=== ROLE ASSIGNMENT FAILED ===");
+      console.error("Error details:", error);
+      throw error;
     }
   },
 
