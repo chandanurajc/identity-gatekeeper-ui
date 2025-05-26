@@ -39,6 +39,31 @@ const parseContacts = (data: Json | null): Contact[] => {
   }) as unknown as Contact[];
 };
 
+// Helper function to get current user's display name
+const getCurrentUserDisplayName = async (): Promise<string> => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return "System";
+
+    // Try to get user profile information
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('first_name, last_name, username')
+      .eq('id', user.id)
+      .single();
+
+    if (profile) {
+      const fullName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim();
+      return fullName || profile.username || user.email || "Unknown User";
+    }
+
+    return user.email || "Unknown User";
+  } catch (error) {
+    console.error("Error getting current user display name:", error);
+    return "System";
+  }
+};
+
 export const organizationService = {
   getAllOrganizations: async (): Promise<Organization[]> => {
     try {
@@ -224,6 +249,9 @@ export const organizationService = {
 
       console.log("OrganizationService: Validation passed, preparing insert...");
       
+      // Get proper display name for created_by
+      const displayName = await getCurrentUserDisplayName();
+      
       // Prepare insert data - store username instead of UUID for created_by
       const insertData = {
         name: organization.name.trim(),
@@ -236,7 +264,7 @@ export const organizationService = {
         organization_references: organization.references && organization.references.length > 0 
           ? JSON.parse(JSON.stringify(organization.references)) as Json 
           : null,
-        created_by: createdBy, // Store username directly instead of UUID
+        created_by: displayName, // Store display name instead of UUID
         address: null
       };
 
@@ -299,10 +327,13 @@ export const organizationService = {
     }
   },
 
-  updateOrganization: async (id: string, organizationData: Partial<OrganizationFormData>, updatedBy: string): Promise<Organization | undefined> => {
+  updateOrganization: async (id: string, organizationData: Partial<OrganizationFormData>, updatedBy?: string): Promise<Organization | undefined> => {
     try {
+      // Get proper display name for updated_by if not provided
+      const displayName = updatedBy || await getCurrentUserDisplayName();
+      
       const updateData: any = {
-        updated_by: updatedBy, // Store username directly instead of UUID
+        updated_by: displayName, // Store display name instead of UUID
         updated_on: new Date().toISOString()
       };
 
@@ -353,7 +384,7 @@ export const organizationService = {
       };
     } catch (error) {
       console.error("OrganizationService: Error in updateOrganization:", error);
-      return undefined;
+      throw error;
     }
   },
 

@@ -55,7 +55,7 @@ const OrganizationEdit = () => {
     }
 
     try {
-      // Use username/email as updated_by instead of user ID
+      // Get user profile to get the proper name for updated_by
       const updatedByValue = user?.name || user?.email || "Unknown User";
       
       await organizationService.updateOrganization(
@@ -70,6 +70,7 @@ const OrganizationEdit = () => {
       });
       navigate("/admin/organizations");
     } catch (error) {
+      console.error("Error updating organization:", error);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to update organization",

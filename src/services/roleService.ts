@@ -1,5 +1,31 @@
+
 import { Permission, Role } from "@/types/role";
 import { supabase } from "@/integrations/supabase/client";
+
+// Helper function to get current user's display name
+const getCurrentUserDisplayName = async (): Promise<string> => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return "System";
+
+    // Try to get user profile information
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('first_name, last_name, username')
+      .eq('id', user.id)
+      .single();
+
+    if (profile) {
+      const fullName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim();
+      return fullName || profile.username || user.email || "Unknown User";
+    }
+
+    return user.email || "Unknown User";
+  } catch (error) {
+    console.error("Error getting current user display name:", error);
+    return "System";
+  }
+};
 
 export const roleService = {
   getAllRoles: async (): Promise<Role[]> => {
@@ -107,16 +133,8 @@ export const roleService = {
         throw new Error("No authenticated user found");
       }
 
-      // Get user profile to get the name
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('first_name, last_name, username')
-        .eq('id', user.id)
-        .single();
-
-      const createdByValue = profile 
-        ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || profile.username || user.email
-        : user.email || "Unknown User";
+      // Get proper display name for created_by
+      const createdByValue = await getCurrentUserDisplayName();
       
       console.log("Created by value:", createdByValue);
 
@@ -194,16 +212,8 @@ export const roleService = {
         throw new Error("No authenticated user found");
       }
 
-      // Get user profile to get the name
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('first_name, last_name, username')
-        .eq('id', user.id)
-        .single();
-
-      const updatedByValue = profile 
-        ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || profile.username || user.email
-        : user.email || "Unknown User";
+      // Get proper display name for updated_by
+      const updatedByValue = await getCurrentUserDisplayName();
 
       // Update the role
       const { data: updatedRole, error: roleError } = await supabase
