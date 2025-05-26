@@ -35,48 +35,11 @@ export const useRolePermissions = () => {
             console.log("All permissions fetched for admin:", allPermissions);
             setPermissions(allPermissions);
           } else {
-            console.log("User is not admin, checking specific role permissions");
-            console.log("User roles to check:", user.roles);
-            
-            // For non-admin users, get all permissions for all their roles
-            let userPermissions: Permission[] = [];
-            
-            for (const roleName of user.roles) {
-              console.log(`Checking permissions for role: ${roleName}`);
-              try {
-                // Check if the role name indicates user management permissions
-                if (roleName.toLowerCase().includes('user') || roleName.toLowerCase().includes('management')) {
-                  console.log("Role is related to user management, adding both user and role permissions");
-                  const allPerms = await roleService.getAllPermissions();
-                  console.log("All available permissions:", allPerms);
-                  
-                  // Add both user and role management permissions
-                  const managementPerms = allPerms.filter(p => 
-                    // User permissions
-                    p.component.toLowerCase().includes('user') || 
-                    p.name.toLowerCase().includes('user') ||
-                    // Role permissions
-                    p.component.toLowerCase().includes('role') || 
-                    p.name.includes('view_roles') ||
-                    p.name.includes('create_role') ||
-                    p.name.includes('edit_roles') ||
-                    p.name === 'view_permissions'
-                  );
-                  console.log("Management permissions found:", managementPerms);
-                  userPermissions = [...userPermissions, ...managementPerms];
-                }
-              } catch (error) {
-                console.error(`Error fetching permissions for role ${roleName}:`, error);
-              }
-            }
-            
-            // Remove duplicates
-            userPermissions = userPermissions.filter((permission, index, self) => 
-              index === self.findIndex(p => p.id === permission.id)
-            );
-            
-            console.log("Final user permissions:", userPermissions);
-            setPermissions(userPermissions);
+            console.log("User is not admin, they should not have role permissions unless specifically assigned");
+            // For non-admin users, they should not have role permissions unless specifically assigned
+            // This ensures that users like 'usermanager@admn.com' with 'User Management' role
+            // only get the permissions that are actually assigned to their role in the database
+            setPermissions([]);
           }
         } catch (error) {
           console.error("Error fetching permissions:", error);
