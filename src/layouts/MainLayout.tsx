@@ -20,26 +20,45 @@ function MainLayoutInner({ children }: MainLayoutProps) {
   // Handle clicks outside sidebar to close it on mobile
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      console.log('Click detected:', {
+        isMobile,
+        open,
+        target: event.target,
+        targetElement: (event.target as Element)?.tagName,
+        targetClasses: (event.target as Element)?.className
+      });
+
       // Only handle on mobile when sidebar is open
-      if (!isMobile || !open) return;
+      if (!isMobile || !open) {
+        console.log('Not handling click - not mobile or sidebar not open');
+        return;
+      }
 
       const target = event.target as Element;
       
-      // Check if click is on sidebar trigger button
-      if (target?.closest('[data-sidebar="trigger"]')) {
-        return; // Let the trigger handle it
+      // Check if click is on sidebar trigger button or its children
+      if (target?.closest('[data-sidebar="trigger"]') || 
+          target?.closest('button[data-sidebar="trigger"]')) {
+        console.log('Click on sidebar trigger, not closing');
+        return;
       }
 
-      // Check if click is inside the sidebar content
-      if (target?.closest('[data-sidebar="sidebar"]')) {
-        return; // Click is inside sidebar, don't close
+      // Check if click is inside the sidebar content or sheet
+      if (target?.closest('[data-sidebar="sidebar"]') || 
+          target?.closest('.sidebar') ||
+          target?.closest('[data-mobile="true"]')) {
+        console.log('Click inside sidebar, not closing');
+        return;
       }
 
-      // Check if click is inside any sidebar-related modal or dropdown
+      // Check if click is inside any modal, dropdown, or overlay
       if (target?.closest('[data-radix-popper-content-wrapper]') || 
           target?.closest('[role="dialog"]') || 
-          target?.closest('[role="menu"]')) {
-        return; // Click is in a modal/dropdown, don't close
+          target?.closest('[role="menu"]') ||
+          target?.closest('.sheet-content') ||
+          target?.closest('[data-state="open"]')) {
+        console.log('Click in modal/dropdown, not closing');
+        return;
       }
 
       // If we get here, the click is outside the sidebar
@@ -47,12 +66,14 @@ function MainLayoutInner({ children }: MainLayoutProps) {
       setOpen(false);
     };
 
-    if (isMobile && open) {
-      // Add event listener to document
-      document.addEventListener('mousedown', handleClickOutside, true);
+    if (isMobile) {
+      console.log('Adding click listener for mobile sidebar');
+      // Use capture phase and add to document body
+      document.body.addEventListener('click', handleClickOutside, true);
       
       return () => {
-        document.removeEventListener('mousedown', handleClickOutside, true);
+        console.log('Removing click listener for mobile sidebar');
+        document.body.removeEventListener('click', handleClickOutside, true);
       };
     }
   }, [open, setOpen, isMobile]);
