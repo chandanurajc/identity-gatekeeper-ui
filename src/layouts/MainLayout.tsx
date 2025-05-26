@@ -14,22 +14,21 @@ interface MainLayoutProps {
 
 // Inner Layout Component that consumes sidebar context
 function MainLayoutInner({ children }: MainLayoutProps) {
-  const { open, setOpen, isMobile } = useSidebar();
-  const sidebarRef = useRef<HTMLDivElement>(null);
+  const { open, setOpen, isMobile, openMobile, setOpenMobile } = useSidebar();
 
   // Handle clicks outside sidebar to close it on mobile
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       console.log('Click detected:', {
         isMobile,
-        open,
+        openMobile,
         target: event.target,
         targetElement: (event.target as Element)?.tagName,
         targetClasses: (event.target as Element)?.className
       });
 
       // Only handle on mobile when sidebar is open
-      if (!isMobile || !open) {
+      if (!isMobile || !openMobile) {
         console.log('Not handling click - not mobile or sidebar not open');
         return;
       }
@@ -46,7 +45,8 @@ function MainLayoutInner({ children }: MainLayoutProps) {
       // Check if click is inside the sidebar content or sheet
       if (target?.closest('[data-sidebar="sidebar"]') || 
           target?.closest('.sidebar') ||
-          target?.closest('[data-mobile="true"]')) {
+          target?.closest('[data-mobile="true"]') ||
+          target?.closest('.sheet-content')) {
         console.log('Click inside sidebar, not closing');
         return;
       }
@@ -55,7 +55,6 @@ function MainLayoutInner({ children }: MainLayoutProps) {
       if (target?.closest('[data-radix-popper-content-wrapper]') || 
           target?.closest('[role="dialog"]') || 
           target?.closest('[role="menu"]') ||
-          target?.closest('.sheet-content') ||
           target?.closest('[data-state="open"]')) {
         console.log('Click in modal/dropdown, not closing');
         return;
@@ -63,26 +62,24 @@ function MainLayoutInner({ children }: MainLayoutProps) {
 
       // If we get here, the click is outside the sidebar
       console.log('Click outside sidebar detected, closing sidebar');
-      setOpen(false);
+      setOpenMobile(false);
     };
 
     if (isMobile) {
       console.log('Adding click listener for mobile sidebar');
-      // Use capture phase and add to document body
-      document.body.addEventListener('click', handleClickOutside, true);
+      // Use capture phase to catch events before they bubble
+      document.addEventListener('mousedown', handleClickOutside, true);
       
       return () => {
         console.log('Removing click listener for mobile sidebar');
-        document.body.removeEventListener('click', handleClickOutside, true);
+        document.removeEventListener('mousedown', handleClickOutside, true);
       };
     }
-  }, [open, setOpen, isMobile]);
+  }, [openMobile, setOpenMobile, isMobile]);
 
   return (
     <div className="flex min-h-screen w-full">
-      <div ref={sidebarRef}>
-        <AppSidebar />
-      </div>
+      <AppSidebar />
       
       <SidebarInset className="flex flex-col flex-1">
         {/* Fixed Header */}
