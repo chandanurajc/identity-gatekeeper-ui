@@ -33,6 +33,7 @@ const EditUser = () => {
         }
 
         setLoading(true);
+        console.log("Fetching user data for ID:", userId);
         const userData = await userService.getUserById(userId);
         
         if (!userData) {
@@ -45,6 +46,7 @@ const EditUser = () => {
           return;
         }
         
+        console.log("User data fetched:", userData);
         setUser(userData);
       } catch (error) {
         console.error("Error fetching user:", error);
@@ -66,15 +68,31 @@ const EditUser = () => {
     if (!userId) return;
     
     try {
+      console.log("=== Starting user update process ===");
+      console.log("User ID:", userId);
+      console.log("Form data received:", userData);
+      console.log("Current user organization:", currentUser?.organizationId);
+      
       // Use user name instead of ID for updated_by field
       const updatedByValue = currentUser?.name || "unknown";
+      console.log("Updated by value:", updatedByValue);
       
-      console.log("Using updatedBy value:", updatedByValue);
+      // Update user with organization context
+      await userService.updateUser(userId, userData, updatedByValue, currentUser?.organizationId);
       
-      await userService.updateUser(userId, userData, updatedByValue);
+      toast({
+        title: "User updated successfully",
+        description: "The user has been updated successfully.",
+      });
+      
+      navigate("/admin/users");
     } catch (error) {
       console.error("Error updating user:", error);
-      throw error;
+      toast({
+        variant: "destructive",
+        title: "Failed to update user",
+        description: error instanceof Error ? error.message : "An unknown error occurred",
+      });
     }
   };
 
@@ -135,10 +153,12 @@ const EditUser = () => {
     phone: user.phone,
     designation: user.designation,
     organizationId: user.organizationId || '',
-    roles: user.roles,
+    roles: user.roles || [],
     effectiveFrom: user.effectiveFrom,
     effectiveTo: user.effectiveTo,
   };
+
+  console.log("Passing form data to UserForm:", userFormData);
 
   return (
     <div className="container mx-auto py-8">

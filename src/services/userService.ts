@@ -1,265 +1,432 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { User, UserFormData, PhoneNumber } from "@/types/user";
+import { User, UserFormData } from "@/types/user";
 
 export const userService = {
   async getUsers(): Promise<User[]> {
     console.log("Fetching users...");
     
-    try {
-      // First fetch users without organization join
-      const { data: usersData, error: usersError } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_on', { ascending: false });
+    const { data: profiles, error } = await supabase
+      .from('profiles')
+      .select(`
+        *,
+        organizations (
+          name
+        )
+      `)
+      .order('created_on', { ascending: false });
 
-      if (usersError) {
-        console.error("Error fetching users:", usersError);
-        throw new Error(`Failed to fetch users: ${usersError.message}`);
-      }
-
-      // Then fetch organizations separately
-      const { data: orgsData, error: orgsError } = await supabase
-        .from('organizations')
-        .select('id, name');
-
-      if (orgsError) {
-        console.error("Error fetching organizations:", orgsError);
-        // Don't throw error here, just log it and continue without org names
-        console.warn("Organizations data not available");
-      }
-
-      // Create a map of organization id to name for quick lookup
-      const orgMap = new Map();
-      if (orgsData) {
-        orgsData.forEach(org => orgMap.set(org.id, org.name));
-      }
-
-      console.log("Users fetched successfully:", usersData);
-      
-      // Transform database data to match User interface
-      return (usersData || []).map(user => ({
-        id: user.id,
-        username: user.username,
-        email: user.username, // Using username as email since they're the same
-        firstName: user.first_name,
-        lastName: user.last_name,
-        phone: user.phone ? user.phone as unknown as PhoneNumber : undefined,
-        designation: user.designation,
-        roles: [], // Will be populated by separate query if needed
-        status: user.status,
-        organizationId: user.organization_id,
-        organizationName: user.organization_id ? orgMap.get(user.organization_id) : undefined,
-        effectiveFrom: new Date(user.effective_from),
-        effectiveTo: user.effective_to ? new Date(user.effective_to) : undefined,
-        createdBy: user.created_by,
-        createdOn: new Date(user.created_on),
-        updatedBy: user.updated_by,
-        updatedOn: user.updated_on ? new Date(user.updated_on) : undefined,
-      }));
-    } catch (error) {
-      console.error("Error in getUsers:", error);
-      throw error;
+    if (error) {
+      console.error("Error fetching users:", error);
+      throw new Error(`Failed to fetch users: ${error.message}`);
     }
-  },
 
-  // Alias for backward compatibility
-  async getAllUsers(): Promise<User[]> {
-    return this.getUsers();
+    console.log("Raw profiles data:", profiles);
+
+    // Transform profiles to users with roles
+    const usersWithRoles = await Promise.all(
+      (profiles || []).map(async (profile) => {
+        console.log("Processing profile:", profile.id);
+        
+        // Get user roles
+        const { data: userRoles, error: rolesError } = await supabase
+          .from('user_roles')
+          .select(`
+            roles (
+              name
+            )
+          `)
+          .eq('user_id', profile.id);
+
+        if (rolesError) {
+          console.error("Error fetching roles for user:", profile.id, rolesError);
+        }
+
+        const roles = userRoles?.map((ur: any) => ur.roles?.name).filter(Boolean) || [];
+        console.log("Roles for user", profile.id, ":", roles);
+
+        return {
+          id: profile.id,
+          firstName: profile.first_name,
+          lastName: profile.last_name,
+          username: profile.username,
+          email: profile.username, // Using username as email
+          phone: profile.phone,
+          designation: profile.designation,
+          organizationId: profile.organization_id,
+          organizationName: profile.organizations?.name,
+          roles: roles,
+          effectiveFrom: profile.effective_from ? new Date(profile.effective_from) : undefined,
+          effectiveTo: profile.effective_to ? new Date(profile.effective_to) : undefined,
+          createdBy: profile.created_by,
+          createdOn: profile.created_on ? new Date(profile.created_on) : undefined,
+          updatedBy: profile.updated_by,
+          updatedOn: profile.updated_on ? new Date(profile.updated_on) : undefined,
+        };
+      })
+    );
+
+    console.log("Users with roles:", usersWithRoles);
+    return usersWithRoles;
   },
 
   async getUserById(id: string): Promise<User | null> {
     console.log("Fetching user by ID:", id);
     
-    try {
-      // Fetch user without organization join
-      const { data: userData, error: userError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', id)
-        .single();
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select(`
+        *,
+        organizations (
+          name
+        )
+      `)
+      .eq('id', id)
+      .single();
 
-      if (userError) {
-        console.error("Error fetching user:", userError);
-        if (userError.code === 'PGRST116') {
-          return null;
-        }
-        throw new Error(`Failed to fetch user: ${userError.message}`);
+    if (error) {
+      console.error("Error fetching user:", error);
+      if (error.code === 'PGRST116') {
+        return null; // User not found
       }
-
-      // Fetch organization name if user has organization_id
-      let organizationName = undefined;
-      if (userData.organization_id) {
-        const { data: orgData, error: orgError } = await supabase
-          .from('organizations')
-          .select('name')
-          .eq('id', userData.organization_id)
-          .single();
-        
-        if (!orgError && orgData) {
-          organizationName = orgData.name;
-        }
-      }
-
-      console.log("User fetched successfully:", userData);
-      
-      // Transform database data to match User interface
-      return {
-        id: userData.id,
-        username: userData.username,
-        email: userData.username, // Using username as email since they're the same
-        firstName: userData.first_name,
-        lastName: userData.last_name,
-        phone: userData.phone ? userData.phone as unknown as PhoneNumber : undefined,
-        designation: userData.designation,
-        roles: [], // Will be populated by separate query if needed
-        status: userData.status,
-        organizationId: userData.organization_id,
-        organizationName: organizationName,
-        effectiveFrom: new Date(userData.effective_from),
-        effectiveTo: userData.effective_to ? new Date(userData.effective_to) : undefined,
-        createdBy: userData.created_by,
-        createdOn: new Date(userData.created_on),
-        updatedBy: userData.updated_by,
-        updatedOn: userData.updated_on ? new Date(userData.updated_on) : undefined,
-      };
-    } catch (error) {
-      console.error("Error in getUserById:", error);
-      throw error;
+      throw new Error(`Failed to fetch user: ${error.message}`);
     }
+
+    console.log("Profile data:", profile);
+
+    // Get user roles
+    const { data: userRoles, error: rolesError } = await supabase
+      .from('user_roles')
+      .select(`
+        roles (
+          name
+        )
+      `)
+      .eq('user_id', profile.id);
+
+    if (rolesError) {
+      console.error("Error fetching roles for user:", rolesError);
+    }
+
+    const roles = userRoles?.map((ur: any) => ur.roles?.name).filter(Boolean) || [];
+    console.log("User roles:", roles);
+
+    return {
+      id: profile.id,
+      firstName: profile.first_name,
+      lastName: profile.last_name,
+      username: profile.username,
+      email: profile.username,
+      phone: profile.phone,
+      designation: profile.designation,
+      organizationId: profile.organization_id,
+      organizationName: profile.organizations?.name,
+      roles: roles,
+      effectiveFrom: profile.effective_from ? new Date(profile.effective_from) : undefined,
+      effectiveTo: profile.effective_to ? new Date(profile.effective_to) : undefined,
+      createdBy: profile.created_by,
+      createdOn: profile.created_on ? new Date(profile.created_on) : undefined,
+      updatedBy: profile.updated_by,
+      updatedOn: profile.updated_on ? new Date(profile.updated_on) : undefined,
+    };
   },
 
-  async createUser(userData: UserFormData, createdByUserName: string): Promise<User> {
+  async createUser(userData: UserFormData, createdByUserName: string, organizationId: string | null): Promise<User> {
     console.log("Creating user with data:", userData);
-    console.log("Created by user name:", createdByUserName);
+    console.log("Organization ID:", organizationId);
+    console.log("Created by:", createdByUserName);
     
-    // Generate a UUID for the new user
-    const userId = crypto.randomUUID();
-    
-    const newUser = {
-      id: userId,
-      username: userData.username,
+    // First create the auth user
+    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      email: userData.email,
+      password: userData.password,
+      email_confirm: true,
+      user_metadata: {
+        first_name: userData.firstName,
+        last_name: userData.lastName
+      }
+    });
+
+    if (authError) {
+      console.error("Error creating auth user:", authError);
+      throw new Error(`Failed to create user: ${authError.message}`);
+    }
+
+    console.log("Auth user created:", authData.user.id);
+
+    // Create profile
+    const profileData = {
+      id: authData.user.id,
       first_name: userData.firstName,
       last_name: userData.lastName,
-      phone: userData.phone as any,
+      username: userData.username,
+      phone: userData.phone,
       designation: userData.designation,
-      organization_id: userData.organizationId,
-      effective_from: userData.effectiveFrom.toISOString(),
-      effective_to: userData.effectiveTo?.toISOString() || null,
+      organization_id: organizationId,
+      effective_from: userData.effectiveFrom?.toISOString(),
+      effective_to: userData.effectiveTo?.toISOString(),
       created_by: createdByUserName,
       updated_by: createdByUserName,
     };
 
-    const { data, error } = await supabase
+    console.log("Creating profile with data:", profileData);
+
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .insert(newUser)
+      .insert([profileData])
       .select()
       .single();
 
-    if (error) {
-      console.error("Error creating user:", error);
-      throw new Error(`Failed to create user: ${error.message}`);
+    if (profileError) {
+      console.error("Error creating profile:", profileError);
+      // Clean up auth user if profile creation fails
+      await supabase.auth.admin.deleteUser(authData.user.id);
+      throw new Error(`Failed to create user profile: ${profileError.message}`);
     }
 
-    console.log("User created successfully:", data);
-    
-    // Transform response back to User interface
+    console.log("Profile created:", profile);
+
+    // Handle roles if provided
+    if (userData.roles && userData.roles.length > 0) {
+      console.log("Assigning roles:", userData.roles);
+      await this.assignRolesToUser(authData.user.id, userData.roles, createdByUserName);
+    }
+
     return {
-      id: data.id,
-      username: data.username,
-      email: data.username,
-      firstName: data.first_name,
-      lastName: data.last_name,
-      phone: data.phone ? data.phone as unknown as PhoneNumber : undefined,
-      designation: data.designation,
-      roles: userData.roles,
-      status: data.status,
-      organizationId: data.organization_id,
-      effectiveFrom: new Date(data.effective_from),
-      effectiveTo: data.effective_to ? new Date(data.effective_to) : undefined,
-      createdBy: data.created_by,
-      createdOn: new Date(data.created_on),
-      updatedBy: data.updated_by,
-      updatedOn: data.updated_on ? new Date(data.updated_on) : undefined,
+      id: profile.id,
+      firstName: profile.first_name,
+      lastName: profile.last_name,
+      username: profile.username,
+      email: profile.username,
+      phone: profile.phone,
+      designation: profile.designation,
+      organizationId: profile.organization_id,
+      roles: userData.roles || [],
+      effectiveFrom: profile.effective_from ? new Date(profile.effective_from) : undefined,
+      effectiveTo: profile.effective_to ? new Date(profile.effective_to) : undefined,
+      createdBy: profile.created_by,
+      createdOn: profile.created_on ? new Date(profile.created_on) : undefined,
+      updatedBy: profile.updated_by,
+      updatedOn: profile.updated_on ? new Date(profile.updated_on) : undefined,
     };
   },
 
-  async updateUser(id: string, userData: UserFormData, updatedByUserName: string): Promise<User> {
-    console.log("Updating user:", id, "with data:", userData);
-    console.log("Updated by user name:", updatedByUserName);
+  async updateUser(id: string, userData: UserFormData, updatedByUserName: string, organizationId?: string | null): Promise<User> {
+    console.log("=== updateUser called ===");
+    console.log("User ID:", id);
+    console.log("User data:", userData);
+    console.log("Updated by:", updatedByUserName);
+    console.log("Organization ID:", organizationId);
     
-    const updateData = {
-      username: userData.username,
+    // Update profile data
+    const profileUpdateData = {
       first_name: userData.firstName,
       last_name: userData.lastName,
-      phone: userData.phone as any,
+      username: userData.username,
+      phone: userData.phone,
       designation: userData.designation,
-      organization_id: userData.organizationId,
-      effective_from: userData.effectiveFrom.toISOString(),
-      effective_to: userData.effectiveTo?.toISOString() || null,
+      organization_id: organizationId || userData.organizationId,
+      effective_from: userData.effectiveFrom?.toISOString(),
+      effective_to: userData.effectiveTo?.toISOString(),
       updated_by: updatedByUserName,
       updated_on: new Date().toISOString(),
     };
 
-    const { data, error } = await supabase
+    console.log("Profile update data:", profileUpdateData);
+
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .update(updateData)
+      .update(profileUpdateData)
       .eq('id', id)
       .select()
       .single();
 
-    if (error) {
-      console.error("Error updating user:", error);
-      throw new Error(`Failed to update user: ${error.message}`);
+    if (profileError) {
+      console.error("Error updating profile:", profileError);
+      throw new Error(`Failed to update user profile: ${profileError.message}`);
     }
 
-    console.log("User updated successfully:", data);
+    console.log("Profile updated successfully:", profile);
+
+    // Handle roles update if provided
+    if (userData.roles) {
+      console.log("Updating user roles to:", userData.roles);
+      await this.updateUserRoles(id, userData.roles, updatedByUserName);
+    }
+
+    // Handle password update if provided
+    if (userData.password && userData.password.trim() !== '') {
+      console.log("Updating user password");
+      const { error: passwordError } = await supabase.auth.admin.updateUserById(id, {
+        password: userData.password
+      });
+
+      if (passwordError) {
+        console.error("Error updating password:", passwordError);
+        throw new Error(`Failed to update password: ${passwordError.message}`);
+      }
+      console.log("Password updated successfully");
+    }
+
+    // Fetch updated user with roles
+    const updatedUser = await this.getUserById(id);
+    if (!updatedUser) {
+      throw new Error("Failed to fetch updated user data");
+    }
+
+    console.log("User update completed successfully:", updatedUser);
+    return updatedUser;
+  },
+
+  async assignRolesToUser(userId: string, roleNames: string[], assignedBy: string): Promise<void> {
+    console.log("Assigning roles to user:", userId, roleNames);
     
-    // Transform response back to User interface
-    return {
-      id: data.id,
-      username: data.username,
-      email: data.username,
-      firstName: data.first_name,
-      lastName: data.last_name,
-      phone: data.phone ? data.phone as unknown as PhoneNumber : undefined,
-      designation: data.designation,
-      roles: userData.roles,
-      status: data.status,
-      organizationId: data.organization_id,
-      effectiveFrom: new Date(data.effective_from),
-      effectiveTo: data.effective_to ? new Date(data.effective_to) : undefined,
-      createdBy: data.created_by,
-      createdOn: new Date(data.created_on),
-      updatedBy: data.updated_by,
-      updatedOn: data.updated_on ? new Date(data.updated_on) : undefined,
-    };
+    // Get role IDs from role names
+    const { data: roles, error: rolesError } = await supabase
+      .from('roles')
+      .select('id, name')
+      .in('name', roleNames);
+
+    if (rolesError) {
+      console.error("Error fetching roles:", rolesError);
+      throw new Error(`Failed to fetch roles: ${rolesError.message}`);
+    }
+
+    if (!roles || roles.length === 0) {
+      console.error("No roles found for names:", roleNames);
+      throw new Error("No valid roles found");
+    }
+
+    console.log("Found roles:", roles);
+
+    // Create user_roles entries
+    const userRoleData = roles.map(role => ({
+      user_id: userId,
+      role_id: role.id,
+      assigned_by: assignedBy,
+    }));
+
+    console.log("Inserting user roles:", userRoleData);
+
+    const { error: userRolesError } = await supabase
+      .from('user_roles')
+      .insert(userRoleData);
+
+    if (userRolesError) {
+      console.error("Error assigning roles:", userRolesError);
+      throw new Error(`Failed to assign roles: ${userRolesError.message}`);
+    }
+
+    console.log("Roles assigned successfully");
+  },
+
+  async updateUserRoles(userId: string, roleNames: string[], assignedBy: string): Promise<void> {
+    console.log("=== updateUserRoles called ===");
+    console.log("User ID:", userId);
+    console.log("Role names:", roleNames);
+    console.log("Assigned by:", assignedBy);
+    
+    // First, delete existing user roles
+    console.log("Deleting existing user roles...");
+    const { error: deleteError } = await supabase
+      .from('user_roles')
+      .delete()
+      .eq('user_id', userId);
+
+    if (deleteError) {
+      console.error("Error deleting existing roles:", deleteError);
+      throw new Error(`Failed to delete existing roles: ${deleteError.message}`);
+    }
+
+    console.log("Existing roles deleted successfully");
+
+    // Then assign new roles if any
+    if (roleNames && roleNames.length > 0) {
+      console.log("Assigning new roles...");
+      await this.assignRolesToUser(userId, roleNames, assignedBy);
+      console.log("New roles assigned successfully");
+    } else {
+      console.log("No roles to assign");
+    }
   },
 
   async deleteUser(id: string): Promise<void> {
     console.log("Deleting user:", id);
     
-    const { error } = await supabase
+    // Delete user roles first
+    await supabase
+      .from('user_roles')
+      .delete()
+      .eq('user_id', id);
+    
+    // Delete profile
+    const { error: profileError } = await supabase
       .from('profiles')
       .delete()
       .eq('id', id);
 
-    if (error) {
-      console.error("Error deleting user:", error);
-      throw new Error(`Failed to delete user: ${error.message}`);
+    if (profileError) {
+      console.error("Error deleting profile:", profileError);
+      throw new Error(`Failed to delete user profile: ${profileError.message}`);
+    }
+
+    // Delete auth user
+    const { error: authError } = await supabase.auth.admin.deleteUser(id);
+
+    if (authError) {
+      console.error("Error deleting auth user:", authError);
+      throw new Error(`Failed to delete auth user: ${authError.message}`);
     }
 
     console.log("User deleted successfully");
-  },
-
-  async getUserPermissions(userId: string): Promise<string[]> {
-    console.log("Fetching user permissions for user:", userId);
-    
-    // For now, return empty array since we don't have proper role relationships
-    console.log("User permissions fetched successfully:", []);
-    return [];
   }
 };
 
-// Export individual functions for backward compatibility
-export const { getUserPermissions, createUser, getUserById, updateUser, getAllUsers } = userService;
+export const getUserPermissions = async (userId: string): Promise<string[]> => {
+  console.log("=== getUserPermissions called ===");
+  console.log("Fetching permissions for user ID:", userId);
+  
+  try {
+    const { data, error } = await supabase
+      .from('user_roles')
+      .select(`
+        roles (
+          role_permissions (
+            permissions (
+              name
+            )
+          )
+        )
+      `)
+      .eq('user_id', userId);
+
+    if (error) {
+      console.error("Error fetching user permissions:", error);
+      throw new Error(`Failed to fetch user permissions: ${error.message}`);
+    }
+
+    console.log("Raw permissions data:", data);
+
+    const permissions: string[] = [];
+    
+    if (data) {
+      data.forEach((userRole: any) => {
+        if (userRole.roles?.role_permissions) {
+          userRole.roles.role_permissions.forEach((rolePermission: any) => {
+            if (rolePermission.permissions?.name) {
+              permissions.push(rolePermission.permissions.name);
+            }
+          });
+        }
+      });
+    }
+
+    const uniquePermissions = [...new Set(permissions)];
+    console.log("Final permissions array:", uniquePermissions);
+    
+    return uniquePermissions;
+  } catch (error) {
+    console.error("Error in getUserPermissions:", error);
+    return [];
+  }
+};
