@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { User, UserFormData, PhoneNumber } from "@/types/user";
 
@@ -360,41 +361,45 @@ export const userService = {
   async assignRolesToUser(userId: string, roleNames: string[], assignedBy: string): Promise<void> {
     console.log("=== assignRolesToUser called ===");
     console.log("User ID:", userId);
-    console.log("Role names:", roleNames);
+    console.log("Role names to assign:", roleNames);
     console.log("Assigned by:", assignedBy);
     
-    // Get role IDs from role names - handle case-insensitive matching
-    const { data: roles, error: rolesError } = await supabase
+    if (!roleNames || roleNames.length === 0) {
+      console.log("No roles to assign, skipping");
+      return;
+    }
+    
+    // Get ALL roles from database first
+    const { data: allRoles, error: allRolesError } = await supabase
       .from('roles')
-      .select('id, name');
+      .select('id, name')
+      .order('name');
 
-    if (rolesError) {
-      console.error("Error fetching all roles:", rolesError);
-      throw new Error(`Failed to fetch roles: ${rolesError.message}`);
+    if (allRolesError) {
+      console.error("Error fetching all roles:", allRolesError);
+      throw new Error(`Failed to fetch roles: ${allRolesError.message}`);
     }
 
-    console.log("All available roles:", roles);
-
-    // Match roles case-insensitively
-    const matchedRoles = roles?.filter(role => 
-      roleNames.some(roleName => 
-        role.name.toLowerCase() === roleName.toLowerCase()
-      )
+    console.log("All available roles in database:", allRoles);
+    
+    // Match roles by exact name (case-sensitive)
+    const matchedRoles = allRoles?.filter(role => 
+      roleNames.includes(role.name)
     ) || [];
 
-    console.log("Matched roles:", matchedRoles);
+    console.log("Exact matched roles:", matchedRoles);
 
-    if (!matchedRoles || matchedRoles.length === 0) {
-      console.error("No roles found for names:", roleNames);
+    if (matchedRoles.length === 0) {
+      console.error("No roles found for exact names:", roleNames);
+      console.log("Available role names:", allRoles?.map(r => r.name));
       throw new Error(`No valid roles found for: ${roleNames.join(', ')}`);
     }
 
     if (matchedRoles.length !== roleNames.length) {
       const foundRoleNames = matchedRoles.map(r => r.name);
-      const missingRoles = roleNames.filter(name => 
-        !foundRoleNames.some(found => found.toLowerCase() === name.toLowerCase())
-      );
-      console.warn("Some roles not found:", missingRoles);
+      const missingRoles = roleNames.filter(name => !foundRoleNames.includes(name));
+      console.warn("Some roles not found (exact match):", missingRoles);
+      console.log("Available roles:", allRoles?.map(r => r.name));
     }
 
     // Create user_roles entries
@@ -404,27 +409,57 @@ export const userService = {
       assigned_by: assignedBy,
     }));
 
-    console.log("Inserting user roles:", userRoleData);
+    console.log("Inserting user roles data:", userRoleData);
 
-    const { error: userRolesError } = await supabase
+    const { data: insertedRoles, error: userRolesError } = await supabase
       .from('user_roles')
-      .insert(userRoleData);
+      .insert(userRoleData)
+      .select();
 
     if (userRolesError) {
       console.error("Error assigning roles:", userRolesError);
       throw new Error(`Failed to assign roles: ${userRolesError.message}`);
     }
 
-    console.log("Roles assigned successfully");
+    console.log("Roles assigned successfully:", insertedRoles);
+    
+    // Verify roles were actually inserted
+    const { data: verifyRoles, error: verifyError } = await supabase
+      .from('user_roles')
+      .select(`
+        role_id,
+        roles (
+          name
+        )
+      `)
+      .eq('user_id', userId);
+      
+    if (verifyError) {
+      console.error("Error verifying role assignment:", verifyError);
+    } else {
+      console.log("Verification - User now has roles:", verifyRoles);
+    }
   },
 
   async updateUserRoles(userId: string, roleNames: string[], assignedBy: string): Promise<void> {
     console.log("=== updateUserRoles called ===");
     console.log("User ID:", userId);
-    console.log("Role names:", roleNames);
+    console.log("New role names:", roleNames);
     console.log("Assigned by:", assignedBy);
     
-    // First, delete existing user roles
+    // First, get current roles for logging
+    const { data: currentRoles } = await supabase
+      .from('user_roles')
+      .select(`
+        roles (
+          name
+        )
+      `)
+      .eq('user_id', userId);
+    
+    console.log("Current user roles before update:", currentRoles?.map(ur => ur.roles?.name));
+    
+    // Delete existing user roles
     console.log("Deleting existing user roles...");
     const { error: deleteError } = await supabase
       .from('user_roles')
