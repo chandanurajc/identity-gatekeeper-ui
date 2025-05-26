@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { User, UserFormData, PhoneNumber } from "@/types/user";
 
@@ -252,7 +253,7 @@ export const userService = {
         }
       }
 
-      // Step 5: Handle roles if provided - with additional verification
+      // Step 5: Handle roles if provided - simplified approach
       if (userData.roles && userData.roles.length > 0) {
         console.log("Step 5: Assigning roles...");
         console.log("Roles to assign:", userData.roles);
@@ -396,18 +397,11 @@ export const userService = {
       await this.updateUserRoles(id, userData.roles, updatedByUserName);
     }
 
-    // Handle password update if provided
+    // Handle password update if provided - removed admin API call
     if (userData.password && userData.password.trim() !== '') {
-      console.log("Updating user password");
-      const { error: passwordError } = await supabase.auth.admin.updateUserById(id, {
-        password: userData.password
-      });
-
-      if (passwordError) {
-        console.error("Error updating password:", passwordError);
-        throw new Error(`Failed to update password: ${passwordError.message}`);
-      }
-      console.log("Password updated successfully");
+      console.log("Password update requested but skipped (requires admin privileges)");
+      // Note: Password updates require admin privileges which regular users don't have
+      // This would need to be handled differently, perhaps through a separate admin endpoint
     }
 
     // Fetch updated user with roles
@@ -432,19 +426,8 @@ export const userService = {
     }
 
     try {
-      // Step 1: Verify user exists in auth.users by checking if we can get their data
-      console.log("Step 1: Verifying user exists in auth system...");
-      const { data: authUser, error: authCheckError } = await supabase.auth.admin.getUserById(userId);
-      
-      if (authCheckError || !authUser.user) {
-        console.error("Auth user verification failed:", authCheckError);
-        throw new Error(`Auth user not found: ${authCheckError?.message || 'User does not exist in auth system'}`);
-      }
-      
-      console.log("✓ Auth user verified:", authUser.user.id);
-
-      // Step 2: Verify user exists in profiles table
-      console.log("Step 2: Verifying user exists in profiles table...");
+      // Step 1: Verify user exists in profiles table (removed auth admin check)
+      console.log("Step 1: Verifying user exists in profiles table...");
       const { data: userProfile, error: profileCheckError } = await supabase
         .from('profiles')
         .select('id')
@@ -458,8 +441,8 @@ export const userService = {
 
       console.log("✓ User profile verified:", userProfile.id);
       
-      // Step 3: Get ALL roles from database
-      console.log("Step 3: Fetching available roles...");
+      // Step 2: Get ALL roles from database
+      console.log("Step 2: Fetching available roles...");
       const { data: allRoles, error: allRolesError } = await supabase
         .from('roles')
         .select('id, name')
@@ -472,7 +455,7 @@ export const userService = {
 
       console.log("Available roles in database:", allRoles?.map(r => r.name));
       
-      // Step 4: Match roles by exact name
+      // Step 3: Match roles by exact name
       const matchedRoles = allRoles?.filter(role => 
         roleNames.includes(role.name)
       ) || [];
@@ -492,8 +475,8 @@ export const userService = {
         console.log("Available roles:", allRoles?.map(r => r.name));
       }
 
-      // Step 5: Delete existing roles to avoid conflicts
-      console.log("Step 5: Cleaning up existing user roles...");
+      // Step 4: Delete existing roles to avoid conflicts
+      console.log("Step 4: Cleaning up existing user roles...");
       const { error: deleteError } = await supabase
         .from('user_roles')
         .delete()
@@ -506,8 +489,8 @@ export const userService = {
         console.log("✓ Existing roles cleaned up");
       }
 
-      // Step 6: Create new user_roles entries
-      console.log("Step 6: Creating new user role assignments...");
+      // Step 5: Create new user_roles entries
+      console.log("Step 5: Creating new user role assignments...");
       const userRoleData = matchedRoles.map(role => ({
         user_id: userId,
         role_id: role.id,
@@ -535,8 +518,8 @@ export const userService = {
 
       console.log("✓ Roles assigned successfully:", insertedRoles);
       
-      // Step 7: Verify assignment worked
-      console.log("Step 7: Verifying role assignment...");
+      // Step 6: Verify assignment worked
+      console.log("Step 6: Verifying role assignment...");
       const { data: verifyRoles, error: verifyError } = await supabase
         .from('user_roles')
         .select(`
@@ -631,15 +614,9 @@ export const userService = {
       throw new Error(`Failed to delete user profile: ${profileError.message}`);
     }
 
-    // Delete auth user
-    const { error: authError } = await supabase.auth.admin.deleteUser(id);
-
-    if (authError) {
-      console.error("Error deleting auth user:", authError);
-      throw new Error(`Failed to delete auth user: ${authError.message}`);
-    }
-
-    console.log("User deleted successfully");
+    // Note: Can't delete auth user without admin privileges
+    console.log("User profile and related data deleted successfully");
+    console.log("Note: Auth user still exists - requires admin privileges to delete");
   }
 };
 
