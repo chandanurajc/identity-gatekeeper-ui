@@ -1,22 +1,6 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { User, UserFormData, PhoneNumber } from "@/types/user";
-
-// Helper function to safely parse phone data
-const parsePhoneData = (phoneJson: any): PhoneNumber | undefined => {
-  if (!phoneJson || typeof phoneJson !== 'object') {
-    return undefined;
-  }
-  
-  // Check if it has the required properties for PhoneNumber
-  if (typeof phoneJson.countryCode === 'string' && typeof phoneJson.number === 'string') {
-    return {
-      countryCode: phoneJson.countryCode,
-      number: phoneJson.number
-    };
-  }
-  
-  return undefined;
-};
 
 export const userService = {
   async getUsers(): Promise<User[]> {
@@ -28,6 +12,10 @@ export const userService = {
         *,
         organizations (
           name
+        ),
+        phone_numbers (
+          country_code,
+          number
         )
       `)
       .order('created_on', { ascending: false });
@@ -61,8 +49,11 @@ export const userService = {
         const roles = userRoles?.map((ur: any) => ur.roles?.name).filter(Boolean) || [];
         console.log("Roles for user", profile.id, ":", roles);
 
-        // Parse phone data safely
-        const phoneData = parsePhoneData(profile.phone);
+        // Get phone data from separate table
+        const phoneData = profile.phone_numbers?.[0] ? {
+          countryCode: profile.phone_numbers[0].country_code,
+          number: profile.phone_numbers[0].number
+        } : undefined;
 
         return {
           id: profile.id,
@@ -98,6 +89,10 @@ export const userService = {
         *,
         organizations (
           name
+        ),
+        phone_numbers (
+          country_code,
+          number
         )
       `)
       .eq('id', id)
@@ -130,8 +125,11 @@ export const userService = {
     const roles = userRoles?.map((ur: any) => ur.roles?.name).filter(Boolean) || [];
     console.log("User roles:", roles);
 
-    // Parse phone data safely
-    const phoneData = parsePhoneData(profile.phone);
+    // Get phone data from separate table
+    const phoneData = profile.phone_numbers?.[0] ? {
+      countryCode: profile.phone_numbers[0].country_code,
+      number: profile.phone_numbers[0].number
+    } : undefined;
 
     return {
       id: profile.id,
@@ -182,7 +180,6 @@ export const userService = {
       first_name: userData.firstName,
       last_name: userData.lastName,
       username: userData.username,
-      phone: userData.phone,
       designation: userData.designation,
       organization_id: organizationId,
       effective_from: userData.effectiveFrom?.toISOString(),
@@ -208,14 +205,27 @@ export const userService = {
 
     console.log("Profile created:", profile);
 
+    // Create phone number entry if provided
+    if (userData.phone && userData.phone.countryCode && userData.phone.number) {
+      const { error: phoneError } = await supabase
+        .from('phone_numbers')
+        .insert([{
+          profile_id: authData.user.id,
+          country_code: userData.phone.countryCode,
+          number: userData.phone.number
+        }]);
+
+      if (phoneError) {
+        console.error("Error creating phone number:", phoneError);
+        // Continue even if phone creation fails, but log the error
+      }
+    }
+
     // Handle roles if provided
     if (userData.roles && userData.roles.length > 0) {
       console.log("Assigning roles:", userData.roles);
       await this.assignRolesToUser(authData.user.id, userData.roles, createdByUserName);
     }
-
-    // Parse phone data safely
-    const phoneData = parsePhoneData(profile.phone);
 
     return {
       id: profile.id,
@@ -223,7 +233,7 @@ export const userService = {
       lastName: profile.last_name,
       username: profile.username,
       email: profile.username,
-      phone: phoneData,
+      phone: userData.phone,
       designation: profile.designation,
       organizationId: profile.organization_id,
       roles: userData.roles || [],
@@ -248,7 +258,6 @@ export const userService = {
       first_name: userData.firstName,
       last_name: userData.lastName,
       username: userData.username,
-      phone: userData.phone,
       designation: userData.designation,
       organization_id: organizationId || userData.organizationId,
       effective_from: userData.effectiveFrom?.toISOString(),
@@ -272,6 +281,45 @@ export const userService = {
     }
 
     console.log("Profile updated successfully:", profile);
+
+    // Update phone number if provided
+    if (userData.phone && userData.phone.countryCode && userData.phone.number) {
+      // First, try to update existing phone number
+      const { data: existingPhone } = await supabase
+        .from('phone_numbers')
+        .select('id')
+        .eq('profile_id', id)
+        .single();
+
+      if (existingPhone) {
+        // Update existing phone number
+        const { error: phoneUpdateError } = await supabase
+          .from('phone_numbers')
+          .update({
+            country_code: userData.phone.countryCode,
+            number: userData.phone.number,
+            updated_on: new Date().toISOString()
+          })
+          .eq('profile_id', id);
+
+        if (phoneUpdateError) {
+          console.error("Error updating phone number:", phoneUpdateError);
+        }
+      } else {
+        // Create new phone number
+        const { error: phoneCreateError } = await supabase
+          .from('phone_numbers')
+          .insert([{
+            profile_id: id,
+            country_code: userData.phone.countryCode,
+            number: userData.phone.number
+          }]);
+
+        if (phoneCreateError) {
+          console.error("Error creating phone number:", phoneCreateError);
+        }
+      }
+    }
 
     // Handle roles update if provided
     if (userData.roles) {
@@ -383,6 +431,12 @@ export const userService = {
       .from('user_roles')
       .delete()
       .eq('user_id', id);
+    
+    // Delete phone numbers
+    await supabase
+      .from('phone_numbers')
+      .delete()
+      .eq('profile_id', id);
     
     // Delete profile
     const { error: profileError } = await supabase

@@ -9,6 +9,106 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      organization_contacts: {
+        Row: {
+          address1: string | null
+          address2: string | null
+          city: string | null
+          contact_type: string
+          country: string | null
+          created_on: string
+          email: string | null
+          first_name: string
+          id: string
+          last_name: string | null
+          organization_id: string
+          phone_number: string | null
+          postal_code: string | null
+          state: string | null
+          updated_on: string | null
+          website: string | null
+        }
+        Insert: {
+          address1?: string | null
+          address2?: string | null
+          city?: string | null
+          contact_type: string
+          country?: string | null
+          created_on?: string
+          email?: string | null
+          first_name: string
+          id?: string
+          last_name?: string | null
+          organization_id: string
+          phone_number?: string | null
+          postal_code?: string | null
+          state?: string | null
+          updated_on?: string | null
+          website?: string | null
+        }
+        Update: {
+          address1?: string | null
+          address2?: string | null
+          city?: string | null
+          contact_type?: string
+          country?: string | null
+          created_on?: string
+          email?: string | null
+          first_name?: string
+          id?: string
+          last_name?: string | null
+          organization_id?: string
+          phone_number?: string | null
+          postal_code?: string | null
+          state?: string | null
+          updated_on?: string | null
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_contacts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organization_references: {
+        Row: {
+          created_on: string
+          id: string
+          organization_id: string
+          reference_type: string
+          reference_value: string
+          updated_on: string | null
+        }
+        Insert: {
+          created_on?: string
+          id?: string
+          organization_id: string
+          reference_type: string
+          reference_value: string
+          updated_on?: string | null
+        }
+        Update: {
+          created_on?: string
+          id?: string
+          organization_id?: string
+          reference_type?: string
+          reference_value?: string
+          updated_on?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_references_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organizations: {
         Row: {
           address: Json | null
@@ -81,6 +181,41 @@ export type Database = {
         }
         Relationships: []
       }
+      phone_numbers: {
+        Row: {
+          country_code: string
+          created_on: string
+          id: string
+          number: string
+          profile_id: string
+          updated_on: string | null
+        }
+        Insert: {
+          country_code: string
+          created_on?: string
+          id?: string
+          number: string
+          profile_id: string
+          updated_on?: string | null
+        }
+        Update: {
+          country_code?: string
+          created_on?: string
+          id?: string
+          number?: string
+          profile_id?: string
+          updated_on?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "phone_numbers_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_by: string | null
@@ -130,7 +265,15 @@ export type Database = {
           updated_on?: string | null
           username?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_profiles_organization"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       role_permissions: {
         Row: {
