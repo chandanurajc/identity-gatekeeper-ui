@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -90,8 +89,8 @@ const UserForm = ({ initialData, isEditing = false, onSubmit }: UserFormProps) =
     const fetchData = async () => {
       try {
         const [roles, orgs] = await Promise.all([
-          roleService.getAllRoles(),
-          organizationService.getAllOrganizations()
+          roleService.getRoles(),
+          organizationService.getOrganizations()
         ]);
         
         const formattedRoles = roles.map(role => ({

@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { Organization, OrganizationFormData } from "@/types/organization";
+import { Organization, OrganizationFormData, Reference, Contact } from "@/types/organization";
 
 export const organizationService = {
   async getOrganizations(): Promise<Organization[]> {
@@ -23,11 +23,11 @@ export const organizationService = {
       id: org.id,
       name: org.name,
       code: org.code,
-      alias: org.description, // Map description to alias
-      type: 'Admin' as const, // Default type since not in DB
+      alias: org.description,
+      type: 'Admin' as const,
       status: org.status as 'active' | 'inactive',
-      references: Array.isArray(org.organization_references) ? org.organization_references : [],
-      contacts: Array.isArray(org.contacts) ? org.contacts : [],
+      references: Array.isArray(org.organization_references) ? org.organization_references as Reference[] : [],
+      contacts: Array.isArray(org.contacts) ? org.contacts as Contact[] : [],
       createdBy: org.created_by,
       createdOn: org.created_on ? new Date(org.created_on) : undefined,
       updatedBy: org.updated_by,
@@ -59,7 +59,6 @@ export const organizationService = {
 
     console.log("Organization fetched successfully:", data);
     
-    // Transform database data to match Organization interface
     return {
       id: data.id,
       name: data.name,
@@ -67,8 +66,8 @@ export const organizationService = {
       alias: data.description,
       type: 'Admin' as const,
       status: data.status as 'active' | 'inactive',
-      references: Array.isArray(data.organization_references) ? data.organization_references : [],
-      contacts: Array.isArray(data.contacts) ? data.contacts : [],
+      references: Array.isArray(data.organization_references) ? data.organization_references as Reference[] : [],
+      contacts: Array.isArray(data.contacts) ? data.contacts as Contact[] : [],
       createdBy: data.created_by,
       createdOn: data.created_on ? new Date(data.created_on) : undefined,
       updatedBy: data.updated_by,
@@ -79,7 +78,6 @@ export const organizationService = {
   async createOrganization(organizationData: OrganizationFormData, createdBy: string): Promise<Organization> {
     console.log("Creating organization with data:", organizationData);
     
-    // Transform form data to match database schema
     const newOrganization = {
       name: organizationData.name,
       code: organizationData.code,
@@ -93,7 +91,7 @@ export const organizationService = {
 
     const { data, error } = await supabase
       .from('organizations')
-      .insert([newOrganization])
+      .insert(newOrganization)
       .select()
       .single();
 
@@ -104,7 +102,6 @@ export const organizationService = {
 
     console.log("Organization created successfully:", data);
     
-    // Transform response back to Organization interface
     return {
       id: data.id,
       name: data.name,

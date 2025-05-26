@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -13,6 +14,7 @@ import { ContactForm } from "./ContactForm";
 import { ReferenceForm } from "./ReferenceForm";
 import { useQuery } from "@tanstack/react-query";
 import { organizationService } from "@/services/organizationService";
+import { Organization } from "@/types/organization";
 
 // Form schema with validation
 const divisionSchema = z.object({
@@ -58,10 +60,13 @@ const DivisionForm = ({ initialData, onSubmit, isEditing = false }: DivisionForm
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Fetch organizations for dropdown
-  const { data: organizations = [] } = useQuery({
+  const { data: organizationsData = [] } = useQuery({
     queryKey: ['organizations'],
     queryFn: organizationService.getOrganizations,
   });
+
+  // Ensure organizations is always an array
+  const organizations: Organization[] = Array.isArray(organizationsData) ? organizationsData : [];
 
   // Initialize form with default values or existing data
   const form = useForm<DivisionFormData>({
@@ -80,9 +85,7 @@ const DivisionForm = ({ initialData, onSubmit, isEditing = false }: DivisionForm
   });
 
   const selectedOrgId = form.watch("organizationId");
-  const selectedOrg = Array.isArray(organizations) 
-    ? organizations.find(org => org.id === selectedOrgId)
-    : undefined;
+  const selectedOrg = organizations.find(org => org.id === selectedOrgId);
 
   const handleSubmit = async (data: DivisionFormData) => {
     setIsSubmitting(true);
@@ -122,7 +125,7 @@ const DivisionForm = ({ initialData, onSubmit, isEditing = false }: DivisionForm
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {Array.isArray(organizations) && organizations.map((org) => (
+                    {organizations.map((org) => (
                       <SelectItem key={org.id} value={org.id}>
                         {org.code} - {org.name}
                       </SelectItem>

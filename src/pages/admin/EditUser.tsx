@@ -2,11 +2,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { UserFormData, User } from "@/types/user";
-import { getUserById, updateUser } from "@/services/userService";
+import { userService } from "@/services/userService";
 import UserForm from "@/components/admin/UserForm";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useAuth } from "@/context/AuthContext";
 
 const EditUser = () => {
   const { userId } = useParams<{ userId: string }>();
@@ -15,6 +16,7 @@ const EditUser = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { canEditUsers } = usePermissions();
+  const { user: currentUser } = useAuth();
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -29,7 +31,7 @@ const EditUser = () => {
           return;
         }
 
-        const userData = await getUserById(userId);
+        const userData = await userService.getUserById(userId);
         
         if (!userData) {
           toast({
@@ -61,7 +63,7 @@ const EditUser = () => {
     if (!userId) return;
     
     try {
-      await updateUser(userId, userData);
+      await userService.updateUser(userId, userData, currentUser?.id || 'system');
     } catch (error) {
       console.error("Error updating user:", error);
       throw error;
@@ -121,6 +123,7 @@ const EditUser = () => {
     email: user.email,
     phone: user.phone,
     designation: user.designation,
+    organizationId: user.organizationId || '',
     roles: user.roles,
     effectiveFrom: user.effectiveFrom,
     effectiveTo: user.effectiveTo,

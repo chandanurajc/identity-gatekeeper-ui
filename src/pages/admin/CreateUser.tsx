@@ -1,18 +1,20 @@
 
 import { useNavigate } from "react-router-dom";
 import { UserFormData } from "@/types/user";
-import { createUser } from "@/services/userService";
+import { userService } from "@/services/userService";
 import UserForm from "@/components/admin/UserForm";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useAuth } from "@/context/AuthContext";
 
 const CreateUser = () => {
   const navigate = useNavigate();
   const { canCreateUsers } = usePermissions();
+  const { user } = useAuth();
 
   const handleCreateUser = async (userData: UserFormData) => {
     try {
-      await createUser(userData);
+      await userService.createUser(userData, user?.id || 'system');
     } catch (error) {
       console.error("Error creating user:", error);
       throw error;

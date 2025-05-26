@@ -8,7 +8,12 @@ export const roleService = {
     
     const { data, error } = await supabase
       .from('roles')
-      .select('*')
+      .select(`
+        *,
+        role_permissions (
+          permissions (*)
+        )
+      `)
       .order('created_on', { ascending: false });
 
     if (error) {
@@ -17,7 +22,19 @@ export const roleService = {
     }
 
     console.log("Roles fetched successfully:", data);
-    return data || [];
+    
+    // Transform database data to match Role interface
+    return (data || []).map(role => ({
+      id: role.id,
+      name: role.name,
+      description: role.description,
+      permissions: role.role_permissions?.map((rp: any) => rp.permissions) || [],
+      organizationId: role.organization_id,
+      createdBy: role.created_by,
+      createdOn: role.created_on ? new Date(role.created_on) : undefined,
+      updatedBy: role.updated_by,
+      updatedOn: role.updated_on ? new Date(role.updated_on) : undefined,
+    }));
   },
 
   // Alias for backward compatibility
@@ -83,7 +100,12 @@ export const roleService = {
     
     const { data, error } = await supabase
       .from('roles')
-      .select('*')
+      .select(`
+        *,
+        role_permissions (
+          permissions (*)
+        )
+      `)
       .eq('id', id)
       .single();
 
@@ -93,14 +115,26 @@ export const roleService = {
     }
 
     console.log("Role fetched successfully:", data);
-    return data;
+    
+    return {
+      id: data.id,
+      name: data.name,
+      description: data.description,
+      permissions: data.role_permissions?.map((rp: any) => rp.permissions) || [],
+      organizationId: data.organization_id,
+      createdBy: data.created_by,
+      createdOn: data.created_on ? new Date(data.created_on) : undefined,
+      updatedBy: data.updated_by,
+      updatedOn: data.updated_on ? new Date(data.updated_on) : undefined,
+    };
   },
 
   async createRole(roleData: RoleFormData, createdBy: string, organizationId: string): Promise<Role> {
     console.log("Creating role with data:", roleData);
     
     const newRole = {
-      ...roleData,
+      name: roleData.name,
+      description: roleData.description,
       created_by: createdBy,
       updated_by: createdBy,
       organization_id: organizationId,
@@ -118,14 +152,26 @@ export const roleService = {
     }
 
     console.log("Role created successfully:", data);
-    return data;
+    
+    return {
+      id: data.id,
+      name: data.name,
+      description: data.description,
+      permissions: roleData.permissions,
+      organizationId: data.organization_id,
+      createdBy: data.created_by,
+      createdOn: data.created_on ? new Date(data.created_on) : undefined,
+      updatedBy: data.updated_by,
+      updatedOn: data.updated_on ? new Date(data.updated_on) : undefined,
+    };
   },
 
   async updateRole(id: string, roleData: RoleFormData, updatedBy: string): Promise<Role> {
     console.log("Updating role:", id, "with data:", roleData);
     
     const updateData = {
-      ...roleData,
+      name: roleData.name,
+      description: roleData.description,
       updated_by: updatedBy,
       updated_on: new Date().toISOString(),
     };
@@ -143,7 +189,18 @@ export const roleService = {
     }
 
     console.log("Role updated successfully:", data);
-    return data;
+    
+    return {
+      id: data.id,
+      name: data.name,
+      description: data.description,
+      permissions: roleData.permissions,
+      organizationId: data.organization_id,
+      createdBy: data.created_by,
+      createdOn: data.created_on ? new Date(data.created_on) : undefined,
+      updatedBy: data.updated_by,
+      updatedOn: data.updated_on ? new Date(data.updated_on) : undefined,
+    };
   },
 
   async deleteRole(id: string): Promise<void> {

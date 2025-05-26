@@ -23,7 +23,26 @@ export const userService = {
     }
 
     console.log("Users fetched successfully:", data);
-    return data || [];
+    
+    // Transform database data to match User interface
+    return (data || []).map(user => ({
+      id: user.id,
+      username: user.username,
+      email: user.username, // Using username as email since they're the same
+      firstName: user.first_name,
+      lastName: user.last_name,
+      phone: user.phone,
+      designation: user.designation,
+      roles: user.user_roles?.map((ur: any) => ur.roles?.name) || [],
+      status: user.status,
+      organizationId: user.organization_id,
+      effectiveFrom: new Date(user.effective_from),
+      effectiveTo: user.effective_to ? new Date(user.effective_to) : undefined,
+      createdBy: user.created_by,
+      createdOn: new Date(user.created_on),
+      updatedBy: user.updated_by,
+      updatedOn: user.updated_on ? new Date(user.updated_on) : undefined,
+    }));
   },
 
   // Alias for backward compatibility
@@ -55,14 +74,40 @@ export const userService = {
     }
 
     console.log("User fetched successfully:", data);
-    return data;
+    
+    // Transform database data to match User interface
+    return {
+      id: data.id,
+      username: data.username,
+      email: data.username, // Using username as email since they're the same
+      firstName: data.first_name,
+      lastName: data.last_name,
+      phone: data.phone,
+      designation: data.designation,
+      roles: data.user_roles?.map((ur: any) => ur.roles?.name) || [],
+      status: data.status,
+      organizationId: data.organization_id,
+      effectiveFrom: new Date(data.effective_from),
+      effectiveTo: data.effective_to ? new Date(data.effective_to) : undefined,
+      createdBy: data.created_by,
+      createdOn: new Date(data.created_on),
+      updatedBy: data.updated_by,
+      updatedOn: data.updated_on ? new Date(data.updated_on) : undefined,
+    };
   },
 
   async createUser(userData: UserFormData, createdBy: string): Promise<User> {
     console.log("Creating user with data:", userData);
     
     const newUser = {
-      ...userData,
+      username: userData.username,
+      first_name: userData.firstName,
+      last_name: userData.lastName,
+      phone: userData.phone,
+      designation: userData.designation,
+      organization_id: userData.organizationId,
+      effective_from: userData.effectiveFrom.toISOString(),
+      effective_to: userData.effectiveTo?.toISOString() || null,
       created_by: createdBy,
       updated_by: createdBy,
     };
@@ -79,14 +124,40 @@ export const userService = {
     }
 
     console.log("User created successfully:", data);
-    return data;
+    
+    // Transform response back to User interface
+    return {
+      id: data.id,
+      username: data.username,
+      email: data.username,
+      firstName: data.first_name,
+      lastName: data.last_name,
+      phone: data.phone,
+      designation: data.designation,
+      roles: userData.roles,
+      status: data.status,
+      organizationId: data.organization_id,
+      effectiveFrom: new Date(data.effective_from),
+      effectiveTo: data.effective_to ? new Date(data.effective_to) : undefined,
+      createdBy: data.created_by,
+      createdOn: new Date(data.created_on),
+      updatedBy: data.updated_by,
+      updatedOn: data.updated_on ? new Date(data.updated_on) : undefined,
+    };
   },
 
   async updateUser(id: string, userData: UserFormData, updatedBy: string): Promise<User> {
     console.log("Updating user:", id, "with data:", userData);
     
     const updateData = {
-      ...userData,
+      username: userData.username,
+      first_name: userData.firstName,
+      last_name: userData.lastName,
+      phone: userData.phone,
+      designation: userData.designation,
+      organization_id: userData.organizationId,
+      effective_from: userData.effectiveFrom.toISOString(),
+      effective_to: userData.effectiveTo?.toISOString() || null,
       updated_by: updatedBy,
       updated_on: new Date().toISOString(),
     };
@@ -104,7 +175,26 @@ export const userService = {
     }
 
     console.log("User updated successfully:", data);
-    return data;
+    
+    // Transform response back to User interface
+    return {
+      id: data.id,
+      username: data.username,
+      email: data.username,
+      firstName: data.first_name,
+      lastName: data.last_name,
+      phone: data.phone,
+      designation: data.designation,
+      roles: userData.roles,
+      status: data.status,
+      organizationId: data.organization_id,
+      effectiveFrom: new Date(data.effective_from),
+      effectiveTo: data.effective_to ? new Date(data.effective_to) : undefined,
+      createdBy: data.created_by,
+      createdOn: new Date(data.created_on),
+      updatedBy: data.updated_by,
+      updatedOn: data.updated_on ? new Date(data.updated_on) : undefined,
+    };
   },
 
   async deleteUser(id: string): Promise<void> {
@@ -123,7 +213,7 @@ export const userService = {
     console.log("User deleted successfully");
   },
 
-  async getUserPermissions(userId: string): Promise<any[]> {
+  async getUserPermissions(userId: string): Promise<string[]> {
     console.log("Fetching user permissions for user:", userId);
     
     const { data, error } = await supabase
@@ -131,7 +221,7 @@ export const userService = {
       .select(`
         roles (
           role_permissions (
-            permissions (*)
+            permissions (name)
           )
         )
       `)
@@ -144,8 +234,8 @@ export const userService = {
 
     // Flatten the permissions
     const permissions = data?.flatMap(ur => 
-      ur.roles?.role_permissions?.map(rp => rp.permissions) || []
-    ) || [];
+      ur.roles?.role_permissions?.map(rp => rp.permissions?.name) || []
+    ).filter(Boolean) || [];
 
     console.log("User permissions fetched successfully:", permissions);
     return permissions;
