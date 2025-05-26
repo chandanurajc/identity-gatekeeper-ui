@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { User, UserFormData, PhoneNumber } from "@/types/user";
 
@@ -107,10 +108,11 @@ export const userService = {
     }
   },
 
-  async createUser(userData: UserFormData, createdBy: string): Promise<User> {
+  async createUser(userData: UserFormData, createdByUserName: string): Promise<User> {
     console.log("Creating user with data:", userData);
+    console.log("Created by user name:", createdByUserName);
     
-    // Generate a UUID for the new user (this would typically come from auth.users)
+    // Generate a UUID for the new user
     const userId = crypto.randomUUID();
     
     const newUser = {
@@ -123,8 +125,8 @@ export const userService = {
       organization_id: userData.organizationId,
       effective_from: userData.effectiveFrom.toISOString(),
       effective_to: userData.effectiveTo?.toISOString() || null,
-      created_by: createdBy,
-      updated_by: createdBy,
+      created_by: createdByUserName,
+      updated_by: createdByUserName,
     };
 
     const { data, error } = await supabase
@@ -161,8 +163,9 @@ export const userService = {
     };
   },
 
-  async updateUser(id: string, userData: UserFormData, updatedBy: string): Promise<User> {
+  async updateUser(id: string, userData: UserFormData, updatedByUserName: string): Promise<User> {
     console.log("Updating user:", id, "with data:", userData);
+    console.log("Updated by user name:", updatedByUserName);
     
     const updateData = {
       username: userData.username,
@@ -173,7 +176,7 @@ export const userService = {
       organization_id: userData.organizationId,
       effective_from: userData.effectiveFrom.toISOString(),
       effective_to: userData.effectiveTo?.toISOString() || null,
-      updated_by: updatedBy,
+      updated_by: updatedByUserName,
       updated_on: new Date().toISOString(),
     };
 
