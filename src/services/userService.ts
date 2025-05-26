@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { User, UserFormData, PhoneNumber } from "@/types/user";
 
@@ -108,91 +107,62 @@ export const userService = {
     }
   },
 
-  async createUser(userData: UserFormData, createdByUserName: string): Promise<User> {
+  async createUser(userData: UserFormData, createdBy: string): Promise<User> {
     console.log("Creating user with data:", userData);
-    console.log("Created by user name:", createdByUserName);
     
-    try {
-      // First, create the authenticated user
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        email: userData.username,
-        password: userData.password || 'TempPassword123!',
-        email_confirm: true,
-        user_metadata: {
-          first_name: userData.firstName,
-          last_name: userData.lastName
-        }
-      });
+    // Generate a UUID for the new user (this would typically come from auth.users)
+    const userId = crypto.randomUUID();
+    
+    const newUser = {
+      id: userId,
+      username: userData.username,
+      first_name: userData.firstName,
+      last_name: userData.lastName,
+      phone: userData.phone as any,
+      designation: userData.designation,
+      organization_id: userData.organizationId,
+      effective_from: userData.effectiveFrom.toISOString(),
+      effective_to: userData.effectiveTo?.toISOString() || null,
+      created_by: createdBy,
+      updated_by: createdBy,
+    };
 
-      if (authError) {
-        console.error("Error creating auth user:", authError);
-        throw new Error(`Failed to create authenticated user: ${authError.message}`);
-      }
+    const { data, error } = await supabase
+      .from('profiles')
+      .insert(newUser)
+      .select()
+      .single();
 
-      if (!authData.user) {
-        throw new Error("No user data returned from auth creation");
-      }
-
-      console.log("Auth user created successfully:", authData.user.id);
-
-      // Then, create/update the profile record
-      const profileData = {
-        id: authData.user.id,
-        username: userData.username,
-        first_name: userData.firstName,
-        last_name: userData.lastName,
-        phone: userData.phone as any,
-        designation: userData.designation,
-        organization_id: userData.organizationId,
-        effective_from: userData.effectiveFrom.toISOString(),
-        effective_to: userData.effectiveTo?.toISOString() || null,
-        created_by: createdByUserName,
-        updated_by: createdByUserName,
-      };
-
-      const { data: profileResult, error: profileError } = await supabase
-        .from('profiles')
-        .upsert(profileData)
-        .select()
-        .single();
-
-      if (profileError) {
-        console.error("Error creating profile:", profileError);
-        // Clean up the auth user if profile creation fails
-        await supabase.auth.admin.deleteUser(authData.user.id);
-        throw new Error(`Failed to create user profile: ${profileError.message}`);
-      }
-
-      console.log("User profile created successfully:", profileResult);
-      
-      // Transform response back to User interface
-      return {
-        id: profileResult.id,
-        username: profileResult.username,
-        email: profileResult.username,
-        firstName: profileResult.first_name,
-        lastName: profileResult.last_name,
-        phone: profileResult.phone ? profileResult.phone as unknown as PhoneNumber : undefined,
-        designation: profileResult.designation,
-        roles: userData.roles,
-        status: profileResult.status,
-        organizationId: profileResult.organization_id,
-        effectiveFrom: new Date(profileResult.effective_from),
-        effectiveTo: profileResult.effective_to ? new Date(profileResult.effective_to) : undefined,
-        createdBy: profileResult.created_by,
-        createdOn: new Date(profileResult.created_on),
-        updatedBy: profileResult.updated_by,
-        updatedOn: profileResult.updated_on ? new Date(profileResult.updated_on) : undefined,
-      };
-    } catch (error) {
-      console.error("Error in createUser:", error);
-      throw error;
+    if (error) {
+      console.error("Error creating user:", error);
+      throw new Error(`Failed to create user: ${error.message}`);
     }
+
+    console.log("User created successfully:", data);
+    
+    // Transform response back to User interface
+    return {
+      id: data.id,
+      username: data.username,
+      email: data.username,
+      firstName: data.first_name,
+      lastName: data.last_name,
+      phone: data.phone ? data.phone as unknown as PhoneNumber : undefined,
+      designation: data.designation,
+      roles: userData.roles,
+      status: data.status,
+      organizationId: data.organization_id,
+      effectiveFrom: new Date(data.effective_from),
+      effectiveTo: data.effective_to ? new Date(data.effective_to) : undefined,
+      createdBy: data.created_by,
+      createdOn: new Date(data.created_on),
+      updatedBy: data.updated_by,
+      updatedOn: data.updated_on ? new Date(data.updated_on) : undefined,
+    };
   },
 
-  async updateUser(id: string, userData: UserFormData, updatedByUserName: string): Promise<User> {
+  async updateUser(id: string, userData: UserFormData, updatedBy: string): Promise<User> {
     console.log("Updating user:", id, "with data:", userData);
-    console.log("Updated by user name:", updatedByUserName);
     
     const updateData = {
       username: userData.username,
@@ -203,7 +173,7 @@ export const userService = {
       organization_id: userData.organizationId,
       effective_from: userData.effectiveFrom.toISOString(),
       effective_to: userData.effectiveTo?.toISOString() || null,
-      updated_by: updatedByUserName,
+      updated_by: updatedBy,
       updated_on: new Date().toISOString(),
     };
 
