@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { usePermissions } from "@/hooks/usePermissions";
-import { getAllUsers } from "@/services/userService";
+import { userService } from "@/services/userService";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@/types/user";
 import { Button } from "@/components/ui/button";
@@ -45,10 +45,10 @@ const UsersList = () => {
       setError(null);
       
       const startTime = Date.now();
-      const data = await getAllUsers();
+      const data = await userService.getUsers();
       const endTime = Date.now();
       
-      console.log(`getAllUsers completed in ${endTime - startTime}ms`);
+      console.log(`userService.getUsers completed in ${endTime - startTime}ms`);
       console.log("Users data received:", { count: data?.length || 0 });
       
       setUsers(data || []);

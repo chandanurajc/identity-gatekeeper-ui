@@ -20,13 +20,17 @@ function MainLayoutInner({ children }: MainLayoutProps) {
   // Handle clicks outside sidebar to close it on mobile
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      
       if (
         isMobile &&
         open && 
         sidebarRef.current && 
         !sidebarRef.current.contains(event.target as Node) &&
-        !(event.target as Element)?.closest('button[data-sidebar="trigger"]') &&
-        !(event.target as Element)?.closest('[data-sidebar="sidebar"]')
+        !target?.closest('button[data-sidebar="trigger"]') &&
+        !target?.closest('[data-sidebar="sidebar"]') &&
+        !target?.closest('[data-sidebar="menu-button"]') &&
+        !target?.closest('[data-sidebar="menu-item"]')
       ) {
         setOpen(false);
       }
@@ -34,8 +38,10 @@ function MainLayoutInner({ children }: MainLayoutProps) {
 
     if (isMobile && open) {
       document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('touchstart', handleClickOutside);
       return () => {
         document.removeEventListener('mousedown', handleClickOutside);
+        document.removeEventListener('touchstart', handleClickOutside);
       };
     }
   }, [open, setOpen, isMobile]);
