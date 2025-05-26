@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Role, RoleFormData } from "@/types/role";
 
@@ -189,15 +188,17 @@ export const roleService = {
     };
   },
 
-  async updateRole(id: string, roleData: RoleFormData, updatedByUserName: string): Promise<Role> {
+  async updateRole(id: string, roleData: RoleFormData, updatedByUserName: string, organizationId?: string | null): Promise<Role> {
     console.log("Updating role:", id, "with data:", roleData);
     console.log("Updated by user name:", updatedByUserName);
+    console.log("Organization ID:", organizationId);
     
     const updateData = {
       name: roleData.name,
       description: roleData.description,
       updated_by: updatedByUserName,
       updated_on: new Date().toISOString(),
+      organization_id: organizationId,
     };
 
     const { data, error } = await supabase

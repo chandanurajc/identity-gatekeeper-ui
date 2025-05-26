@@ -115,7 +115,8 @@ const RoleForm = () => {
       console.log("Organization ID being passed:", selectedOrganizationId || null);
 
       if (isEditing && roleId) {
-        await roleService.updateRole(roleId, roleData, user.name);
+        // Pass the organization ID to the update function
+        await roleService.updateRole(roleId, roleData, user.name, selectedOrganizationId || null);
         toast({
           title: "Role Updated",
           description: `The role "${roleName}" has been updated successfully.`,
