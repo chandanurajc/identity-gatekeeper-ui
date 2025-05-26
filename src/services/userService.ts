@@ -231,9 +231,11 @@ export const userService = {
       }
     }
 
-    // Handle roles if provided
+    // Handle roles if provided - WAIT for profile creation to complete
     if (userData.roles && userData.roles.length > 0) {
       console.log("Assigning roles:", userData.roles);
+      // Add delay to ensure profile is fully created
+      await new Promise(resolve => setTimeout(resolve, 1000));
       await this.assignRolesToUser(authData.user.id, userData.roles, createdByUserName);
     }
 
@@ -263,6 +265,20 @@ export const userService = {
     console.log("Updated by:", updatedByUserName);
     console.log("Organization ID:", organizationId);
     
+    // First verify the user exists in profiles table
+    const { data: existingProfile, error: profileCheckError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('id', id)
+      .single();
+
+    if (profileCheckError || !existingProfile) {
+      console.error("User profile not found:", profileCheckError);
+      throw new Error(`User profile not found: ${profileCheckError?.message || 'Unknown error'}`);
+    }
+
+    console.log("User profile verified:", existingProfile);
+
     // Update profile data
     const profileUpdateData = {
       first_name: userData.firstName,
@@ -368,6 +384,20 @@ export const userService = {
       console.log("No roles to assign, skipping");
       return;
     }
+
+    // First verify user exists in profiles table (which should match auth.users)
+    const { data: userProfile, error: userCheckError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('id', userId)
+      .single();
+
+    if (userCheckError || !userProfile) {
+      console.error("User not found in profiles:", userCheckError);
+      throw new Error(`User not found: ${userCheckError?.message || 'User does not exist'}`);
+    }
+
+    console.log("User verified in profiles table:", userProfile);
     
     // Get ALL roles from database first
     const { data: allRoles, error: allRolesError } = await supabase
@@ -400,6 +430,18 @@ export const userService = {
       const missingRoles = roleNames.filter(name => !foundRoleNames.includes(name));
       console.warn("Some roles not found (exact match):", missingRoles);
       console.log("Available roles:", allRoles?.map(r => r.name));
+    }
+
+    // Delete existing roles for this user first to avoid conflicts
+    console.log("Deleting existing user roles...");
+    const { error: deleteError } = await supabase
+      .from('user_roles')
+      .delete()
+      .eq('user_id', userId);
+
+    if (deleteError) {
+      console.error("Error deleting existing roles:", deleteError);
+      // Continue anyway - they might not have had roles before
     }
 
     // Create user_roles entries
