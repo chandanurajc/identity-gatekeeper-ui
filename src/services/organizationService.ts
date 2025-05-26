@@ -83,15 +83,15 @@ export const organizationService = {
       code: organizationData.code,
       description: organizationData.alias || null,
       status: organizationData.status,
-      organization_references: organizationData.references || [],
-      contacts: organizationData.contacts || [],
+      organization_references: organizationData.references as any || [],
+      contacts: organizationData.contacts as any || [],
       created_by: createdBy,
       updated_by: createdBy,
     };
 
     const { data, error } = await supabase
       .from('organizations')
-      .insert([newOrganization])
+      .insert(newOrganization)
       .select()
       .single();
 
@@ -126,8 +126,8 @@ export const organizationService = {
       code: organizationData.code,
       description: organizationData.alias || null,
       status: organizationData.status,
-      organization_references: organizationData.references || [],
-      contacts: organizationData.contacts || [],
+      organization_references: organizationData.references as any || [],
+      contacts: organizationData.contacts as any || [],
       updated_by: updatedBy,
       updated_on: new Date().toISOString(),
     };

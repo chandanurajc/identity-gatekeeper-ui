@@ -87,11 +87,15 @@ export const userService = {
   async createUser(userData: UserFormData, createdBy: string): Promise<User> {
     console.log("Creating user with data:", userData);
     
+    // Generate a UUID for the new user (this would typically come from auth.users)
+    const userId = crypto.randomUUID();
+    
     const newUser = {
+      id: userId,
       username: userData.username,
       first_name: userData.firstName,
       last_name: userData.lastName,
-      phone: userData.phone,
+      phone: userData.phone as any,
       designation: userData.designation,
       organization_id: userData.organizationId,
       effective_from: userData.effectiveFrom.toISOString(),
@@ -102,7 +106,7 @@ export const userService = {
 
     const { data, error } = await supabase
       .from('profiles')
-      .insert([newUser])
+      .insert(newUser)
       .select()
       .single();
 
@@ -141,7 +145,7 @@ export const userService = {
       username: userData.username,
       first_name: userData.firstName,
       last_name: userData.lastName,
-      phone: userData.phone,
+      phone: userData.phone as any,
       designation: userData.designation,
       organization_id: userData.organizationId,
       effective_from: userData.effectiveFrom.toISOString(),
