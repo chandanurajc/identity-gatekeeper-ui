@@ -52,11 +52,11 @@ const App = () => (
             <Route 
               path="/dashboard" 
               element={
-                <ProtectedRoute>
+                <PermissionProtectedRoute requiredPermission="view_dashboard">
                   <MainLayout>
                     <Dashboard />
                   </MainLayout>
-                </ProtectedRoute>
+                </PermissionProtectedRoute>
               } 
             />
             

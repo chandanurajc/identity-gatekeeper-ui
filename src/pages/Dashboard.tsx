@@ -5,11 +5,19 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { usePermissions } from "@/hooks/usePermissions"; 
 import { Users } from "lucide-react";
+import { useEffect } from "react";
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
-  const { canViewUsers } = usePermissions();
+  const { canViewUsers, canViewDashboard } = usePermissions();
   const navigate = useNavigate();
+
+  // Check dashboard permission and redirect if user doesn't have access
+  useEffect(() => {
+    if (!canViewDashboard && user) {
+      navigate("/unauthorized");
+    }
+  }, [canViewDashboard, user, navigate]);
 
   const handleLogout = async () => {
     try {
@@ -23,6 +31,11 @@ const Dashboard = () => {
   const navigateToUserManagement = () => {
     navigate("/admin/users");
   };
+
+  // Don't render dashboard content if user doesn't have permission
+  if (!canViewDashboard) {
+    return null; // This will prevent flash before redirect
+  }
 
   return (
     <div className="container mx-auto py-8">

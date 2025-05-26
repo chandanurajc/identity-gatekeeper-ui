@@ -42,7 +42,7 @@ export const usePermissions = () => {
               "view-organization", "create-organization", "edit-organization",
               "view-division", "create-division", "edit-division",
               "view-category", "create-category", "edit-category",
-              "access_admin", "access_settings"
+              "access_admin", "access_settings", "view_dashboard"
             ];
             setPermissions(allPermissions);
             console.log("Admin permissions set:", allPermissions);
@@ -164,6 +164,8 @@ export const usePermissions = () => {
         // Module access
         canAccessAdminModule: false,
         canAccessSettingsModule: false,
+        // Dashboard permissions
+        canViewDashboard: false,
       };
     }
 
@@ -194,6 +196,8 @@ export const usePermissions = () => {
         // Module access
         canAccessAdminModule: true,
         canAccessSettingsModule: true,
+        // Dashboard permissions
+        canViewDashboard: true,
       };
     }
 
@@ -223,6 +227,8 @@ export const usePermissions = () => {
       // Module access
       canAccessAdminModule: permissions.includes("access_admin") || permissions.length > 0,
       canAccessSettingsModule: permissions.includes("access_settings"),
+      // Dashboard permissions
+      canViewDashboard: permissions.includes("view_dashboard"),
     };
     
     console.log("Computed permissions:", computed);
