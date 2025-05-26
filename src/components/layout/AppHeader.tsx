@@ -4,7 +4,6 @@ import { Input } from "@/components/ui/input";
 import { HeaderUserMenu } from "./HeaderUserMenu";
 import { Search, Building, Menu } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Button } from "@/components/ui/button";
 
 export function AppHeader() {
   const { user } = useAuth();
@@ -12,11 +11,7 @@ export function AppHeader() {
   return (
     <header className="flex h-14 items-center gap-4 bg-background px-4 lg:px-6 w-full border-b">
       {/* Sidebar Toggle */}
-      <SidebarTrigger asChild>
-        <Button variant="ghost" size="icon" className="md:hidden">
-          <Menu className="h-4 w-4" />
-        </Button>
-      </SidebarTrigger>
+      <SidebarTrigger className="md:hidden" />
 
       {/* App Logo */}
       <div className="flex items-center gap-2">
