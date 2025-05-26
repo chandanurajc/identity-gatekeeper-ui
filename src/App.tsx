@@ -35,6 +35,7 @@ import SupplierEdit from "./pages/supplier/SupplierEdit";
 import SupplierDetail from "./pages/supplier/SupplierDetail";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
+import PermissionProtectedRoute from "./components/PermissionProtectedRoute";
 import { MainLayout } from "./layouts/MainLayout";
 
 const queryClient = new QueryClient();
@@ -59,87 +60,87 @@ const App = () => (
               } 
             />
             
-            {/* User Management Routes */}
+            {/* User Management Routes - Use permission-based protection */}
             <Route 
               path="/admin/users" 
               element={
-                <ProtectedRoute requiredRoles={["admin"]}>
+                <PermissionProtectedRoute requiredPermission="view-user">
                   <MainLayout>
                     <UsersList />
                   </MainLayout>
-                </ProtectedRoute>
+                </PermissionProtectedRoute>
               } 
             />
             <Route 
               path="/admin/users/create" 
               element={
-                <ProtectedRoute requiredRoles={["admin"]}>
+                <PermissionProtectedRoute requiredPermission="create-user">
                   <MainLayout>
                     <CreateUser />
                   </MainLayout>
-                </ProtectedRoute>
+                </PermissionProtectedRoute>
               } 
             />
             <Route 
               path="/admin/users/edit/:userId" 
               element={
-                <ProtectedRoute requiredRoles={["admin"]}>
+                <PermissionProtectedRoute requiredPermission="edit-user">
                   <MainLayout>
                     <EditUser />
                   </MainLayout>
-                </ProtectedRoute>
+                </PermissionProtectedRoute>
               } 
             />
             <Route 
               path="/admin/users/:userId" 
               element={
-                <ProtectedRoute requiredRoles={["admin"]}>
+                <PermissionProtectedRoute requiredPermission="view-user">
                   <MainLayout>
                     <UserDetails />
                   </MainLayout>
-                </ProtectedRoute>
+                </PermissionProtectedRoute>
               } 
             />
             
-            {/* Role Management Routes */}
+            {/* Role Management Routes - Use permission-based protection */}
             <Route 
               path="/admin/roles" 
               element={
-                <ProtectedRoute requiredRoles={["admin"]}>
+                <PermissionProtectedRoute requiredPermission="view_roles">
                   <MainLayout>
                     <RolesList />
                   </MainLayout>
-                </ProtectedRoute>
+                </PermissionProtectedRoute>
               } 
             />
             <Route 
               path="/admin/roles/create" 
               element={
-                <ProtectedRoute requiredRoles={["admin"]}>
+                <PermissionProtectedRoute requiredPermission="create_role">
                   <MainLayout>
                     <RoleForm />
                   </MainLayout>
-                </ProtectedRoute>
+                </PermissionProtectedRoute>
               } 
             />
             <Route 
               path="/admin/roles/edit/:roleId" 
               element={
-                <ProtectedRoute requiredRoles={["admin"]}>
+                <PermissionProtectedRoute requiredPermission="edit_roles">
                   <MainLayout>
                     <RoleForm />
                   </MainLayout>
-                </ProtectedRoute>
+                </PermissionProtectedRoute>
               } 
             />
             <Route 
               path="/admin/roles/:roleId" 
               element={
-                <ProtectedRoute requiredRoles={["admin"]}>
+                <PermissionProtectedRoute requiredPermission="view_roles">
                   <MainLayout>
                     <RoleDetails />
                   </MainLayout>
-                </ProtectedRoute>
+                </PermissionProtectedRoute>
               } 
             />
             
@@ -147,41 +148,41 @@ const App = () => (
             <Route 
               path="/admin/organizations" 
               element={
-                <ProtectedRoute requiredRoles={["admin"]}>
+                <PermissionProtectedRoute requiredPermission="view-organization">
                   <MainLayout>
                     <OrganizationsList />
                   </MainLayout>
-                </ProtectedRoute>
+                </PermissionProtectedRoute>
               } 
             />
             <Route 
               path="/admin/organizations/create" 
               element={
-                <ProtectedRoute requiredRoles={["admin"]}>
+                <PermissionProtectedRoute requiredPermission="create-organization">
                   <MainLayout>
                     <OrganizationCreate />
                   </MainLayout>
-                </ProtectedRoute>
+                </PermissionProtectedRoute>
               } 
             />
             <Route 
               path="/admin/organizations/edit/:organizationId" 
               element={
-                <ProtectedRoute requiredRoles={["admin"]}>
+                <PermissionProtectedRoute requiredPermission="edit-organization">
                   <MainLayout>
                     <OrganizationEdit />
                   </MainLayout>
-                </ProtectedRoute>
+                </PermissionProtectedRoute>
               } 
             />
             <Route 
               path="/admin/organizations/:organizationId" 
               element={
-                <ProtectedRoute requiredRoles={["admin"]}>
+                <PermissionProtectedRoute requiredPermission="view-organization">
                   <MainLayout>
                     <OrganizationDetail />
                   </MainLayout>
-                </ProtectedRoute>
+                </PermissionProtectedRoute>
               } 
             />
             
@@ -189,41 +190,41 @@ const App = () => (
             <Route 
               path="/admin/divisions" 
               element={
-                <ProtectedRoute requiredRoles={["admin"]}>
+                <PermissionProtectedRoute requiredPermission="view-division">
                   <MainLayout>
                     <DivisionsList />
                   </MainLayout>
-                </ProtectedRoute>
+                </PermissionProtectedRoute>
               } 
             />
             <Route 
               path="/admin/divisions/create" 
               element={
-                <ProtectedRoute requiredRoles={["admin"]}>
+                <PermissionProtectedRoute requiredPermission="create-division">
                   <MainLayout>
                     <DivisionCreate />
                   </MainLayout>
-                </ProtectedRoute>
+                </PermissionProtectedRoute>
               } 
             />
             <Route 
               path="/admin/divisions/edit/:divisionId" 
               element={
-                <ProtectedRoute requiredRoles={["admin"]}>
+                <PermissionProtectedRoute requiredPermission="edit-division">
                   <MainLayout>
                     <DivisionEdit />
                   </MainLayout>
-                </ProtectedRoute>
+                </PermissionProtectedRoute>
               } 
             />
             <Route 
               path="/admin/divisions/:divisionId" 
               element={
-                <ProtectedRoute requiredRoles={["admin"]}>
+                <PermissionProtectedRoute requiredPermission="view-division">
                   <MainLayout>
                     <DivisionDetail />
                   </MainLayout>
-                </ProtectedRoute>
+                </PermissionProtectedRoute>
               } 
             />
             
@@ -231,11 +232,11 @@ const App = () => (
             <Route 
               path="/admin/permissions" 
               element={
-                <ProtectedRoute requiredRoles={["admin"]}>
+                <PermissionProtectedRoute requiredPermission="view_permissions">
                   <MainLayout>
                     <PermissionsList />
                   </MainLayout>
-                </ProtectedRoute>
+                </PermissionProtectedRoute>
               } 
             />
 
@@ -243,31 +244,31 @@ const App = () => (
             <Route 
               path="/master-data/item-category" 
               element={
-                <ProtectedRoute>
+                <PermissionProtectedRoute requiredPermission="view-category">
                   <MainLayout>
                     <CategoriesList />
                   </MainLayout>
-                </ProtectedRoute>
+                </PermissionProtectedRoute>
               } 
             />
             <Route 
               path="/master-data/item-category/create" 
               element={
-                <ProtectedRoute>
+                <PermissionProtectedRoute requiredPermission="create-category">
                   <MainLayout>
                     <CategoryCreate />
                   </MainLayout>
-                </ProtectedRoute>
+                </PermissionProtectedRoute>
               } 
             />
             <Route 
               path="/master-data/item-category/:categoryId" 
               element={
-                <ProtectedRoute>
+                <PermissionProtectedRoute requiredPermission="view-category">
                   <MainLayout>
                     <CategoryDetail />
                   </MainLayout>
-                </ProtectedRoute>
+                </PermissionProtectedRoute>
               } 
             />
             

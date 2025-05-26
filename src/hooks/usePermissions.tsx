@@ -38,7 +38,7 @@ export const usePermissions = () => {
             // Grant all possible permissions for admin users
             const allPermissions = [
               "view-user", "create-user", "edit-user",
-              "view-roles", "create_role", "edit_roles", "view_permissions",
+              "view_roles", "create_role", "edit_roles", "view_permissions",
               "view-organization", "create-organization", "edit-organization",
               "view-division", "create-division", "edit-division",
               "view-category", "create-category", "edit-category",
@@ -71,7 +71,7 @@ export const usePermissions = () => {
               // Add admin module access for user management roles
               const userManagementPermissions = [
                 "view-user", "create-user", "edit-user", 
-                "view-roles", "create_role", "edit_roles", "view_permissions",
+                "view_roles", "create_role", "edit_roles", "view_permissions",
                 "access_admin" // Key permission for accessing admin module
               ];
               
