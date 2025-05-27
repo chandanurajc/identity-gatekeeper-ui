@@ -1,101 +1,96 @@
-
-import { 
-  Users, 
-  LayoutDashboard, 
-  Settings, 
-  Shield, 
-  Lock, 
-  Folder,
-  Building,
-  GitBranch
+import {
+  Home,
+  LayoutDashboard,
+  ListChecks,
+  Package,
+  Settings,
+  Shield,
+  ShoppingBag,
+  User,
+  Users,
 } from "lucide-react";
 
-export interface MenuItem {
-  path: string;
-  label: string;
-  icon: React.ElementType;
-  permission: boolean;
+export interface NavItem {
+  title: string;
+  href: string;
+  icon: keyof typeof Icons;
+  label?: string;
+  permission?: string;
 }
 
-export interface ModuleGroup {
-  name: string;
-  items: MenuItem[];
+export interface NavGroup {
+  title: string;
+  items: NavItem[];
 }
 
-export const createModuleGroups = (permissions: {
-  canViewUsers: boolean;
-  canViewRoles: boolean;
-  canViewPermissions: boolean;
-  canViewCategory: boolean;
-  canViewOrganization: boolean;
-  canViewDivision: boolean;
-}): ModuleGroup[] => [
+export interface NavigationGroup {
+  title: string;
+  items: NavItem[];
+}
+
+export const Icons = {
+  home: Home,
+  dashboard: LayoutDashboard,
+  product: Package,
+  orders: ShoppingBag,
+  customers: Users,
+  user: User,
+  settings: Settings,
+  roles: Shield,
+  permissions: ListChecks,
+};
+
+export const sidebarConfig: NavigationGroup[] = [
   {
-    name: "Main",
+    title: "Master Data",
     items: [
       {
-        path: "/dashboard",
-        label: "Dashboard",
-        icon: LayoutDashboard,
-        permission: true
-      }
-    ]
-  },
-  {
-    name: "Administration",
-    items: [
-      {
-        path: "/admin/users",
-        label: "User Management",
-        icon: Users,
-        permission: permissions.canViewUsers
-      },
-      {
-        path: "/admin/roles",
-        label: "Role Management",
-        icon: Shield,
-        permission: permissions.canViewRoles
-      },
-      {
-        path: "/admin/permissions",
-        label: "System Permissions",
-        icon: Lock,
-        permission: permissions.canViewPermissions
-      },
-      {
+        title: "Organizations",
         path: "/admin/organizations",
-        label: "Organizations",
-        icon: Building,
-        permission: permissions.canViewOrganization
+        permission: "view-organization",
+        icon: "Shield" as const,
       },
       {
+        title: "Divisions",
         path: "/admin/divisions",
-        label: "Divisions",
-        icon: GitBranch,
-        permission: permissions.canViewDivision
-      }
-    ]
+        permission: "view-division",
+        icon: "Shield" as const,
+      },
+      {
+        title: "Suppliers",
+        path: "/master-data/suppliers",
+        permission: "view-supplier",
+        icon: "Shield" as const,
+      },
+      {
+        title: "Partner Management",
+        path: "/master-data/partners",
+        permission: "manage_partner",
+        icon: "Shield" as const,
+      },
+    ],
   },
   {
-    name: "Master Data",
+    title: "Admin",
     items: [
       {
-        path: "/master-data/item-category",
-        label: "Item Category",
-        icon: Folder,
-        permission: permissions.canViewCategory
-      }
-    ]
+        title: "Users",
+        path: "/admin/users",
+        icon: "user",
+        permission: "view-user",
+      },
+      {
+        title: "Roles",
+        path: "/admin/roles",
+        icon: "roles",
+        permission: "view-role",
+      },
+      {
+        title: "Permissions",
+        path: "/admin/permissions",
+        icon: "permissions",
+        permission: "view-permission",
+      },
+    ],
   },
-  {
-    name: "System",
-    items: [
-      {
-        path: "/settings",
-        label: "Settings",
-        icon: Settings,
-        permission: true
-      }
-    ]
-  }
 ];

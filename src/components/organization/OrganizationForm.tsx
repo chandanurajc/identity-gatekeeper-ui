@@ -13,7 +13,7 @@ import { useAuth } from "@/context/AuthContext";
 import { ContactForm } from "./ContactForm";
 import { ReferenceForm } from "./ReferenceForm";
 
-// Enhanced form schema with stricter validation
+// Enhanced form schema with stricter validation - type is now required
 const organizationSchema = z.object({
   name: z.string()
     .min(3, "Name must be at least 3 characters")
@@ -27,7 +27,9 @@ const organizationSchema = z.object({
     .max(200, "Alias must be less than 200 characters")
     .optional()
     .transform(val => val?.trim() || undefined),
-  type: z.enum(["Supplier", "Retailer", "Wholesale Customer", "Retail Customer", "Admin"]),
+  type: z.enum(["Supplier", "Retailer", "Wholesale Customer", "Retail Customer", "Admin"], {
+    required_error: "Organization type is required",
+  }),
   status: z.enum(["active", "inactive"]),
   contacts: z.array(
     z.object({
@@ -72,7 +74,7 @@ const OrganizationForm = ({ initialData, onSubmit, isEditing = false }: Organiza
       name: initialData?.name || "",
       code: initialData?.code || "",
       alias: initialData?.alias || "",
-      type: initialData?.type || "Supplier",
+      type: initialData?.type || undefined, // Changed from default value to force selection
       status: initialData?.status || "active",
       contacts: initialData?.contacts && initialData.contacts.length > 0 
         ? initialData.contacts 
@@ -100,6 +102,11 @@ const OrganizationForm = ({ initialData, onSubmit, isEditing = false }: Organiza
       // Validate organization code format
       if (!/^[A-Z0-9]{4}$/.test(data.code)) {
         throw new Error("Organization code must be exactly 4 uppercase alphanumeric characters");
+      }
+
+      // Validate that organization type is selected
+      if (!data.type) {
+        throw new Error("Organization type is required");
       }
 
       console.log("OrganizationForm: Validation passed, calling onSubmit");
@@ -204,8 +211,7 @@ const OrganizationForm = ({ initialData, onSubmit, isEditing = false }: Organiza
                 <Select 
                   disabled={isSubmitting} 
                   onValueChange={field.onChange} 
-                  defaultValue={field.value}
-                  value={field.value}
+                  value={field.value || ""}
                 >
                   <FormControl>
                     <SelectTrigger>
