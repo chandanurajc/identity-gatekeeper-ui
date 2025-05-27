@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Organization, OrganizationFormData, Reference, Contact } from "@/types/organization";
 
@@ -11,8 +10,8 @@ export const organizationService = {
         .from('organizations')
         .select(`
           *,
-          organization_references!inner(*),
-          organization_contacts!inner(*)
+          organization_references(*),
+          organization_contacts(*)
         `)
         .order('created_on', { ascending: false });
 
@@ -148,7 +147,7 @@ export const organizationService = {
     console.log("Creating organization with data:", organizationData);
     
     try {
-      // First create the organization
+      // First create the organization without JSON fields
       const newOrganization = {
         name: organizationData.name,
         code: organizationData.code,

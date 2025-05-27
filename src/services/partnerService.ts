@@ -58,12 +58,12 @@ export const partnerService = {
     
     try {
       if (searchType === 'code') {
-        // Case-insensitive search for organizations by code
+        // Case-insensitive search for organizations by code using ilike
         const { data, error } = await supabase
           .from('organizations')
           .select('id, code, name, type')
           .eq('status', 'active')
-          .ilike('code', searchTerm)
+          .ilike('code', `%${searchTerm}%`)
           .limit(20);
 
         if (error) {
@@ -84,7 +84,7 @@ export const partnerService = {
         }));
 
       } else if (searchType === 'gst') {
-        // Case-insensitive search in the organization_references table
+        // Case-insensitive search in the organization_references table using ilike
         const { data, error } = await supabase
           .from('organization_references')
           .select(`
@@ -94,7 +94,7 @@ export const partnerService = {
           `)
           .eq('reference_type', 'GST')
           .eq('organizations.status', 'active')
-          .ilike('reference_value', searchTerm)
+          .ilike('reference_value', `%${searchTerm}%`)
           .limit(20);
 
         if (error) {
