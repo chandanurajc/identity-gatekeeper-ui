@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Organization, OrganizationFormData, Reference, Contact } from "@/types/organization";
 
@@ -32,7 +33,7 @@ export const organizationService = {
           name: org.name,
           code: org.code,
           alias: org.description,
-          type: org.type || 'Admin', // Default to Admin if type is null
+          type: org.type as Organization['type'],
           status: org.status as 'active' | 'inactive',
           references: Array.isArray(org.organization_references) 
             ? org.organization_references as unknown as Reference[] 
@@ -88,7 +89,7 @@ export const organizationService = {
         name: data.name,
         code: data.code,
         alias: data.description,
-        type: data.type || 'Admin',
+        type: data.type as Organization['type'],
         status: data.status as 'active' | 'inactive',
         references: Array.isArray(data.organization_references) 
           ? data.organization_references as unknown as Reference[] 
@@ -114,7 +115,7 @@ export const organizationService = {
       name: organizationData.name,
       code: organizationData.code,
       description: organizationData.alias || null,
-      type: organizationData.type, // Explicitly set the type
+      type: organizationData.type,
       status: organizationData.status,
       organization_references: organizationData.references as any || [],
       contacts: organizationData.contacts as any || [],
@@ -142,7 +143,7 @@ export const organizationService = {
       name: data.name,
       code: data.code,
       alias: data.description,
-      type: data.type || organizationData.type, // Use the type from the form if not returned by the database
+      type: data.type as Organization['type'],
       status: data.status as 'active' | 'inactive',
       references: organizationData.references,
       contacts: organizationData.contacts,
@@ -161,7 +162,7 @@ export const organizationService = {
       name: organizationData.name,
       code: organizationData.code,
       description: organizationData.alias || null,
-      type: organizationData.type, // Explicitly set the type field
+      type: organizationData.type,
       status: organizationData.status,
       organization_references: organizationData.references as any || [],
       contacts: organizationData.contacts as any || [],
@@ -189,7 +190,7 @@ export const organizationService = {
       name: data.name,
       code: data.code,
       alias: data.description,
-      type: data.type || organizationData.type, // Use the type from the form if not returned
+      type: data.type as Organization['type'],
       status: data.status as 'active' | 'inactive',
       references: organizationData.references,
       contacts: organizationData.contacts,

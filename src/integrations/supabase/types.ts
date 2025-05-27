@@ -121,7 +121,7 @@ export type Database = {
           name: string
           organization_references: Json | null
           status: string
-          type: string | null
+          type: string
           updated_by: string | null
           updated_on: string | null
         }
@@ -136,7 +136,7 @@ export type Database = {
           name: string
           organization_references?: Json | null
           status?: string
-          type?: string | null
+          type?: string
           updated_by?: string | null
           updated_on?: string | null
         }
@@ -151,7 +151,7 @@ export type Database = {
           name?: string
           organization_references?: Json | null
           status?: string
-          type?: string | null
+          type?: string
           updated_by?: string | null
           updated_on?: string | null
         }
