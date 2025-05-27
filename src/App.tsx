@@ -32,6 +32,7 @@ import SuppliersList from "./pages/supplier/SuppliersList";
 import SupplierCreate from "./pages/supplier/SupplierCreate";
 import SupplierEdit from "./pages/supplier/SupplierEdit";
 import SupplierDetail from "./pages/supplier/SupplierDetail";
+import PartnersList from "./pages/master-data/PartnersList";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PermissionProtectedRoute from "./components/PermissionProtectedRoute";
@@ -310,6 +311,18 @@ const App = () => (
                     <SupplierDetail />
                   </MainLayout>
                 </ProtectedRoute>
+              } 
+            />
+            
+            {/* Partner Management Routes */}
+            <Route 
+              path="/master-data/partners" 
+              element={
+                <PermissionProtectedRoute requiredPermission="manage_partner">
+                  <MainLayout>
+                    <PartnersList />
+                  </MainLayout>
+                </PermissionProtectedRoute>
               } 
             />
             
