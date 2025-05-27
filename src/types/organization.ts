@@ -30,7 +30,6 @@ export interface Organization {
   status: 'active' | 'inactive';
   references: Reference[];
   contacts: Contact[];
-  supplierId?: string; // Add supplier field
   createdBy?: string;
   createdOn?: Date;
   updatedBy?: string;
@@ -45,5 +44,4 @@ export interface OrganizationFormData {
   status: 'active' | 'inactive';
   references: Reference[];
   contacts: Contact[];
-  supplierId?: string; // Add supplier field
 }

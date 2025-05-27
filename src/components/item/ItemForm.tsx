@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,8 +8,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ItemFormData, ItemCostFormData, ItemPriceFormData } from "@/types/item";
 import { ItemGroup } from "@/types/itemGroup";
 import { SalesChannel } from "@/types/salesChannel";
+import { Organization } from "@/types/organization";
 import { itemGroupService } from "@/services/itemGroupService";
 import { salesChannelService } from "@/services/salesChannelService";
+import { organizationService } from "@/services/organizationService";
 import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -37,6 +38,7 @@ const ItemForm = ({ initialData, onSubmit, onCancel, isEdit = false }: ItemFormP
   
   const [itemGroups, setItemGroups] = useState<ItemGroup[]>([]);
   const [salesChannels, setSalesChannels] = useState<SalesChannel[]>([]);
+  const [suppliers, setSuppliers] = useState<Organization[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
 
@@ -49,16 +51,20 @@ const ItemForm = ({ initialData, onSubmit, onCancel, isEdit = false }: ItemFormP
   const fetchSelectData = async () => {
     console.log("ItemForm: Fetching select data...");
     try {
-      const [itemGroupsData, salesChannelsData] = await Promise.all([
+      const [itemGroupsData, salesChannelsData, organizationsData] = await Promise.all([
         itemGroupService.getItemGroups(),
         salesChannelService.getActiveSalesChannels(),
+        organizationService.getOrganizations(),
       ]);
       
       console.log("ItemForm: Item groups fetched:", itemGroupsData);
       console.log("ItemForm: Sales channels fetched:", salesChannelsData);
+      console.log("ItemForm: Organizations fetched:", organizationsData);
       
       setItemGroups(itemGroupsData.filter(ig => ig.status === 'active'));
       setSalesChannels(salesChannelsData);
+      // Filter organizations to only show suppliers
+      setSuppliers(organizationsData.filter(org => org.type === 'Supplier' && org.status === 'active'));
     } catch (error) {
       console.error("ItemForm: Error fetching select data:", error);
       toast.error("Failed to load form data");
@@ -365,12 +371,22 @@ const ItemForm = ({ initialData, onSubmit, onCancel, isEdit = false }: ItemFormP
               {formData.costs.map((cost, index) => (
                 <div key={index} className="flex items-end gap-4 p-4 border rounded-lg">
                   <div className="flex-1">
-                    <Label>Supplier ID</Label>
-                    <Input
-                      value={cost.supplierId}
-                      onChange={(e) => updateCost(index, "supplierId", e.target.value)}
-                      placeholder="Enter supplier ID"
-                    />
+                    <Label>Supplier</Label>
+                    <Select 
+                      value={cost.supplierId} 
+                      onValueChange={(value) => updateCost(index, "supplierId", value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select supplier" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {suppliers.map((supplier) => (
+                          <SelectItem key={supplier.id} value={supplier.id}>
+                            {supplier.name} ({supplier.code})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="flex-1">
                     <Label>Cost</Label>
@@ -391,6 +407,11 @@ const ItemForm = ({ initialData, onSubmit, onCancel, isEdit = false }: ItemFormP
                   </Button>
                 </div>
               ))}
+              {formData.costs.length === 0 && (
+                <p className="text-muted-foreground text-center py-4">
+                  No supplier costs added yet. Click "Add Cost" to get started.
+                </p>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -446,6 +467,11 @@ const ItemForm = ({ initialData, onSubmit, onCancel, isEdit = false }: ItemFormP
                   </Button>
                 </div>
               ))}
+              {formData.prices.length === 0 && (
+                <p className="text-muted-foreground text-center py-4">
+                  No sales channel prices added yet. Click "Add Price" to get started.
+                </p>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
