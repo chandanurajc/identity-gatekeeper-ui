@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Item, ItemFormData } from "@/types/item";
 
@@ -71,46 +70,65 @@ export const itemService = {
   },
 
   async generateItemId(): Promise<string> {
+    console.log("ItemService: Starting generateItemId...");
+    
     // Generate a 5-digit numerical ID
     const randomId = Math.floor(10000 + Math.random() * 90000).toString();
+    console.log("ItemService: Generated potential ID:", randomId);
     
     // Check if ID already exists
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('items')
       .select('id')
       .eq('id', randomId)
       .single();
     
+    if (error && error.code !== 'PGRST116') {
+      console.error("ItemService: Error checking existing ID:", error);
+      throw error;
+    }
+    
     // If exists, generate another one recursively
     if (data) {
+      console.log("ItemService: ID already exists, generating new one...");
       return this.generateItemId();
     }
     
+    console.log("ItemService: Final generated ID:", randomId);
     return randomId;
   },
 
   async generateGTIN14(itemId: string, organizationId: string): Promise<string> {
-    console.log("Generating GTIN-14 for item:", itemId, "organization:", organizationId);
+    console.log("ItemService: Generating GTIN-14 for item:", itemId, "organization:", organizationId);
     
     try {
       // Get GS1 Company code from organization references
-      const { data: orgRef } = await supabase
+      const { data: orgRef, error: refError } = await supabase
         .from('organization_references')
         .select('reference_value')
         .eq('organization_id', organizationId)
         .eq('reference_type', 'GS1 Company code')
         .single();
 
-      if (!orgRef?.reference_value) {
+      if (refError) {
+        console.error("ItemService: Error fetching GS1 code:", refError);
         throw new Error("GS1 Company code not found for organization");
       }
 
+      if (!orgRef?.reference_value) {
+        console.error("ItemService: No GS1 Company code found");
+        throw new Error("GS1 Company code not found for organization");
+      }
+
+      console.log("ItemService: Found GS1 Company code:", orgRef.reference_value);
+      
       const companyPrefix = orgRef.reference_value.substring(0, 7);
       const packagingIndicator = '0';
       const itemReference = itemId.padStart(5, '0');
       
       // Create the 13 digits without check digit
       const partial = packagingIndicator + companyPrefix + itemReference;
+      console.log("ItemService: Partial GTIN (without check digit):", partial);
       
       // Calculate check digit using GTIN-14 algorithm
       let sum = 0;
@@ -124,74 +142,106 @@ export const itemService = {
       const checkDigit = (10 - (sum % 10)) % 10;
       const gtin14 = partial + checkDigit.toString();
       
-      console.log("Generated GTIN-14:", gtin14);
+      console.log("ItemService: Generated GTIN-14:", gtin14);
       return gtin14;
       
     } catch (error) {
-      console.error("Error generating GTIN-14:", error);
+      console.error("ItemService: Error generating GTIN-14:", error);
       throw error;
     }
   },
 
   async createItem(formData: ItemFormData, createdBy: string): Promise<void> {
-    console.log("Creating item:", formData, "created by:", createdBy);
+    console.log("ItemService: Starting createItem...");
+    console.log("ItemService: FormData received:", JSON.stringify(formData, null, 2));
+    console.log("ItemService: CreatedBy:", createdBy);
     
     try {
       // Get current user's organization
-      const { data: { user } } = await supabase.auth.getUser();
+      console.log("ItemService: Getting current user...");
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError) {
+        console.error("ItemService: Error getting user:", userError);
+        throw new Error("User authentication error");
+      }
+      
       if (!user) {
+        console.error("ItemService: User not authenticated");
         throw new Error("User not authenticated");
       }
+      
+      console.log("ItemService: User authenticated:", user.id);
 
-      const { data: profile } = await supabase
+      console.log("ItemService: Getting user profile...");
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('organization_id')
         .eq('id', user.id)
         .single();
 
+      if (profileError) {
+        console.error("ItemService: Error getting profile:", profileError);
+        throw new Error("Failed to get user profile");
+      }
+
       if (!profile?.organization_id) {
+        console.error("ItemService: No organization found for user");
         throw new Error("No organization found for user");
       }
+
+      console.log("ItemService: User organization:", profile.organization_id);
 
       // Generate item ID if not provided
       let itemId = formData.id;
       if (!itemId) {
+        console.log("ItemService: No ID provided, generating...");
         itemId = await this.generateItemId();
       }
+      console.log("ItemService: Using item ID:", itemId);
 
       // Generate barcode if not provided
       let barcode = formData.barcode;
       if (!barcode) {
+        console.log("ItemService: No barcode provided, generating...");
         barcode = await this.generateGTIN14(itemId, profile.organization_id);
       }
+      console.log("ItemService: Using barcode:", barcode);
 
       // Insert main item record
+      console.log("ItemService: Preparing item insert...");
+      const itemInsert = {
+        id: itemId,
+        description: formData.description,
+        item_group_id: formData.itemGroupId || null,
+        classification: formData.classification,
+        sub_classification: formData.subClassification,
+        status: formData.status,
+        barcode: barcode,
+        length: formData.length || null,
+        width: formData.width || null,
+        height: formData.height || null,
+        weight: formData.weight || null,
+        organization_id: profile.organization_id,
+        created_by: createdBy,
+        updated_by: createdBy,
+      };
+      
+      console.log("ItemService: Item insert data:", JSON.stringify(itemInsert, null, 2));
+      
       const { error: itemError } = await supabase
         .from('items')
-        .insert({
-          id: itemId,
-          description: formData.description,
-          item_group_id: formData.itemGroupId,
-          classification: formData.classification,
-          sub_classification: formData.subClassification,
-          status: formData.status,
-          barcode: barcode,
-          length: formData.length,
-          width: formData.width,
-          height: formData.height,
-          weight: formData.weight,
-          organization_id: profile.organization_id,
-          created_by: createdBy,
-          updated_by: createdBy,
-        });
+        .insert(itemInsert);
 
       if (itemError) {
-        console.error("Error creating item:", itemError);
+        console.error("ItemService: Error creating item:", itemError);
         throw new Error(`Failed to create item: ${itemError.message}`);
       }
 
+      console.log("ItemService: Item created successfully");
+
       // Insert item costs
       if (formData.costs && formData.costs.length > 0) {
+        console.log("ItemService: Inserting", formData.costs.length, "costs...");
         const costInserts = formData.costs.map(cost => ({
           item_id: itemId,
           supplier_id: cost.supplierId,
@@ -201,18 +251,23 @@ export const itemService = {
           updated_by: createdBy,
         }));
 
+        console.log("ItemService: Cost inserts:", JSON.stringify(costInserts, null, 2));
+
         const { error: costError } = await supabase
           .from('item_costs')
           .insert(costInserts);
 
         if (costError) {
-          console.error("Error creating item costs:", costError);
+          console.error("ItemService: Error creating item costs:", costError);
           throw new Error(`Failed to create item costs: ${costError.message}`);
         }
+        
+        console.log("ItemService: Costs inserted successfully");
       }
 
       // Insert item prices
       if (formData.prices && formData.prices.length > 0) {
+        console.log("ItemService: Inserting", formData.prices.length, "prices...");
         const priceInserts = formData.prices.map(price => ({
           item_id: itemId,
           sales_channel_id: price.salesChannelId,
@@ -222,20 +277,24 @@ export const itemService = {
           updated_by: createdBy,
         }));
 
+        console.log("ItemService: Price inserts:", JSON.stringify(priceInserts, null, 2));
+
         const { error: priceError } = await supabase
           .from('item_prices')
           .insert(priceInserts);
 
         if (priceError) {
-          console.error("Error creating item prices:", priceError);
+          console.error("ItemService: Error creating item prices:", priceError);
           throw new Error(`Failed to create item prices: ${priceError.message}`);
         }
+        
+        console.log("ItemService: Prices inserted successfully");
       }
 
-      console.log("Item created successfully with ID:", itemId);
+      console.log("ItemService: Item creation completed successfully with ID:", itemId);
       
     } catch (error) {
-      console.error("Service error creating item:", error);
+      console.error("ItemService: Service error creating item:", error);
       throw error;
     }
   },

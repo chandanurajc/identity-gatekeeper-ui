@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +22,9 @@ interface ItemFormProps {
 }
 
 const ItemForm = ({ initialData, onSubmit, onCancel, isEdit = false }: ItemFormProps) => {
+  console.log("ItemForm: Initializing with data:", initialData);
+  console.log("ItemForm: isEdit:", isEdit);
+  
   const [formData, setFormData] = useState<ItemFormData>({
     description: "",
     classification: "",
@@ -36,21 +40,27 @@ const ItemForm = ({ initialData, onSubmit, onCancel, isEdit = false }: ItemFormP
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
 
+  console.log("ItemForm: Current formData:", formData);
+
   useEffect(() => {
     fetchSelectData();
   }, []);
 
   const fetchSelectData = async () => {
+    console.log("ItemForm: Fetching select data...");
     try {
       const [itemGroupsData, salesChannelsData] = await Promise.all([
         itemGroupService.getItemGroups(),
         salesChannelService.getActiveSalesChannels(),
       ]);
       
+      console.log("ItemForm: Item groups fetched:", itemGroupsData);
+      console.log("ItemForm: Sales channels fetched:", salesChannelsData);
+      
       setItemGroups(itemGroupsData.filter(ig => ig.status === 'active'));
       setSalesChannels(salesChannelsData);
     } catch (error) {
-      console.error("Error fetching select data:", error);
+      console.error("ItemForm: Error fetching select data:", error);
       toast.error("Failed to load form data");
     } finally {
       setLoadingData(false);
@@ -59,26 +69,58 @@ const ItemForm = ({ initialData, onSubmit, onCancel, isEdit = false }: ItemFormP
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("ItemForm: Starting form submission...");
+    console.log("ItemForm: Form data to submit:", JSON.stringify(formData, null, 2));
+    
     setLoading(true);
     
     try {
+      // Validate required fields
+      if (!formData.description.trim()) {
+        console.error("ItemForm: Description is required");
+        toast.error("Description is required");
+        return;
+      }
+      
+      if (!formData.classification.trim()) {
+        console.error("ItemForm: Classification is required");
+        toast.error("Classification is required");
+        return;
+      }
+      
+      if (!formData.subClassification.trim()) {
+        console.error("ItemForm: Sub-classification is required");
+        toast.error("Sub-classification is required");
+        return;
+      }
+
+      console.log("ItemForm: Validation passed, calling onSubmit...");
       await onSubmit(formData);
+      console.log("ItemForm: onSubmit completed successfully");
       toast.success(`Item ${isEdit ? 'updated' : 'created'} successfully`);
     } catch (error) {
-      console.error(`Error ${isEdit ? 'updating' : 'creating'} item:`, error);
-      toast.error(`Failed to ${isEdit ? 'update' : 'create'} item`);
+      console.error(`ItemForm: Error ${isEdit ? 'updating' : 'creating'} item:`, error);
+      const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred";
+      toast.error(`Failed to ${isEdit ? 'update' : 'create'} item: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
   };
 
   const handleInputChange = (field: keyof ItemFormData, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    console.log(`ItemForm: Updating field ${field} with value:`, value);
+    setFormData(prev => {
+      const updated = { ...prev, [field]: value };
+      console.log("ItemForm: Updated formData:", updated);
+      return updated;
+    });
   };
 
   const handleItemGroupChange = (itemGroupId: string) => {
+    console.log("ItemForm: Item group changed to:", itemGroupId);
     const selectedGroup = itemGroups.find(group => group.id === itemGroupId);
     if (selectedGroup) {
+      console.log("ItemForm: Found selected group:", selectedGroup);
       setFormData(prev => ({
         ...prev,
         itemGroupId,
@@ -91,6 +133,7 @@ const ItemForm = ({ initialData, onSubmit, onCancel, isEdit = false }: ItemFormP
   };
 
   const addCost = () => {
+    console.log("ItemForm: Adding new cost");
     setFormData(prev => ({
       ...prev,
       costs: [...prev.costs, { supplierId: "", cost: 0 }]
@@ -98,6 +141,7 @@ const ItemForm = ({ initialData, onSubmit, onCancel, isEdit = false }: ItemFormP
   };
 
   const removeCost = (index: number) => {
+    console.log("ItemForm: Removing cost at index:", index);
     setFormData(prev => ({
       ...prev,
       costs: prev.costs.filter((_, i) => i !== index)
@@ -105,6 +149,7 @@ const ItemForm = ({ initialData, onSubmit, onCancel, isEdit = false }: ItemFormP
   };
 
   const updateCost = (index: number, field: keyof ItemCostFormData, value: any) => {
+    console.log(`ItemForm: Updating cost ${index} field ${field}:`, value);
     setFormData(prev => ({
       ...prev,
       costs: prev.costs.map((cost, i) => 
@@ -114,6 +159,7 @@ const ItemForm = ({ initialData, onSubmit, onCancel, isEdit = false }: ItemFormP
   };
 
   const addPrice = () => {
+    console.log("ItemForm: Adding new price");
     setFormData(prev => ({
       ...prev,
       prices: [...prev.prices, { salesChannelId: "", price: 0 }]
@@ -121,6 +167,7 @@ const ItemForm = ({ initialData, onSubmit, onCancel, isEdit = false }: ItemFormP
   };
 
   const removePrice = (index: number) => {
+    console.log("ItemForm: Removing price at index:", index);
     setFormData(prev => ({
       ...prev,
       prices: prev.prices.filter((_, i) => i !== index)
@@ -128,6 +175,7 @@ const ItemForm = ({ initialData, onSubmit, onCancel, isEdit = false }: ItemFormP
   };
 
   const updatePrice = (index: number, field: keyof ItemPriceFormData, value: any) => {
+    console.log(`ItemForm: Updating price ${index} field ${field}:`, value);
     setFormData(prev => ({
       ...prev,
       prices: prev.prices.map((price, i) => 
