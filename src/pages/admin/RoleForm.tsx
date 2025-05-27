@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { roleService } from "@/services/roleService";
@@ -35,7 +34,7 @@ const RoleForm = () => {
     const loadData = async () => {
       try {
         // Fetch organizations
-        const orgs = await organizationService.getAllOrganizations();
+        const orgs = await organizationService.getOrganizations();
         setOrganizations(orgs);
         setIsLoadingOrganizations(false);
         

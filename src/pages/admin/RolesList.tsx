@@ -45,7 +45,7 @@ const RolesList = () => {
         console.log("Fetching roles and organizations...");
         const [allRoles, allOrgs] = await Promise.all([
           roleService.getAllRoles(),
-          organizationService.getAllOrganizations()
+          organizationService.getOrganizations()
         ]);
         
         console.log("Roles fetched:", allRoles.length);
