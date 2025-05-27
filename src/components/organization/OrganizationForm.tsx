@@ -1,9 +1,10 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { OrganizationFormData } from "@/types/organization";
+import { Partner } from "@/types/partner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -13,8 +14,9 @@ import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { ContactForm } from "./ContactForm";
 import { ReferenceForm } from "./ReferenceForm";
+import { partnerService } from "@/services/partnerService";
 
-// Enhanced form schema with stricter validation - type is now required
+// Enhanced form schema with supplier field
 const organizationSchema = z.object({
   name: z.string()
     .min(3, "Name must be at least 3 characters")
@@ -32,6 +34,7 @@ const organizationSchema = z.object({
     required_error: "Organization type is required",
   }),
   status: z.enum(["active", "inactive"]),
+  supplierId: z.string().optional(),
   contacts: z.array(
     z.object({
       id: z.string(),
@@ -52,7 +55,7 @@ const organizationSchema = z.object({
   references: z.array(
     z.object({
       id: z.string(),
-      type: z.enum(["GST", "CIN", "PAN"]),
+      type: z.enum(["GST", "CIN", "PAN", "GS1 Company code"]),
       value: z.string().min(1, "Reference value is required"),
     })
   ).optional().default([]),
@@ -68,9 +71,26 @@ const OrganizationForm = ({ initialData, onSubmit, isEditing = false }: Organiza
   const { user } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [partners, setPartners] = useState<Partner[]>([]);
+  const [loadingPartners, setLoadingPartners] = useState(true);
   
   console.log("OrganizationForm: Initializing with data:", initialData);
   console.log("OrganizationForm: isEditing:", isEditing);
+
+  // Load partners for supplier dropdown
+  useEffect(() => {
+    const loadPartners = async () => {
+      try {
+        const partnerData = await partnerService.getPartners();
+        setPartners(partnerData);
+      } catch (error) {
+        console.error("Failed to load partners:", error);
+      } finally {
+        setLoadingPartners(false);
+      }
+    };
+    loadPartners();
+  }, []);
   
   // Initialize form with default values or existing data
   const form = useForm<OrganizationFormData>({
@@ -81,6 +101,7 @@ const OrganizationForm = ({ initialData, onSubmit, isEditing = false }: Organiza
       alias: initialData?.alias || "",
       type: initialData?.type || undefined,
       status: initialData?.status || "active",
+      supplierId: initialData?.supplierId || "",
       contacts: initialData?.contacts && initialData.contacts.length > 0 
         ? initialData.contacts 
         : [],
@@ -291,6 +312,36 @@ const OrganizationForm = ({ initialData, onSubmit, isEditing = false }: Organiza
                   <SelectContent>
                     <SelectItem value="active">Active</SelectItem>
                     <SelectItem value="inactive">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="supplierId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Supplier</FormLabel>
+                <Select 
+                  disabled={isSubmitting || loadingPartners} 
+                  onValueChange={field.onChange} 
+                  value={field.value || ""}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder={loadingPartners ? "Loading suppliers..." : "Select supplier (optional)"} />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="">None</SelectItem>
+                    {partners.map((partner) => (
+                      <SelectItem key={partner.id} value={partner.id}>
+                        {partner.organizationName}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <FormMessage />

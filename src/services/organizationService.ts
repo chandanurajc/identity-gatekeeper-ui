@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Organization, OrganizationFormData, Reference, Contact } from "@/types/organization";
 
@@ -39,6 +38,7 @@ export const organizationService = {
           alias: org.description,
           type: org.type as Organization['type'],
           status: org.status as 'active' | 'inactive',
+          supplierId: org.supplier_id,
           references: (org.organization_references || []).map((ref: any) => ({
             id: ref.id,
             type: ref.reference_type as 'GST' | 'CIN' | 'PAN' | 'GS1 Company code',
@@ -108,6 +108,7 @@ export const organizationService = {
         alias: data.description,
         type: data.type as Organization['type'],
         status: data.status as 'active' | 'inactive',
+        supplierId: data.supplier_id,
         references: (data.organization_references || []).map((ref: any) => ({
           id: ref.id,
           type: ref.reference_type as 'GST' | 'CIN' | 'PAN' | 'GS1 Company code',
@@ -150,6 +151,7 @@ export const organizationService = {
         description: organizationData.alias || null,
         type: organizationData.type,
         status: organizationData.status,
+        supplier_id: organizationData.supplierId || null,
         created_by: createdBy,
         updated_by: createdBy,
       };
@@ -220,6 +222,7 @@ export const organizationService = {
         alias: orgData.description,
         type: orgData.type as Organization['type'],
         status: orgData.status as 'active' | 'inactive',
+        supplierId: orgData.supplier_id,
         references: organizationData.references,
         contacts: organizationData.contacts,
         createdBy: orgData.created_by,
@@ -250,6 +253,7 @@ export const organizationService = {
         description: organizationData.alias || null,
         type: organizationData.type,
         status: organizationData.status,
+        supplier_id: organizationData.supplierId || null,
         updated_by: updatedBy,
         updated_on: new Date().toISOString(),
       };
@@ -357,6 +361,7 @@ export const organizationService = {
         alias: orgData.description,
         type: orgData.type as Organization['type'],
         status: orgData.status as 'active' | 'inactive',
+        supplierId: orgData.supplier_id,
         references: organizationData.references,
         contacts: organizationData.contacts,
         createdBy: orgData.created_by,
