@@ -58,12 +58,12 @@ export const partnerService = {
     
     try {
       if (searchType === 'code') {
-        // Exact search for organizations by code
+        // Case-insensitive search for organizations by code
         const { data, error } = await supabase
           .from('organizations')
           .select('id, code, name, type')
           .eq('status', 'active')
-          .eq('code', searchTerm)
+          .ilike('code', searchTerm)
           .limit(20);
 
         if (error) {
@@ -84,8 +84,8 @@ export const partnerService = {
         }));
 
       } else if (searchType === 'gst') {
-        // First search in the organization_references table (traditional approach)
-        const { data: refData, error: refError } = await supabase
+        // Case-insensitive search in the organization_references table
+        const { data, error } = await supabase
           .from('organization_references')
           .select(`
             organization_id,
@@ -94,62 +94,27 @@ export const partnerService = {
           `)
           .eq('reference_type', 'GST')
           .eq('organizations.status', 'active')
-          .eq('reference_value', searchTerm)
+          .ilike('reference_value', searchTerm)
           .limit(20);
 
-        if (refError) {
-          console.error("Error searching organizations by GST in references table:", refError);
+        if (error) {
+          console.error("Error searching organizations by GST:", error);
+          throw new Error(`Failed to search organizations: ${error.message}`);
         }
 
-        // Then search in JSON column (organizations.organization_references)
-        const { data: jsonData, error: jsonError } = await supabase
-          .from('organizations')
-          .select('id, code, name, type')
-          .eq('status', 'active')
-          .contains('organization_references', [{ type: 'GST', value: searchTerm }])
-          .limit(20);
-
-        if (jsonError) {
-          console.error("Error searching organizations by GST in JSON column:", jsonError);
+        if (!data || data.length === 0) {
+          console.log("No organizations found with GST:", searchTerm);
+          return [];
         }
 
-        // Combine results from both searches, removing duplicates by id
-        let results: OrganizationSearchResult[] = [];
-        
-        // Add results from references table
-        if (refData && refData.length > 0) {
-          console.log("Organization search results by GST from references table:", refData);
-          const refResults = refData.map(ref => ({
-            id: ref.organizations.id,
-            code: ref.organizations.code,
-            name: ref.organizations.name,
-            type: ref.organizations.type || 'Unknown',
-            gstNumber: ref.reference_value,
-          }));
-          results = [...refResults];
-        }
-        
-        // Add results from JSON column if not already in results
-        if (jsonData && jsonData.length > 0) {
-          console.log("Organization search results by GST from JSON column:", jsonData);
-          const jsonResults = jsonData.map(org => ({
-            id: org.id,
-            code: org.code,
-            name: org.name,
-            type: org.type || 'Unknown',
-            gstNumber: searchTerm,
-          }));
-          
-          // Add only unique results
-          for (const jsonResult of jsonResults) {
-            if (!results.some(r => r.id === jsonResult.id)) {
-              results.push(jsonResult);
-            }
-          }
-        }
-
-        console.log("Combined organization search results by GST:", results);
-        return results;
+        console.log("Organization search results by GST:", data);
+        return data.map(ref => ({
+          id: ref.organizations.id,
+          code: ref.organizations.code,
+          name: ref.organizations.name,
+          type: ref.organizations.type || 'Unknown',
+          gstNumber: ref.reference_value,
+        }));
       }
 
       return [];
