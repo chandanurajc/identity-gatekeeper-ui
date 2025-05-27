@@ -11,6 +11,8 @@ import { useCategoryPermissions } from "@/hooks/useCategoryPermissions";
 import { useOrganizationPermissions } from "@/hooks/useOrganizationPermissions";
 import { useDivisionPermissions } from "@/hooks/useDivisionPermissions";
 import { usePartnerPermissions } from "@/hooks/usePartnerPermissions";
+import { useSalesChannelPermissions } from "@/hooks/useSalesChannelPermissions";
+import { useItemPermissions } from "@/hooks/useItemPermissions";
 import { createModuleGroups } from "./sidebar/sidebarConfig";
 import { SidebarNavContent } from "./sidebar/SidebarNavContent";
 import { SidebarFooterContent } from "./sidebar/SidebarFooterContent";
@@ -22,6 +24,8 @@ export function AppSidebar() {
   const { canViewOrganization } = useOrganizationPermissions();
   const { canViewDivision } = useDivisionPermissions();
   const { canManagePartner } = usePartnerPermissions();
+  const { canViewSalesChannel } = useSalesChannelPermissions();
+  const { canViewItem } = useItemPermissions();
   const { setOpen } = useSidebar();
   
   const permissions = {
@@ -32,6 +36,8 @@ export function AppSidebar() {
     canViewOrganization,
     canViewDivision,
     canManagePartner,
+    canViewSalesChannel,
+    canViewItem,
   };
 
   const moduleGroups = createModuleGroups(permissions);

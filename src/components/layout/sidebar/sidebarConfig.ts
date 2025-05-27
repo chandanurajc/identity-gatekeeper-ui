@@ -14,6 +14,8 @@ import {
   GitBranch,
   Handshake,
   Folder,
+  Radio,
+  Box,
 } from "lucide-react";
 
 export interface NavItem {
@@ -94,6 +96,18 @@ export const sidebarConfig: NavigationGroup[] = [
         permission: "view-item-group",
         icon: "shield" as const,
       },
+      {
+        title: "Sales Channels",
+        href: "/master-data/sales-channels",
+        permission: "view-sales-channel",
+        icon: "shield" as const,
+      },
+      {
+        title: "Item Master",
+        href: "/master-data/items",
+        permission: "view-item",
+        icon: "shield" as const,
+      },
     ],
   },
   {
@@ -150,6 +164,24 @@ export const createModuleGroups = (permissions: any): ModuleGroup[] => {
       label: "Partner Management",
       path: "/master-data/partners",
       icon: Handshake,
+      permission: true,
+    });
+  }
+
+  if (permissions.canViewSalesChannel) {
+    masterDataItems.push({
+      label: "Sales Channels",
+      path: "/master-data/sales-channels",
+      icon: Radio,
+      permission: true,
+    });
+  }
+
+  if (permissions.canViewItem) {
+    masterDataItems.push({
+      label: "Item Master",
+      path: "/master-data/items",
+      icon: Box,
       permission: true,
     });
   }
