@@ -1,101 +1,106 @@
 
 import { useState } from "react";
-import { Reference } from "@/types/organization";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { v4 as uuidv4 } from "uuid";
-import { X, Plus } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Plus, Trash2 } from "lucide-react";
+import { Reference } from "@/types/organization";
+import { v4 as uuidv4 } from "uuid";
 
 interface ReferenceFormProps {
   references: Reference[];
   onChange: (references: Reference[]) => void;
-  readOnly?: boolean;
 }
 
-export const ReferenceForm = ({ references, onChange, readOnly = false }: ReferenceFormProps) => {
-  const [newReference, setNewReference] = useState<Omit<Reference, 'id'>>({
-    type: 'GST',
-    value: ''
-  });
+export const ReferenceForm = ({ references, onChange }: ReferenceFormProps) => {
+  console.log("ReferenceForm: Current references:", references);
 
-  const handleAddReference = () => {
-    if (newReference.value.trim() !== '') {
-      const reference: Reference = {
-        ...newReference,
-        id: uuidv4()
-      };
-      onChange([...references, reference]);
-      setNewReference({ type: 'GST', value: '' });
-    }
+  const addReference = () => {
+    console.log("ReferenceForm: Adding new reference");
+    const newReference: Reference = {
+      id: uuidv4(),
+      type: 'GST' as const,
+      value: '',
+    };
+    const updatedReferences = [...references, newReference];
+    console.log("ReferenceForm: Updated references:", updatedReferences);
+    onChange(updatedReferences);
   };
 
-  const handleRemoveReference = (id: string) => {
-    onChange(references.filter(ref => ref.id !== id));
+  const removeReference = (index: number) => {
+    console.log("ReferenceForm: Removing reference at index:", index);
+    const updatedReferences = references.filter((_, i) => i !== index);
+    console.log("ReferenceForm: Updated references after removal:", updatedReferences);
+    onChange(updatedReferences);
   };
 
-  const referenceTypes = ['GST', 'CIN', 'PAN', 'GS1 Company code'];
+  const updateReference = (index: number, field: keyof Reference, value: string) => {
+    console.log(`ReferenceForm: Updating reference ${index} field ${field}:`, value);
+    const updatedReferences = references.map((ref, i) => 
+      i === index ? { ...ref, [field]: value } : ref
+    );
+    console.log("ReferenceForm: Updated references:", updatedReferences);
+    onChange(updatedReferences);
+  };
 
   return (
     <div className="space-y-4">
-      {!readOnly && (
-        <div className="flex flex-col space-y-4 p-4 border rounded-md bg-muted/20">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="flex flex-col space-y-2">
-              <Label htmlFor="referenceType">Reference Type</Label>
-              <Select
-                value={newReference.type}
-                onValueChange={(value) => setNewReference({ ...newReference, type: value as Reference['type'] })}
+      <div className="flex justify-between items-center">
+        <h4 className="text-sm font-medium">References</h4>
+        <Button type="button" onClick={addReference} size="sm" variant="outline">
+          <Plus className="h-4 w-4 mr-2" />
+          Add Reference
+        </Button>
+      </div>
+
+      {references.map((reference, index) => (
+        <Card key={reference.id} className="p-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+            <div>
+              <Label>Reference Type</Label>
+              <Select 
+                value={reference.type} 
+                onValueChange={(value: Reference['type']) => updateReference(index, 'type', value)}
               >
-                <SelectTrigger id="referenceType">
+                <SelectTrigger>
                   <SelectValue placeholder="Select reference type" />
                 </SelectTrigger>
                 <SelectContent>
-                  {referenceTypes.map(type => (
-                    <SelectItem key={type} value={type}>{type}</SelectItem>
-                  ))}
+                  <SelectItem value="GST">GST</SelectItem>
+                  <SelectItem value="CIN">CIN</SelectItem>
+                  <SelectItem value="PAN">PAN</SelectItem>
+                  <SelectItem value="GS1 Company code">GS1 Company code</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex flex-col space-y-2">
-              <Label htmlFor="referenceValue">Reference Value</Label>
-              <div className="flex items-center space-x-2">
-                <Input
-                  id="referenceValue"
-                  value={newReference.value}
-                  onChange={(e) => setNewReference({ ...newReference, value: e.target.value })}
-                  placeholder="Enter reference value"
-                  className="flex-1"
-                />
-                <Button type="button" onClick={handleAddReference} size="sm">
-                  <Plus className="h-4 w-4 mr-1" /> Add
-                </Button>
-              </div>
+            
+            <div>
+              <Label>Reference Value</Label>
+              <Input
+                value={reference.value}
+                onChange={(e) => updateReference(index, 'value', e.target.value)}
+                placeholder="Enter reference value"
+              />
             </div>
+            
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => removeReference(index)}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
           </div>
-        </div>
-      )}
+        </Card>
+      ))}
 
-      {references.length > 0 && (
-        <div className="grid grid-cols-1 gap-4">
-          {references.map(reference => (
-            <Card key={reference.id} className="bg-card">
-              <CardHeader className="py-2 px-4 flex flex-row justify-between items-center">
-                <CardTitle className="text-sm font-medium">{reference.type}</CardTitle>
-                {!readOnly && (
-                  <Button variant="ghost" size="icon" onClick={() => handleRemoveReference(reference.id)}>
-                    <X className="h-4 w-4" />
-                  </Button>
-                )}
-              </CardHeader>
-              <CardContent className="py-2 px-4">
-                <p className="text-sm">{reference.value}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+      {references.length === 0 && (
+        <p className="text-muted-foreground text-center py-4">
+          No references added yet. Click "Add Reference" to get started.
+        </p>
       )}
     </div>
   );

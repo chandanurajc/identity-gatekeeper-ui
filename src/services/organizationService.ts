@@ -167,11 +167,14 @@ export const organizationService = {
 
       // Create references in the dedicated table
       if (organizationData.references && organizationData.references.length > 0) {
+        console.log("Creating references:", organizationData.references);
         const references = organizationData.references.map(ref => ({
           organization_id: orgData.id,
           reference_type: ref.type,
           reference_value: ref.value,
         }));
+
+        console.log("Reference inserts:", references);
 
         const { error: refError } = await supabase
           .from('organization_references')
@@ -306,6 +309,8 @@ export const organizationService = {
           reference_type: ref.type,
           reference_value: ref.value,
         }));
+
+        console.log("OrganizationService: Reference data to insert:", references);
 
         const { error: refError } = await supabase
           .from('organization_references')
