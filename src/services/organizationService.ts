@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Organization, OrganizationFormData, Reference, Contact } from "@/types/organization";
 
@@ -252,7 +251,7 @@ export const organizationService = {
         throw new Error("Required fields (name, code, type) are missing");
       }
 
-      // Start a transaction-like operation
+      // Start transaction-like operation
       console.log("OrganizationService: Starting update transaction");
 
       // Update the organization first
@@ -277,12 +276,6 @@ export const organizationService = {
 
       if (orgError) {
         console.error("OrganizationService: Error updating organization:", orgError);
-        console.error("OrganizationService: Error details:", {
-          message: orgError.message,
-          details: orgError.details,
-          hint: orgError.hint,
-          code: orgError.code
-        });
         throw new Error(`Failed to update organization: ${orgError.message}`);
       }
 
@@ -316,17 +309,22 @@ export const organizationService = {
         throw new Error(`Failed to delete existing contacts: ${deleteContactsError.message}`);
       }
 
-      // Create new references with better validation
+      // Create new references with exact constraint validation
       if (organizationData.references && organizationData.references.length > 0) {
         console.log("OrganizationService: Creating new references:", organizationData.references);
         
-        // Filter out empty references and validate types
+        // Validate reference types against database constraint
+        const allowedReferenceTypes = ['GST', 'CIN', 'PAN', 'GS1 Company code'];
+        
         const validReferences = organizationData.references.filter(ref => {
           const hasValue = ref.value && ref.value.trim();
-          const validType = ['GST', 'CIN', 'PAN', 'GS1 Company code'].includes(ref.type);
+          const validType = allowedReferenceTypes.includes(ref.type);
           
           if (!validType) {
-            console.error("Invalid reference type:", ref.type);
+            console.error("OrganizationService: Invalid reference type:", ref.type, "Allowed:", allowedReferenceTypes);
+          }
+          if (!hasValue) {
+            console.error("OrganizationService: Empty reference value for:", ref.type);
           }
           
           return hasValue && validType;
@@ -335,7 +333,7 @@ export const organizationService = {
         if (validReferences.length > 0) {
           const references = validReferences.map(ref => ({
             organization_id: id,
-            reference_type: ref.type,
+            reference_type: ref.type, // Must match database constraint exactly
             reference_value: ref.value.trim(),
           }));
 
@@ -359,18 +357,23 @@ export const organizationService = {
         }
       }
 
-      // Create new contacts with better validation
+      // Create new contacts with validation
       if (organizationData.contacts && organizationData.contacts.length > 0) {
         console.log("OrganizationService: Creating new contacts:", organizationData.contacts);
         
-        // Validate contact types
-        const validContactTypes = ['Registered location', 'Billing', 'Shipping', 'Owner'];
+        const allowedContactTypes = ['Registered location', 'Billing', 'Shipping', 'Owner'];
         const validContacts = organizationData.contacts.filter(contact => {
-          const validType = validContactTypes.includes(contact.type);
+          const validType = allowedContactTypes.includes(contact.type);
+          const hasFirstName = contact.firstName && contact.firstName.trim();
+          
           if (!validType) {
-            console.error("Invalid contact type:", contact.type);
+            console.error("OrganizationService: Invalid contact type:", contact.type, "Allowed:", allowedContactTypes);
           }
-          return validType && contact.firstName && contact.firstName.trim();
+          if (!hasFirstName) {
+            console.error("OrganizationService: Missing first name for contact:", contact.type);
+          }
+          
+          return validType && hasFirstName;
         });
         
         if (validContacts.length > 0) {
@@ -396,12 +399,6 @@ export const organizationService = {
 
           if (contactError) {
             console.error("OrganizationService: Error creating contacts:", contactError);
-            console.error("OrganizationService: Contact error details:", {
-              message: contactError.message,
-              details: contactError.details,
-              hint: contactError.hint,
-              code: contactError.code
-            });
             throw new Error(`Failed to create contacts: ${contactError.message}`);
           }
           console.log("OrganizationService: Contacts created successfully");

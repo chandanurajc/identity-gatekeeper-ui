@@ -14,26 +14,27 @@ interface ReferenceFormProps {
   onChange: (references: Reference[]) => void;
 }
 
+// These values MUST match exactly what's in the database constraint
 const REFERENCE_TYPES = [
   { value: "GST", label: "GST" },
-  { value: "CIN", label: "CIN" },
+  { value: "CIN", label: "CIN" }, 
   { value: "PAN", label: "PAN" },
   { value: "GS1 Company code", label: "GS1 Company code" }
 ] as const;
 
 export const ReferenceForm = ({ references, onChange }: ReferenceFormProps) => {
-  const [internalReferences, setInternalReferences] = useState<Reference[]>(references);
+  const [internalReferences, setInternalReferences] = useState<Reference[]>(references || []);
 
   useEffect(() => {
     console.log("ReferenceForm: Props changed, updating internal state:", references);
-    setInternalReferences(references);
+    setInternalReferences(references || []);
   }, [references]);
 
   const addReference = () => {
     console.log("ReferenceForm: Adding new reference");
     const newReference: Reference = {
       id: uuidv4(),
-      type: 'GST',
+      type: 'GST', // Default to first valid option
       value: '',
     };
     const updatedReferences = [...internalReferences, newReference];
@@ -53,11 +54,11 @@ export const ReferenceForm = ({ references, onChange }: ReferenceFormProps) => {
   const updateReference = (index: number, field: keyof Reference, value: string) => {
     console.log(`ReferenceForm: Updating reference ${index} field ${field}:`, value);
     
-    // Ensure we're working with valid reference types
+    // Validate reference type strictly
     if (field === 'type') {
-      const validType = REFERENCE_TYPES.find(t => t.value === value);
-      if (!validType) {
-        console.error("Invalid reference type:", value);
+      const validTypes = REFERENCE_TYPES.map(t => t.value);
+      if (!validTypes.includes(value as any)) {
+        console.error("ReferenceForm: Invalid reference type:", value, "Valid types:", validTypes);
         return;
       }
     }
@@ -105,7 +106,7 @@ export const ReferenceForm = ({ references, onChange }: ReferenceFormProps) => {
             <div>
               <Label>Reference Value</Label>
               <Input
-                value={reference.value}
+                value={reference.value || ''}
                 onChange={(e) => updateReference(index, 'value', e.target.value)}
                 placeholder="Enter reference value"
               />
