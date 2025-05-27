@@ -277,6 +277,12 @@ export const organizationService = {
 
       if (orgError) {
         console.error("OrganizationService: Error updating organization:", orgError);
+        console.error("OrganizationService: Error details:", {
+          message: orgError.message,
+          details: orgError.details,
+          hint: orgError.hint,
+          code: orgError.code
+        });
         throw new Error(`Failed to update organization: ${orgError.message}`);
       }
 
@@ -310,17 +316,26 @@ export const organizationService = {
         throw new Error(`Failed to delete existing contacts: ${deleteContactsError.message}`);
       }
 
-      // Create new references
+      // Create new references with better validation
       if (organizationData.references && organizationData.references.length > 0) {
         console.log("OrganizationService: Creating new references:", organizationData.references);
         
-        // Filter out empty references
-        const validReferences = organizationData.references.filter(ref => ref.value && ref.value.trim());
+        // Filter out empty references and validate types
+        const validReferences = organizationData.references.filter(ref => {
+          const hasValue = ref.value && ref.value.trim();
+          const validType = ['GST', 'CIN', 'PAN', 'GS1 Company code'].includes(ref.type);
+          
+          if (!validType) {
+            console.error("Invalid reference type:", ref.type);
+          }
+          
+          return hasValue && validType;
+        });
         
         if (validReferences.length > 0) {
           const references = validReferences.map(ref => ({
             organization_id: id,
-            reference_type: ref.type as 'GST' | 'CIN' | 'PAN' | 'GS1 Company code',
+            reference_type: ref.type,
             reference_value: ref.value.trim(),
           }));
 
@@ -332,40 +347,65 @@ export const organizationService = {
 
           if (refError) {
             console.error("OrganizationService: Error creating references:", refError);
+            console.error("OrganizationService: Reference error details:", {
+              message: refError.message,
+              details: refError.details,
+              hint: refError.hint,
+              code: refError.code
+            });
             throw new Error(`Failed to create references: ${refError.message}`);
           }
           console.log("OrganizationService: References created successfully");
         }
       }
 
-      // Create new contacts
+      // Create new contacts with better validation
       if (organizationData.contacts && organizationData.contacts.length > 0) {
         console.log("OrganizationService: Creating new contacts:", organizationData.contacts);
-        const contacts = organizationData.contacts.map(contact => ({
-          organization_id: id,
-          contact_type: contact.type,
-          first_name: contact.firstName.trim(),
-          last_name: contact.lastName?.trim() || null,
-          address1: contact.address1?.trim() || null,
-          address2: contact.address2?.trim() || null,
-          postal_code: contact.postalCode?.trim() || null,
-          city: contact.city?.trim() || null,
-          state: contact.state?.trim() || null,
-          country: contact.country?.trim() || null,
-          phone_number: contact.phoneNumber?.trim() || null,
-          email: contact.email?.trim() || null,
-          website: contact.website?.trim() || null,
-        }));
+        
+        // Validate contact types
+        const validContactTypes = ['Registered location', 'Billing', 'Shipping', 'Owner'];
+        const validContacts = organizationData.contacts.filter(contact => {
+          const validType = validContactTypes.includes(contact.type);
+          if (!validType) {
+            console.error("Invalid contact type:", contact.type);
+          }
+          return validType && contact.firstName && contact.firstName.trim();
+        });
+        
+        if (validContacts.length > 0) {
+          const contacts = validContacts.map(contact => ({
+            organization_id: id,
+            contact_type: contact.type,
+            first_name: contact.firstName.trim(),
+            last_name: contact.lastName?.trim() || null,
+            address1: contact.address1?.trim() || null,
+            address2: contact.address2?.trim() || null,
+            postal_code: contact.postalCode?.trim() || null,
+            city: contact.city?.trim() || null,
+            state: contact.state?.trim() || null,
+            country: contact.country?.trim() || null,
+            phone_number: contact.phoneNumber?.trim() || null,
+            email: contact.email?.trim() || null,
+            website: contact.website?.trim() || null,
+          }));
 
-        const { error: contactError } = await supabase
-          .from('organization_contacts')
-          .insert(contacts);
+          const { error: contactError } = await supabase
+            .from('organization_contacts')
+            .insert(contacts);
 
-        if (contactError) {
-          console.error("OrganizationService: Error creating contacts:", contactError);
-          throw new Error(`Failed to create contacts: ${contactError.message}`);
+          if (contactError) {
+            console.error("OrganizationService: Error creating contacts:", contactError);
+            console.error("OrganizationService: Contact error details:", {
+              message: contactError.message,
+              details: contactError.details,
+              hint: contactError.hint,
+              code: contactError.code
+            });
+            throw new Error(`Failed to create contacts: ${contactError.message}`);
+          }
+          console.log("OrganizationService: Contacts created successfully");
         }
-        console.log("OrganizationService: Contacts created successfully");
       }
 
       console.log("OrganizationService: Update process completed successfully");

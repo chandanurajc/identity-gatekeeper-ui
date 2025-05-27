@@ -14,11 +14,16 @@ interface ReferenceFormProps {
   onChange: (references: Reference[]) => void;
 }
 
+const REFERENCE_TYPES = [
+  { value: "GST", label: "GST" },
+  { value: "CIN", label: "CIN" },
+  { value: "PAN", label: "PAN" },
+  { value: "GS1 Company code", label: "GS1 Company code" }
+] as const;
+
 export const ReferenceForm = ({ references, onChange }: ReferenceFormProps) => {
-  // Use internal state to ensure proper updates
   const [internalReferences, setInternalReferences] = useState<Reference[]>(references);
 
-  // Sync with parent when references prop changes
   useEffect(() => {
     console.log("ReferenceForm: Props changed, updating internal state:", references);
     setInternalReferences(references);
@@ -28,7 +33,7 @@ export const ReferenceForm = ({ references, onChange }: ReferenceFormProps) => {
     console.log("ReferenceForm: Adding new reference");
     const newReference: Reference = {
       id: uuidv4(),
-      type: 'GST' as const,
+      type: 'GST',
       value: '',
     };
     const updatedReferences = [...internalReferences, newReference];
@@ -47,6 +52,16 @@ export const ReferenceForm = ({ references, onChange }: ReferenceFormProps) => {
 
   const updateReference = (index: number, field: keyof Reference, value: string) => {
     console.log(`ReferenceForm: Updating reference ${index} field ${field}:`, value);
+    
+    // Ensure we're working with valid reference types
+    if (field === 'type') {
+      const validType = REFERENCE_TYPES.find(t => t.value === value);
+      if (!validType) {
+        console.error("Invalid reference type:", value);
+        return;
+      }
+    }
+    
     const updatedReferences = internalReferences.map((ref, i) => 
       i === index ? { ...ref, [field]: value } : ref
     );
@@ -72,16 +87,17 @@ export const ReferenceForm = ({ references, onChange }: ReferenceFormProps) => {
               <Label>Reference Type</Label>
               <Select 
                 value={reference.type} 
-                onValueChange={(value: Reference['type']) => updateReference(index, 'type', value)}
+                onValueChange={(value) => updateReference(index, 'type', value)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select reference type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="GST">GST</SelectItem>
-                  <SelectItem value="CIN">CIN</SelectItem>
-                  <SelectItem value="PAN">PAN</SelectItem>
-                  <SelectItem value="GS1 Company code">GS1 Company code</SelectItem>
+                  {REFERENCE_TYPES.map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
