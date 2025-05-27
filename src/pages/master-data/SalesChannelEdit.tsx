@@ -44,11 +44,11 @@ const SalesChannelEdit = () => {
   };
 
   const handleSubmit = async (formData: SalesChannelFormData) => {
-    if (!user?.username || !id) {
+    if (!user?.email || !id) {
       throw new Error("User not authenticated or channel ID missing");
     }
 
-    await salesChannelService.updateSalesChannel(id, formData, user.username);
+    await salesChannelService.updateSalesChannel(id, formData, user.email);
     navigate("/master-data/sales-channels");
   };
 

@@ -13,11 +13,11 @@ const SalesChannelCreate = () => {
   const { canCreateSalesChannel } = useSalesChannelPermissions();
 
   const handleSubmit = async (formData: SalesChannelFormData) => {
-    if (!user?.username) {
+    if (!user?.email) {
       throw new Error("User not authenticated");
     }
 
-    await salesChannelService.createSalesChannel(formData, user.username);
+    await salesChannelService.createSalesChannel(formData, user.email);
     navigate("/master-data/sales-channels");
   };
 
