@@ -161,6 +161,18 @@ export const usePermissions = () => {
         canViewCategory: false,
         canCreateCategory: false,
         canEditCategory: false,
+        // Item Group permissions
+        canViewItemGroup: false,
+        canCreateItemGroup: false,
+        canEditItemGroup: false,
+        // Sales Channel permissions
+        canViewSalesChannel: false,
+        canCreateSalesChannel: false,
+        canEditSalesChannel: false,
+        // Item permissions
+        canViewItem: false,
+        canCreateItem: false,
+        canEditItem: false,
         // Module access
         canAccessAdminModule: false,
         canAccessSettingsModule: false,
@@ -191,6 +203,18 @@ export const usePermissions = () => {
         canViewCategory: true,
         canCreateCategory: true,
         canEditCategory: true,
+        // Item Group permissions
+        canViewItemGroup: true,
+        canCreateItemGroup: true,
+        canEditItemGroup: true,
+        // Sales Channel permissions
+        canViewSalesChannel: true,
+        canCreateSalesChannel: true,
+        canEditSalesChannel: true,
+        // Item permissions
+        canViewItem: true,
+        canCreateItem: true,
+        canEditItem: true,
         // Module access
         canAccessAdminModule: true,
         canAccessSettingsModule: true,
@@ -220,6 +244,18 @@ export const usePermissions = () => {
       canViewCategory: permissions.includes("view-category"),
       canCreateCategory: permissions.includes("create-category"),
       canEditCategory: permissions.includes("edit-category"),
+      // Item Group permissions
+      canViewItemGroup: permissions.includes("view-item-group"),
+      canCreateItemGroup: permissions.includes("create-item-group"),
+      canEditItemGroup: permissions.includes("edit-item-group"),
+      // Sales Channel permissions
+      canViewSalesChannel: permissions.includes("view-sales-channel"),
+      canCreateSalesChannel: permissions.includes("create-sales-channel"),
+      canEditSalesChannel: permissions.includes("edit-sales-channel"),
+      // Item permissions
+      canViewItem: permissions.includes("view-item"),
+      canCreateItem: permissions.includes("create-item"),
+      canEditItem: permissions.includes("edit-item"),
       // Module access
       canAccessAdminModule: permissions.includes("access_admin") || permissions.length > 0,
       canAccessSettingsModule: permissions.includes("access_settings"),

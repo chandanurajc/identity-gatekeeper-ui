@@ -1,0 +1,71 @@
+
+export interface Item {
+  id: string;
+  description: string;
+  itemGroupId?: string;
+  classification: string;
+  subClassification: string;
+  status: 'active' | 'inactive';
+  barcode?: string;
+  length?: number;
+  width?: number;
+  height?: number;
+  weight?: number;
+  organizationId?: string;
+  createdBy?: string;
+  createdOn?: Date;
+  updatedBy?: string;
+  updatedOn?: Date;
+  costs?: ItemCost[];
+  prices?: ItemPrice[];
+}
+
+export interface ItemCost {
+  id: string;
+  itemId: string;
+  supplierId: string;
+  cost: number;
+  organizationId?: string;
+  createdBy?: string;
+  createdOn?: Date;
+  updatedBy?: string;
+  updatedOn?: Date;
+}
+
+export interface ItemPrice {
+  id: string;
+  itemId: string;
+  salesChannelId: string;
+  price: number;
+  organizationId?: string;
+  createdBy?: string;
+  createdOn?: Date;
+  updatedBy?: string;
+  updatedOn?: Date;
+}
+
+export interface ItemFormData {
+  id?: string;
+  description: string;
+  itemGroupId?: string;
+  classification: string;
+  subClassification: string;
+  status: 'active' | 'inactive';
+  barcode?: string;
+  length?: number;
+  width?: number;
+  height?: number;
+  weight?: number;
+  costs: ItemCostFormData[];
+  prices: ItemPriceFormData[];
+}
+
+export interface ItemCostFormData {
+  supplierId: string;
+  cost: number;
+}
+
+export interface ItemPriceFormData {
+  salesChannelId: string;
+  price: number;
+}

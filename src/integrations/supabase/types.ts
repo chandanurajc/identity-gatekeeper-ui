@@ -9,6 +9,64 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      item_costs: {
+        Row: {
+          cost: number
+          created_by: string
+          created_on: string
+          id: string
+          item_id: string | null
+          organization_id: string | null
+          supplier_id: string | null
+          updated_by: string | null
+          updated_on: string | null
+        }
+        Insert: {
+          cost: number
+          created_by: string
+          created_on?: string
+          id?: string
+          item_id?: string | null
+          organization_id?: string | null
+          supplier_id?: string | null
+          updated_by?: string | null
+          updated_on?: string | null
+        }
+        Update: {
+          cost?: number
+          created_by?: string
+          created_on?: string
+          id?: string
+          item_id?: string | null
+          organization_id?: string | null
+          supplier_id?: string | null
+          updated_by?: string | null
+          updated_on?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "item_costs_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "item_costs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "item_costs_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       item_groups: {
         Row: {
           classification: string
@@ -49,6 +107,136 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "item_groups_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      item_prices: {
+        Row: {
+          created_by: string
+          created_on: string
+          id: string
+          item_id: string | null
+          organization_id: string | null
+          price: number
+          sales_channel_id: string | null
+          updated_by: string | null
+          updated_on: string | null
+        }
+        Insert: {
+          created_by: string
+          created_on?: string
+          id?: string
+          item_id?: string | null
+          organization_id?: string | null
+          price: number
+          sales_channel_id?: string | null
+          updated_by?: string | null
+          updated_on?: string | null
+        }
+        Update: {
+          created_by?: string
+          created_on?: string
+          id?: string
+          item_id?: string | null
+          organization_id?: string | null
+          price?: number
+          sales_channel_id?: string | null
+          updated_by?: string | null
+          updated_on?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "item_prices_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "item_prices_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "item_prices_sales_channel_id_fkey"
+            columns: ["sales_channel_id"]
+            isOneToOne: false
+            referencedRelation: "sales_channels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      items: {
+        Row: {
+          barcode: string | null
+          classification: string
+          created_by: string
+          created_on: string
+          description: string
+          height: number | null
+          id: string
+          item_group_id: string | null
+          length: number | null
+          organization_id: string | null
+          status: string
+          sub_classification: string
+          updated_by: string | null
+          updated_on: string | null
+          weight: number | null
+          width: number | null
+        }
+        Insert: {
+          barcode?: string | null
+          classification: string
+          created_by: string
+          created_on?: string
+          description: string
+          height?: number | null
+          id: string
+          item_group_id?: string | null
+          length?: number | null
+          organization_id?: string | null
+          status?: string
+          sub_classification: string
+          updated_by?: string | null
+          updated_on?: string | null
+          weight?: number | null
+          width?: number | null
+        }
+        Update: {
+          barcode?: string | null
+          classification?: string
+          created_by?: string
+          created_on?: string
+          description?: string
+          height?: number | null
+          id?: string
+          item_group_id?: string | null
+          length?: number | null
+          organization_id?: string | null
+          status?: string
+          sub_classification?: string
+          updated_by?: string | null
+          updated_on?: string | null
+          weight?: number | null
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "items_item_group_id_fkey"
+            columns: ["item_group_id"]
+            isOneToOne: false
+            referencedRelation: "item_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "items_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -443,6 +631,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "roles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales_channels: {
+        Row: {
+          created_by: string
+          created_on: string
+          id: string
+          name: string
+          organization_id: string | null
+          status: string
+          updated_by: string | null
+          updated_on: string | null
+        }
+        Insert: {
+          created_by: string
+          created_on?: string
+          id?: string
+          name: string
+          organization_id?: string | null
+          status?: string
+          updated_by?: string | null
+          updated_on?: string | null
+        }
+        Update: {
+          created_by?: string
+          created_on?: string
+          id?: string
+          name?: string
+          organization_id?: string | null
+          status?: string
+          updated_by?: string | null
+          updated_on?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_channels_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"

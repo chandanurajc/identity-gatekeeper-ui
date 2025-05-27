@@ -1,0 +1,423 @@
+
+import { supabase } from "@/integrations/supabase/client";
+import { Item, ItemFormData } from "@/types/item";
+
+export const itemService = {
+  async getItems(): Promise<Item[]> {
+    console.log("Fetching items from Supabase...");
+    
+    try {
+      // Get current user's organization
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('organization_id')
+        .eq('id', user.id)
+        .single();
+
+      if (!profile?.organization_id) {
+        console.log("No organization found for user");
+        return [];
+      }
+
+      const { data, error } = await supabase
+        .from('items')
+        .select('*')
+        .eq('organization_id', profile.organization_id)
+        .order('created_on', { ascending: false });
+
+      if (error) {
+        console.error("Supabase error fetching items:", error);
+        throw new Error(`Failed to fetch items: ${error.message}`);
+      }
+
+      console.log("Raw items data from Supabase:", data);
+      
+      if (!data) {
+        console.log("No items data returned");
+        return [];
+      }
+
+      const transformedData = data.map(item => ({
+        id: item.id,
+        description: item.description,
+        itemGroupId: item.item_group_id,
+        classification: item.classification,
+        subClassification: item.sub_classification,
+        status: item.status as 'active' | 'inactive',
+        barcode: item.barcode,
+        length: item.length,
+        width: item.width,
+        height: item.height,
+        weight: item.weight,
+        organizationId: item.organization_id,
+        createdBy: item.created_by,
+        createdOn: new Date(item.created_on),
+        updatedBy: item.updated_by,
+        updatedOn: item.updated_on ? new Date(item.updated_on) : undefined,
+      }));
+
+      console.log("Transformed items data:", transformedData);
+      return transformedData;
+      
+    } catch (error) {
+      console.error("Service error fetching items:", error);
+      throw error;
+    }
+  },
+
+  async generateItemId(): Promise<string> {
+    // Generate a 5-digit numerical ID
+    const randomId = Math.floor(10000 + Math.random() * 90000).toString();
+    
+    // Check if ID already exists
+    const { data } = await supabase
+      .from('items')
+      .select('id')
+      .eq('id', randomId)
+      .single();
+    
+    // If exists, generate another one recursively
+    if (data) {
+      return this.generateItemId();
+    }
+    
+    return randomId;
+  },
+
+  async generateGTIN14(itemId: string, organizationId: string): Promise<string> {
+    console.log("Generating GTIN-14 for item:", itemId, "organization:", organizationId);
+    
+    try {
+      // Get GS1 Company code from organization references
+      const { data: orgRef } = await supabase
+        .from('organization_references')
+        .select('reference_value')
+        .eq('organization_id', organizationId)
+        .eq('reference_type', 'GS1 Company code')
+        .single();
+
+      if (!orgRef?.reference_value) {
+        throw new Error("GS1 Company code not found for organization");
+      }
+
+      const companyPrefix = orgRef.reference_value.substring(0, 7);
+      const packagingIndicator = '0';
+      const itemReference = itemId.padStart(5, '0');
+      
+      // Create the 13 digits without check digit
+      const partial = packagingIndicator + companyPrefix + itemReference;
+      
+      // Calculate check digit using GTIN-14 algorithm
+      let sum = 0;
+      for (let i = 0; i < partial.length; i++) {
+        const digit = parseInt(partial[i]);
+        // Multiply by 3 for odd positions (1st, 3rd, 5th... from left), by 1 for even positions
+        const multiplier = (i % 2 === 0) ? 3 : 1;
+        sum += digit * multiplier;
+      }
+      
+      const checkDigit = (10 - (sum % 10)) % 10;
+      const gtin14 = partial + checkDigit.toString();
+      
+      console.log("Generated GTIN-14:", gtin14);
+      return gtin14;
+      
+    } catch (error) {
+      console.error("Error generating GTIN-14:", error);
+      throw error;
+    }
+  },
+
+  async createItem(formData: ItemFormData, createdBy: string): Promise<void> {
+    console.log("Creating item:", formData, "created by:", createdBy);
+    
+    try {
+      // Get current user's organization
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('organization_id')
+        .eq('id', user.id)
+        .single();
+
+      if (!profile?.organization_id) {
+        throw new Error("No organization found for user");
+      }
+
+      // Generate item ID if not provided
+      let itemId = formData.id;
+      if (!itemId) {
+        itemId = await this.generateItemId();
+      }
+
+      // Generate barcode if not provided
+      let barcode = formData.barcode;
+      if (!barcode) {
+        barcode = await this.generateGTIN14(itemId, profile.organization_id);
+      }
+
+      // Insert main item record
+      const { error: itemError } = await supabase
+        .from('items')
+        .insert({
+          id: itemId,
+          description: formData.description,
+          item_group_id: formData.itemGroupId,
+          classification: formData.classification,
+          sub_classification: formData.subClassification,
+          status: formData.status,
+          barcode: barcode,
+          length: formData.length,
+          width: formData.width,
+          height: formData.height,
+          weight: formData.weight,
+          organization_id: profile.organization_id,
+          created_by: createdBy,
+          updated_by: createdBy,
+        });
+
+      if (itemError) {
+        console.error("Error creating item:", itemError);
+        throw new Error(`Failed to create item: ${itemError.message}`);
+      }
+
+      // Insert item costs
+      if (formData.costs && formData.costs.length > 0) {
+        const costInserts = formData.costs.map(cost => ({
+          item_id: itemId,
+          supplier_id: cost.supplierId,
+          cost: cost.cost,
+          organization_id: profile.organization_id,
+          created_by: createdBy,
+          updated_by: createdBy,
+        }));
+
+        const { error: costError } = await supabase
+          .from('item_costs')
+          .insert(costInserts);
+
+        if (costError) {
+          console.error("Error creating item costs:", costError);
+          throw new Error(`Failed to create item costs: ${costError.message}`);
+        }
+      }
+
+      // Insert item prices
+      if (formData.prices && formData.prices.length > 0) {
+        const priceInserts = formData.prices.map(price => ({
+          item_id: itemId,
+          sales_channel_id: price.salesChannelId,
+          price: price.price,
+          organization_id: profile.organization_id,
+          created_by: createdBy,
+          updated_by: createdBy,
+        }));
+
+        const { error: priceError } = await supabase
+          .from('item_prices')
+          .insert(priceInserts);
+
+        if (priceError) {
+          console.error("Error creating item prices:", priceError);
+          throw new Error(`Failed to create item prices: ${priceError.message}`);
+        }
+      }
+
+      console.log("Item created successfully with ID:", itemId);
+      
+    } catch (error) {
+      console.error("Service error creating item:", error);
+      throw error;
+    }
+  },
+
+  async updateItem(itemId: string, formData: ItemFormData, updatedBy: string): Promise<void> {
+    console.log("Updating item:", { itemId, formData, updatedBy });
+    
+    try {
+      // Get current user's organization
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('organization_id')
+        .eq('id', user.id)
+        .single();
+
+      if (!profile?.organization_id) {
+        throw new Error("No organization found for user");
+      }
+
+      // Generate barcode if not provided
+      let barcode = formData.barcode;
+      if (!barcode) {
+        barcode = await this.generateGTIN14(itemId, profile.organization_id);
+      }
+
+      // Update main item record
+      const { error: itemError } = await supabase
+        .from('items')
+        .update({
+          description: formData.description,
+          item_group_id: formData.itemGroupId,
+          classification: formData.classification,
+          sub_classification: formData.subClassification,
+          status: formData.status,
+          barcode: barcode,
+          length: formData.length,
+          width: formData.width,
+          height: formData.height,
+          weight: formData.weight,
+          updated_by: updatedBy,
+          updated_on: new Date().toISOString(),
+        })
+        .eq('id', itemId);
+
+      if (itemError) {
+        console.error("Error updating item:", itemError);
+        throw new Error(`Failed to update item: ${itemError.message}`);
+      }
+
+      // Delete existing costs and prices
+      await supabase.from('item_costs').delete().eq('item_id', itemId);
+      await supabase.from('item_prices').delete().eq('item_id', itemId);
+
+      // Insert new costs
+      if (formData.costs && formData.costs.length > 0) {
+        const costInserts = formData.costs.map(cost => ({
+          item_id: itemId,
+          supplier_id: cost.supplierId,
+          cost: cost.cost,
+          organization_id: profile.organization_id,
+          created_by: updatedBy,
+          updated_by: updatedBy,
+        }));
+
+        const { error: costError } = await supabase
+          .from('item_costs')
+          .insert(costInserts);
+
+        if (costError) {
+          console.error("Error updating item costs:", costError);
+          throw new Error(`Failed to update item costs: ${costError.message}`);
+        }
+      }
+
+      // Insert new prices
+      if (formData.prices && formData.prices.length > 0) {
+        const priceInserts = formData.prices.map(price => ({
+          item_id: itemId,
+          sales_channel_id: price.salesChannelId,
+          price: price.price,
+          organization_id: profile.organization_id,
+          created_by: updatedBy,
+          updated_by: updatedBy,
+        }));
+
+        const { error: priceError } = await supabase
+          .from('item_prices')
+          .insert(priceInserts);
+
+        if (priceError) {
+          console.error("Error updating item prices:", priceError);
+          throw new Error(`Failed to update item prices: ${priceError.message}`);
+        }
+      }
+
+      console.log("Item updated successfully");
+      
+    } catch (error) {
+      console.error("Service error updating item:", error);
+      throw error;
+    }
+  },
+
+  async getItemById(itemId: string): Promise<Item | null> {
+    console.log("Fetching item by ID:", itemId);
+    
+    try {
+      const { data: itemData, error: itemError } = await supabase
+        .from('items')
+        .select('*')
+        .eq('id', itemId)
+        .single();
+
+      if (itemError || !itemData) {
+        console.error("Error fetching item:", itemError);
+        return null;
+      }
+
+      // Fetch costs
+      const { data: costsData } = await supabase
+        .from('item_costs')
+        .select('*')
+        .eq('item_id', itemId);
+
+      // Fetch prices
+      const { data: pricesData } = await supabase
+        .from('item_prices')
+        .select('*')
+        .eq('item_id', itemId);
+
+      const item: Item = {
+        id: itemData.id,
+        description: itemData.description,
+        itemGroupId: itemData.item_group_id,
+        classification: itemData.classification,
+        subClassification: itemData.sub_classification,
+        status: itemData.status as 'active' | 'inactive',
+        barcode: itemData.barcode,
+        length: itemData.length,
+        width: itemData.width,
+        height: itemData.height,
+        weight: itemData.weight,
+        organizationId: itemData.organization_id,
+        createdBy: itemData.created_by,
+        createdOn: new Date(itemData.created_on),
+        updatedBy: itemData.updated_by,
+        updatedOn: itemData.updated_on ? new Date(itemData.updated_on) : undefined,
+        costs: costsData?.map(cost => ({
+          id: cost.id,
+          itemId: cost.item_id,
+          supplierId: cost.supplier_id,
+          cost: cost.cost,
+          organizationId: cost.organization_id,
+          createdBy: cost.created_by,
+          createdOn: new Date(cost.created_on),
+          updatedBy: cost.updated_by,
+          updatedOn: cost.updated_on ? new Date(cost.updated_on) : undefined,
+        })) || [],
+        prices: pricesData?.map(price => ({
+          id: price.id,
+          itemId: price.item_id,
+          salesChannelId: price.sales_channel_id,
+          price: price.price,
+          organizationId: price.organization_id,
+          createdBy: price.created_by,
+          createdOn: new Date(price.created_on),
+          updatedBy: price.updated_by,
+          updatedOn: price.updated_on ? new Date(price.updated_on) : undefined,
+        })) || [],
+      };
+
+      console.log("Item fetched successfully:", item);
+      return item;
+      
+    } catch (error) {
+      console.error("Service error fetching item:", error);
+      throw error;
+    }
+  }
+};
