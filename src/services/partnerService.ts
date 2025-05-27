@@ -2,6 +2,12 @@
 import { supabase } from "@/integrations/supabase/client";
 import { Partner, PartnerFormData, OrganizationSearchResult } from "@/types/partner";
 
+// Define the structure of organization references
+interface OrganizationReference {
+  type: string;
+  value: string;
+}
+
 export const partnerService = {
   async getPartners(): Promise<Partner[]> {
     console.log("Fetching partners from Supabase...");
@@ -80,16 +86,21 @@ export const partnerService = {
 
       // Transform to search results
       const results = data.map(org => {
-        const gstRef = Array.isArray(org.organization_references) 
-          ? org.organization_references.find((ref: any) => ref.type === 'GST')
-          : null;
+        let gstNumber: string | undefined;
+        
+        // Safely parse organization_references
+        if (org.organization_references && Array.isArray(org.organization_references)) {
+          const gstRef = (org.organization_references as OrganizationReference[])
+            .find(ref => ref.type === 'GST');
+          gstNumber = gstRef?.value;
+        }
         
         return {
           id: org.id,
           code: org.code,
           name: org.name,
           type: org.type || 'Unknown',
-          gstNumber: gstRef?.value,
+          gstNumber,
         };
       });
 
