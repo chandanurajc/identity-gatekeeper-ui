@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Partner, PartnerFormData, OrganizationSearchResult } from "@/types/partner";
 
@@ -56,12 +55,12 @@ export const partnerService = {
     
     try {
       if (searchType === 'code') {
-        // Search organizations by code
+        // Exact search for organizations by code
         const { data, error } = await supabase
           .from('organizations')
           .select('id, code, name, type')
           .eq('status', 'active')
-          .ilike('code', `%${searchTerm}%`)
+          .eq('code', searchTerm)
           .limit(20);
 
         if (error) {
@@ -82,7 +81,7 @@ export const partnerService = {
         }));
 
       } else if (searchType === 'gst') {
-        // Search organizations by GST number in organization_references table
+        // Exact search for organizations by GST number in organization_references table
         const { data, error } = await supabase
           .from('organization_references')
           .select(`
@@ -92,7 +91,7 @@ export const partnerService = {
           `)
           .eq('reference_type', 'GST')
           .eq('organizations.status', 'active')
-          .ilike('reference_value', `%${searchTerm}%`)
+          .eq('reference_value', searchTerm)
           .limit(20);
 
         if (error) {

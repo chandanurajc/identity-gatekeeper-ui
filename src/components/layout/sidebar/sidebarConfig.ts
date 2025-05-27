@@ -1,4 +1,3 @@
-
 import {
   Home,
   LayoutDashboard,
@@ -13,6 +12,7 @@ import {
   Building,
   GitBranch,
   Handshake,
+  Folder,
 } from "lucide-react";
 
 export interface NavItem {
@@ -81,6 +81,12 @@ export const sidebarConfig: NavigationGroup[] = [
         permission: "manage_partner",
         icon: "shield" as const,
       },
+      {
+        title: "Item Categories",
+        href: "/master-data/item-category",
+        permission: "view-category",
+        icon: "shield" as const,
+      },
     ],
   },
   {
@@ -110,6 +116,34 @@ export const sidebarConfig: NavigationGroup[] = [
 
 export const createModuleGroups = (permissions: any): ModuleGroup[] => {
   const moduleGroups: ModuleGroup[] = [];
+
+  // Master Data module
+  const masterDataItems: MenuItem[] = [];
+  
+  if (permissions.canViewCategory) {
+    masterDataItems.push({
+      label: "Item Categories",
+      path: "/master-data/item-category",
+      icon: Folder,
+      permission: true,
+    });
+  }
+  
+  if (permissions.canManagePartner) {
+    masterDataItems.push({
+      label: "Partner Management",
+      path: "/master-data/partners",
+      icon: Handshake,
+      permission: true,
+    });
+  }
+
+  if (masterDataItems.length > 0) {
+    moduleGroups.push({
+      name: "Master Data",
+      items: masterDataItems,
+    });
+  }
 
   // Admin module
   const adminItems: MenuItem[] = [];
@@ -163,25 +197,6 @@ export const createModuleGroups = (permissions: any): ModuleGroup[] => {
     moduleGroups.push({
       name: "Admin",
       items: adminItems,
-    });
-  }
-
-  // Master Data module
-  const masterDataItems: MenuItem[] = [];
-  
-  if (permissions.canManagePartner) {
-    masterDataItems.push({
-      label: "Partner Management",
-      path: "/master-data/partners",
-      icon: Handshake,
-      permission: true,
-    });
-  }
-
-  if (masterDataItems.length > 0) {
-    moduleGroups.push({
-      name: "Master Data",
-      items: masterDataItems,
     });
   }
 

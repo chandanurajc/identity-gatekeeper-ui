@@ -89,6 +89,7 @@ const PartnerList = ({ partners, onRefresh }: PartnerListProps) => {
           <TableHeader>
             <TableRow>
               <TableHead>Partner Name</TableHead>
+              <TableHead>Partner Code</TableHead>
               <TableHead>Partner Type</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Partnership Date</TableHead>
@@ -103,11 +104,11 @@ const PartnerList = ({ partners, onRefresh }: PartnerListProps) => {
               <TableRow key={partner.id}>
                 <TableCell className="font-medium">
                   {partner.organizationName}
-                  <div className="text-sm text-muted-foreground">
-                    {partner.organizationCode}
-                  </div>
                 </TableCell>
-                <TableCell>{partner.organizationType}</TableCell>
+                <TableCell>
+                  {partner.organizationCode}
+                </TableCell>
+                <TableCell>{partner.organizationType || 'Unknown'}</TableCell>
                 <TableCell>
                   <div className="flex items-center space-x-2">
                     <Switch
