@@ -1,3 +1,4 @@
+
 import {
   Home,
   LayoutDashboard,
@@ -8,6 +9,7 @@ import {
   ShoppingBag,
   User,
   Users,
+  Building2,
 } from "lucide-react";
 
 export interface NavItem {
@@ -28,6 +30,18 @@ export interface NavigationGroup {
   items: NavItem[];
 }
 
+export interface MenuItem {
+  label: string;
+  path: string;
+  icon: any;
+  permission?: boolean;
+}
+
+export interface ModuleGroup {
+  name: string;
+  items: MenuItem[];
+}
+
 export const Icons = {
   home: Home,
   dashboard: LayoutDashboard,
@@ -38,6 +52,8 @@ export const Icons = {
   settings: Settings,
   roles: Shield,
   permissions: ListChecks,
+  shield: Shield,
+  building: Building2,
 };
 
 export const sidebarConfig: NavigationGroup[] = [
@@ -46,27 +62,27 @@ export const sidebarConfig: NavigationGroup[] = [
     items: [
       {
         title: "Organizations",
-        path: "/admin/organizations",
+        href: "/admin/organizations",
         permission: "view-organization",
-        icon: "Shield" as const,
+        icon: "shield" as const,
       },
       {
         title: "Divisions",
-        path: "/admin/divisions",
+        href: "/admin/divisions",
         permission: "view-division",
-        icon: "Shield" as const,
+        icon: "shield" as const,
       },
       {
         title: "Suppliers",
-        path: "/master-data/suppliers",
+        href: "/master-data/suppliers",
         permission: "view-supplier",
-        icon: "Shield" as const,
+        icon: "shield" as const,
       },
       {
         title: "Partner Management",
-        path: "/master-data/partners",
+        href: "/master-data/partners",
         permission: "manage_partner",
-        icon: "Shield" as const,
+        icon: "shield" as const,
       },
     ],
   },
@@ -75,22 +91,111 @@ export const sidebarConfig: NavigationGroup[] = [
     items: [
       {
         title: "Users",
-        path: "/admin/users",
+        href: "/admin/users",
         icon: "user",
         permission: "view-user",
       },
       {
         title: "Roles",
-        path: "/admin/roles",
+        href: "/admin/roles",
         icon: "roles",
         permission: "view-role",
       },
       {
         title: "Permissions",
-        path: "/admin/permissions",
+        href: "/admin/permissions",
         icon: "permissions",
         permission: "view-permission",
       },
     ],
   },
 ];
+
+export const createModuleGroups = (permissions: any): ModuleGroup[] => {
+  const moduleGroups: ModuleGroup[] = [];
+
+  // Master Data module
+  const masterDataItems: MenuItem[] = [];
+  
+  if (permissions.canViewOrganization) {
+    masterDataItems.push({
+      label: "Organizations",
+      path: "/admin/organizations",
+      icon: Building2,
+      permission: true,
+    });
+  }
+  
+  if (permissions.canViewDivision) {
+    masterDataItems.push({
+      label: "Divisions",
+      path: "/admin/divisions",
+      icon: Building2,
+      permission: true,
+    });
+  }
+  
+  if (permissions.canViewSupplier) {
+    masterDataItems.push({
+      label: "Suppliers",
+      path: "/master-data/suppliers",
+      icon: Building2,
+      permission: true,
+    });
+  }
+  
+  if (permissions.canManagePartner) {
+    masterDataItems.push({
+      label: "Partner Management",
+      path: "/master-data/partners",
+      icon: Building2,
+      permission: true,
+    });
+  }
+
+  if (masterDataItems.length > 0) {
+    moduleGroups.push({
+      name: "Master Data",
+      items: masterDataItems,
+    });
+  }
+
+  // Admin module
+  const adminItems: MenuItem[] = [];
+  
+  if (permissions.canViewUsers) {
+    adminItems.push({
+      label: "Users",
+      path: "/admin/users",
+      icon: User,
+      permission: true,
+    });
+  }
+  
+  if (permissions.canViewRoles) {
+    adminItems.push({
+      label: "Roles",
+      path: "/admin/roles",
+      icon: Shield,
+      permission: true,
+    });
+  }
+  
+  if (permissions.canViewPermissions) {
+    adminItems.push({
+      label: "Permissions",
+      path: "/admin/permissions",
+      icon: ListChecks,
+      permission: true,
+    });
+  }
+
+  if (adminItems.length > 0) {
+    moduleGroups.push({
+      name: "Admin",
+      items: adminItems,
+    });
+  }
+
+  return moduleGroups;
+};

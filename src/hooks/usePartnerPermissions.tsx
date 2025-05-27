@@ -2,9 +2,9 @@
 import { usePermissions } from "./usePermissions";
 
 export const usePartnerPermissions = () => {
-  const { permissions, isLoading } = usePermissions();
+  const { hasPermission, isLoading } = usePermissions();
 
-  const canManagePartner = permissions.includes("manage_partner");
+  const canManagePartner = hasPermission("manage_partner");
 
   return {
     canManagePartner,

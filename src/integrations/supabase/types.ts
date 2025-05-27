@@ -121,6 +121,7 @@ export type Database = {
           name: string
           organization_references: Json | null
           status: string
+          type: string | null
           updated_by: string | null
           updated_on: string | null
         }
@@ -135,6 +136,7 @@ export type Database = {
           name: string
           organization_references?: Json | null
           status?: string
+          type?: string | null
           updated_by?: string | null
           updated_on?: string | null
         }
@@ -149,10 +151,52 @@ export type Database = {
           name?: string
           organization_references?: Json | null
           status?: string
+          type?: string | null
           updated_by?: string | null
           updated_on?: string | null
         }
         Relationships: []
+      }
+      partners: {
+        Row: {
+          created_by: string
+          created_on: string
+          id: string
+          organization_id: string
+          partnership_date: string
+          status: string
+          updated_by: string | null
+          updated_on: string | null
+        }
+        Insert: {
+          created_by: string
+          created_on?: string
+          id?: string
+          organization_id: string
+          partnership_date?: string
+          status?: string
+          updated_by?: string | null
+          updated_on?: string | null
+        }
+        Update: {
+          created_by?: string
+          created_on?: string
+          id?: string
+          organization_id?: string
+          partnership_date?: string
+          status?: string
+          updated_by?: string | null
+          updated_on?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partners_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       permissions: {
         Row: {

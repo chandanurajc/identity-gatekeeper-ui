@@ -21,7 +21,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { partnerService } from "@/services/partnerService";
 import { useAuth } from "@/context/AuthContext";
-import { search } from "lucide-react";
+import { Search } from "lucide-react";
 
 const searchSchema = z.object({
   searchType: z.enum(['code', 'gst'], {
