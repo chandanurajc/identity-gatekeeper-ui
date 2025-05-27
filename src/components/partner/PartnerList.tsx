@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { partnerService } from "@/services/partnerService";
 import { useAuth } from "@/context/AuthContext";
+import { useMultiTenant } from "@/hooks/useMultiTenant";
 
 interface PartnerListProps {
   partners: Partner[];
@@ -26,6 +27,13 @@ const PartnerList = ({ partners, onRefresh }: PartnerListProps) => {
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
+  const { getCurrentOrganizationId, getCurrentOrganizationName } = useMultiTenant();
+
+  // Filter partners to show only those belonging to the current organization
+  const currentOrgId = getCurrentOrganizationId();
+  const filteredPartners = partners.filter(partner => 
+    partner.currentOrganizationId === currentOrgId
+  );
 
   const handleStatusToggle = async (partner: Partner) => {
     if (!user?.name && !user?.email) {
@@ -64,7 +72,7 @@ const PartnerList = ({ partners, onRefresh }: PartnerListProps) => {
     }
   };
 
-  if (partners.length === 0) {
+  if (filteredPartners.length === 0) {
     return (
       <Card>
         <CardContent className="flex items-center justify-center py-8">
@@ -73,6 +81,11 @@ const PartnerList = ({ partners, onRefresh }: PartnerListProps) => {
             <p className="text-sm text-muted-foreground mt-1">
               Create your first partnership to get started
             </p>
+            {getCurrentOrganizationName() && (
+              <p className="text-xs text-muted-foreground mt-2">
+                Current Organization: {getCurrentOrganizationName()}
+              </p>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -82,7 +95,14 @@ const PartnerList = ({ partners, onRefresh }: PartnerListProps) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Partners ({partners.length})</CardTitle>
+        <CardTitle>
+          Partners ({filteredPartners.length})
+          {getCurrentOrganizationName() && (
+            <span className="text-sm font-normal text-muted-foreground ml-2">
+              for {getCurrentOrganizationName()}
+            </span>
+          )}
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <Table>
@@ -100,7 +120,7 @@ const PartnerList = ({ partners, onRefresh }: PartnerListProps) => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {partners.map((partner) => (
+            {filteredPartners.map((partner) => (
               <TableRow key={partner.id}>
                 <TableCell className="font-medium">
                   {partner.organizationName}

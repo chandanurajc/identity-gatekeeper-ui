@@ -161,6 +161,7 @@ export type Database = {
         Row: {
           created_by: string
           created_on: string
+          current_organization_id: string
           id: string
           organization_id: string
           partnership_date: string
@@ -171,6 +172,7 @@ export type Database = {
         Insert: {
           created_by: string
           created_on?: string
+          current_organization_id: string
           id?: string
           organization_id: string
           partnership_date?: string
@@ -181,6 +183,7 @@ export type Database = {
         Update: {
           created_by?: string
           created_on?: string
+          current_organization_id?: string
           id?: string
           organization_id?: string
           partnership_date?: string
@@ -189,6 +192,13 @@ export type Database = {
           updated_on?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "partners_current_organization_id_fkey"
+            columns: ["current_organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "partners_organization_id_fkey"
             columns: ["organization_id"]

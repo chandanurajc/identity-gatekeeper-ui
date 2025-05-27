@@ -5,6 +5,7 @@ export interface Partner {
   organizationCode: string;
   organizationName: string;
   organizationType: string;
+  currentOrganizationId: string;
   status: 'active' | 'inactive';
   partnershipDate: Date;
   createdBy: string;

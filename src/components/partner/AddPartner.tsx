@@ -21,6 +21,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { partnerService } from "@/services/partnerService";
 import { useAuth } from "@/context/AuthContext";
+import { useMultiTenant } from "@/hooks/useMultiTenant";
 import { Search } from "lucide-react";
 
 const searchSchema = z.object({
@@ -41,6 +42,7 @@ const AddPartner = ({ onPartnerAdded }: AddPartnerProps) => {
   const [isCreating, setIsCreating] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
+  const { getCurrentOrganizationId } = useMultiTenant();
 
   const form = useForm<z.infer<typeof searchSchema>>({
     resolver: zodResolver(searchSchema),
@@ -96,6 +98,16 @@ const AddPartner = ({ onPartnerAdded }: AddPartnerProps) => {
       return;
     }
 
+    const currentOrganizationId = getCurrentOrganizationId();
+    if (!currentOrganizationId) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Current organization not found. Please ensure you are logged in.",
+      });
+      return;
+    }
+
     if (!user?.name && !user?.email) {
       toast({
         variant: "destructive",
@@ -109,6 +121,7 @@ const AddPartner = ({ onPartnerAdded }: AddPartnerProps) => {
     try {
       await partnerService.createPartnerships(
         selectedOrganizations,
+        currentOrganizationId,
         user.name || user.email || "System"
       );
       

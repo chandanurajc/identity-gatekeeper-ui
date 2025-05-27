@@ -11,7 +11,8 @@ export const partnerService = {
         .from('partners')
         .select(`
           *,
-          organization:organizations(code, name, type)
+          organization:organizations!partners_organization_id_fkey(code, name, type),
+          current_organization:organizations!partners_current_organization_id_fkey(id, code, name)
         `)
         .order('created_on', { ascending: false });
 
@@ -34,6 +35,7 @@ export const partnerService = {
         organizationCode: partner.organization?.code || '',
         organizationName: partner.organization?.name || '',
         organizationType: partner.organization?.type || '',
+        currentOrganizationId: partner.current_organization_id,
         status: partner.status as 'active' | 'inactive',
         partnershipDate: new Date(partner.partnership_date),
         createdBy: partner.created_by,
@@ -158,12 +160,13 @@ export const partnerService = {
     }
   },
 
-  async createPartnerships(organizationIds: string[], createdBy: string): Promise<void> {
-    console.log("Creating partnerships for organizations:", organizationIds);
+  async createPartnerships(organizationIds: string[], currentOrganizationId: string, createdBy: string): Promise<void> {
+    console.log("Creating partnerships for organizations:", organizationIds, "current org:", currentOrganizationId);
     
     try {
       const partnerships = organizationIds.map(orgId => ({
         organization_id: orgId,
+        current_organization_id: currentOrganizationId,
         status: 'active',
         partnership_date: new Date().toISOString(),
         created_by: createdBy,
