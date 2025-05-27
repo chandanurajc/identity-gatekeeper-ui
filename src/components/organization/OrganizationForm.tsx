@@ -88,6 +88,22 @@ const OrganizationForm = ({ initialData, onSubmit, isEditing = false }: Organiza
     },
   });
 
+  // Update form when initialData changes (important for editing)
+  useEffect(() => {
+    if (initialData) {
+      console.log("OrganizationForm: Updating form with new initial data:", initialData);
+      form.reset({
+        name: initialData.name || "",
+        code: initialData.code || "",
+        alias: initialData.alias || "",
+        type: initialData.type || undefined,
+        status: initialData.status || "active",
+        contacts: initialData.contacts || [],
+        references: initialData.references || [],
+      });
+    }
+  }, [initialData, form]);
+
   console.log("OrganizationForm: Form values:", form.getValues());
 
   const handleSubmit = async (data: OrganizationFormData) => {
@@ -140,6 +156,20 @@ const OrganizationForm = ({ initialData, onSubmit, isEditing = false }: Organiza
         return;
       }
 
+      // Ensure references have values if they exist
+      if (data.references && data.references.length > 0) {
+        const invalidReferences = data.references.filter(ref => !ref.value.trim());
+        if (invalidReferences.length > 0) {
+          console.error("OrganizationForm: Invalid references found");
+          toast({
+            title: "Validation Error",
+            description: "All references must have values.",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+
       console.log("OrganizationForm: Validation passed, calling onSubmit");
       console.log("OrganizationForm: About to call onSubmit with data:", data);
       
@@ -163,17 +193,13 @@ const OrganizationForm = ({ initialData, onSubmit, isEditing = false }: Organiza
   };
 
   const handleContactsChange = (contacts: any[]) => {
-    console.log("OrganizationForm: Contacts changed:", contacts.length);
-    form.setValue("contacts", contacts);
-    // Trigger validation
-    form.trigger("contacts");
+    console.log("OrganizationForm: Contacts changed:", contacts.length, contacts);
+    form.setValue("contacts", contacts, { shouldValidate: true, shouldDirty: true });
   };
 
   const handleReferencesChange = (references: any[]) => {
-    console.log("OrganizationForm: References changed:", references.length);
-    form.setValue("references", references);
-    // Trigger validation
-    form.trigger("references");
+    console.log("OrganizationForm: References changed:", references.length, references);
+    form.setValue("references", references, { shouldValidate: true, shouldDirty: true });
   };
 
   return (

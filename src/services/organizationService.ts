@@ -239,18 +239,27 @@ export const organizationService = {
   async updateOrganization(id: string, organizationData: OrganizationFormData, updatedBy: string): Promise<Organization> {
     console.log("OrganizationService: updateOrganization called");
     console.log("OrganizationService: ID:", id);
-    console.log("OrganizationService: Data:", organizationData);
+    console.log("OrganizationService: Data:", JSON.stringify(organizationData, null, 2));
     console.log("OrganizationService: UpdatedBy:", updatedBy);
     
     try {
+      // Validate input data
+      if (!id) {
+        throw new Error("Organization ID is required");
+      }
+      
+      if (!organizationData.name || !organizationData.code || !organizationData.type) {
+        throw new Error("Required fields (name, code, type) are missing");
+      }
+
       // Start a transaction-like operation
       console.log("OrganizationService: Starting update transaction");
 
       // Update the organization first
       const updateData = {
-        name: organizationData.name,
-        code: organizationData.code,
-        description: organizationData.alias || null,
+        name: organizationData.name.trim(),
+        code: organizationData.code.trim().toUpperCase(),
+        description: organizationData.alias?.trim() || null,
         type: organizationData.type,
         status: organizationData.status,
         updated_by: updatedBy,
@@ -304,23 +313,29 @@ export const organizationService = {
       // Create new references
       if (organizationData.references && organizationData.references.length > 0) {
         console.log("OrganizationService: Creating new references:", organizationData.references);
-        const references = organizationData.references.map(ref => ({
-          organization_id: id,
-          reference_type: ref.type,
-          reference_value: ref.value,
-        }));
+        
+        // Filter out empty references
+        const validReferences = organizationData.references.filter(ref => ref.value && ref.value.trim());
+        
+        if (validReferences.length > 0) {
+          const references = validReferences.map(ref => ({
+            organization_id: id,
+            reference_type: ref.type as 'GST' | 'CIN' | 'PAN' | 'GS1 Company code',
+            reference_value: ref.value.trim(),
+          }));
 
-        console.log("OrganizationService: Reference data to insert:", references);
+          console.log("OrganizationService: Reference data to insert:", references);
 
-        const { error: refError } = await supabase
-          .from('organization_references')
-          .insert(references);
+          const { error: refError } = await supabase
+            .from('organization_references')
+            .insert(references);
 
-        if (refError) {
-          console.error("OrganizationService: Error creating references:", refError);
-          throw new Error(`Failed to create references: ${refError.message}`);
+          if (refError) {
+            console.error("OrganizationService: Error creating references:", refError);
+            throw new Error(`Failed to create references: ${refError.message}`);
+          }
+          console.log("OrganizationService: References created successfully");
         }
-        console.log("OrganizationService: References created successfully");
       }
 
       // Create new contacts
@@ -329,17 +344,17 @@ export const organizationService = {
         const contacts = organizationData.contacts.map(contact => ({
           organization_id: id,
           contact_type: contact.type,
-          first_name: contact.firstName,
-          last_name: contact.lastName || null,
-          address1: contact.address1 || null,
-          address2: contact.address2 || null,
-          postal_code: contact.postalCode || null,
-          city: contact.city || null,
-          state: contact.state || null,
-          country: contact.country || null,
-          phone_number: contact.phoneNumber || null,
-          email: contact.email || null,
-          website: contact.website || null,
+          first_name: contact.firstName.trim(),
+          last_name: contact.lastName?.trim() || null,
+          address1: contact.address1?.trim() || null,
+          address2: contact.address2?.trim() || null,
+          postal_code: contact.postalCode?.trim() || null,
+          city: contact.city?.trim() || null,
+          state: contact.state?.trim() || null,
+          country: contact.country?.trim() || null,
+          phone_number: contact.phoneNumber?.trim() || null,
+          email: contact.email?.trim() || null,
+          website: contact.website?.trim() || null,
         }));
 
         const { error: contactError } = await supabase
@@ -355,20 +370,24 @@ export const organizationService = {
 
       console.log("OrganizationService: Update process completed successfully");
       
-      return {
+      // Return the updated organization with the new data
+      const result: Organization = {
         id: orgData.id,
         name: orgData.name,
         code: orgData.code,
         alias: orgData.description,
         type: orgData.type as Organization['type'],
         status: orgData.status as 'active' | 'inactive',
-        references: organizationData.references,
-        contacts: organizationData.contacts,
+        references: organizationData.references || [],
+        contacts: organizationData.contacts || [],
         createdBy: orgData.created_by,
         createdOn: orgData.created_on ? new Date(orgData.created_on) : undefined,
         updatedBy: orgData.updated_by,
         updatedOn: orgData.updated_on ? new Date(orgData.updated_on) : undefined,
       };
+      
+      console.log("OrganizationService: Returning result:", result);
+      return result;
     } catch (error) {
       console.error("OrganizationService: Error in updateOrganization:", error);
       throw error;

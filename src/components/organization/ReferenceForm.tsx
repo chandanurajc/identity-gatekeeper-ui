@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,7 +15,14 @@ interface ReferenceFormProps {
 }
 
 export const ReferenceForm = ({ references, onChange }: ReferenceFormProps) => {
-  console.log("ReferenceForm: Current references:", references);
+  // Use internal state to ensure proper updates
+  const [internalReferences, setInternalReferences] = useState<Reference[]>(references);
+
+  // Sync with parent when references prop changes
+  useEffect(() => {
+    console.log("ReferenceForm: Props changed, updating internal state:", references);
+    setInternalReferences(references);
+  }, [references]);
 
   const addReference = () => {
     console.log("ReferenceForm: Adding new reference");
@@ -24,24 +31,27 @@ export const ReferenceForm = ({ references, onChange }: ReferenceFormProps) => {
       type: 'GST' as const,
       value: '',
     };
-    const updatedReferences = [...references, newReference];
+    const updatedReferences = [...internalReferences, newReference];
     console.log("ReferenceForm: Updated references:", updatedReferences);
+    setInternalReferences(updatedReferences);
     onChange(updatedReferences);
   };
 
   const removeReference = (index: number) => {
     console.log("ReferenceForm: Removing reference at index:", index);
-    const updatedReferences = references.filter((_, i) => i !== index);
+    const updatedReferences = internalReferences.filter((_, i) => i !== index);
     console.log("ReferenceForm: Updated references after removal:", updatedReferences);
+    setInternalReferences(updatedReferences);
     onChange(updatedReferences);
   };
 
   const updateReference = (index: number, field: keyof Reference, value: string) => {
     console.log(`ReferenceForm: Updating reference ${index} field ${field}:`, value);
-    const updatedReferences = references.map((ref, i) => 
+    const updatedReferences = internalReferences.map((ref, i) => 
       i === index ? { ...ref, [field]: value } : ref
     );
     console.log("ReferenceForm: Updated references:", updatedReferences);
+    setInternalReferences(updatedReferences);
     onChange(updatedReferences);
   };
 
@@ -55,8 +65,8 @@ export const ReferenceForm = ({ references, onChange }: ReferenceFormProps) => {
         </Button>
       </div>
 
-      {references.map((reference, index) => (
-        <Card key={reference.id} className="p-4">
+      {internalReferences.map((reference, index) => (
+        <Card key={`ref-${index}-${reference.id}`} className="p-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
             <div>
               <Label>Reference Type</Label>
@@ -97,7 +107,7 @@ export const ReferenceForm = ({ references, onChange }: ReferenceFormProps) => {
         </Card>
       ))}
 
-      {references.length === 0 && (
+      {internalReferences.length === 0 && (
         <p className="text-muted-foreground text-center py-4">
           No references added yet. Click "Add Reference" to get started.
         </p>
