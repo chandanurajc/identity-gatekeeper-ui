@@ -10,6 +10,9 @@ import {
   User,
   Users,
   Building2,
+  Building,
+  GitBranch,
+  Handshake,
 } from "lucide-react";
 
 export interface NavItem {
@@ -73,12 +76,6 @@ export const sidebarConfig: NavigationGroup[] = [
         icon: "shield" as const,
       },
       {
-        title: "Suppliers",
-        href: "/master-data/suppliers",
-        permission: "view-supplier",
-        icon: "shield" as const,
-      },
-      {
         title: "Partner Management",
         href: "/master-data/partners",
         permission: "manage_partner",
@@ -114,54 +111,26 @@ export const sidebarConfig: NavigationGroup[] = [
 export const createModuleGroups = (permissions: any): ModuleGroup[] => {
   const moduleGroups: ModuleGroup[] = [];
 
-  // Master Data module
-  const masterDataItems: MenuItem[] = [];
+  // Admin module
+  const adminItems: MenuItem[] = [];
   
   if (permissions.canViewOrganization) {
-    masterDataItems.push({
+    adminItems.push({
       label: "Organizations",
       path: "/admin/organizations",
-      icon: Building2,
+      icon: Building,
       permission: true,
     });
   }
   
   if (permissions.canViewDivision) {
-    masterDataItems.push({
+    adminItems.push({
       label: "Divisions",
       path: "/admin/divisions",
-      icon: Building2,
+      icon: GitBranch,
       permission: true,
     });
   }
-  
-  if (permissions.canViewSupplier) {
-    masterDataItems.push({
-      label: "Suppliers",
-      path: "/master-data/suppliers",
-      icon: Building2,
-      permission: true,
-    });
-  }
-  
-  if (permissions.canManagePartner) {
-    masterDataItems.push({
-      label: "Partner Management",
-      path: "/master-data/partners",
-      icon: Building2,
-      permission: true,
-    });
-  }
-
-  if (masterDataItems.length > 0) {
-    moduleGroups.push({
-      name: "Master Data",
-      items: masterDataItems,
-    });
-  }
-
-  // Admin module
-  const adminItems: MenuItem[] = [];
   
   if (permissions.canViewUsers) {
     adminItems.push({
@@ -194,6 +163,25 @@ export const createModuleGroups = (permissions: any): ModuleGroup[] => {
     moduleGroups.push({
       name: "Admin",
       items: adminItems,
+    });
+  }
+
+  // Master Data module
+  const masterDataItems: MenuItem[] = [];
+  
+  if (permissions.canManagePartner) {
+    masterDataItems.push({
+      label: "Partner Management",
+      path: "/master-data/partners",
+      icon: Handshake,
+      permission: true,
+    });
+  }
+
+  if (masterDataItems.length > 0) {
+    moduleGroups.push({
+      name: "Master Data",
+      items: masterDataItems,
     });
   }
 

@@ -32,7 +32,6 @@ export function AppSidebar() {
     canViewOrganization,
     canViewDivision,
     canManagePartner,
-    canViewSupplier: true, // Add this based on your actual supplier permissions
   };
 
   const moduleGroups = createModuleGroups(permissions);

@@ -55,55 +55,66 @@ export const partnerService = {
     console.log("Searching organizations:", { searchType, searchTerm });
     
     try {
-      let query = supabase
-        .from('organizations')
-        .select(`
-          id, 
-          code, 
-          name, 
-          type,
-          organization_references!inner(reference_type, reference_value)
-        `)
-        .eq('status', 'active');
-
       if (searchType === 'code') {
-        query = query.ilike('code', `%${searchTerm}%`);
-      } else if (searchType === 'gst') {
-        // Search for GST numbers in the organization_references table
-        query = query
-          .eq('organization_references.reference_type', 'GST')
-          .ilike('organization_references.reference_value', `%${searchTerm}%`);
-      }
+        // Search organizations by code
+        const { data, error } = await supabase
+          .from('organizations')
+          .select('id, code, name, type')
+          .eq('status', 'active')
+          .ilike('code', `%${searchTerm}%`)
+          .limit(20);
 
-      const { data, error } = await query.limit(20);
+        if (error) {
+          console.error("Error searching organizations by code:", error);
+          throw new Error(`Failed to search organizations: ${error.message}`);
+        }
 
-      if (error) {
-        console.error("Error searching organizations:", error);
-        throw new Error(`Failed to search organizations: ${error.message}`);
-      }
+        if (!data) {
+          return [];
+        }
 
-      if (!data) {
-        return [];
-      }
-
-      // Transform to search results
-      const results = data.map(org => {
-        // Find GST reference from the joined data
-        const gstRef = Array.isArray(org.organization_references) 
-          ? org.organization_references.find((ref: any) => ref.reference_type === 'GST')
-          : null;
-        
-        return {
+        console.log("Organization search results by code:", data);
+        return data.map(org => ({
           id: org.id,
           code: org.code,
           name: org.name,
           type: org.type || 'Unknown',
-          gstNumber: gstRef?.reference_value,
-        };
-      });
+        }));
 
-      console.log("Organization search results:", results);
-      return results;
+      } else if (searchType === 'gst') {
+        // Search organizations by GST number in organization_references table
+        const { data, error } = await supabase
+          .from('organization_references')
+          .select(`
+            organization_id,
+            reference_value,
+            organizations!inner(id, code, name, type, status)
+          `)
+          .eq('reference_type', 'GST')
+          .eq('organizations.status', 'active')
+          .ilike('reference_value', `%${searchTerm}%`)
+          .limit(20);
+
+        if (error) {
+          console.error("Error searching organizations by GST:", error);
+          throw new Error(`Failed to search organizations: ${error.message}`);
+        }
+
+        if (!data) {
+          return [];
+        }
+
+        console.log("Organization search results by GST:", data);
+        return data.map(ref => ({
+          id: ref.organizations.id,
+          code: ref.organizations.code,
+          name: ref.organizations.name,
+          type: ref.organizations.type || 'Unknown',
+          gstNumber: ref.reference_value,
+        }));
+      }
+
+      return [];
       
     } catch (error) {
       console.error("Service error searching organizations:", error);

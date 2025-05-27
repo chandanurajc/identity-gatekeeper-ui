@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -28,10 +29,6 @@ import PermissionsList from "./pages/admin/PermissionsList";
 import CategoriesList from "./pages/inventory/CategoriesList";
 import CategoryCreate from "./pages/inventory/CategoryCreate";
 import CategoryDetail from "./pages/inventory/CategoryDetail";
-import SuppliersList from "./pages/supplier/SuppliersList";
-import SupplierCreate from "./pages/supplier/SupplierCreate";
-import SupplierEdit from "./pages/supplier/SupplierEdit";
-import SupplierDetail from "./pages/supplier/SupplierDetail";
 import PartnersList from "./pages/master-data/PartnersList";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -269,48 +266,6 @@ const App = () => (
                     <CategoryDetail />
                   </MainLayout>
                 </PermissionProtectedRoute>
-              } 
-            />
-            
-            {/* Supplier Management Routes */}
-            <Route 
-              path="/master-data/suppliers" 
-              element={
-                <ProtectedRoute>
-                  <MainLayout>
-                    <SuppliersList />
-                  </MainLayout>
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/master-data/suppliers/create" 
-              element={
-                <ProtectedRoute>
-                  <MainLayout>
-                    <SupplierCreate />
-                  </MainLayout>
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/master-data/suppliers/edit/:supplierId" 
-              element={
-                <ProtectedRoute>
-                  <MainLayout>
-                    <SupplierEdit />
-                  </MainLayout>
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/master-data/suppliers/:supplierId" 
-              element={
-                <ProtectedRoute>
-                  <MainLayout>
-                    <SupplierDetail />
-                  </MainLayout>
-                </ProtectedRoute>
               } 
             />
             
