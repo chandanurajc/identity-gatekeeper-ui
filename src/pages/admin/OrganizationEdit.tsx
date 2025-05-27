@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useOrganizationPermissions } from "@/hooks/useOrganizationPermissions";
@@ -48,33 +49,63 @@ const OrganizationEdit = () => {
   }, [organizationId, navigate, toast]);
 
   const handleSave = async (formData: OrganizationFormData) => {
+    console.log("OrganizationEdit: handleSave called with:", formData);
+    
     if (!canEditOrganization || !organizationId) {
+      toast({
+        title: "Error",
+        description: "You don't have permission to edit organizations.",
+        variant: "destructive",
+      });
       navigate("/unauthorized");
       return;
     }
 
     try {
-      // Use user name instead of ID for updated_by field
-      const updatedByValue = user?.name || "unknown";
+      console.log("OrganizationEdit: Starting save process...");
       
-      console.log("Using updatedBy value:", updatedByValue);
+      // Validate user authentication
+      if (!user || !user.id) {
+        console.error("OrganizationEdit: User not authenticated", user);
+        toast({
+          title: "Error",
+          description: "You must be logged in to save changes.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Use user email or ID as fallback for updated_by field
+      const updatedByValue = user.email || user.id || "unknown";
       
-      await organizationService.updateOrganization(
+      console.log("OrganizationEdit: Using updatedBy value:", updatedByValue);
+      console.log("OrganizationEdit: Organization ID:", organizationId);
+      
+      const result = await organizationService.updateOrganization(
         organizationId, 
         formData, 
         updatedByValue
       );
       
+      console.log("OrganizationEdit: Save successful:", result);
+      
       toast({
         title: "Success",
         description: "Organization updated successfully",
       });
+      
+      // Navigate back to organizations list
       navigate("/admin/organizations");
+      
     } catch (error) {
-      console.error("Error updating organization:", error);
+      console.error("OrganizationEdit: Error updating organization:", error);
+      
+      // Extract error message
+      const errorMessage = error instanceof Error ? error.message : "Failed to update organization";
+      
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to update organization",
+        description: errorMessage,
         variant: "destructive",
       });
     }

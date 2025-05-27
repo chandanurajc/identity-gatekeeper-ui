@@ -10,6 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/context/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 import { ContactForm } from "./ContactForm";
 import { ReferenceForm } from "./ReferenceForm";
 
@@ -65,6 +66,7 @@ interface OrganizationFormProps {
 
 const OrganizationForm = ({ initialData, onSubmit, isEditing = false }: OrganizationFormProps) => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Initialize form with default values or existing data
@@ -74,7 +76,7 @@ const OrganizationForm = ({ initialData, onSubmit, isEditing = false }: Organiza
       name: initialData?.name || "",
       code: initialData?.code || "",
       alias: initialData?.alias || "",
-      type: initialData?.type || undefined, // Changed from default value to force selection
+      type: initialData?.type || undefined,
       status: initialData?.status || "active",
       contacts: initialData?.contacts && initialData.contacts.length > 0 
         ? initialData.contacts 
@@ -91,31 +93,62 @@ const OrganizationForm = ({ initialData, onSubmit, isEditing = false }: Organiza
     try {
       // Validate that we have a user
       if (!user?.id) {
-        throw new Error("User must be authenticated to create organizations");
+        console.error("OrganizationForm: User not authenticated");
+        toast({
+          title: "Authentication Error",
+          description: "You must be logged in to save organizations.",
+          variant: "destructive",
+        });
+        return;
       }
 
       // Ensure contacts array is not empty
       if (!data.contacts || data.contacts.length === 0) {
-        throw new Error("At least one contact is required");
+        console.error("OrganizationForm: No contacts provided");
+        toast({
+          title: "Validation Error",
+          description: "At least one contact is required.",
+          variant: "destructive",
+        });
+        return;
       }
 
       // Validate organization code format
       if (!/^[A-Z0-9]{4}$/.test(data.code)) {
-        throw new Error("Organization code must be exactly 4 uppercase alphanumeric characters");
+        console.error("OrganizationForm: Invalid code format");
+        toast({
+          title: "Validation Error",
+          description: "Organization code must be exactly 4 uppercase alphanumeric characters.",
+          variant: "destructive",
+        });
+        return;
       }
 
       // Validate that organization type is selected
       if (!data.type) {
-        throw new Error("Organization type is required");
+        console.error("OrganizationForm: No type selected");
+        toast({
+          title: "Validation Error",
+          description: "Organization type is required.",
+          variant: "destructive",
+        });
+        return;
       }
 
       console.log("OrganizationForm: Validation passed, calling onSubmit");
       await onSubmit(data);
       console.log("OrganizationForm: onSubmit completed successfully");
+      
     } catch (error) {
       console.error("OrganizationForm: Submission error:", error);
-      // Let the parent component handle the error display
-      throw error;
+      
+      // Show error toast
+      const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred";
+      toast({
+        title: "Save Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
       console.log("OrganizationForm: Submission process completed");
