@@ -26,14 +26,16 @@ const OrganizationEdit = () => {
           throw new Error("Organization ID is required");
         }
 
+        console.log("OrganizationEdit: Fetching organization with ID:", organizationId);
         const data = await organizationService.getOrganizationById(organizationId);
         if (!data) {
           throw new Error("Organization not found");
         }
 
+        console.log("OrganizationEdit: Organization fetched successfully:", data);
         setOrganization(data);
       } catch (error) {
-        console.error("Error fetching organization:", error);
+        console.error("OrganizationEdit: Error fetching organization:", error);
         toast({
           title: "Error",
           description: "Failed to load organization details.",
@@ -49,9 +51,13 @@ const OrganizationEdit = () => {
   }, [organizationId, navigate, toast]);
 
   const handleSave = async (formData: OrganizationFormData) => {
-    console.log("OrganizationEdit: handleSave called with:", formData);
+    console.log("OrganizationEdit: handleSave called with formData:", formData);
+    console.log("OrganizationEdit: canEditOrganization:", canEditOrganization);
+    console.log("OrganizationEdit: organizationId:", organizationId);
+    console.log("OrganizationEdit: user:", user);
     
     if (!canEditOrganization || !organizationId) {
+      console.error("OrganizationEdit: Permission denied or missing organizationId");
       toast({
         title: "Error",
         description: "You don't have permission to edit organizations.",
@@ -62,7 +68,7 @@ const OrganizationEdit = () => {
     }
 
     try {
-      console.log("OrganizationEdit: Starting save process...");
+      console.log("OrganizationEdit: Starting update process...");
       
       // Validate user authentication
       if (!user || !user.id) {
@@ -79,7 +85,7 @@ const OrganizationEdit = () => {
       const updatedByValue = user.email || user.id || "unknown";
       
       console.log("OrganizationEdit: Using updatedBy value:", updatedByValue);
-      console.log("OrganizationEdit: Organization ID:", organizationId);
+      console.log("OrganizationEdit: Calling organizationService.updateOrganization...");
       
       const result = await organizationService.updateOrganization(
         organizationId, 
@@ -87,7 +93,7 @@ const OrganizationEdit = () => {
         updatedByValue
       );
       
-      console.log("OrganizationEdit: Save successful:", result);
+      console.log("OrganizationEdit: Update successful:", result);
       
       toast({
         title: "Success",
@@ -136,6 +142,8 @@ const OrganizationEdit = () => {
       </div>
     );
   }
+
+  console.log("OrganizationEdit: Rendering form with organization:", organization);
 
   return (
     <div className="p-6 space-y-6">

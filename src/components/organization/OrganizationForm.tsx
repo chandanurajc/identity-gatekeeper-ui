@@ -69,6 +69,9 @@ const OrganizationForm = ({ initialData, onSubmit, isEditing = false }: Organiza
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
+  console.log("OrganizationForm: Initializing with data:", initialData);
+  console.log("OrganizationForm: isEditing:", isEditing);
+  
   // Initialize form with default values or existing data
   const form = useForm<OrganizationFormData>({
     resolver: zodResolver(organizationSchema),
@@ -85,9 +88,11 @@ const OrganizationForm = ({ initialData, onSubmit, isEditing = false }: Organiza
     },
   });
 
+  console.log("OrganizationForm: Form values:", form.getValues());
+
   const handleSubmit = async (data: OrganizationFormData) => {
-    console.log("OrganizationForm: Form submission started");
-    console.log("OrganizationForm: Form data:", JSON.stringify(data, null, 2));
+    console.log("OrganizationForm: handleSubmit called");
+    console.log("OrganizationForm: Form data received:", JSON.stringify(data, null, 2));
     
     setIsSubmitting(true);
     try {
@@ -136,6 +141,8 @@ const OrganizationForm = ({ initialData, onSubmit, isEditing = false }: Organiza
       }
 
       console.log("OrganizationForm: Validation passed, calling onSubmit");
+      console.log("OrganizationForm: About to call onSubmit with data:", data);
+      
       await onSubmit(data);
       console.log("OrganizationForm: onSubmit completed successfully");
       

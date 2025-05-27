@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Organization, OrganizationFormData, Reference, Contact } from "@/types/organization";
 
@@ -238,7 +239,10 @@ export const organizationService = {
   },
 
   async updateOrganization(id: string, organizationData: OrganizationFormData, updatedBy: string): Promise<Organization> {
-    console.log("Updating organization:", id, "with data:", organizationData);
+    console.log("OrganizationService: updateOrganization called");
+    console.log("OrganizationService: ID:", id);
+    console.log("OrganizationService: Data:", organizationData);
+    console.log("OrganizationService: UpdatedBy:", updatedBy);
     
     try {
       // Update the organization
@@ -252,6 +256,8 @@ export const organizationService = {
         updated_on: new Date().toISOString(),
       };
 
+      console.log("OrganizationService: Updating organization with data:", updateData);
+
       const { data: orgData, error: orgError } = await supabase
         .from('organizations')
         .update(updateData)
@@ -260,16 +266,20 @@ export const organizationService = {
         .single();
 
       if (orgError) {
-        console.error("Error updating organization:", orgError);
+        console.error("OrganizationService: Error updating organization:", orgError);
         throw new Error(`Failed to update organization: ${orgError.message}`);
       }
 
+      console.log("OrganizationService: Organization updated successfully:", orgData);
+
       // Delete existing references and contacts
+      console.log("OrganizationService: Deleting existing references and contacts");
       await supabase.from('organization_references').delete().eq('organization_id', id);
       await supabase.from('organization_contacts').delete().eq('organization_id', id);
 
       // Create new references
       if (organizationData.references && organizationData.references.length > 0) {
+        console.log("OrganizationService: Creating new references:", organizationData.references);
         const references = organizationData.references.map(ref => ({
           organization_id: id,
           reference_type: ref.type,
@@ -281,13 +291,15 @@ export const organizationService = {
           .insert(references);
 
         if (refError) {
-          console.error("Error updating references:", refError);
+          console.error("OrganizationService: Error updating references:", refError);
           throw new Error(`Failed to update references: ${refError.message}`);
         }
+        console.log("OrganizationService: References created successfully");
       }
 
       // Create new contacts
       if (organizationData.contacts && organizationData.contacts.length > 0) {
+        console.log("OrganizationService: Creating new contacts:", organizationData.contacts);
         const contacts = organizationData.contacts.map(contact => ({
           organization_id: id,
           contact_type: contact.type,
@@ -309,12 +321,13 @@ export const organizationService = {
           .insert(contacts);
 
         if (contactError) {
-          console.error("Error updating contacts:", contactError);
+          console.error("OrganizationService: Error updating contacts:", contactError);
           throw new Error(`Failed to update contacts: ${contactError.message}`);
         }
+        console.log("OrganizationService: Contacts created successfully");
       }
 
-      console.log("Organization updated successfully:", orgData);
+      console.log("OrganizationService: Update process completed successfully");
       
       return {
         id: orgData.id,
@@ -331,7 +344,7 @@ export const organizationService = {
         updatedOn: orgData.updated_on ? new Date(orgData.updated_on) : undefined,
       };
     } catch (error) {
-      console.error("Service error updating organization:", error);
+      console.error("OrganizationService: Error in updateOrganization:", error);
       throw error;
     }
   },
