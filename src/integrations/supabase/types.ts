@@ -346,45 +346,36 @@ export type Database = {
       }
       organizations: {
         Row: {
-          address: Json | null
           code: string
-          contacts: Json | null
           created_by: string | null
           created_on: string
           description: string | null
           id: string
           name: string
-          organization_references: Json | null
           status: string
           type: string
           updated_by: string | null
           updated_on: string | null
         }
         Insert: {
-          address?: Json | null
           code: string
-          contacts?: Json | null
           created_by?: string | null
           created_on?: string
           description?: string | null
           id?: string
           name: string
-          organization_references?: Json | null
           status?: string
           type?: string
           updated_by?: string | null
           updated_on?: string | null
         }
         Update: {
-          address?: Json | null
           code?: string
-          contacts?: Json | null
           created_by?: string | null
           created_on?: string
           description?: string | null
           id?: string
           name?: string
-          organization_references?: Json | null
           status?: string
           type?: string
           updated_by?: string | null
