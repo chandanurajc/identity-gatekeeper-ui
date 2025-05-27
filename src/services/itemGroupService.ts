@@ -7,9 +7,27 @@ export const itemGroupService = {
     console.log("Fetching item groups from Supabase...");
     
     try {
+      // Get current user's organization
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('organization_id')
+        .eq('id', user.id)
+        .single();
+
+      if (!profile?.organization_id) {
+        console.log("No organization found for user");
+        return [];
+      }
+
       const { data, error } = await supabase
         .from('item_groups')
         .select('*')
+        .eq('organization_id', profile.organization_id)
         .order('created_on', { ascending: false });
 
       if (error) {
@@ -50,6 +68,22 @@ export const itemGroupService = {
     console.log("Creating item group:", formData, "created by:", createdBy);
     
     try {
+      // Get current user's organization
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('organization_id')
+        .eq('id', user.id)
+        .single();
+
+      if (!profile?.organization_id) {
+        throw new Error("No organization found for user");
+      }
+
       const { error } = await supabase
         .from('item_groups')
         .insert({
@@ -57,6 +91,7 @@ export const itemGroupService = {
           classification: formData.classification,
           sub_classification: formData.subClassification,
           status: formData.status,
+          organization_id: profile.organization_id,
           created_by: createdBy,
           updated_by: createdBy,
         });

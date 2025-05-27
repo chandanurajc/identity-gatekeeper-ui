@@ -9,6 +9,53 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      item_groups: {
+        Row: {
+          classification: string
+          created_by: string
+          created_on: string
+          id: string
+          name: string
+          organization_id: string | null
+          status: string
+          sub_classification: string
+          updated_by: string | null
+          updated_on: string | null
+        }
+        Insert: {
+          classification: string
+          created_by: string
+          created_on?: string
+          id?: string
+          name: string
+          organization_id?: string | null
+          status?: string
+          sub_classification: string
+          updated_by?: string | null
+          updated_on?: string | null
+        }
+        Update: {
+          classification?: string
+          created_by?: string
+          created_on?: string
+          id?: string
+          name?: string
+          organization_id?: string | null
+          status?: string
+          sub_classification?: string
+          updated_by?: string | null
+          updated_on?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "item_groups_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_contacts: {
         Row: {
           address1: string | null
