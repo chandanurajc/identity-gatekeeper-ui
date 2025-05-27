@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -30,6 +29,7 @@ import CategoriesList from "./pages/inventory/CategoriesList";
 import CategoryCreate from "./pages/inventory/CategoryCreate";
 import CategoryDetail from "./pages/inventory/CategoryDetail";
 import PartnersList from "./pages/master-data/PartnersList";
+import ItemGroupsList from "./pages/master-data/ItemGroupsList";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PermissionProtectedRoute from "./components/PermissionProtectedRoute";
@@ -264,6 +264,18 @@ const App = () => (
                 <PermissionProtectedRoute requiredPermission="view-category">
                   <MainLayout>
                     <CategoryDetail />
+                  </MainLayout>
+                </PermissionProtectedRoute>
+              } 
+            />
+            
+            {/* Item Group Management Routes */}
+            <Route 
+              path="/master-data/item-groups" 
+              element={
+                <PermissionProtectedRoute requiredPermission="view-item-group">
+                  <MainLayout>
+                    <ItemGroupsList />
                   </MainLayout>
                 </PermissionProtectedRoute>
               } 

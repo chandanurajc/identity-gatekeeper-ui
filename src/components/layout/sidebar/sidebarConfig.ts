@@ -88,6 +88,12 @@ export const sidebarConfig: NavigationGroup[] = [
         permission: "view-category",
         icon: "shield" as const,
       },
+      {
+        title: "Item Groups",
+        href: "/master-data/item-groups",
+        permission: "view-item-group",
+        icon: "shield" as const,
+      },
     ],
   },
   {
@@ -125,6 +131,15 @@ export const createModuleGroups = (permissions: any): ModuleGroup[] => {
     masterDataItems.push({
       label: "Item Categories",
       path: "/master-data/item-category",
+      icon: Folder,
+      permission: true,
+    });
+  }
+  
+  if (permissions.canViewItemGroup) {
+    masterDataItems.push({
+      label: "Item Groups",
+      path: "/master-data/item-groups",
       icon: Folder,
       permission: true,
     });

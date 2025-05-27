@@ -36,7 +36,7 @@ export const ReferenceForm = ({ references, onChange, readOnly = false }: Refere
     onChange(references.filter(ref => ref.id !== id));
   };
 
-  const referenceTypes = ['GST', 'CIN', 'PAN'];
+  const referenceTypes = ['GST', 'CIN', 'PAN', 'GS1 Company code'];
 
   return (
     <div className="space-y-4">
