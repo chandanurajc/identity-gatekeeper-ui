@@ -26,9 +26,6 @@ import DivisionEdit from "./pages/admin/DivisionEdit";
 import DivisionDetail from "./pages/admin/DivisionDetail";
 import Settings from "./pages/Settings";
 import PermissionsList from "./pages/admin/PermissionsList";
-import CategoriesList from "./pages/inventory/CategoriesList";
-import CategoryCreate from "./pages/inventory/CategoryCreate";
-import CategoryDetail from "./pages/inventory/CategoryDetail";
 import PartnersList from "./pages/master-data/PartnersList";
 import ItemGroupsList from "./pages/master-data/ItemGroupsList";
 import SalesChannelsList from "./pages/master-data/SalesChannelsList";
@@ -239,38 +236,6 @@ const App = () => (
                 <PermissionProtectedRoute requiredPermission="view_permissions">
                   <MainLayout>
                     <PermissionsList />
-                  </MainLayout>
-                </PermissionProtectedRoute>
-              } 
-            />
-
-            {/* Item Category Management Routes */}
-            <Route 
-              path="/master-data/item-category" 
-              element={
-                <PermissionProtectedRoute requiredPermission="view-category">
-                  <MainLayout>
-                    <CategoriesList />
-                  </MainLayout>
-                </PermissionProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/master-data/item-category/create" 
-              element={
-                <PermissionProtectedRoute requiredPermission="create-category">
-                  <MainLayout>
-                    <CategoryCreate />
-                  </MainLayout>
-                </PermissionProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/master-data/item-category/:categoryId" 
-              element={
-                <PermissionProtectedRoute requiredPermission="view-category">
-                  <MainLayout>
-                    <CategoryDetail />
                   </MainLayout>
                 </PermissionProtectedRoute>
               } 

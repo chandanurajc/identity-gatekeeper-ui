@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -77,6 +76,20 @@ const ItemForm = ({ initialData, onSubmit, onCancel, isEdit = false }: ItemFormP
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleItemGroupChange = (itemGroupId: string) => {
+    const selectedGroup = itemGroups.find(group => group.id === itemGroupId);
+    if (selectedGroup) {
+      setFormData(prev => ({
+        ...prev,
+        itemGroupId,
+        classification: selectedGroup.classification,
+        subClassification: selectedGroup.subClassification
+      }));
+    } else {
+      handleInputChange("itemGroupId", itemGroupId);
+    }
+  };
+
   const addCost = () => {
     setFormData(prev => ({
       ...prev,
@@ -147,17 +160,17 @@ const ItemForm = ({ initialData, onSubmit, onCancel, isEdit = false }: ItemFormP
               <CardTitle>Basic Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {isEdit && (
-                <div>
-                  <Label htmlFor="id">Item ID</Label>
-                  <Input
-                    id="id"
-                    value={formData.id || ""}
-                    disabled
-                    className="bg-gray-100"
-                  />
-                </div>
-              )}
+              <div>
+                <Label htmlFor="id">Item ID</Label>
+                <Input
+                  id="id"
+                  value={formData.id || ""}
+                  onChange={(e) => handleInputChange("id", e.target.value)}
+                  placeholder={isEdit ? "Item ID (read-only)" : "Auto-generated if empty"}
+                  disabled={isEdit}
+                  className={isEdit ? "bg-gray-100" : ""}
+                />
+              </div>
               
               <div>
                 <Label htmlFor="description">Description *</Label>
@@ -173,7 +186,7 @@ const ItemForm = ({ initialData, onSubmit, onCancel, isEdit = false }: ItemFormP
                 <Label htmlFor="itemGroup">Item Group</Label>
                 <Select 
                   value={formData.itemGroupId || ""} 
-                  onValueChange={(value) => handleInputChange("itemGroupId", value)}
+                  onValueChange={handleItemGroupChange}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select item group" />

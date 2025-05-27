@@ -7,7 +7,6 @@ import {
 } from "@/components/ui/sidebar";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useRolePermissions } from "@/hooks/useRolePermissions";
-import { useCategoryPermissions } from "@/hooks/useCategoryPermissions";
 import { useOrganizationPermissions } from "@/hooks/useOrganizationPermissions";
 import { useDivisionPermissions } from "@/hooks/useDivisionPermissions";
 import { usePartnerPermissions } from "@/hooks/usePartnerPermissions";
@@ -21,7 +20,6 @@ import { SidebarFooterContent } from "./sidebar/SidebarFooterContent";
 export function AppSidebar() {
   const { canViewUsers } = usePermissions();
   const { canViewRoles, canViewPermissions } = useRolePermissions();
-  const { canViewCategory } = useCategoryPermissions();
   const { canViewOrganization } = useOrganizationPermissions();
   const { canViewDivision } = useDivisionPermissions();
   const { canManagePartner } = usePartnerPermissions();
@@ -34,7 +32,6 @@ export function AppSidebar() {
     canViewUsers,
     canViewRoles,
     canViewPermissions,
-    canViewCategory,
     canViewOrganization,
     canViewDivision,
     canManagePartner,
