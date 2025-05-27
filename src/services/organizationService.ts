@@ -32,7 +32,7 @@ export const organizationService = {
           name: org.name,
           code: org.code,
           alias: org.description,
-          type: 'Admin' as const, // Default type since it's not stored in DB
+          type: org.type || 'Admin', // Default to Admin if type is null
           status: org.status as 'active' | 'inactive',
           references: Array.isArray(org.organization_references) 
             ? org.organization_references as unknown as Reference[] 
@@ -88,7 +88,7 @@ export const organizationService = {
         name: data.name,
         code: data.code,
         alias: data.description,
-        type: 'Admin' as const,
+        type: data.type || 'Admin',
         status: data.status as 'active' | 'inactive',
         references: Array.isArray(data.organization_references) 
           ? data.organization_references as unknown as Reference[] 
@@ -114,12 +114,15 @@ export const organizationService = {
       name: organizationData.name,
       code: organizationData.code,
       description: organizationData.alias || null,
+      type: organizationData.type, // Explicitly set the type
       status: organizationData.status,
       organization_references: organizationData.references as any || [],
       contacts: organizationData.contacts as any || [],
       created_by: createdBy,
       updated_by: createdBy,
     };
+
+    console.log("Saving organization with type:", organizationData.type);
 
     const { data, error } = await supabase
       .from('organizations')
@@ -139,7 +142,7 @@ export const organizationService = {
       name: data.name,
       code: data.code,
       alias: data.description,
-      type: organizationData.type,
+      type: data.type || organizationData.type, // Use the type from the form if not returned by the database
       status: data.status as 'active' | 'inactive',
       references: organizationData.references,
       contacts: organizationData.contacts,
@@ -152,11 +155,13 @@ export const organizationService = {
 
   async updateOrganization(id: string, organizationData: OrganizationFormData, updatedBy: string): Promise<Organization> {
     console.log("Updating organization:", id, "with data:", organizationData);
+    console.log("Organization type being updated to:", organizationData.type);
     
     const updateData = {
       name: organizationData.name,
       code: organizationData.code,
       description: organizationData.alias || null,
+      type: organizationData.type, // Explicitly set the type field
       status: organizationData.status,
       organization_references: organizationData.references as any || [],
       contacts: organizationData.contacts as any || [],
@@ -177,13 +182,14 @@ export const organizationService = {
     }
 
     console.log("Organization updated successfully:", data);
+    console.log("Organization type after update:", data.type);
     
     return {
       id: data.id,
       name: data.name,
       code: data.code,
       alias: data.description,
-      type: organizationData.type,
+      type: data.type || organizationData.type, // Use the type from the form if not returned
       status: data.status as 'active' | 'inactive',
       references: organizationData.references,
       contacts: organizationData.contacts,
