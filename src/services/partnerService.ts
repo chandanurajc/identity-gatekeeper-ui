@@ -2,12 +2,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { Partner, PartnerFormData, OrganizationSearchResult } from "@/types/partner";
 
-// Define the structure of organization references
-interface OrganizationReference {
-  type: string;
-  value: string;
-}
-
 export const partnerService = {
   async getPartners(): Promise<Partner[]> {
     console.log("Fetching partners from Supabase...");
@@ -63,14 +57,22 @@ export const partnerService = {
     try {
       let query = supabase
         .from('organizations')
-        .select('id, code, name, type, organization_references')
+        .select(`
+          id, 
+          code, 
+          name, 
+          type,
+          organization_references!inner(reference_type, reference_value)
+        `)
         .eq('status', 'active');
 
       if (searchType === 'code') {
         query = query.ilike('code', `%${searchTerm}%`);
       } else if (searchType === 'gst') {
-        // Search in organization_references for GST numbers
-        query = query.contains('organization_references', [{ type: 'GST', value: searchTerm }]);
+        // Search for GST numbers in the organization_references table
+        query = query
+          .eq('organization_references.reference_type', 'GST')
+          .ilike('organization_references.reference_value', `%${searchTerm}%`);
       }
 
       const { data, error } = await query.limit(20);
@@ -86,21 +88,17 @@ export const partnerService = {
 
       // Transform to search results
       const results = data.map(org => {
-        let gstNumber: string | undefined;
-        
-        // Safely parse organization_references
-        if (org.organization_references && Array.isArray(org.organization_references)) {
-          const gstRef = (org.organization_references as OrganizationReference[])
-            .find(ref => ref.type === 'GST');
-          gstNumber = gstRef?.value;
-        }
+        // Find GST reference from the joined data
+        const gstRef = Array.isArray(org.organization_references) 
+          ? org.organization_references.find((ref: any) => ref.reference_type === 'GST')
+          : null;
         
         return {
           id: org.id,
           code: org.code,
           name: org.name,
           type: org.type || 'Unknown',
-          gstNumber,
+          gstNumber: gstRef?.reference_value,
         };
       });
 
