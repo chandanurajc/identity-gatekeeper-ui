@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -68,6 +68,7 @@ const OrganizationForm = ({ initialData, onSubmit, isEditing = false }: Organiza
   const { user } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const initialDataRef = useRef<string>();
   
   console.log("OrganizationForm: Initializing with data:", initialData);
   console.log("OrganizationForm: isEditing:", isEditing);
@@ -88,25 +89,25 @@ const OrganizationForm = ({ initialData, onSubmit, isEditing = false }: Organiza
     },
   });
 
-  // Stable reference to initialData to prevent unnecessary re-renders
-  const [initialFormData, setInitialFormData] = useState(initialData);
-  
-  // Only update form when initialData actually changes (not on every render)
+  // Only update form when initialData actually changes (stable comparison)
   useEffect(() => {
-    if (initialData && JSON.stringify(initialData) !== JSON.stringify(initialFormData)) {
-      console.log("OrganizationForm: Initial data changed, updating form");
-      setInitialFormData(initialData);
-      form.reset({
-        name: initialData.name || "",
-        code: initialData.code || "",
-        alias: initialData.alias || "",
-        type: initialData.type || undefined,
-        status: initialData.status || "active",
-        contacts: initialData.contacts || [],
-        references: initialData.references || [],
-      });
+    if (initialData) {
+      const currentDataString = JSON.stringify(initialData);
+      if (currentDataString !== initialDataRef.current) {
+        console.log("OrganizationForm: Initial data changed, updating form");
+        initialDataRef.current = currentDataString;
+        form.reset({
+          name: initialData.name || "",
+          code: initialData.code || "",
+          alias: initialData.alias || "",
+          type: initialData.type || undefined,
+          status: initialData.status || "active",
+          contacts: initialData.contacts || [],
+          references: initialData.references || [],
+        });
+      }
     }
-  }, [initialData, initialFormData, form]);
+  }, [initialData, form]);
 
   console.log("OrganizationForm: Form values:", form.getValues());
 
