@@ -147,6 +147,9 @@ const UserDetails = () => {
                 <span className="font-medium">Email:</span> {user.email}
               </div>
               <div>
+                <span className="font-medium">Organization:</span> {user.organizationName || 'Not assigned'}
+              </div>
+              <div>
                 <span className="font-medium">Phone:</span> {user.phone ? `${user.phone.countryCode} ${user.phone.number}` : 'Not set'}
               </div>
               <div>
