@@ -34,6 +34,7 @@ import SalesChannelEdit from "./pages/master-data/SalesChannelEdit";
 import ItemsList from "./pages/master-data/ItemsList";
 import ItemCreate from "./pages/master-data/ItemCreate";
 import ItemEdit from "./pages/master-data/ItemEdit";
+import ItemView from "./pages/master-data/ItemView";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PermissionProtectedRoute from "./components/PermissionProtectedRoute";
@@ -312,6 +313,16 @@ const App = () => (
                 <PermissionProtectedRoute requiredPermission="edit-item">
                   <MainLayout>
                     <ItemEdit />
+                  </MainLayout>
+                </PermissionProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/master-data/items/view/:id" 
+              element={
+                <PermissionProtectedRoute requiredPermission="view-item">
+                  <MainLayout>
+                    <ItemView />
                   </MainLayout>
                 </PermissionProtectedRoute>
               } 
