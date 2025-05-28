@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -52,7 +51,7 @@ const organizationSchema = z.object({
   references: z.array(
     z.object({
       id: z.string(),
-      type: z.enum(["GST", "CIN", "PAN", "GS1Code"]), // Updated to use GS1Code
+      type: z.enum(["GST", "CIN", "PAN", "GS1Code"]),
       value: z.string().min(1, "Reference value is required"),
     })
   ).optional().default([]),
@@ -70,8 +69,10 @@ const OrganizationForm = ({ initialData, onSubmit, isEditing = false }: Organiza
   const [isSubmitting, setIsSubmitting] = useState(false);
   const initialDataRef = useRef<string>();
   
+  console.log("=== OrganizationForm Debug Start ===");
   console.log("OrganizationForm: Initializing with data:", initialData);
   console.log("OrganizationForm: isEditing:", isEditing);
+  console.log("OrganizationForm: user:", user);
   
   // Initialize form with default values or existing data
   const form = useForm<OrganizationFormData>({
@@ -109,13 +110,26 @@ const OrganizationForm = ({ initialData, onSubmit, isEditing = false }: Organiza
     }
   }, [initialData, form]);
 
-  console.log("OrganizationForm: Form values:", form.getValues());
+  console.log("OrganizationForm: Current form values:", form.getValues());
+  console.log("OrganizationForm: Form errors:", form.formState.errors);
+  console.log("OrganizationForm: Form isValid:", form.formState.isValid);
+  console.log("OrganizationForm: Form isDirty:", form.formState.isDirty);
 
   const handleSubmit = async (data: OrganizationFormData) => {
-    console.log("OrganizationForm: handleSubmit called");
-    console.log("OrganizationForm: Form data received:", JSON.stringify(data, null, 2));
+    console.log("=== FORM SUBMIT HANDLER CALLED ===");
+    console.log("OrganizationForm: handleSubmit triggered");
+    console.log("OrganizationForm: Raw form data:", JSON.stringify(data, null, 2));
+    console.log("OrganizationForm: isSubmitting state:", isSubmitting);
+    
+    // Prevent double submission
+    if (isSubmitting) {
+      console.log("OrganizationForm: Already submitting, ignoring");
+      return;
+    }
     
     setIsSubmitting(true);
+    console.log("OrganizationForm: Set isSubmitting to true");
+    
     try {
       // Validate that we have a user
       if (!user?.id) {
@@ -132,7 +146,7 @@ const OrganizationForm = ({ initialData, onSubmit, isEditing = false }: Organiza
       if (!data.contacts || data.contacts.length === 0) {
         console.error("OrganizationForm: No contacts provided");
         toast({
-          title: "Validation Error",
+          title: "Validation Error", 
           description: "At least one contact is required.",
           variant: "destructive",
         });
@@ -175,11 +189,19 @@ const OrganizationForm = ({ initialData, onSubmit, isEditing = false }: Organiza
         }
       }
 
-      console.log("OrganizationForm: Validation passed, calling onSubmit");
-      console.log("OrganizationForm: About to call onSubmit with data:", data);
+      console.log("OrganizationForm: All validations passed");
+      console.log("OrganizationForm: Calling onSubmit with data:", data);
       
+      // Call the parent's onSubmit function
       await onSubmit(data);
+      
       console.log("OrganizationForm: onSubmit completed successfully");
+      
+      // Show success toast
+      toast({
+        title: "Success",
+        description: `Organization ${isEditing ? "updated" : "created"} successfully`,
+      });
       
     } catch (error) {
       console.error("OrganizationForm: Submission error:", error);
@@ -193,7 +215,7 @@ const OrganizationForm = ({ initialData, onSubmit, isEditing = false }: Organiza
       });
     } finally {
       setIsSubmitting(false);
-      console.log("OrganizationForm: Submission process completed");
+      console.log("OrganizationForm: Set isSubmitting to false");
     }
   };
 
@@ -207,9 +229,28 @@ const OrganizationForm = ({ initialData, onSubmit, isEditing = false }: Organiza
     form.setValue("references", references, { shouldValidate: true, shouldDirty: true });
   };
 
+  // Debug form submission
+  const onFormSubmit = (e: React.FormEvent) => {
+    console.log("=== FORM onSubmit EVENT TRIGGERED ===");
+    console.log("OrganizationForm: Form submit event:", e);
+    
+    // Let react-hook-form handle the submission
+    return form.handleSubmit(handleSubmit)(e);
+  };
+
+  const onInvalidSubmit = (errors: any) => {
+    console.log("=== FORM VALIDATION FAILED ===");
+    console.log("OrganizationForm: Validation errors:", errors);
+    toast({
+      title: "Validation Error",
+      description: "Please fix the form errors before submitting.",
+      variant: "destructive",
+    });
+  };
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
+      <form onSubmit={form.handleSubmit(handleSubmit, onInvalidSubmit)} className="space-y-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormField
             control={form.control}
@@ -359,7 +400,20 @@ const OrganizationForm = ({ initialData, onSubmit, isEditing = false }: Organiza
           <Button type="button" variant="outline" disabled={isSubmitting}>
             Cancel
           </Button>
-          <Button type="submit" disabled={isSubmitting}>
+          <Button 
+            type="submit" 
+            disabled={isSubmitting}
+            onClick={() => {
+              console.log("=== SUBMIT BUTTON CLICKED ===");
+              console.log("OrganizationForm: Submit button clicked");
+              console.log("OrganizationForm: Current form state:", {
+                isValid: form.formState.isValid,
+                isDirty: form.formState.isDirty,
+                errors: form.formState.errors,
+                values: form.getValues()
+              });
+            }}
+          >
             {isSubmitting ? "Saving..." : isEditing ? "Update Organization" : "Create Organization"}
           </Button>
         </div>
