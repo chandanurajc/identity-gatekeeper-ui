@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Organization, OrganizationFormData, Reference, Contact } from "@/types/organization";
 
@@ -40,7 +41,7 @@ export const organizationService = {
           status: org.status as 'active' | 'inactive',
           references: (org.organization_references || []).map((ref: any) => ({
             id: ref.id,
-            type: ref.reference_type as 'GST' | 'CIN' | 'PAN' | 'GS1 Company code',
+            type: ref.reference_type as 'GST' | 'CIN' | 'PAN' | 'GS1Code',
             value: ref.reference_value,
           })),
           contacts: (org.organization_contacts || []).map((contact: any) => ({
@@ -109,7 +110,7 @@ export const organizationService = {
         status: data.status as 'active' | 'inactive',
         references: (data.organization_references || []).map((ref: any) => ({
           id: ref.id,
-          type: ref.reference_type as 'GST' | 'CIN' | 'PAN' | 'GS1 Company code',
+          type: ref.reference_type as 'GST' | 'CIN' | 'PAN' | 'GS1Code',
           value: ref.reference_value,
         })),
         contacts: (data.organization_contacts || []).map((contact: any) => ({
@@ -313,8 +314,8 @@ export const organizationService = {
       if (organizationData.references && organizationData.references.length > 0) {
         console.log("OrganizationService: Creating new references:", organizationData.references);
         
-        // Validate reference types against database constraint
-        const allowedReferenceTypes = ['GST', 'CIN', 'PAN', 'GS1 Company code'];
+        // Validate reference types against database constraint - updated to use GS1Code
+        const allowedReferenceTypes = ['GST', 'CIN', 'PAN', 'GS1Code'];
         
         const validReferences = organizationData.references.filter(ref => {
           const hasValue = ref.value && ref.value.trim();

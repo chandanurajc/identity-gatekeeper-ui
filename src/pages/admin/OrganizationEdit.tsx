@@ -148,7 +148,7 @@ const OrganizationEdit = () => {
   return (
     <div className="p-6 space-y-6">
       <h2 className="text-3xl font-bold tracking-tight">Edit Organization</h2>
-      <p className="text-muted-foreground">Update the details for {organization.name}.</p>
+      <p className="text-muted-foreground">Update the details for {organization?.name}.</p>
 
       <OrganizationForm 
         initialData={organization} 

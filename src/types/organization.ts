@@ -1,7 +1,6 @@
-
 export interface Reference {
   id: string;
-  type: 'GST' | 'CIN' | 'PAN' | 'GS1 Company code';
+  type: 'GST' | 'CIN' | 'PAN' | 'GS1Code';
   value: string;
 }
 

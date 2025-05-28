@@ -19,7 +19,7 @@ const REFERENCE_TYPES = [
   { value: "GST", label: "GST" },
   { value: "CIN", label: "CIN" }, 
   { value: "PAN", label: "PAN" },
-  { value: "GS1 Company code", label: "GS1 Company code" }
+  { value: "GS1Code", label: "GS1Code" }
 ] as const;
 
 export const ReferenceForm = ({ references, onChange }: ReferenceFormProps) => {
