@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Item } from "@/types/item";
@@ -11,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { formatDate } from "@/lib/utils";
-import { SearchIcon, Plus } from "lucide-react";
+import { SearchIcon, Plus, Edit } from "lucide-react";
 import { toast } from "sonner";
 import PermissionButton from "@/components/PermissionButton";
 
@@ -117,14 +116,30 @@ const ItemsList = () => {
     <div className="container mx-auto py-8">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold">Item Master</h1>
-        <PermissionButton
-          permission="create-item"
-          onClick={() => navigate("/master-data/items/create")}
-          className="flex items-center gap-2"
-        >
-          <Plus className="h-4 w-4" />
-          Create Item
-        </PermissionButton>
+        <div className="flex items-center gap-2">
+          <PermissionButton
+            permission="edit-item"
+            onClick={() => {
+              if (selectedItems.length === 1) {
+                navigate(`/master-data/items/edit/${selectedItems[0]}`);
+              }
+            }}
+            disabled={selectedItems.length !== 1}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <Edit className="h-4 w-4" />
+            Edit
+          </PermissionButton>
+          <PermissionButton
+            permission="create-item"
+            onClick={() => navigate("/master-data/items/create")}
+            className="flex items-center gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Create Item
+          </PermissionButton>
+        </div>
       </div>
 
       <Card>
@@ -141,18 +156,6 @@ const ItemsList = () => {
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
-              <PermissionButton
-                permission="edit-item"
-                onClick={() => {
-                  if (selectedItems.length === 1) {
-                    navigate(`/master-data/items/edit/${selectedItems[0]}`);
-                  }
-                }}
-                disabled={selectedItems.length !== 1}
-                variant="outline"
-              >
-                Edit
-              </PermissionButton>
             </div>
           </div>
         </CardHeader>
@@ -226,7 +229,18 @@ const ItemsList = () => {
                           />
                         </TableCell>
                         <TableCell className="font-medium">{item.id}</TableCell>
-                        <TableCell>{item.description}</TableCell>
+                        <TableCell>
+                          {canViewItem ? (
+                            <button
+                              onClick={() => navigate(`/master-data/items/view/${item.id}`)}
+                              className="text-blue-600 hover:text-blue-800 hover:underline text-left"
+                            >
+                              {item.description}
+                            </button>
+                          ) : (
+                            item.description
+                          )}
+                        </TableCell>
                         <TableCell>{item.classification}</TableCell>
                         <TableCell>{item.subClassification}</TableCell>
                         <TableCell>

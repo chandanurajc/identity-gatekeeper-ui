@@ -4,14 +4,13 @@ import { useNavigate } from "react-router-dom";
 import { SalesChannel } from "@/types/salesChannel";
 import { salesChannelService } from "@/services/salesChannelService";
 import { useSalesChannelPermissions } from "@/hooks/useSalesChannelPermissions";
-import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { formatDate } from "@/lib/utils";
-import { SearchIcon, Plus } from "lucide-react";
+import { SearchIcon, Plus, Edit } from "lucide-react";
 import { toast } from "sonner";
 import PermissionButton from "@/components/PermissionButton";
 
@@ -115,14 +114,30 @@ const SalesChannelsList = () => {
     <div className="container mx-auto py-8">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold">Sales Channels</h1>
-        <PermissionButton
-          permission="create-sales-channel"
-          onClick={() => navigate("/master-data/sales-channels/create")}
-          className="flex items-center gap-2"
-        >
-          <Plus className="h-4 w-4" />
-          Create Sales Channel
-        </PermissionButton>
+        <div className="flex items-center gap-2">
+          <PermissionButton
+            permission="edit-sales-channel"
+            onClick={() => {
+              if (selectedChannels.length === 1) {
+                navigate(`/master-data/sales-channels/edit/${selectedChannels[0]}`);
+              }
+            }}
+            disabled={selectedChannels.length !== 1}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <Edit className="h-4 w-4" />
+            Edit
+          </PermissionButton>
+          <PermissionButton
+            permission="create-sales-channel"
+            onClick={() => navigate("/master-data/sales-channels/create")}
+            className="flex items-center gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Create Sales Channel
+          </PermissionButton>
+        </div>
       </div>
 
       <Card>

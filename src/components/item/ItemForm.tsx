@@ -12,7 +12,7 @@ import { Organization } from "@/types/organization";
 import { itemGroupService } from "@/services/itemGroupService";
 import { salesChannelService } from "@/services/salesChannelService";
 import { organizationService } from "@/services/organizationService";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 interface ItemFormProps {
@@ -142,7 +142,7 @@ const ItemForm = ({ initialData, onSubmit, onCancel, isEdit = false }: ItemFormP
     console.log("ItemForm: Adding new cost");
     setFormData(prev => ({
       ...prev,
-      costs: [...prev.costs, { supplierId: "", cost: 0 }]
+      costs: [...prev.costs, { supplierId: "", cost: "" as any }]
     }));
   };
 
@@ -159,7 +159,10 @@ const ItemForm = ({ initialData, onSubmit, onCancel, isEdit = false }: ItemFormP
     setFormData(prev => ({
       ...prev,
       costs: prev.costs.map((cost, i) => 
-        i === index ? { ...cost, [field]: value } : cost
+        i === index ? { 
+          ...cost, 
+          [field]: field === 'cost' ? (value === "" ? "" : parseFloat(value) || "") : value 
+        } : cost
       )
     }));
   };
@@ -168,7 +171,7 @@ const ItemForm = ({ initialData, onSubmit, onCancel, isEdit = false }: ItemFormP
     console.log("ItemForm: Adding new price");
     setFormData(prev => ({
       ...prev,
-      prices: [...prev.prices, { salesChannelId: "", price: 0 }]
+      prices: [...prev.prices, { salesChannelId: "", price: "" as any }]
     }));
   };
 
@@ -185,9 +188,25 @@ const ItemForm = ({ initialData, onSubmit, onCancel, isEdit = false }: ItemFormP
     setFormData(prev => ({
       ...prev,
       prices: prev.prices.map((price, i) => 
-        i === index ? { ...price, [field]: value } : price
+        i === index ? { 
+          ...price, 
+          [field]: field === 'price' ? (value === "" ? "" : parseFloat(value) || "") : value 
+        } : price
       )
     }));
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // For now, just store the file name
+      // In a full implementation, you would upload to storage
+      setFormData(prev => ({
+        ...prev,
+        image: file.name
+      }));
+      toast.success("Image selected: " + file.name);
+    }
   };
 
   if (loadingData) {
@@ -300,6 +319,33 @@ const ItemForm = ({ initialData, onSubmit, onCancel, isEdit = false }: ItemFormP
                   placeholder="Auto-generated if empty"
                 />
               </div>
+
+              <div>
+                <Label htmlFor="image">Product Image</Label>
+                <div className="flex items-center gap-4">
+                  <Input
+                    id="image"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => document.getElementById('image')?.click()}
+                    className="flex items-center gap-2"
+                  >
+                    <Upload className="h-4 w-4" />
+                    Upload Image
+                  </Button>
+                  {formData.image && (
+                    <span className="text-sm text-muted-foreground">
+                      Selected: {formData.image}
+                    </span>
+                  )}
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -393,8 +439,9 @@ const ItemForm = ({ initialData, onSubmit, onCancel, isEdit = false }: ItemFormP
                     <Input
                       type="number"
                       step="0.01"
+                      placeholder="Enter cost"
                       value={cost.cost}
-                      onChange={(e) => updateCost(index, "cost", parseFloat(e.target.value) || 0)}
+                      onChange={(e) => updateCost(index, "cost", e.target.value)}
                     />
                   </div>
                   <Button
@@ -453,8 +500,9 @@ const ItemForm = ({ initialData, onSubmit, onCancel, isEdit = false }: ItemFormP
                     <Input
                       type="number"
                       step="0.01"
+                      placeholder="Enter price"
                       value={price.price}
-                      onChange={(e) => updatePrice(index, "price", parseFloat(e.target.value) || 0)}
+                      onChange={(e) => updatePrice(index, "price", e.target.value)}
                     />
                   </div>
                   <Button

@@ -11,6 +11,7 @@ export interface Item {
   width?: number;
   height?: number;
   weight?: number;
+  image?: string;
   organizationId?: string;
   createdBy?: string;
   createdOn?: Date;
@@ -56,6 +57,7 @@ export interface ItemFormData {
   width?: number;
   height?: number;
   weight?: number;
+  image?: string;
   costs: ItemCostFormData[];
   prices: ItemPriceFormData[];
 }
