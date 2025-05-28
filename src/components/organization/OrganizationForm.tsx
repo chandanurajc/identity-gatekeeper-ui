@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ContactForm } from "./ContactForm";
 import { ReferenceForm } from "./ReferenceForm";
 
-// Form schema without supplier field
+// Form schema with updated reference types
 const organizationSchema = z.object({
   name: z.string()
     .min(3, "Name must be at least 3 characters")
@@ -52,7 +52,7 @@ const organizationSchema = z.object({
   references: z.array(
     z.object({
       id: z.string(),
-      type: z.enum(["GST", "CIN", "PAN", "GS1 Company code"]),
+      type: z.enum(["GST", "CIN", "PAN", "GS1Code"]), // Updated to use GS1Code
       value: z.string().min(1, "Reference value is required"),
     })
   ).optional().default([]),
@@ -88,10 +88,14 @@ const OrganizationForm = ({ initialData, onSubmit, isEditing = false }: Organiza
     },
   });
 
-  // Update form when initialData changes (important for editing)
+  // Stable reference to initialData to prevent unnecessary re-renders
+  const [initialFormData, setInitialFormData] = useState(initialData);
+  
+  // Only update form when initialData actually changes (not on every render)
   useEffect(() => {
-    if (initialData) {
-      console.log("OrganizationForm: Updating form with new initial data:", initialData);
+    if (initialData && JSON.stringify(initialData) !== JSON.stringify(initialFormData)) {
+      console.log("OrganizationForm: Initial data changed, updating form");
+      setInitialFormData(initialData);
       form.reset({
         name: initialData.name || "",
         code: initialData.code || "",
@@ -102,7 +106,7 @@ const OrganizationForm = ({ initialData, onSubmit, isEditing = false }: Organiza
         references: initialData.references || [],
       });
     }
-  }, [initialData, form]);
+  }, [initialData, initialFormData, form]);
 
   console.log("OrganizationForm: Form values:", form.getValues());
 
