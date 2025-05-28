@@ -107,7 +107,7 @@ export const itemService = {
         .from('organization_references')
         .select('reference_value')
         .eq('organization_id', organizationId)
-        .eq('reference_type', 'GS1 Company code')
+        .eq('reference_type', 'GS1code')
         .single();
 
       if (refError) {
