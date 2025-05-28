@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -67,7 +68,6 @@ const OrganizationForm = ({ initialData, onSubmit, isEditing = false }: Organiza
   const { user } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const initialDataRef = useRef<string>();
   
   console.log("=== OrganizationForm Debug Start ===");
   console.log("OrganizationForm: Initializing with data:", initialData);
@@ -77,6 +77,7 @@ const OrganizationForm = ({ initialData, onSubmit, isEditing = false }: Organiza
   // Initialize form with default values or existing data
   const form = useForm<OrganizationFormData>({
     resolver: zodResolver(organizationSchema),
+    mode: "onChange",
     defaultValues: {
       name: initialData?.name || "",
       code: initialData?.code || "",
@@ -93,22 +94,18 @@ const OrganizationForm = ({ initialData, onSubmit, isEditing = false }: Organiza
   // Only update form when initialData actually changes (stable comparison)
   useEffect(() => {
     if (initialData) {
-      const currentDataString = JSON.stringify(initialData);
-      if (currentDataString !== initialDataRef.current) {
-        console.log("OrganizationForm: Initial data changed, updating form");
-        initialDataRef.current = currentDataString;
-        form.reset({
-          name: initialData.name || "",
-          code: initialData.code || "",
-          alias: initialData.alias || "",
-          type: initialData.type || undefined,
-          status: initialData.status || "active",
-          contacts: initialData.contacts || [],
-          references: initialData.references || [],
-        });
-      }
+      console.log("OrganizationForm: Initial data changed, updating form");
+      form.reset({
+        name: initialData.name || "",
+        code: initialData.code || "",
+        alias: initialData.alias || "",
+        type: initialData.type || undefined,
+        status: initialData.status || "active",
+        contacts: initialData.contacts || [],
+        references: initialData.references || [],
+      });
     }
-  }, [initialData, form]);
+  }, [JSON.stringify(initialData)]);
 
   console.log("OrganizationForm: Current form values:", form.getValues());
   console.log("OrganizationForm: Form errors:", form.formState.errors);
@@ -229,21 +226,28 @@ const OrganizationForm = ({ initialData, onSubmit, isEditing = false }: Organiza
     form.setValue("references", references, { shouldValidate: true, shouldDirty: true });
   };
 
-  // Debug form submission
-  const onFormSubmit = (e: React.FormEvent) => {
-    console.log("=== FORM onSubmit EVENT TRIGGERED ===");
-    console.log("OrganizationForm: Form submit event:", e);
-    
-    // Let react-hook-form handle the submission
-    return form.handleSubmit(handleSubmit)(e);
-  };
-
+  // Debug form submission with detailed error logging
   const onInvalidSubmit = (errors: any) => {
     console.log("=== FORM VALIDATION FAILED ===");
     console.log("OrganizationForm: Validation errors:", errors);
+    console.log("OrganizationForm: Current form values:", form.getValues());
+    
+    // Create detailed error messages
+    const errorFields = Object.keys(errors);
+    const errorMessages = errorFields.map(field => {
+      const error = errors[field];
+      if (error?.message) {
+        return `${field}: ${error.message}`;
+      }
+      return `${field}: Invalid value`;
+    });
+    
+    console.log("OrganizationForm: Error fields:", errorFields);
+    console.log("OrganizationForm: Error messages:", errorMessages);
+    
     toast({
       title: "Validation Error",
-      description: "Please fix the form errors before submitting.",
+      description: `Please fix the following errors: ${errorMessages.join(', ')}`,
       variant: "destructive",
     });
   };
