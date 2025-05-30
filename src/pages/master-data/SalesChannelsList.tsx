@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { SalesChannel } from "@/types/salesChannel";
 import { salesChannelService } from "@/services/salesChannelService";
@@ -78,8 +79,6 @@ const SalesChannelsList = () => {
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
-                <TableHead>Code</TableHead>
-                <TableHead>Description</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -88,8 +87,6 @@ const SalesChannelsList = () => {
               {salesChannels.map((salesChannel) => (
                 <TableRow key={salesChannel.id}>
                   <TableCell>{salesChannel.name}</TableCell>
-                  <TableCell>{salesChannel.code}</TableCell>
-                  <TableCell>{salesChannel.description}</TableCell>
                   <TableCell>
                     <Badge variant={salesChannel.status === "active" ? "outline" : "secondary"}>
                       {salesChannel.status}
