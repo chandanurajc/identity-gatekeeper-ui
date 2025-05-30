@@ -103,7 +103,7 @@ export const itemService = {
     console.log("ItemService: Generating GTIN-14 for item:", itemId, "organization:", organizationId);
     
     try {
-      // Get GS1 Company code from organization references - use maybeSingle and handle multiple results
+      // Get GS1 Company code from organization references - use array query and handle multiple results
       console.log("ItemService: Fetching GS1 code for organization:", organizationId);
       
       const { data: orgRefList, error: refError } = await supabase
