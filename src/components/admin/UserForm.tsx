@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -121,7 +122,7 @@ const UserForm = ({ initialData, isEditing = false, onSubmit }: UserFormProps) =
     fetchData();
   }, [toast]);
 
-  // Initialize form with default values
+  // Initialize form with default values - CLEAR organizationId default
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -134,7 +135,7 @@ const UserForm = ({ initialData, isEditing = false, onSubmit }: UserFormProps) =
       phoneCountryCode: initialData?.phone?.countryCode || "+1",
       phoneNumber: initialData?.phone?.number || "",
       designation: initialData?.designation || "",
-      organizationId: initialData?.organizationId || "",
+      organizationId: initialData?.organizationId || "", // Empty string, not pre-filled
       roles: initialData?.roles || [],
       effectiveFrom: initialData?.effectiveFrom 
         ? new Date(initialData.effectiveFrom).toISOString().split('T')[0]
@@ -149,6 +150,16 @@ const UserForm = ({ initialData, isEditing = false, onSubmit }: UserFormProps) =
     try {
       console.log("Form submission values:", values);
       
+      // Ensure organization ID is properly set
+      if (!values.organizationId) {
+        toast({
+          variant: "destructive",
+          title: "Organization Required",
+          description: "Please select an organization for the user."
+        });
+        return;
+      }
+      
       // Transform form data to match UserFormData structure
       const userData: UserFormData = {
         firstName: values.firstName,
@@ -162,13 +173,14 @@ const UserForm = ({ initialData, isEditing = false, onSubmit }: UserFormProps) =
           number: values.phoneNumber,
         },
         designation: values.designation,
-        organizationId: values.organizationId,
+        organizationId: values.organizationId, // This will be used for the new user
         roles: values.roles, // Keep the exact role names from the form
         effectiveFrom: new Date(values.effectiveFrom),
         effectiveTo: values.effectiveTo ? new Date(values.effectiveTo) : undefined,
       };
 
       console.log("Transformed user data for submission:", userData);
+      console.log("Target organization ID:", userData.organizationId);
 
       await onSubmit(userData);
 
@@ -330,7 +342,7 @@ const UserForm = ({ initialData, isEditing = false, onSubmit }: UserFormProps) =
                 )}
               />
 
-              {/* Organization dropdown */}
+              {/* Organization dropdown - MUST BE SELECTED BY USER */}
               <FormField
                 control={form.control}
                 name="organizationId"
@@ -339,7 +351,6 @@ const UserForm = ({ initialData, isEditing = false, onSubmit }: UserFormProps) =
                     <FormLabel>Organization*</FormLabel>
                     <Select 
                       onValueChange={field.onChange} 
-                      defaultValue={field.value}
                       value={field.value}
                     >
                       <FormControl>
@@ -353,7 +364,7 @@ const UserForm = ({ initialData, isEditing = false, onSubmit }: UserFormProps) =
                         ) : (
                           organizations.map((org) => (
                             <SelectItem key={org.id} value={org.id}>
-                              {org.name}
+                              {org.name} ({org.code})
                             </SelectItem>
                           ))
                         )}

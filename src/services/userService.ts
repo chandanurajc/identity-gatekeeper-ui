@@ -167,7 +167,7 @@ export const userService = {
   async createUser(userData: UserFormData, createdByUserName: string, organizationId: string | null): Promise<User> {
     console.log("=== STARTING USER CREATION PROCESS ===");
     console.log("Creating user with data:", userData);
-    console.log("Organization ID:", organizationId);
+    console.log("Target Organization ID:", organizationId);
     console.log("Created by:", createdByUserName);
     
     let authUserId: string | null = null;
@@ -177,9 +177,9 @@ export const userService = {
       console.log("Step 1: Creating auth user using signup...");
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: userData.email,
-        password: userData.password || 'TempPass123!', // Provide a default if not specified
+        password: userData.password || 'TempPass123!',
         options: {
-          emailRedirectTo: undefined, // Disable email confirmation for now
+          emailRedirectTo: undefined,
           data: {
             first_name: userData.firstName,
             last_name: userData.lastName
@@ -201,16 +201,16 @@ export const userService = {
 
       // Step 2: Wait for auth user to be fully committed
       console.log("Step 2: Waiting for auth user to be committed...");
-      await new Promise(resolve => setTimeout(resolve, 2000)); // 2 second delay
+      await new Promise(resolve => setTimeout(resolve, 2000));
 
-      // Step 3: Create/Update profile (the trigger should have created it, but we'll update it)
-      console.log("Step 3: Updating user profile...");
+      // Step 3: Create/Update profile with SPECIFIED organization ID
+      console.log("Step 3: Updating user profile with organization ID:", organizationId);
       const profileData = {
         first_name: userData.firstName,
         last_name: userData.lastName,
         username: userData.username,
         designation: userData.designation,
-        organization_id: organizationId,
+        organization_id: organizationId, // Use the SPECIFIED organization ID, not current user's
         effective_from: userData.effectiveFrom?.toISOString(),
         effective_to: userData.effectiveTo?.toISOString(),
         created_by: createdByUserName,
@@ -248,18 +248,16 @@ export const userService = {
 
         if (phoneError) {
           console.error("Error creating phone number:", phoneError);
-          // Don't fail the entire process for phone number issues
         } else {
           console.log("✓ Phone number created successfully");
         }
       }
 
-      // Step 5: Handle roles if provided - simplified approach
+      // Step 5: Handle roles if provided
       if (userData.roles && userData.roles.length > 0) {
         console.log("Step 5: Assigning roles...");
         console.log("Roles to assign:", userData.roles);
         
-        // Additional wait to ensure all database operations are committed
         await new Promise(resolve => setTimeout(resolve, 1000));
         
         try {
@@ -267,8 +265,6 @@ export const userService = {
           console.log("✓ Roles assigned successfully");
         } catch (roleError) {
           console.error("Error assigning roles (non-fatal):", roleError);
-          // Don't fail user creation if role assignment fails
-          // The user can be created and roles assigned later
         }
       }
 
@@ -284,7 +280,7 @@ export const userService = {
         phone: userData.phone,
         designation: profile.designation,
         organizationId: profile.organization_id,
-        organizationName: '', // Will be populated when fetching
+        organizationName: '',
         roles: userData.roles || [],
         effectiveFrom: profile.effective_from ? new Date(profile.effective_from) : new Date(),
         effectiveTo: profile.effective_to ? new Date(profile.effective_to) : undefined,
@@ -297,11 +293,6 @@ export const userService = {
     } catch (error) {
       console.error("=== USER CREATION FAILED ===");
       console.error("Error details:", error);
-      
-      // Note: With regular signup, we can't easily delete the auth user if something fails
-      // The user will exist in auth but may not have complete profile data
-      // This is acceptable as they can complete their profile later or admin can fix it
-      
       throw error;
     }
   },
@@ -392,7 +383,7 @@ export const userService = {
       }
     }
 
-    // Handle roles update if provided - IMPROVED VERSION
+    // Handle roles update if provided
     if (userData.roles && Array.isArray(userData.roles)) {
       console.log("=== STARTING ROLE UPDATE PROCESS ===");
       console.log("Roles to assign:", userData.roles);
@@ -504,7 +495,6 @@ export const userService = {
       } catch (roleError) {
         console.error("=== ROLE UPDATE FAILED ===");
         console.error("Role assignment error:", roleError);
-        // Don't fail the entire user update if role assignment fails
         console.log("Continuing with user update despite role assignment failure");
       }
     }
@@ -531,7 +521,7 @@ export const userService = {
     }
 
     try {
-      // Step 1: Verify user exists in profiles table (removed auth admin check)
+      // Step 1: Verify user exists in profiles table
       console.log("Step 1: Verifying user exists in profiles table...");
       const { data: userProfile, error: profileCheckError } = await supabase
         .from('profiles')
@@ -589,7 +579,6 @@ export const userService = {
 
       if (deleteError) {
         console.error("Error deleting existing roles:", deleteError);
-        // Continue anyway - user might not have had roles before
       } else {
         console.log("✓ Existing roles cleaned up");
       }
@@ -719,7 +708,6 @@ export const userService = {
       throw new Error(`Failed to delete user profile: ${profileError.message}`);
     }
 
-    // Note: Can't delete auth user without admin privileges
     console.log("User profile and related data deleted successfully");
     console.log("Note: Auth user still exists - requires admin privileges to delete");
   }

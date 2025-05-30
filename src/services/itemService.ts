@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Item, ItemFormData } from "@/types/item";
 
@@ -104,19 +103,29 @@ export const itemService = {
     
     try {
       // Get GS1 Company code from organization references
+      console.log("ItemService: Fetching GS1 code for organization:", organizationId);
+      
       const { data: orgRef, error: refError } = await supabase
         .from('organization_references')
         .select('reference_value')
         .eq('organization_id', organizationId)
         .eq('reference_type', 'GS1code')
-        .single();
+        .maybeSingle();
 
-      if (refError || !orgRef?.reference_value) {
+      console.log("ItemService: Organization reference query result:", orgRef, "Error:", refError);
+
+      if (refError && refError.code !== 'PGRST116') {
+        console.error("ItemService: Database error fetching GS1 code:", refError);
+        throw refError;
+      }
+
+      if (!orgRef?.reference_value) {
         console.log("ItemService: No GS1 Company code found, generating simple barcode");
         // Generate a simple 14-digit barcode when no GS1 code exists
         const timestamp = Date.now().toString().slice(-8);
         const paddedItemId = itemId.padStart(5, '0');
         const partial = '1' + timestamp + paddedItemId; // 1 + 8 + 5 = 14 digits
+        console.log("ItemService: Generated fallback barcode:", partial);
         return partial;
       }
 
@@ -151,7 +160,9 @@ export const itemService = {
       // Fallback to simple barcode generation
       const timestamp = Date.now().toString().slice(-8);
       const paddedItemId = itemId.padStart(5, '0');
-      return '1' + timestamp + paddedItemId;
+      const fallbackBarcode = '1' + timestamp + paddedItemId;
+      console.log("ItemService: Generated fallback barcode due to error:", fallbackBarcode);
+      return fallbackBarcode;
     }
   },
 
@@ -203,10 +214,10 @@ export const itemService = {
       }
       console.log("ItemService: Using item ID:", itemId);
 
-      // Generate barcode if not provided
+      // Generate barcode if not provided - this now properly uses GS1 code
       let barcode = formData.barcode;
       if (!barcode) {
-        console.log("ItemService: No barcode provided, generating...");
+        console.log("ItemService: No barcode provided, generating with GS1 code...");
         barcode = await this.generateGTIN14(itemId, profile.organization_id);
       }
       console.log("ItemService: Using barcode:", barcode);
@@ -243,56 +254,64 @@ export const itemService = {
 
       console.log("ItemService: Item created successfully");
 
-      // Insert item costs
+      // Insert item costs - only if provided
       if (formData.costs && formData.costs.length > 0) {
         console.log("ItemService: Inserting", formData.costs.length, "costs...");
-        const costInserts = formData.costs.map(cost => ({
-          item_id: itemId,
-          supplier_id: cost.supplierId,
-          cost: cost.cost,
-          organization_id: profile.organization_id,
-          created_by: createdBy,
-          updated_by: createdBy,
-        }));
+        const costInserts = formData.costs
+          .filter(cost => cost.supplierId && cost.cost !== undefined && cost.cost !== null)
+          .map(cost => ({
+            item_id: itemId,
+            supplier_id: cost.supplierId,
+            cost: cost.cost,
+            organization_id: profile.organization_id,
+            created_by: createdBy,
+            updated_by: createdBy,
+          }));
 
-        console.log("ItemService: Cost inserts:", JSON.stringify(costInserts, null, 2));
+        if (costInserts.length > 0) {
+          console.log("ItemService: Cost inserts:", JSON.stringify(costInserts, null, 2));
 
-        const { error: costError } = await supabase
-          .from('item_costs')
-          .insert(costInserts);
+          const { error: costError } = await supabase
+            .from('item_costs')
+            .insert(costInserts);
 
-        if (costError) {
-          console.error("ItemService: Error creating item costs:", costError);
-          throw new Error(`Failed to create item costs: ${costError.message}`);
+          if (costError) {
+            console.error("ItemService: Error creating item costs:", costError);
+            throw new Error(`Failed to create item costs: ${costError.message}`);
+          }
+          
+          console.log("ItemService: Costs inserted successfully");
         }
-        
-        console.log("ItemService: Costs inserted successfully");
       }
 
-      // Insert item prices
+      // Insert item prices - only if provided
       if (formData.prices && formData.prices.length > 0) {
         console.log("ItemService: Inserting", formData.prices.length, "prices...");
-        const priceInserts = formData.prices.map(price => ({
-          item_id: itemId,
-          sales_channel_id: price.salesChannelId,
-          price: price.price,
-          organization_id: profile.organization_id,
-          created_by: createdBy,
-          updated_by: createdBy,
-        }));
+        const priceInserts = formData.prices
+          .filter(price => price.salesChannelId && price.price !== undefined && price.price !== null)
+          .map(price => ({
+            item_id: itemId,
+            sales_channel_id: price.salesChannelId,
+            price: price.price,
+            organization_id: profile.organization_id,
+            created_by: createdBy,
+            updated_by: createdBy,
+          }));
 
-        console.log("ItemService: Price inserts:", JSON.stringify(priceInserts, null, 2));
+        if (priceInserts.length > 0) {
+          console.log("ItemService: Price inserts:", JSON.stringify(priceInserts, null, 2));
 
-        const { error: priceError } = await supabase
-          .from('item_prices')
-          .insert(priceInserts);
+          const { error: priceError } = await supabase
+            .from('item_prices')
+            .insert(priceInserts);
 
-        if (priceError) {
-          console.error("ItemService: Error creating item prices:", priceError);
-          throw new Error(`Failed to create item prices: ${priceError.message}`);
+          if (priceError) {
+            console.error("ItemService: Error creating item prices:", priceError);
+            throw new Error(`Failed to create item prices: ${priceError.message}`);
+          }
+          
+          console.log("ItemService: Prices inserted successfully");
         }
-        
-        console.log("ItemService: Prices inserted successfully");
       }
 
       console.log("ItemService: Item creation completed successfully with ID:", itemId);
@@ -323,7 +342,7 @@ export const itemService = {
         throw new Error("No organization found for user");
       }
 
-      // Generate barcode if not provided
+      // Generate barcode if not provided - using proper GS1 code
       let barcode = formData.barcode;
       if (!barcode) {
         barcode = await this.generateGTIN14(itemId, profile.organization_id);
@@ -357,45 +376,53 @@ export const itemService = {
       await supabase.from('item_costs').delete().eq('item_id', itemId);
       await supabase.from('item_prices').delete().eq('item_id', itemId);
 
-      // Insert new costs
+      // Insert new costs - only if provided
       if (formData.costs && formData.costs.length > 0) {
-        const costInserts = formData.costs.map(cost => ({
-          item_id: itemId,
-          supplier_id: cost.supplierId,
-          cost: cost.cost,
-          organization_id: profile.organization_id,
-          created_by: updatedBy,
-          updated_by: updatedBy,
-        }));
+        const costInserts = formData.costs
+          .filter(cost => cost.supplierId && cost.cost !== undefined && cost.cost !== null)
+          .map(cost => ({
+            item_id: itemId,
+            supplier_id: cost.supplierId,
+            cost: cost.cost,
+            organization_id: profile.organization_id,
+            created_by: updatedBy,
+            updated_by: updatedBy,
+          }));
 
-        const { error: costError } = await supabase
-          .from('item_costs')
-          .insert(costInserts);
+        if (costInserts.length > 0) {
+          const { error: costError } = await supabase
+            .from('item_costs')
+            .insert(costInserts);
 
-        if (costError) {
-          console.error("Error updating item costs:", costError);
-          throw new Error(`Failed to update item costs: ${costError.message}`);
+          if (costError) {
+            console.error("Error updating item costs:", costError);
+            throw new Error(`Failed to update item costs: ${costError.message}`);
+          }
         }
       }
 
-      // Insert new prices
+      // Insert new prices - only if provided
       if (formData.prices && formData.prices.length > 0) {
-        const priceInserts = formData.prices.map(price => ({
-          item_id: itemId,
-          sales_channel_id: price.salesChannelId,
-          price: price.price,
-          organization_id: profile.organization_id,
-          created_by: updatedBy,
-          updated_by: updatedBy,
-        }));
+        const priceInserts = formData.prices
+          .filter(price => price.salesChannelId && price.price !== undefined && price.price !== null)
+          .map(price => ({
+            item_id: itemId,
+            sales_channel_id: price.salesChannelId,
+            price: price.price,
+            organization_id: profile.organization_id,
+            created_by: updatedBy,
+            updated_by: updatedBy,
+          }));
 
-        const { error: priceError } = await supabase
-          .from('item_prices')
-          .insert(priceInserts);
+        if (priceInserts.length > 0) {
+          const { error: priceError } = await supabase
+            .from('item_prices')
+            .insert(priceInserts);
 
-        if (priceError) {
-          console.error("Error updating item prices:", priceError);
-          throw new Error(`Failed to update item prices: ${priceError.message}`);
+          if (priceError) {
+            console.error("Error updating item prices:", priceError);
+            throw new Error(`Failed to update item prices: ${priceError.message}`);
+          }
         }
       }
 

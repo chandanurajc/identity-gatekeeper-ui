@@ -18,17 +18,21 @@ const CreateUser = () => {
       // Use user name instead of ID for created_by field
       const createdByValue = user?.name || "unknown";
       
+      console.log("Creating user with data:", userData);
       console.log("Using createdBy value:", createdByValue);
-      console.log("Organization ID:", user?.organizationId);
+      console.log("Current user organization ID:", user?.organizationId);
       
-      await userService.createUser(userData, createdByValue, user?.organizationId || null);
+      // Use the organizationId from userData (selected in form), not from current user
+      await userService.createUser(userData, createdByValue, userData.organizationId);
       
-      // Show success message and navigate back to users list
+      console.log("User created successfully, navigating to users list");
+      
+      // Show success message and navigate back to users list - DON'T auto-login
       toast.success("User created successfully");
       navigate("/admin/users");
     } catch (error) {
       console.error("Error creating user:", error);
-      throw error;
+      toast.error(error instanceof Error ? error.message : "Failed to create user");
     }
   };
 
