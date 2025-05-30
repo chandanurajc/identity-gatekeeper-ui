@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Item } from "@/types/item";
@@ -194,8 +193,8 @@ const ItemView = () => {
                 <div className="space-y-2">
                   {item.costs.map((cost, index) => (
                     <div key={index} className="flex justify-between items-center p-2 border rounded">
-                      <span>Supplier: {cost.supplierId}</span>
-                      <span>Cost: ${cost.cost}</span>
+                      <span>Supplier: {cost.supplierName || cost.supplierId}</span>
+                      <span>Cost: ₹{cost.cost}</span>
                     </div>
                   ))}
                 </div>
@@ -216,8 +215,8 @@ const ItemView = () => {
                 <div className="space-y-2">
                   {item.prices.map((price, index) => (
                     <div key={index} className="flex justify-between items-center p-2 border rounded">
-                      <span>Channel: {price.salesChannelId}</span>
-                      <span>Price: ${price.price}</span>
+                      <span>Channel: {price.salesChannelName || price.salesChannelId}</span>
+                      <span>Price: ₹{price.price}</span>
                     </div>
                   ))}
                 </div>

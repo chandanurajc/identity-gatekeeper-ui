@@ -6,6 +6,7 @@ import UserForm from "@/components/admin/UserForm";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useAuth } from "@/context/AuthContext";
+import { toast } from "sonner";
 
 const CreateUser = () => {
   const navigate = useNavigate();
@@ -21,6 +22,10 @@ const CreateUser = () => {
       console.log("Organization ID:", user?.organizationId);
       
       await userService.createUser(userData, createdByValue, user?.organizationId || null);
+      
+      // Show success message and navigate back to users list
+      toast.success("User created successfully");
+      navigate("/admin/users");
     } catch (error) {
       console.error("Error creating user:", error);
       throw error;

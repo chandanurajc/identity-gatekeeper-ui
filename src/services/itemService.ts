@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Item, ItemFormData } from "@/types/item";
 
@@ -121,7 +122,8 @@ export const itemService = {
 
       console.log("ItemService: Found GS1 Company code:", orgRef.reference_value);
       
-      const companyPrefix = orgRef.reference_value.substring(0, 7);
+      // Use the actual GS1 company code (should be 7 digits)
+      const companyPrefix = orgRef.reference_value.padStart(7, '0').substring(0, 7);
       const packagingIndicator = '0';
       const itemReference = itemId.padStart(5, '0');
       
@@ -141,7 +143,7 @@ export const itemService = {
       const checkDigit = (10 - (sum % 10)) % 10;
       const gtin14 = partial + checkDigit.toString();
       
-      console.log("ItemService: Generated GTIN-14:", gtin14);
+      console.log("ItemService: Generated GTIN-14 with GS1 code:", gtin14);
       return gtin14;
       
     } catch (error) {
@@ -420,16 +422,27 @@ export const itemService = {
         return null;
       }
 
-      // Fetch costs
+      // Fetch costs with supplier details
       const { data: costsData } = await supabase
         .from('item_costs')
-        .select('*')
+        .select(`
+          *,
+          organizations!supplier_id (
+            name,
+            code
+          )
+        `)
         .eq('item_id', itemId);
 
-      // Fetch prices
+      // Fetch prices with sales channel details
       const { data: pricesData } = await supabase
         .from('item_prices')
-        .select('*')
+        .select(`
+          *,
+          sales_channels (
+            name
+          )
+        `)
         .eq('item_id', itemId);
 
       const item: Item = {
@@ -453,6 +466,7 @@ export const itemService = {
           id: cost.id,
           itemId: cost.item_id,
           supplierId: cost.supplier_id,
+          supplierName: cost.organizations?.name || 'Unknown Supplier',
           cost: cost.cost,
           organizationId: cost.organization_id,
           createdBy: cost.created_by,
@@ -464,6 +478,7 @@ export const itemService = {
           id: price.id,
           itemId: price.item_id,
           salesChannelId: price.sales_channel_id,
+          salesChannelName: price.sales_channels?.name || 'Unknown Channel',
           price: price.price,
           organizationId: price.organization_id,
           createdBy: price.created_by,

@@ -25,6 +25,7 @@ export interface ItemCost {
   id: string;
   itemId: string;
   supplierId: string;
+  supplierName?: string;
   cost: number;
   organizationId?: string;
   createdBy?: string;
@@ -37,6 +38,7 @@ export interface ItemPrice {
   id: string;
   itemId: string;
   salesChannelId: string;
+  salesChannelName?: string;
   price: number;
   organizationId?: string;
   createdBy?: string;
