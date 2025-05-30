@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Item, ItemFormData } from "@/types/item";
 
@@ -110,23 +111,17 @@ export const itemService = {
         .select('reference_value')
         .eq('organization_id', organizationId)
         .eq('reference_type', 'GS1code')
-        .maybeSingle();
+        .single();
 
       console.log("ItemService: Organization reference query result:", orgRef, "Error:", refError);
 
-      if (refError && refError.code !== 'PGRST116') {
+      if (refError) {
         console.error("ItemService: Database error fetching GS1 code:", refError);
-        throw refError;
+        throw new Error(`Failed to fetch GS1 code: ${refError.message}`);
       }
 
       if (!orgRef?.reference_value) {
-        console.log("ItemService: No GS1 Company code found, generating simple barcode");
-        // Generate a simple 14-digit barcode when no GS1 code exists
-        const timestamp = Date.now().toString().slice(-8);
-        const paddedItemId = itemId.padStart(5, '0');
-        const partial = '1' + timestamp + paddedItemId; // 1 + 8 + 5 = 14 digits
-        console.log("ItemService: Generated fallback barcode:", partial);
-        return partial;
+        throw new Error("No GS1 Company code found for organization. Please configure GS1 code in organization references.");
       }
 
       console.log("ItemService: Found GS1 Company code:", orgRef.reference_value);
@@ -157,12 +152,7 @@ export const itemService = {
       
     } catch (error) {
       console.error("ItemService: Error generating GTIN-14:", error);
-      // Fallback to simple barcode generation
-      const timestamp = Date.now().toString().slice(-8);
-      const paddedItemId = itemId.padStart(5, '0');
-      const fallbackBarcode = '1' + timestamp + paddedItemId;
-      console.log("ItemService: Generated fallback barcode due to error:", fallbackBarcode);
-      return fallbackBarcode;
+      throw error;
     }
   },
 

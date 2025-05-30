@@ -20,14 +20,14 @@ const CreateUser = () => {
       
       console.log("Creating user with data:", userData);
       console.log("Using createdBy value:", createdByValue);
-      console.log("Current user organization ID:", user?.organizationId);
+      console.log("Target organization ID:", userData.organizationId);
       
-      // Use the organizationId from userData (selected in form), not from current user
+      // Use the organizationId from userData (selected in form)
       await userService.createUser(userData, createdByValue, userData.organizationId);
       
       console.log("User created successfully, navigating to users list");
       
-      // Show success message and navigate back to users list - DON'T auto-login
+      // Show success message and navigate back to users list
       toast.success("User created successfully");
       navigate("/admin/users");
     } catch (error) {
