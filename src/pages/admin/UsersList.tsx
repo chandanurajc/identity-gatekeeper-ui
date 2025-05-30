@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -233,10 +232,6 @@ const UsersList = () => {
             <CardDescription>Manage user accounts and permissions</CardDescription>
           </div>
           <div className="flex space-x-2">
-            <Button onClick={handleRefresh} variant="outline" size="sm">
-              <RefreshCw className="mr-2 h-4 w-4" />
-              Refresh
-            </Button>
             {canCreateUsers && (
               <Button onClick={handleCreateUser}>
                 <Plus className="mr-2 h-4 w-4" />
