@@ -103,31 +103,36 @@ export const itemService = {
     console.log("ItemService: Generating GTIN-14 for item:", itemId, "organization:", organizationId);
     
     try {
-      // Get GS1 Company code from organization references
+      // Get GS1 Company code from organization references - use maybeSingle and handle multiple results
       console.log("ItemService: Fetching GS1 code for organization:", organizationId);
       
-      const { data: orgRef, error: refError } = await supabase
+      const { data: orgRefList, error: refError } = await supabase
         .from('organization_references')
         .select('reference_value')
         .eq('organization_id', organizationId)
-        .eq('reference_type', 'GS1code')
-        .single();
+        .eq('reference_type', 'GS1Code'); // Note: using 'GS1Code' as per the database
 
-      console.log("ItemService: Organization reference query result:", orgRef, "Error:", refError);
+      console.log("ItemService: Organization reference query result:", orgRefList, "Error:", refError);
 
       if (refError) {
         console.error("ItemService: Database error fetching GS1 code:", refError);
         throw new Error(`Failed to fetch GS1 code: ${refError.message}`);
       }
 
-      if (!orgRef?.reference_value) {
+      if (!orgRefList || orgRefList.length === 0) {
         throw new Error("No GS1 Company code found for organization. Please configure GS1 code in organization references.");
       }
 
-      console.log("ItemService: Found GS1 Company code:", orgRef.reference_value);
+      // If multiple GS1 codes exist, use the first one
+      const gs1Code = orgRefList[0].reference_value;
+      if (!gs1Code) {
+        throw new Error("GS1 Company code is empty. Please configure a valid GS1 code in organization references.");
+      }
+
+      console.log("ItemService: Found GS1 Company code:", gs1Code);
       
       // Use the actual GS1 company code (should be 7 digits)
-      const companyPrefix = orgRef.reference_value.padStart(7, '0').substring(0, 7);
+      const companyPrefix = gs1Code.padStart(7, '0').substring(0, 7);
       const packagingIndicator = '0';
       const itemReference = itemId.padStart(5, '0');
       
