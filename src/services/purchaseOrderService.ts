@@ -1,0 +1,313 @@
+
+import { supabase } from "@/integrations/supabase/client";
+import { PurchaseOrder, PurchaseOrderFormData, PurchaseOrderLine } from "@/types/purchaseOrder";
+
+export const purchaseOrderService = {
+  async getAllPurchaseOrders(organizationId: string): Promise<PurchaseOrder[]> {
+    console.log("Fetching purchase orders for organization:", organizationId);
+    
+    const { data, error } = await supabase
+      .from('purchase_order')
+      .select(`
+        *,
+        division:organizations!purchase_order_division_id_fkey(name, code),
+        supplier:organizations!purchase_order_supplier_id_fkey(name, code)
+      `)
+      .eq('organization_id', organizationId)
+      .order('created_on', { ascending: false });
+
+    if (error) {
+      console.error("Error fetching purchase orders:", error);
+      throw new Error(`Failed to fetch purchase orders: ${error.message}`);
+    }
+
+    return data?.map(po => ({
+      id: po.id,
+      poNumber: po.po_number,
+      divisionId: po.division_id,
+      supplierId: po.supplier_id,
+      poDate: new Date(po.po_date),
+      requestedDeliveryDate: po.requested_delivery_date ? new Date(po.requested_delivery_date) : undefined,
+      shipToAddress1: po.ship_to_address_1,
+      shipToAddress2: po.ship_to_address_2,
+      shipToPostalCode: po.ship_to_postal_code,
+      shipToCity: po.ship_to_city,
+      shipToState: po.ship_to_state,
+      shipToCountry: po.ship_to_country,
+      shipToPhone: po.ship_to_phone,
+      shipToEmail: po.ship_to_email,
+      paymentTerms: po.payment_terms,
+      notes: po.notes,
+      trackingNumber: po.tracking_number,
+      status: po.status as 'Created' | 'Approved' | 'Received',
+      organizationId: po.organization_id,
+      createdBy: po.created_by,
+      createdOn: new Date(po.created_on),
+      updatedBy: po.updated_by,
+      updatedOn: po.updated_on ? new Date(po.updated_on) : undefined,
+      division: po.division,
+      supplier: po.supplier
+    })) || [];
+  },
+
+  async getPurchaseOrderById(id: string): Promise<PurchaseOrder | null> {
+    console.log("Fetching purchase order:", id);
+    
+    const { data, error } = await supabase
+      .from('purchase_order')
+      .select(`
+        *,
+        division:organizations!purchase_order_division_id_fkey(name, code),
+        supplier:organizations!purchase_order_supplier_id_fkey(name, code),
+        purchase_order_line (
+          *,
+          items (
+            id,
+            description,
+            classification,
+            sub_classification,
+            item_group_id,
+            item_groups (
+              name,
+              classification,
+              sub_classification
+            )
+          )
+        )
+      `)
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      console.error("Error fetching purchase order:", error);
+      return null;
+    }
+
+    if (!data) return null;
+
+    return {
+      id: data.id,
+      poNumber: data.po_number,
+      divisionId: data.division_id,
+      supplierId: data.supplier_id,
+      poDate: new Date(data.po_date),
+      requestedDeliveryDate: data.requested_delivery_date ? new Date(data.requested_delivery_date) : undefined,
+      shipToAddress1: data.ship_to_address_1,
+      shipToAddress2: data.ship_to_address_2,
+      shipToPostalCode: data.ship_to_postal_code,
+      shipToCity: data.ship_to_city,
+      shipToState: data.ship_to_state,
+      shipToCountry: data.ship_to_country,
+      shipToPhone: data.ship_to_phone,
+      shipToEmail: data.ship_to_email,
+      paymentTerms: data.payment_terms,
+      notes: data.notes,
+      trackingNumber: data.tracking_number,
+      status: data.status as 'Created' | 'Approved' | 'Received',
+      organizationId: data.organization_id,
+      createdBy: data.created_by,
+      createdOn: new Date(data.created_on),
+      updatedBy: data.updated_by,
+      updatedOn: data.updated_on ? new Date(data.updated_on) : undefined,
+      division: data.division,
+      supplier: data.supplier,
+      lines: data.purchase_order_line?.map((line: any) => ({
+        id: line.id,
+        purchaseOrderId: line.purchase_order_id,
+        lineNumber: line.line_number,
+        itemId: line.item_id,
+        quantity: line.quantity,
+        uom: line.uom,
+        unitPrice: line.unit_price,
+        totalUnitPrice: line.total_unit_price,
+        gstPercent: line.gst_percent,
+        gstValue: line.gst_value,
+        lineTotal: line.line_total,
+        organizationId: line.organization_id,
+        createdBy: line.created_by,
+        createdOn: new Date(line.created_on),
+        updatedBy: line.updated_by,
+        updatedOn: line.updated_on ? new Date(line.updated_on) : undefined,
+        item: line.items ? {
+          id: line.items.id,
+          description: line.items.description,
+          classification: line.items.classification,
+          subClassification: line.items.sub_classification,
+          itemGroupId: line.items.item_group_id,
+          itemGroup: line.items.item_groups
+        } : undefined
+      })) || []
+    };
+  },
+
+  async createPurchaseOrder(formData: PurchaseOrderFormData, organizationId: string, userId: string): Promise<PurchaseOrder> {
+    console.log("Creating purchase order:", formData);
+
+    // Start transaction
+    const { data: poData, error: poError } = await supabase
+      .from('purchase_order')
+      .insert({
+        po_number: formData.poNumber,
+        division_id: formData.divisionId,
+        supplier_id: formData.supplierId,
+        po_date: formData.poDate.toISOString().split('T')[0],
+        requested_delivery_date: formData.requestedDeliveryDate?.toISOString().split('T')[0],
+        ship_to_address_1: formData.shipToAddress1,
+        ship_to_address_2: formData.shipToAddress2,
+        ship_to_postal_code: formData.shipToPostalCode,
+        ship_to_city: formData.shipToCity,
+        ship_to_state: formData.shipToState,
+        ship_to_country: formData.shipToCountry,
+        ship_to_phone: formData.shipToPhone,
+        ship_to_email: formData.shipToEmail,
+        payment_terms: formData.paymentTerms,
+        notes: formData.notes,
+        tracking_number: formData.trackingNumber,
+        organization_id: organizationId,
+        created_by: userId
+      })
+      .select()
+      .single();
+
+    if (poError) {
+      console.error("Error creating purchase order:", poError);
+      throw new Error(`Failed to create purchase order: ${poError.message}`);
+    }
+
+    // Create purchase order lines
+    if (formData.lines.length > 0) {
+      const lineData = formData.lines.map(line => ({
+        purchase_order_id: poData.id,
+        line_number: line.lineNumber,
+        item_id: line.itemId,
+        quantity: line.quantity,
+        uom: line.uom,
+        unit_price: line.unitPrice,
+        total_unit_price: line.totalUnitPrice,
+        gst_percent: line.gstPercent,
+        gst_value: line.gstValue,
+        line_total: line.lineTotal,
+        organization_id: organizationId,
+        created_by: userId
+      }));
+
+      const { error: lineError } = await supabase
+        .from('purchase_order_line')
+        .insert(lineData);
+
+      if (lineError) {
+        console.error("Error creating purchase order lines:", lineError);
+        throw new Error(`Failed to create purchase order lines: ${lineError.message}`);
+      }
+    }
+
+    return await this.getPurchaseOrderById(poData.id) as PurchaseOrder;
+  },
+
+  async updatePurchaseOrder(id: string, formData: PurchaseOrderFormData, organizationId: string, userId: string): Promise<PurchaseOrder> {
+    console.log("Updating purchase order:", id, formData);
+
+    // Update purchase order header
+    const { error: poError } = await supabase
+      .from('purchase_order')
+      .update({
+        division_id: formData.divisionId,
+        supplier_id: formData.supplierId,
+        po_date: formData.poDate.toISOString().split('T')[0],
+        requested_delivery_date: formData.requestedDeliveryDate?.toISOString().split('T')[0],
+        ship_to_address_1: formData.shipToAddress1,
+        ship_to_address_2: formData.shipToAddress2,
+        ship_to_postal_code: formData.shipToPostalCode,
+        ship_to_city: formData.shipToCity,
+        ship_to_state: formData.shipToState,
+        ship_to_country: formData.shipToCountry,
+        ship_to_phone: formData.shipToPhone,
+        ship_to_email: formData.shipToEmail,
+        payment_terms: formData.paymentTerms,
+        notes: formData.notes,
+        tracking_number: formData.trackingNumber,
+        updated_by: userId,
+        updated_on: new Date().toISOString()
+      })
+      .eq('id', id)
+      .eq('organization_id', organizationId);
+
+    if (poError) {
+      console.error("Error updating purchase order:", poError);
+      throw new Error(`Failed to update purchase order: ${poError.message}`);
+    }
+
+    // Delete existing lines and recreate them
+    const { error: deleteError } = await supabase
+      .from('purchase_order_line')
+      .delete()
+      .eq('purchase_order_id', id);
+
+    if (deleteError) {
+      console.error("Error deleting purchase order lines:", deleteError);
+      throw new Error(`Failed to delete purchase order lines: ${deleteError.message}`);
+    }
+
+    // Create new purchase order lines
+    if (formData.lines.length > 0) {
+      const lineData = formData.lines.map(line => ({
+        purchase_order_id: id,
+        line_number: line.lineNumber,
+        item_id: line.itemId,
+        quantity: line.quantity,
+        uom: line.uom,
+        unit_price: line.unitPrice,
+        total_unit_price: line.totalUnitPrice,
+        gst_percent: line.gstPercent,
+        gst_value: line.gstValue,
+        line_total: line.lineTotal,
+        organization_id: organizationId,
+        created_by: userId
+      }));
+
+      const { error: lineError } = await supabase
+        .from('purchase_order_line')
+        .insert(lineData);
+
+      if (lineError) {
+        console.error("Error creating purchase order lines:", lineError);
+        throw new Error(`Failed to create purchase order lines: ${lineError.message}`);
+      }
+    }
+
+    return await this.getPurchaseOrderById(id) as PurchaseOrder;
+  },
+
+  async generatePONumber(): Promise<string> {
+    // Get the count of existing POs to generate next number
+    const { count, error } = await supabase
+      .from('purchase_order')
+      .select('*', { count: 'exact', head: true });
+
+    if (error) {
+      console.error("Error getting PO count:", error);
+      throw new Error(`Failed to generate PO number: ${error.message}`);
+    }
+
+    const nextNumber = (count || 0) + 1;
+    return `PO${String(nextNumber).padStart(6, '0')}`;
+  },
+
+  async getDivisionShippingAddress(divisionId: string): Promise<any> {
+    console.log("Fetching division shipping address:", divisionId);
+    
+    const { data, error } = await supabase
+      .from('organization_contacts')
+      .select('*')
+      .eq('organization_id', divisionId)
+      .eq('contact_type', 'Shipping')
+      .single();
+
+    if (error && error.code !== 'PGRST116') {
+      console.error("Error fetching division shipping address:", error);
+      throw new Error(`Failed to fetch division shipping address: ${error.message}`);
+    }
+
+    return data;
+  }
+};

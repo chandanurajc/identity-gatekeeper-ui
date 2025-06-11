@@ -561,6 +561,185 @@ export type Database = {
           },
         ]
       }
+      purchase_order: {
+        Row: {
+          created_by: string
+          created_on: string
+          division_id: string | null
+          id: string
+          notes: string | null
+          organization_id: string | null
+          payment_terms: string | null
+          po_date: string
+          po_number: string
+          requested_delivery_date: string | null
+          ship_to_address_1: string | null
+          ship_to_address_2: string | null
+          ship_to_city: string | null
+          ship_to_country: string | null
+          ship_to_email: string | null
+          ship_to_phone: string | null
+          ship_to_postal_code: string | null
+          ship_to_state: string | null
+          status: string
+          supplier_id: string | null
+          tracking_number: string | null
+          updated_by: string | null
+          updated_on: string | null
+        }
+        Insert: {
+          created_by: string
+          created_on?: string
+          division_id?: string | null
+          id?: string
+          notes?: string | null
+          organization_id?: string | null
+          payment_terms?: string | null
+          po_date?: string
+          po_number: string
+          requested_delivery_date?: string | null
+          ship_to_address_1?: string | null
+          ship_to_address_2?: string | null
+          ship_to_city?: string | null
+          ship_to_country?: string | null
+          ship_to_email?: string | null
+          ship_to_phone?: string | null
+          ship_to_postal_code?: string | null
+          ship_to_state?: string | null
+          status?: string
+          supplier_id?: string | null
+          tracking_number?: string | null
+          updated_by?: string | null
+          updated_on?: string | null
+        }
+        Update: {
+          created_by?: string
+          created_on?: string
+          division_id?: string | null
+          id?: string
+          notes?: string | null
+          organization_id?: string | null
+          payment_terms?: string | null
+          po_date?: string
+          po_number?: string
+          requested_delivery_date?: string | null
+          ship_to_address_1?: string | null
+          ship_to_address_2?: string | null
+          ship_to_city?: string | null
+          ship_to_country?: string | null
+          ship_to_email?: string | null
+          ship_to_phone?: string | null
+          ship_to_postal_code?: string | null
+          ship_to_state?: string | null
+          status?: string
+          supplier_id?: string | null
+          tracking_number?: string | null
+          updated_by?: string | null
+          updated_on?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_order_division_id_fkey"
+            columns: ["division_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_order_line: {
+        Row: {
+          created_by: string
+          created_on: string
+          gst_percent: number
+          gst_value: number
+          id: string
+          item_id: string
+          line_number: number
+          line_total: number
+          organization_id: string | null
+          purchase_order_id: string
+          quantity: number
+          total_unit_price: number
+          unit_price: number
+          uom: string
+          updated_by: string | null
+          updated_on: string | null
+        }
+        Insert: {
+          created_by: string
+          created_on?: string
+          gst_percent?: number
+          gst_value?: number
+          id?: string
+          item_id: string
+          line_number: number
+          line_total: number
+          organization_id?: string | null
+          purchase_order_id: string
+          quantity: number
+          total_unit_price: number
+          unit_price: number
+          uom: string
+          updated_by?: string | null
+          updated_on?: string | null
+        }
+        Update: {
+          created_by?: string
+          created_on?: string
+          gst_percent?: number
+          gst_value?: number
+          id?: string
+          item_id?: string
+          line_number?: number
+          line_total?: number
+          organization_id?: string | null
+          purchase_order_id?: string
+          quantity?: number
+          total_unit_price?: number
+          unit_price?: number
+          uom?: string
+          updated_by?: string | null
+          updated_on?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_order_line_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_line_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_line_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_order"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       role_permissions: {
         Row: {
           id: string

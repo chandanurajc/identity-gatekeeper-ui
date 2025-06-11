@@ -42,6 +42,7 @@ export const usePermissions = () => {
               "view-organization", "create-organization", "edit-organization",
               "view-division", "create-division", "edit-division",
               "view-category", "create-category", "edit-category",
+              "View PO", "Create PO", "Edit PO",
               "access_admin", "access_settings"
             ];
             setPermissions(allPermissions);
@@ -173,6 +174,10 @@ export const usePermissions = () => {
         canViewItem: false,
         canCreateItem: false,
         canEditItem: false,
+        // Purchase Order permissions
+        canViewPurchaseOrders: false,
+        canCreatePurchaseOrder: false,
+        canEditPurchaseOrder: false,
         // Module access
         canAccessAdminModule: false,
         canAccessSettingsModule: false,
@@ -215,6 +220,10 @@ export const usePermissions = () => {
         canViewItem: true,
         canCreateItem: true,
         canEditItem: true,
+        // Purchase Order permissions
+        canViewPurchaseOrders: true,
+        canCreatePurchaseOrder: true,
+        canEditPurchaseOrder: true,
         // Module access
         canAccessAdminModule: true,
         canAccessSettingsModule: true,
@@ -256,6 +265,10 @@ export const usePermissions = () => {
       canViewItem: permissions.includes("view-item"),
       canCreateItem: permissions.includes("create-item"),
       canEditItem: permissions.includes("edit-item"),
+      // Purchase Order permissions
+      canViewPurchaseOrders: permissions.includes("View PO"),
+      canCreatePurchaseOrder: permissions.includes("Create PO"),
+      canEditPurchaseOrder: permissions.includes("Edit PO"),
       // Module access
       canAccessAdminModule: permissions.includes("access_admin") || permissions.length > 0,
       canAccessSettingsModule: permissions.includes("access_settings"),
