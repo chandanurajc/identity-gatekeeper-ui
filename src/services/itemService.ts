@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Item, ItemFormData } from "@/types/item";
 
@@ -50,6 +49,8 @@ export const itemService = {
         subClassification: item.sub_classification,
         status: item.status as 'active' | 'inactive',
         barcode: item.barcode,
+        gstPercentage: item.gst_percentage || 0,
+        uom: item.uom || 'Unit',
         length: item.length,
         width: item.width,
         height: item.height,
@@ -227,6 +228,8 @@ export const itemService = {
         sub_classification: formData.subClassification,
         status: formData.status,
         barcode: barcode,
+        gst_percentage: formData.gstPercentage,
+        uom: formData.uom,
         length: formData.length || null,
         width: formData.width || null,
         height: formData.height || null,
@@ -353,6 +356,8 @@ export const itemService = {
           sub_classification: formData.subClassification,
           status: formData.status,
           barcode: barcode,
+          gst_percentage: formData.gstPercentage,
+          uom: formData.uom,
           length: formData.length,
           width: formData.width,
           height: formData.height,
@@ -475,6 +480,8 @@ export const itemService = {
         subClassification: itemData.sub_classification,
         status: itemData.status as 'active' | 'inactive',
         barcode: itemData.barcode,
+        gstPercentage: itemData.gst_percentage || 0,
+        uom: itemData.uom || 'Unit',
         length: itemData.length,
         width: itemData.width,
         height: itemData.height,
