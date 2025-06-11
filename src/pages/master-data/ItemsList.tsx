@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Item } from "@/types/item";
@@ -56,6 +57,7 @@ const ItemsList = () => {
       item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.classification.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.subClassification.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.uom.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (item.barcode && item.barcode.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (item.createdBy && item.createdBy.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (item.updatedBy && item.updatedBy.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -196,6 +198,18 @@ const ItemsList = () => {
                     </TableHead>
                     <TableHead 
                       className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleSort("gstPercentage")}
+                    >
+                      GST % {sortField === "gstPercentage" && (sortDirection === "asc" ? "↑" : "↓")}
+                    </TableHead>
+                    <TableHead 
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleSort("uom")}
+                    >
+                      UOM {sortField === "uom" && (sortDirection === "asc" ? "↑" : "↓")}
+                    </TableHead>
+                    <TableHead 
+                      className="cursor-pointer hover:bg-muted/50"
                       onClick={() => handleSort("status")}
                     >
                       Status {sortField === "status" && (sortDirection === "asc" ? "↑" : "↓")}
@@ -240,6 +254,8 @@ const ItemsList = () => {
                         </TableCell>
                         <TableCell>{item.classification}</TableCell>
                         <TableCell>{item.subClassification}</TableCell>
+                        <TableCell>{item.gstPercentage}%</TableCell>
+                        <TableCell>{item.uom}</TableCell>
                         <TableCell>
                           <span className={`px-2 py-1 rounded-full text-xs ${
                             item.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
@@ -254,7 +270,7 @@ const ItemsList = () => {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={9} className="text-center py-6">
+                      <TableCell colSpan={11} className="text-center py-6">
                         No items found.
                       </TableCell>
                     </TableRow>

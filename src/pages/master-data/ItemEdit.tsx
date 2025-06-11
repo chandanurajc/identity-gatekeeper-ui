@@ -95,6 +95,8 @@ const ItemEdit = () => {
     subClassification: item.subClassification,
     status: item.status,
     barcode: item.barcode,
+    gstPercentage: item.gstPercentage || 0,
+    uom: item.uom || "Unit",
     length: item.length,
     width: item.width,
     height: item.height,

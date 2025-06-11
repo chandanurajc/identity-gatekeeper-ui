@@ -7,6 +7,8 @@ export interface Item {
   subClassification: string;
   status: 'active' | 'inactive';
   barcode?: string;
+  gstPercentage: number;
+  uom: string;
   length?: number;
   width?: number;
   height?: number;
@@ -55,6 +57,8 @@ export interface ItemFormData {
   subClassification: string;
   status: 'active' | 'inactive';
   barcode?: string;
+  gstPercentage: number;
+  uom: string;
   length?: number;
   width?: number;
   height?: number;

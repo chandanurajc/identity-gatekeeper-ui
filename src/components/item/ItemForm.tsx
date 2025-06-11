@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +23,24 @@ interface ItemFormProps {
   isEdit?: boolean;
 }
 
+const GST_PERCENTAGES = [
+  { value: 0, label: "0%" },
+  { value: 5, label: "5%" },
+  { value: 8, label: "8%" },
+  { value: 12, label: "12%" },
+  { value: 18, label: "18%" },
+  { value: 28, label: "28%" },
+];
+
+const UOM_OPTIONS = [
+  { value: "Unit", label: "Unit" },
+  { value: "Kilograms", label: "Kilograms" },
+  { value: "Box", label: "Box" },
+  { value: "Length", label: "Length" },
+  { value: "Grams", label: "Grams" },
+  { value: "Litres", label: "Litres" },
+];
+
 const ItemForm = ({ initialData, onSubmit, onCancel, isEdit = false }: ItemFormProps) => {
   console.log("ItemForm: Initializing with data:", initialData);
   console.log("ItemForm: isEdit:", isEdit);
@@ -31,6 +50,8 @@ const ItemForm = ({ initialData, onSubmit, onCancel, isEdit = false }: ItemFormP
     classification: "",
     subClassification: "",
     status: "active",
+    gstPercentage: 0,
+    uom: "Unit",
     costs: [],
     prices: [],
     ...initialData,
@@ -300,6 +321,44 @@ const ItemForm = ({ initialData, onSubmit, onCancel, isEdit = false }: ItemFormP
                   <SelectContent>
                     <SelectItem value="active">Active</SelectItem>
                     <SelectItem value="inactive">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="gstPercentage">GST Percentage *</Label>
+                <Select 
+                  value={formData.gstPercentage.toString()} 
+                  onValueChange={(value) => handleInputChange("gstPercentage", parseInt(value))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {GST_PERCENTAGES.map((gst) => (
+                      <SelectItem key={gst.value} value={gst.value.toString()}>
+                        {gst.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="uom">Unit of Measure (UOM) *</Label>
+                <Select 
+                  value={formData.uom} 
+                  onValueChange={(value) => handleInputChange("uom", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {UOM_OPTIONS.map((uom) => (
+                      <SelectItem key={uom.value} value={uom.value}>
+                        {uom.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

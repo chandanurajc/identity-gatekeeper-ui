@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Item } from "@/types/item";
@@ -133,6 +134,14 @@ const ItemView = () => {
                   }`}>
                     {item.status}
                   </span>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">GST Percentage</label>
+                  <p className="text-sm">{item.gstPercentage}%</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Unit of Measure (UOM)</label>
+                  <p className="text-sm">{item.uom}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">Barcode</label>
