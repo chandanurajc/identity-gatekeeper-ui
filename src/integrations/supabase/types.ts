@@ -179,6 +179,7 @@ export type Database = {
           created_by: string
           created_on: string
           description: string
+          gst_percentage: number | null
           height: number | null
           id: string
           item_group_id: string | null
@@ -186,6 +187,7 @@ export type Database = {
           organization_id: string | null
           status: string
           sub_classification: string
+          uom: string | null
           updated_by: string | null
           updated_on: string | null
           weight: number | null
@@ -197,6 +199,7 @@ export type Database = {
           created_by: string
           created_on?: string
           description: string
+          gst_percentage?: number | null
           height?: number | null
           id: string
           item_group_id?: string | null
@@ -204,6 +207,7 @@ export type Database = {
           organization_id?: string | null
           status?: string
           sub_classification: string
+          uom?: string | null
           updated_by?: string | null
           updated_on?: string | null
           weight?: number | null
@@ -215,6 +219,7 @@ export type Database = {
           created_by?: string
           created_on?: string
           description?: string
+          gst_percentage?: number | null
           height?: number | null
           id?: string
           item_group_id?: string | null
@@ -222,6 +227,7 @@ export type Database = {
           organization_id?: string | null
           status?: string
           sub_classification?: string
+          uom?: string | null
           updated_by?: string | null
           updated_on?: string | null
           weight?: number | null
