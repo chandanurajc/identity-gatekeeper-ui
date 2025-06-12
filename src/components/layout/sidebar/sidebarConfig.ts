@@ -16,6 +16,7 @@ import {
   Folder,
   Radio,
   Box,
+  ShoppingCart,
 } from "lucide-react";
 
 export interface NavItem {
@@ -60,6 +61,7 @@ export const Icons = {
   permissions: ListChecks,
   shield: Shield,
   building: Building2,
+  purchaseOrder: ShoppingCart,
 };
 
 export const sidebarConfig: NavigationGroup[] = [
@@ -107,6 +109,17 @@ export const sidebarConfig: NavigationGroup[] = [
         href: "/master-data/items",
         permission: "view-item",
         icon: "shield" as const,
+      },
+    ],
+  },
+  {
+    title: "Order Management",
+    items: [
+      {
+        title: "Purchase Orders",
+        href: "/order-management/purchase-orders",
+        permission: "View PO",
+        icon: "purchaseOrder" as const,
       },
     ],
   },
@@ -190,6 +203,25 @@ export const createModuleGroups = (permissions: any): ModuleGroup[] => {
     moduleGroups.push({
       name: "Master Data",
       items: masterDataItems,
+    });
+  }
+
+  // Order Management module
+  const orderManagementItems: MenuItem[] = [];
+  
+  if (permissions.canViewPurchaseOrders) {
+    orderManagementItems.push({
+      label: "Purchase Orders",
+      path: "/order-management/purchase-orders",
+      icon: ShoppingCart,
+      permission: true,
+    });
+  }
+
+  if (orderManagementItems.length > 0) {
+    moduleGroups.push({
+      name: "Order Management",
+      items: orderManagementItems,
     });
   }
 

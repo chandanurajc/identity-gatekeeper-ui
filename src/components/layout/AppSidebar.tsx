@@ -13,6 +13,7 @@ import { usePartnerPermissions } from "@/hooks/usePartnerPermissions";
 import { useSalesChannelPermissions } from "@/hooks/useSalesChannelPermissions";
 import { useItemPermissions } from "@/hooks/useItemPermissions";
 import { useItemGroupPermissions } from "@/hooks/useItemGroupPermissions";
+import { usePurchaseOrderPermissions } from "@/hooks/usePurchaseOrderPermissions";
 import { createModuleGroups } from "./sidebar/sidebarConfig";
 import { SidebarNavContent } from "./sidebar/SidebarNavContent";
 import { SidebarFooterContent } from "./sidebar/SidebarFooterContent";
@@ -26,6 +27,7 @@ export function AppSidebar() {
   const { canViewSalesChannel } = useSalesChannelPermissions();
   const { canViewItem } = useItemPermissions();
   const { canViewItemGroup } = useItemGroupPermissions();
+  const { canViewPurchaseOrders } = usePurchaseOrderPermissions();
   const { setOpen } = useSidebar();
   
   const permissions = {
@@ -38,6 +40,7 @@ export function AppSidebar() {
     canViewSalesChannel,
     canViewItem,
     canViewItemGroup,
+    canViewPurchaseOrders,
   };
 
   const moduleGroups = createModuleGroups(permissions);
