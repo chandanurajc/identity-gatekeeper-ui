@@ -11,34 +11,34 @@ export type Database = {
     Tables: {
       item_costs: {
         Row: {
-          cost: number
           created_by: string
           created_on: string
           id: string
           item_id: string | null
           organization_id: string | null
+          price: number | null
           supplier_id: string | null
           updated_by: string | null
           updated_on: string | null
         }
         Insert: {
-          cost: number
           created_by: string
           created_on?: string
           id?: string
           item_id?: string | null
           organization_id?: string | null
+          price?: number | null
           supplier_id?: string | null
           updated_by?: string | null
           updated_on?: string | null
         }
         Update: {
-          cost?: number
           created_by?: string
           created_on?: string
           id?: string
           item_id?: string | null
           organization_id?: string | null
+          price?: number | null
           supplier_id?: string | null
           updated_by?: string | null
           updated_on?: string | null
@@ -110,64 +110,6 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      item_prices: {
-        Row: {
-          created_by: string
-          created_on: string
-          id: string
-          item_id: string | null
-          organization_id: string | null
-          price: number
-          sales_channel_id: string | null
-          updated_by: string | null
-          updated_on: string | null
-        }
-        Insert: {
-          created_by: string
-          created_on?: string
-          id?: string
-          item_id?: string | null
-          organization_id?: string | null
-          price: number
-          sales_channel_id?: string | null
-          updated_by?: string | null
-          updated_on?: string | null
-        }
-        Update: {
-          created_by?: string
-          created_on?: string
-          id?: string
-          item_id?: string | null
-          organization_id?: string | null
-          price?: number
-          sales_channel_id?: string | null
-          updated_by?: string | null
-          updated_on?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "item_prices_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "items"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "item_prices_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "item_prices_sales_channel_id_fkey"
-            columns: ["sales_channel_id"]
-            isOneToOne: false
-            referencedRelation: "sales_channels"
             referencedColumns: ["id"]
           },
         ]

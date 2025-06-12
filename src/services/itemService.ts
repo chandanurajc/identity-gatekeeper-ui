@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Item, ItemFormData } from "@/types/item";
 
@@ -256,11 +257,11 @@ export const itemService = {
       if (formData.costs && formData.costs.length > 0) {
         console.log("ItemService: Inserting", formData.costs.length, "costs...");
         const costInserts = formData.costs
-          .filter(cost => cost.supplierId && cost.cost !== undefined && cost.cost !== null)
+          .filter(cost => cost.price !== undefined && cost.price !== null)
           .map(cost => ({
             item_id: itemId,
-            supplier_id: cost.supplierId,
-            cost: cost.cost,
+            supplier_id: cost.supplierId || null,
+            price: cost.price,
             organization_id: profile.organization_id,
             created_by: createdBy,
             updated_by: createdBy,
@@ -279,36 +280,6 @@ export const itemService = {
           }
           
           console.log("ItemService: Costs inserted successfully");
-        }
-      }
-
-      // Insert item prices - only if provided
-      if (formData.prices && formData.prices.length > 0) {
-        console.log("ItemService: Inserting", formData.prices.length, "prices...");
-        const priceInserts = formData.prices
-          .filter(price => price.salesChannelId && price.price !== undefined && price.price !== null)
-          .map(price => ({
-            item_id: itemId,
-            sales_channel_id: price.salesChannelId,
-            price: price.price,
-            organization_id: profile.organization_id,
-            created_by: createdBy,
-            updated_by: createdBy,
-          }));
-
-        if (priceInserts.length > 0) {
-          console.log("ItemService: Price inserts:", JSON.stringify(priceInserts, null, 2));
-
-          const { error: priceError } = await supabase
-            .from('item_prices')
-            .insert(priceInserts);
-
-          if (priceError) {
-            console.error("ItemService: Error creating item prices:", priceError);
-            throw new Error(`Failed to create item prices: ${priceError.message}`);
-          }
-          
-          console.log("ItemService: Prices inserted successfully");
         }
       }
 
@@ -372,18 +343,17 @@ export const itemService = {
         throw new Error(`Failed to update item: ${itemError.message}`);
       }
 
-      // Delete existing costs and prices
+      // Delete existing costs
       await supabase.from('item_costs').delete().eq('item_id', itemId);
-      await supabase.from('item_prices').delete().eq('item_id', itemId);
 
       // Insert new costs - only if provided
       if (formData.costs && formData.costs.length > 0) {
         const costInserts = formData.costs
-          .filter(cost => cost.supplierId && cost.cost !== undefined && cost.cost !== null)
+          .filter(cost => cost.price !== undefined && cost.price !== null)
           .map(cost => ({
             item_id: itemId,
-            supplier_id: cost.supplierId,
-            cost: cost.cost,
+            supplier_id: cost.supplierId || null,
+            price: cost.price,
             organization_id: profile.organization_id,
             created_by: updatedBy,
             updated_by: updatedBy,
@@ -397,31 +367,6 @@ export const itemService = {
           if (costError) {
             console.error("Error updating item costs:", costError);
             throw new Error(`Failed to update item costs: ${costError.message}`);
-          }
-        }
-      }
-
-      // Insert new prices - only if provided
-      if (formData.prices && formData.prices.length > 0) {
-        const priceInserts = formData.prices
-          .filter(price => price.salesChannelId && price.price !== undefined && price.price !== null)
-          .map(price => ({
-            item_id: itemId,
-            sales_channel_id: price.salesChannelId,
-            price: price.price,
-            organization_id: profile.organization_id,
-            created_by: updatedBy,
-            updated_by: updatedBy,
-          }));
-
-        if (priceInserts.length > 0) {
-          const { error: priceError } = await supabase
-            .from('item_prices')
-            .insert(priceInserts);
-
-          if (priceError) {
-            console.error("Error updating item prices:", priceError);
-            throw new Error(`Failed to update item prices: ${priceError.message}`);
           }
         }
       }
@@ -461,17 +406,6 @@ export const itemService = {
         `)
         .eq('item_id', itemId);
 
-      // Fetch prices with sales channel details
-      const { data: pricesData } = await supabase
-        .from('item_prices')
-        .select(`
-          *,
-          sales_channels (
-            name
-          )
-        `)
-        .eq('item_id', itemId);
-
       const item: Item = {
         id: itemData.id,
         description: itemData.description,
@@ -495,25 +429,13 @@ export const itemService = {
           id: cost.id,
           itemId: cost.item_id,
           supplierId: cost.supplier_id,
-          supplierName: cost.organizations?.name || 'Unknown Supplier',
-          cost: cost.cost,
+          supplierName: cost.organizations?.name || 'Default Price',
+          price: cost.price,
           organizationId: cost.organization_id,
           createdBy: cost.created_by,
           createdOn: new Date(cost.created_on),
           updatedBy: cost.updated_by,
           updatedOn: cost.updated_on ? new Date(cost.updated_on) : undefined,
-        })) || [],
-        prices: pricesData?.map(price => ({
-          id: price.id,
-          itemId: price.item_id,
-          salesChannelId: price.sales_channel_id,
-          salesChannelName: price.sales_channels?.name || 'Unknown Channel',
-          price: price.price,
-          organizationId: price.organization_id,
-          createdBy: price.created_by,
-          createdOn: new Date(price.created_on),
-          updatedBy: price.updated_by,
-          updatedOn: price.updated_on ? new Date(price.updated_on) : undefined,
         })) || [],
       };
 
@@ -522,6 +444,55 @@ export const itemService = {
       
     } catch (error) {
       console.error("Service error fetching item:", error);
+      throw error;
+    }
+  },
+
+  async getItemCostForSupplier(itemId: string, supplierId?: string): Promise<number | null> {
+    console.log("Getting item cost for item:", itemId, "supplier:", supplierId);
+    
+    try {
+      let query = supabase
+        .from('item_costs')
+        .select('price')
+        .eq('item_id', itemId);
+
+      if (supplierId) {
+        // First try to find cost for specific supplier
+        const { data: supplierCostData } = await query.eq('supplier_id', supplierId).maybeSingle();
+        
+        if (supplierCostData) {
+          console.log("Found cost for specific supplier:", supplierCostData.price);
+          return supplierCostData.price;
+        }
+
+        // If no specific supplier cost found, get default cost (supplier_id is null)
+        const { data: defaultCostData } = await supabase
+          .from('item_costs')
+          .select('price')
+          .eq('item_id', itemId)
+          .is('supplier_id', null)
+          .maybeSingle();
+
+        if (defaultCostData) {
+          console.log("Found default cost:", defaultCostData.price);
+          return defaultCostData.price;
+        }
+      } else {
+        // If no supplier specified, get default cost
+        const { data: defaultCostData } = await query.is('supplier_id', null).maybeSingle();
+        
+        if (defaultCostData) {
+          console.log("Found default cost:", defaultCostData.price);
+          return defaultCostData.price;
+        }
+      }
+
+      console.log("No cost found for item");
+      return null;
+      
+    } catch (error) {
+      console.error("Error fetching item cost:", error);
       throw error;
     }
   }

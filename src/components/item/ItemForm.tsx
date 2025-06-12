@@ -6,12 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ItemFormData, ItemCostFormData, ItemPriceFormData } from "@/types/item";
+import { ItemFormData, ItemCostFormData } from "@/types/item";
 import { ItemGroup } from "@/types/itemGroup";
-import { SalesChannel } from "@/types/salesChannel";
 import { Organization } from "@/types/organization";
 import { itemGroupService } from "@/services/itemGroupService";
-import { salesChannelService } from "@/services/salesChannelService";
 import { organizationService } from "@/services/organizationService";
 import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -53,12 +51,10 @@ const ItemForm = ({ initialData, onSubmit, onCancel, isEdit = false }: ItemFormP
     gstPercentage: 0,
     uom: "Unit",
     costs: [],
-    prices: [],
     ...initialData,
   });
   
   const [itemGroups, setItemGroups] = useState<ItemGroup[]>([]);
-  const [salesChannels, setSalesChannels] = useState<SalesChannel[]>([]);
   const [suppliers, setSuppliers] = useState<Organization[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
@@ -72,18 +68,15 @@ const ItemForm = ({ initialData, onSubmit, onCancel, isEdit = false }: ItemFormP
   const fetchSelectData = async () => {
     console.log("ItemForm: Fetching select data...");
     try {
-      const [itemGroupsData, salesChannelsData, organizationsData] = await Promise.all([
+      const [itemGroupsData, organizationsData] = await Promise.all([
         itemGroupService.getItemGroups(),
-        salesChannelService.getActiveSalesChannels(),
         organizationService.getOrganizations(),
       ]);
       
       console.log("ItemForm: Item groups fetched:", itemGroupsData);
-      console.log("ItemForm: Sales channels fetched:", salesChannelsData);
       console.log("ItemForm: Organizations fetched:", organizationsData);
       
       setItemGroups(itemGroupsData.filter(ig => ig.status === 'active'));
-      setSalesChannels(salesChannelsData);
       // Filter organizations to only show suppliers
       setSuppliers(organizationsData.filter(org => org.type === 'Supplier' && org.status === 'active'));
     } catch (error) {
@@ -121,11 +114,10 @@ const ItemForm = ({ initialData, onSubmit, onCancel, isEdit = false }: ItemFormP
         return;
       }
 
-      // Filter out empty costs and prices before submission
+      // Filter out empty costs before submission
       const filteredFormData = {
         ...formData,
-        costs: formData.costs.filter(cost => cost.supplierId && cost.cost),
-        prices: formData.prices.filter(price => price.salesChannelId && price.price)
+        costs: formData.costs.filter(cost => cost.price !== undefined && cost.price !== null && cost.price > 0)
       };
 
       console.log("ItemForm: Validation passed, calling onSubmit...");
@@ -170,7 +162,7 @@ const ItemForm = ({ initialData, onSubmit, onCancel, isEdit = false }: ItemFormP
     console.log("ItemForm: Adding new cost");
     setFormData(prev => ({
       ...prev,
-      costs: [...prev.costs, { supplierId: "", cost: 0 }]
+      costs: [...prev.costs, { price: 0 }]
     }));
   };
 
@@ -189,37 +181,8 @@ const ItemForm = ({ initialData, onSubmit, onCancel, isEdit = false }: ItemFormP
       costs: prev.costs.map((cost, i) => 
         i === index ? { 
           ...cost, 
-          [field]: field === 'cost' ? (value === "" ? 0 : parseFloat(value) || 0) : value 
-        } : cost
-      )
-    }));
-  };
-
-  const addPrice = () => {
-    console.log("ItemForm: Adding new price");
-    setFormData(prev => ({
-      ...prev,
-      prices: [...prev.prices, { salesChannelId: "", price: 0 }]
-    }));
-  };
-
-  const removePrice = (index: number) => {
-    console.log("ItemForm: Removing price at index:", index);
-    setFormData(prev => ({
-      ...prev,
-      prices: prev.prices.filter((_, i) => i !== index)
-    }));
-  };
-
-  const updatePrice = (index: number, field: keyof ItemPriceFormData, value: any) => {
-    console.log(`ItemForm: Updating price ${index} field ${field}:`, value);
-    setFormData(prev => ({
-      ...prev,
-      prices: prev.prices.map((price, i) => 
-        i === index ? { 
-          ...price, 
           [field]: field === 'price' ? (value === "" ? 0 : parseFloat(value) || 0) : value 
-        } : price
+        } : cost
       )
     }));
   };
@@ -238,8 +201,7 @@ const ItemForm = ({ initialData, onSubmit, onCancel, isEdit = false }: ItemFormP
         <TabsList>
           <TabsTrigger value="basic">Basic Information</TabsTrigger>
           <TabsTrigger value="physical">Physical Properties</TabsTrigger>
-          <TabsTrigger value="costs">Costs</TabsTrigger>
-          <TabsTrigger value="prices">Prices</TabsTrigger>
+          <TabsTrigger value="costs">Item Costs</TabsTrigger>
         </TabsList>
 
         <TabsContent value="basic">
@@ -432,7 +394,7 @@ const ItemForm = ({ initialData, onSubmit, onCancel, isEdit = false }: ItemFormP
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
-                Supplier Costs
+                Item Costs
                 <Button type="button" onClick={addCost} size="sm">
                   <Plus className="h-4 w-4 mr-2" />
                   Add Cost
@@ -443,15 +405,16 @@ const ItemForm = ({ initialData, onSubmit, onCancel, isEdit = false }: ItemFormP
               {formData.costs.map((cost, index) => (
                 <div key={index} className="flex items-end gap-4 p-4 border rounded-lg">
                   <div className="flex-1">
-                    <Label>Supplier</Label>
+                    <Label>Supplier (Optional)</Label>
                     <Select 
-                      value={cost.supplierId} 
-                      onValueChange={(value) => updateCost(index, "supplierId", value)}
+                      value={cost.supplierId || ""} 
+                      onValueChange={(value) => updateCost(index, "supplierId", value || undefined)}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select supplier" />
+                        <SelectValue placeholder="Select supplier (optional)" />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="">No Supplier (Default Price)</SelectItem>
                         {suppliers.map((supplier) => (
                           <SelectItem key={supplier.id} value={supplier.id}>
                             {supplier.name} ({supplier.code})
@@ -461,13 +424,13 @@ const ItemForm = ({ initialData, onSubmit, onCancel, isEdit = false }: ItemFormP
                     </Select>
                   </div>
                   <div className="flex-1">
-                    <Label>Cost (₹)</Label>
+                    <Label>Price (₹)</Label>
                     <Input
                       type="number"
                       step="0.01"
-                      placeholder="Enter cost"
-                      value={cost.cost || ""}
-                      onChange={(e) => updateCost(index, "cost", e.target.value)}
+                      placeholder="Enter price"
+                      value={cost.price || ""}
+                      onChange={(e) => updateCost(index, "price", e.target.value)}
                     />
                   </div>
                   <Button
@@ -482,68 +445,7 @@ const ItemForm = ({ initialData, onSubmit, onCancel, isEdit = false }: ItemFormP
               ))}
               {formData.costs.length === 0 && (
                 <p className="text-muted-foreground text-center py-4">
-                  No supplier costs added yet. Click "Add Cost" to get started.
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="prices">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                Sales Channel Prices
-                <Button type="button" onClick={addPrice} size="sm">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Price
-                </Button>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {formData.prices.map((price, index) => (
-                <div key={index} className="flex items-end gap-4 p-4 border rounded-lg">
-                  <div className="flex-1">
-                    <Label>Sales Channel</Label>
-                    <Select 
-                      value={price.salesChannelId} 
-                      onValueChange={(value) => updatePrice(index, "salesChannelId", value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select sales channel" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {salesChannels.map((channel) => (
-                          <SelectItem key={channel.id} value={channel.id}>
-                            {channel.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="flex-1">
-                    <Label>Price (₹)</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      placeholder="Enter price"
-                      value={price.price || ""}
-                      onChange={(e) => updatePrice(index, "price", e.target.value)}
-                    />
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => removePrice(index)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-              {formData.prices.length === 0 && (
-                <p className="text-muted-foreground text-center py-4">
-                  No sales channel prices added yet. Click "Add Price" to get started.
+                  No item costs added yet. Click "Add Cost" to get started.
                 </p>
               )}
             </CardContent>

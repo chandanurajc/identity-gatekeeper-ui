@@ -20,27 +20,13 @@ export interface Item {
   updatedBy?: string;
   updatedOn?: Date;
   costs?: ItemCost[];
-  prices?: ItemPrice[];
 }
 
 export interface ItemCost {
   id: string;
   itemId: string;
-  supplierId: string;
+  supplierId?: string;
   supplierName?: string;
-  cost: number;
-  organizationId?: string;
-  createdBy?: string;
-  createdOn?: Date;
-  updatedBy?: string;
-  updatedOn?: Date;
-}
-
-export interface ItemPrice {
-  id: string;
-  itemId: string;
-  salesChannelId: string;
-  salesChannelName?: string;
   price: number;
   organizationId?: string;
   createdBy?: string;
@@ -65,15 +51,9 @@ export interface ItemFormData {
   weight?: number;
   image?: string;
   costs: ItemCostFormData[];
-  prices: ItemPriceFormData[];
 }
 
 export interface ItemCostFormData {
-  supplierId: string;
-  cost: number;
-}
-
-export interface ItemPriceFormData {
-  salesChannelId: string;
+  supplierId?: string;
   price: number;
 }
