@@ -1,150 +1,113 @@
 
-import { Division, DivisionFormData } from "@/types/division";
-import { organizationService } from "./organizationService";
-import { v4 as uuidv4 } from "uuid";
-
-// Mock data for divisions
-let divisions: Division[] = [
-  {
-    id: "div-1",
-    code: "ABCC001",
-    name: "ABC Supplier Division",
-    organizationId: "1",
-    organizationCode: "ABCC",
-    organizationName: "ABC Corporation",
-    type: "Supplier",
-    status: "active",
-    references: [
-      { id: "ref1", type: "GST", value: "GST123456789" }
-    ],
-    contacts: [
-      {
-        id: "contact1",
-        type: "Registered location",
-        firstName: "John",
-        lastName: "Doe",
-        address1: "123 Main St",
-        address2: "Suite 101",
-        postalCode: "12345",
-        city: "New York",
-        state: "NY",
-        country: "USA",
-        phoneNumber: "+1-555-123-4567",
-        email: "john.doe@abccorp.com",
-        website: "www.abccorp.com"
-      }
-    ],
-    createdBy: "System",
-    createdOn: new Date("2024-05-01"),
-  }
-];
-
-const validateDivisionCode = (code: string, excludeId?: string): boolean => {
-  // Check if code is exactly 7 characters (4 org code + 3 user code)
-  if (!/^[A-Za-z0-9]{7}$/.test(code)) {
-    return false;
-  }
-  
-  // Check uniqueness
-  const existingDiv = divisions.find(div => 
-    div.code.toLowerCase() === code.toLowerCase() && div.id !== excludeId
-  );
-  
-  return !existingDiv;
-};
+import { supabase } from "@/integrations/supabase/client";
+import { Division } from "@/types/division";
 
 export const divisionService = {
-  getAllDivisions: (): Promise<Division[]> => {
-    return Promise.resolve([...divisions]);
-  },
-
-  getDivisionById: (id: string): Promise<Division | undefined> => {
-    const division = divisions.find(division => division.id === id);
-    return Promise.resolve(division);
-  },
-
-  getDivisionByCode: (code: string): Promise<Division | undefined> => {
-    const division = divisions.find(div => 
-      div.code.toLowerCase() === code.toLowerCase()
-    );
-    return Promise.resolve(division);
-  },
-
-  validateDivisionCode: (code: string, excludeId?: string): Promise<boolean> => {
-    return Promise.resolve(validateDivisionCode(code, excludeId));
-  },
-
-  createDivision: async (divisionData: DivisionFormData, createdBy: string): Promise<Division> => {
-    // Get organization details
-    const organization = await organizationService.getOrganizationById(divisionData.organizationId);
-    if (!organization) {
-      throw new Error("Organization not found");
-    }
-
-    const fullCode = organization.code + divisionData.userDefinedCode;
+  async getDivisions(): Promise<Division[]> {
+    console.log("Fetching divisions from Supabase...");
     
-    // Check if a division with this code already exists
-    const existingDiv = divisions.find(div => 
-      div.code.toLowerCase() === fullCode.toLowerCase()
-    );
-    
-    if (existingDiv) {
-      throw new Error("A division with this code already exists");
-    }
-    
-    const newDivision: Division = {
-      ...divisionData,
-      id: uuidv4(),
-      code: fullCode,
-      organizationCode: organization.code,
-      organizationName: organization.name,
-      createdBy: createdBy,
-      createdOn: new Date(),
-    };
-    divisions.push(newDivision);
-    return Promise.resolve(newDivision);
-  },
-
-  updateDivision: async (id: string, divisionData: Partial<DivisionFormData>, updatedBy: string): Promise<Division | undefined> => {
-    if (divisionData.organizationId && divisionData.userDefinedCode) {
-      const organization = await organizationService.getOrganizationById(divisionData.organizationId);
-      if (!organization) {
-        throw new Error("Organization not found");
+    try {
+      // Get current user's organization
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error("User not authenticated");
       }
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('organization_id')
+        .eq('id', user.id)
+        .single();
+
+      if (!profile?.organization_id) {
+        console.log("No organization found for user");
+        return [];
+      }
+
+      // Fetch divisions (organizations with type 'Admin' for current organization)
+      const { data, error } = await supabase
+        .from('organizations')
+        .select(`
+          *,
+          organization_references (
+            reference_type,
+            reference_value
+          ),
+          organization_contacts (
+            contact_type,
+            first_name,
+            last_name,
+            address1,
+            address2,
+            postal_code,
+            city,
+            state,
+            country,
+            phone_number,
+            email,
+            website
+          )
+        `)
+        .eq('type', 'Admin')
+        .eq('status', 'active')
+        .order('name');
+
+      if (error) {
+        console.error("Supabase error fetching divisions:", error);
+        throw new Error(`Failed to fetch divisions: ${error.message}`);
+      }
+
+      if (!data) {
+        console.log("No divisions data returned");
+        return [];
+      }
+
+      const transformedData = data.map(org => ({
+        id: org.id,
+        code: org.code,
+        name: org.name,
+        organizationId: org.id,
+        organizationCode: org.code,
+        organizationName: org.name,
+        type: org.type as 'Supplier' | 'Retailer' | 'Retail customer' | 'Wholesale customer',
+        status: org.status as 'active' | 'inactive',
+        references: org.organization_references?.map(ref => ({
+          id: ref.reference_type,
+          type: ref.reference_type as 'GST' | 'CIN' | 'PAN',
+          value: ref.reference_value
+        })) || [],
+        contacts: org.organization_contacts?.map(contact => ({
+          id: contact.contact_type,
+          type: contact.contact_type as 'Registered location' | 'Billing' | 'Shipping' | 'Owner',
+          firstName: contact.first_name,
+          lastName: contact.last_name,
+          address1: contact.address1 || '',
+          address2: contact.address2,
+          postalCode: contact.postal_code || '',
+          city: contact.city || '',
+          state: contact.state || '',
+          country: contact.country || '',
+          phoneNumber: contact.phone_number || '',
+          email: contact.email,
+          website: contact.website
+        })) || [],
+        createdBy: org.created_by,
+        createdOn: new Date(org.created_on),
+        updatedBy: org.updated_by,
+        updatedOn: org.updated_on ? new Date(org.updated_on) : undefined,
+      }));
+
+      console.log("Transformed divisions data:", transformedData);
+      return transformedData;
       
-      const fullCode = organization.code + divisionData.userDefinedCode;
-      if (!validateDivisionCode(fullCode, id)) {
-        throw new Error("Division code must be exactly 7 characters (4 org + 3 user) and unique");
-      }
+    } catch (error) {
+      console.error("Service error fetching divisions:", error);
+      throw error;
     }
-    
-    let updatedDivision: Division | undefined;
-    divisions = divisions.map(division => {
-      if (division.id === id) {
-        const updates: any = { ...divisionData };
-        
-        // Handle organization change
-        if (divisionData.organizationId && divisionData.userDefinedCode) {
-          const organization = divisions.find(d => d.id === id)?.organizationCode;
-          updates.code = divisionData.organizationId + divisionData.userDefinedCode;
-        }
-        
-        updatedDivision = {
-          ...division,
-          ...updates,
-          updatedBy: updatedBy,
-          updatedOn: new Date(),
-        };
-        return updatedDivision;
-      }
-      return division;
-    });
-    return Promise.resolve(updatedDivision);
   },
 
-  deleteDivision: (id: string): Promise<boolean> => {
-    const initialLength = divisions.length;
-    divisions = divisions.filter(division => division.id !== id);
-    return Promise.resolve(divisions.length !== initialLength);
+  async getActiveDivisions(): Promise<Division[]> {
+    const divisions = await this.getDivisions();
+    return divisions.filter(division => division.status === 'active');
   }
 };

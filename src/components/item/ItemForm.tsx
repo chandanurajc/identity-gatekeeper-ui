@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,9 +41,6 @@ const UOM_OPTIONS = [
 ];
 
 const ItemForm = ({ initialData, onSubmit, onCancel, isEdit = false }: ItemFormProps) => {
-  console.log("ItemForm: Initializing with data:", initialData);
-  console.log("ItemForm: isEdit:", isEdit);
-  
   const [formData, setFormData] = useState<ItemFormData>({
     description: "",
     classification: "",
@@ -63,14 +59,11 @@ const ItemForm = ({ initialData, onSubmit, onCancel, isEdit = false }: ItemFormP
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
 
-  console.log("ItemForm: Current formData:", formData);
-
   useEffect(() => {
     fetchSelectData();
   }, []);
 
   const fetchSelectData = async () => {
-    console.log("ItemForm: Fetching select data...");
     try {
       const [itemGroupsData, salesChannelsData, organizationsData] = await Promise.all([
         itemGroupService.getItemGroups(),
@@ -78,13 +71,8 @@ const ItemForm = ({ initialData, onSubmit, onCancel, isEdit = false }: ItemFormP
         organizationService.getOrganizations(),
       ]);
       
-      console.log("ItemForm: Item groups fetched:", itemGroupsData);
-      console.log("ItemForm: Sales channels fetched:", salesChannelsData);
-      console.log("ItemForm: Organizations fetched:", organizationsData);
-      
       setItemGroups(itemGroupsData.filter(ig => ig.status === 'active'));
       setSalesChannels(salesChannelsData);
-      // Filter organizations to only show suppliers
       setSuppliers(organizationsData.filter(org => org.type === 'Supplier' && org.status === 'active'));
     } catch (error) {
       console.error("ItemForm: Error fetching select data:", error);
@@ -96,41 +84,31 @@ const ItemForm = ({ initialData, onSubmit, onCancel, isEdit = false }: ItemFormP
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("ItemForm: Starting form submission...");
-    console.log("ItemForm: Form data to submit:", JSON.stringify(formData, null, 2));
-    
     setLoading(true);
     
     try {
-      // Validate required fields
       if (!formData.description.trim()) {
-        console.error("ItemForm: Description is required");
         toast.error("Description is required");
         return;
       }
       
       if (!formData.classification.trim()) {
-        console.error("ItemForm: Classification is required");
         toast.error("Classification is required");
         return;
       }
       
       if (!formData.subClassification.trim()) {
-        console.error("ItemForm: Sub-classification is required");
         toast.error("Sub-classification is required");
         return;
       }
 
-      // Filter out empty costs and prices before submission
       const filteredFormData = {
         ...formData,
-        costs: formData.costs.filter(cost => cost.supplierId && cost.cost),
-        prices: formData.prices.filter(price => price.salesChannelId && price.price)
+        costs: formData.costs.filter(cost => cost.cost !== undefined && cost.cost !== null && cost.cost > 0),
+        prices: formData.prices.filter(price => price.price !== undefined && price.price !== null && price.price > 0)
       };
 
-      console.log("ItemForm: Validation passed, calling onSubmit...");
       await onSubmit(filteredFormData);
-      console.log("ItemForm: onSubmit completed successfully");
       toast.success(`Item ${isEdit ? 'updated' : 'created'} successfully`);
     } catch (error) {
       console.error(`ItemForm: Error ${isEdit ? 'updating' : 'creating'} item:`, error);
@@ -142,19 +120,12 @@ const ItemForm = ({ initialData, onSubmit, onCancel, isEdit = false }: ItemFormP
   };
 
   const handleInputChange = (field: keyof ItemFormData, value: any) => {
-    console.log(`ItemForm: Updating field ${field} with value:`, value);
-    setFormData(prev => {
-      const updated = { ...prev, [field]: value };
-      console.log("ItemForm: Updated formData:", updated);
-      return updated;
-    });
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   const handleItemGroupChange = (itemGroupId: string) => {
-    console.log("ItemForm: Item group changed to:", itemGroupId);
     const selectedGroup = itemGroups.find(group => group.id === itemGroupId);
     if (selectedGroup) {
-      console.log("ItemForm: Found selected group:", selectedGroup);
       setFormData(prev => ({
         ...prev,
         itemGroupId,
@@ -167,7 +138,6 @@ const ItemForm = ({ initialData, onSubmit, onCancel, isEdit = false }: ItemFormP
   };
 
   const addCost = () => {
-    console.log("ItemForm: Adding new cost");
     setFormData(prev => ({
       ...prev,
       costs: [...prev.costs, { supplierId: "", cost: 0 }]
@@ -175,7 +145,6 @@ const ItemForm = ({ initialData, onSubmit, onCancel, isEdit = false }: ItemFormP
   };
 
   const removeCost = (index: number) => {
-    console.log("ItemForm: Removing cost at index:", index);
     setFormData(prev => ({
       ...prev,
       costs: prev.costs.filter((_, i) => i !== index)
@@ -183,7 +152,6 @@ const ItemForm = ({ initialData, onSubmit, onCancel, isEdit = false }: ItemFormP
   };
 
   const updateCost = (index: number, field: keyof ItemCostFormData, value: any) => {
-    console.log(`ItemForm: Updating cost ${index} field ${field}:`, value);
     setFormData(prev => ({
       ...prev,
       costs: prev.costs.map((cost, i) => 
@@ -196,7 +164,6 @@ const ItemForm = ({ initialData, onSubmit, onCancel, isEdit = false }: ItemFormP
   };
 
   const addPrice = () => {
-    console.log("ItemForm: Adding new price");
     setFormData(prev => ({
       ...prev,
       prices: [...prev.prices, { salesChannelId: "", price: 0 }]
@@ -204,7 +171,6 @@ const ItemForm = ({ initialData, onSubmit, onCancel, isEdit = false }: ItemFormP
   };
 
   const removePrice = (index: number) => {
-    console.log("ItemForm: Removing price at index:", index);
     setFormData(prev => ({
       ...prev,
       prices: prev.prices.filter((_, i) => i !== index)
@@ -212,7 +178,6 @@ const ItemForm = ({ initialData, onSubmit, onCancel, isEdit = false }: ItemFormP
   };
 
   const updatePrice = (index: number, field: keyof ItemPriceFormData, value: any) => {
-    console.log(`ItemForm: Updating price ${index} field ${field}:`, value);
     setFormData(prev => ({
       ...prev,
       prices: prev.prices.map((price, i) => 
@@ -443,24 +408,6 @@ const ItemForm = ({ initialData, onSubmit, onCancel, isEdit = false }: ItemFormP
               {formData.costs.map((cost, index) => (
                 <div key={index} className="flex items-end gap-4 p-4 border rounded-lg">
                   <div className="flex-1">
-                    <Label>Supplier</Label>
-                    <Select 
-                      value={cost.supplierId} 
-                      onValueChange={(value) => updateCost(index, "supplierId", value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select supplier" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {suppliers.map((supplier) => (
-                          <SelectItem key={supplier.id} value={supplier.id}>
-                            {supplier.name} ({supplier.code})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="flex-1">
                     <Label>Cost (₹)</Label>
                     <Input
                       type="number"
@@ -469,6 +416,25 @@ const ItemForm = ({ initialData, onSubmit, onCancel, isEdit = false }: ItemFormP
                       value={cost.cost || ""}
                       onChange={(e) => updateCost(index, "cost", e.target.value)}
                     />
+                  </div>
+                  <div className="flex-1">
+                    <Label>Supplier (Optional)</Label>
+                    <Select 
+                      value={cost.supplierId || ""} 
+                      onValueChange={(value) => updateCost(index, "supplierId", value === "none" ? "" : value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select supplier or leave blank" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">No specific supplier</SelectItem>
+                        {suppliers.map((supplier) => (
+                          <SelectItem key={supplier.id} value={supplier.id}>
+                            {supplier.name} ({supplier.code})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <Button
                     type="button"
@@ -504,24 +470,6 @@ const ItemForm = ({ initialData, onSubmit, onCancel, isEdit = false }: ItemFormP
               {formData.prices.map((price, index) => (
                 <div key={index} className="flex items-end gap-4 p-4 border rounded-lg">
                   <div className="flex-1">
-                    <Label>Sales Channel</Label>
-                    <Select 
-                      value={price.salesChannelId} 
-                      onValueChange={(value) => updatePrice(index, "salesChannelId", value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select sales channel" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {salesChannels.map((channel) => (
-                          <SelectItem key={channel.id} value={channel.id}>
-                            {channel.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="flex-1">
                     <Label>Price (₹)</Label>
                     <Input
                       type="number"
@@ -530,6 +478,25 @@ const ItemForm = ({ initialData, onSubmit, onCancel, isEdit = false }: ItemFormP
                       value={price.price || ""}
                       onChange={(e) => updatePrice(index, "price", e.target.value)}
                     />
+                  </div>
+                  <div className="flex-1">
+                    <Label>Sales Channel (Optional)</Label>
+                    <Select 
+                      value={price.salesChannelId || ""} 
+                      onValueChange={(value) => updatePrice(index, "salesChannelId", value === "none" ? "" : value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select channel or leave blank" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Default price (no channel)</SelectItem>
+                        {salesChannels.map((channel) => (
+                          <SelectItem key={channel.id} value={channel.id}>
+                            {channel.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <Button
                     type="button"

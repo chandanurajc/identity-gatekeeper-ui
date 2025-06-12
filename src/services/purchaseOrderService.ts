@@ -182,8 +182,8 @@ export const purchaseOrderService = {
         item_id: line.itemId,
         quantity: line.quantity,
         uom: line.uom,
-        unit_price: line.unitPrice,
-        total_unit_price: line.totalUnitPrice,
+        unit_price: line.unitPrice, // This maps to unit cost in UI
+        total_unit_price: line.totalUnitPrice, // This maps to total item cost in UI
         gst_percent: line.gstPercent,
         gst_value: line.gstValue,
         line_total: line.lineTotal,

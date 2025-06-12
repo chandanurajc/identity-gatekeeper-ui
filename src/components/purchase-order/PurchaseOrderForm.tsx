@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,10 +11,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Trash2, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { PurchaseOrderFormData, PurchaseOrderLine, ShippingAddress } from "@/types/purchaseOrder";
+import { divisionService } from "@/services/divisionService";
 import { organizationService } from "@/services/organizationService";
 import { itemService } from "@/services/itemService";
 import { purchaseOrderService } from "@/services/purchaseOrderService";
 import { useMultiTenant } from "@/hooks/useMultiTenant";
+import { Division } from "@/types/division";
 import { Organization } from "@/types/organization";
 import { Item } from "@/types/item";
 
@@ -35,9 +36,10 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
   const { toast } = useToast();
   const { currentOrganization } = useMultiTenant();
   
-  const [divisions, setDivisions] = useState<Organization[]>([]);
+  const [divisions, setDivisions] = useState<Division[]>([]);
   const [suppliers, setSuppliers] = useState<Organization[]>([]);
   const [items, setItems] = useState<Item[]>([]);
+  const [filteredItems, setFilteredItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(false);
   const [sameAsDivisionAddress, setSameAsDivisionAddress] = useState(false);
 
@@ -73,6 +75,7 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
 
   const watchedLines = watch("lines");
   const watchedDivisionId = watch("divisionId");
+  const watchedSupplierId = watch("supplierId");
 
   useEffect(() => {
     if (currentOrganization?.id) {
@@ -97,16 +100,15 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
 
     try {
       const [divisionsData, suppliersData, itemsData] = await Promise.all([
-        organizationService.getOrganizations(),
+        divisionService.getActiveDivisions(),
         organizationService.getOrganizations(),
         itemService.getItems()
       ]);
 
-      // Filter divisions (type = 'Admin' for divisions in this context)
-      setDivisions(divisionsData.filter(org => org.type === 'Admin'));
-      // Filter suppliers
-      setSuppliers(suppliersData.filter(org => org.type === 'Supplier'));
+      setDivisions(divisionsData);
+      setSuppliers(suppliersData.filter(org => org.type === 'Supplier' && org.status === 'active'));
       setItems(itemsData);
+      setFilteredItems(itemsData.slice(0, 5)); // Show top 5 by default
     } catch (error) {
       console.error("Error fetching dropdown data:", error);
       toast({
@@ -154,6 +156,20 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
     }
   };
 
+  const searchItems = (searchTerm: string) => {
+    if (!searchTerm.trim()) {
+      setFilteredItems(items.slice(0, 5));
+      return;
+    }
+
+    const filtered = items.filter(item => 
+      item.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.description.toLowerCase().includes(searchTerm.toLowerCase())
+    ).slice(0, 5);
+    
+    setFilteredItems(filtered);
+  };
+
   const addPOLine = () => {
     const newLineNumber = fields.length + 1;
     const newLine: PurchaseOrderLine = {
@@ -180,12 +196,41 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
     });
   };
 
-  const handleItemChange = (lineIndex: number, itemId: string) => {
+  const getItemCostForSupplier = async (itemId: string, supplierId: string): Promise<number | null> => {
+    try {
+      const item = await itemService.getItemById(itemId);
+      if (!item || !item.costs) return null;
+
+      // First priority: cost for selected supplier
+      const supplierCost = item.costs.find(cost => cost.supplierId === supplierId);
+      if (supplierCost) return supplierCost.cost;
+
+      // Second priority: cost with blank supplier (default cost)
+      const defaultCost = item.costs.find(cost => !cost.supplierId || cost.supplierId === "");
+      if (defaultCost) return defaultCost.cost;
+
+      return null;
+    } catch (error) {
+      console.error("Error fetching item cost:", error);
+      return null;
+    }
+  };
+
+  const handleItemChange = async (lineIndex: number, itemId: string) => {
     const selectedItem = items.find(item => item.id === itemId);
     if (selectedItem) {
       setValue(`lines.${lineIndex}.itemId`, itemId);
       setValue(`lines.${lineIndex}.uom`, selectedItem.uom || "");
       setValue(`lines.${lineIndex}.gstPercent`, selectedItem.gstPercentage || 0);
+      
+      // Fetch item cost for selected supplier
+      if (watchedSupplierId) {
+        const itemCost = await getItemCostForSupplier(itemId, watchedSupplierId);
+        if (itemCost !== null) {
+          setValue(`lines.${lineIndex}.unitPrice`, itemCost);
+        }
+      }
+      
       calculateLineTotal(lineIndex);
     }
   };
@@ -227,404 +272,425 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
   const { itemTotal, totalGST } = calculateSummary();
 
   return (
-    <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
-      {/* Header Fields */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Purchase Order Details</CardTitle>
-        </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="poNumber">PO Number *</Label>
-            <Input
-              id="poNumber"
-              {...register("poNumber", { required: "PO Number is required" })}
-              readOnly={isEdit}
-              className={isEdit ? "bg-muted" : ""}
-            />
-            {errors.poNumber && <p className="text-sm text-red-500">{errors.poNumber.message}</p>}
-          </div>
-
-          <div>
-            <Label htmlFor="divisionId">Division *</Label>
-            <Select onValueChange={(value) => setValue("divisionId", value)} defaultValue={watch("divisionId")}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Division" />
-              </SelectTrigger>
-              <SelectContent>
-                {divisions.map((division) => (
-                  <SelectItem key={division.id} value={division.id}>
-                    {division.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.divisionId && <p className="text-sm text-red-500">Division is required</p>}
-          </div>
-
-          <div>
-            <Label htmlFor="supplierId">Supplier *</Label>
-            <Select onValueChange={(value) => setValue("supplierId", value)} defaultValue={watch("supplierId")}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Supplier" />
-              </SelectTrigger>
-              <SelectContent>
-                {suppliers.map((supplier) => (
-                  <SelectItem key={supplier.id} value={supplier.id}>
-                    {supplier.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.supplierId && <p className="text-sm text-red-500">Supplier is required</p>}
-          </div>
-
-          <div>
-            <Label htmlFor="poDate">PO Date *</Label>
-            <Input
-              id="poDate"
-              type="date"
-              {...register("poDate", { required: "PO Date is required" })}
-            />
-            {errors.poDate && <p className="text-sm text-red-500">{errors.poDate.message}</p>}
-          </div>
-
-          <div>
-            <Label htmlFor="requestedDeliveryDate">Requested Delivery Date</Label>
-            <Input
-              id="requestedDeliveryDate"
-              type="date"
-              {...register("requestedDeliveryDate")}
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="paymentTerms">Payment Terms</Label>
-            <Select onValueChange={(value) => setValue("paymentTerms", value)} defaultValue={watch("paymentTerms")}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Payment Terms" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Net 30">Net 30</SelectItem>
-                <SelectItem value="Net 60">Net 60</SelectItem>
-                <SelectItem value="Due on receipt">Due on receipt</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Ship to Address */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Ship to Address</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="sameAsDivisionAddress"
-              checked={sameAsDivisionAddress}
-              onCheckedChange={handleSameAsDivisionAddressChange}
-            />
-            <Label htmlFor="sameAsDivisionAddress">Same as Division's Shipping address?</Label>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="space-y-6">
+      <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
+        {/* Header Fields */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Purchase Order Details</CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="shipToAddress1">Address 1 *</Label>
+              <Label htmlFor="poNumber">PO Number *</Label>
               <Input
-                id="shipToAddress1"
-                {...register("shipToAddress1", { required: "Address 1 is required" })}
-                disabled={sameAsDivisionAddress}
+                id="poNumber"
+                {...register("poNumber", { required: "PO Number is required" })}
+                readOnly={isEdit}
+                className={isEdit ? "bg-muted" : ""}
               />
-              {errors.shipToAddress1 && <p className="text-sm text-red-500">{errors.shipToAddress1.message}</p>}
+              {errors.poNumber && <p className="text-sm text-red-500">{errors.poNumber.message}</p>}
             </div>
 
             <div>
-              <Label htmlFor="shipToAddress2">Address 2</Label>
+              <Label htmlFor="divisionId">Division *</Label>
+              <Select onValueChange={(value) => setValue("divisionId", value)} defaultValue={watch("divisionId")}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Division" />
+                </SelectTrigger>
+                <SelectContent>
+                  {divisions.map((division) => (
+                    <SelectItem key={division.id} value={division.id}>
+                      {division.name} ({division.code})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.divisionId && <p className="text-sm text-red-500">Division is required</p>}
+            </div>
+
+            <div>
+              <Label htmlFor="supplierId">Supplier *</Label>
+              <Select onValueChange={(value) => setValue("supplierId", value)} defaultValue={watch("supplierId")}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Supplier" />
+                </SelectTrigger>
+                <SelectContent>
+                  {suppliers.map((supplier) => (
+                    <SelectItem key={supplier.id} value={supplier.id}>
+                      {supplier.name} ({supplier.code})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.supplierId && <p className="text-sm text-red-500">Supplier is required</p>}
+            </div>
+
+            <div>
+              <Label htmlFor="poDate">PO Date *</Label>
               <Input
-                id="shipToAddress2"
-                {...register("shipToAddress2")}
-                disabled={sameAsDivisionAddress}
+                id="poDate"
+                type="date"
+                {...register("poDate", { required: "PO Date is required" })}
+              />
+              {errors.poDate && <p className="text-sm text-red-500">{errors.poDate.message}</p>}
+            </div>
+
+            <div>
+              <Label htmlFor="requestedDeliveryDate">Requested Delivery Date</Label>
+              <Input
+                id="requestedDeliveryDate"
+                type="date"
+                {...register("requestedDeliveryDate")}
               />
             </div>
 
             <div>
-              <Label htmlFor="shipToPostalCode">Postal Code *</Label>
-              <Input
-                id="shipToPostalCode"
-                {...register("shipToPostalCode", { required: "Postal Code is required" })}
-                disabled={sameAsDivisionAddress}
+              <Label htmlFor="paymentTerms">Payment Terms</Label>
+              <Select onValueChange={(value) => setValue("paymentTerms", value)} defaultValue={watch("paymentTerms")}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Payment Terms" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Net 30">Net 30</SelectItem>
+                  <SelectItem value="Net 60">Net 60</SelectItem>
+                  <SelectItem value="Due on receipt">Due on receipt</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Ship to Address */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Ship to Address</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="sameAsDivisionAddress"
+                checked={sameAsDivisionAddress}
+                onCheckedChange={handleSameAsDivisionAddressChange}
               />
-              {errors.shipToPostalCode && <p className="text-sm text-red-500">{errors.shipToPostalCode.message}</p>}
+              <Label htmlFor="sameAsDivisionAddress">Same as Division's Shipping address?</Label>
             </div>
 
-            <div>
-              <Label htmlFor="shipToCity">City *</Label>
-              <Input
-                id="shipToCity"
-                {...register("shipToCity", { required: "City is required" })}
-                disabled={sameAsDivisionAddress}
-              />
-              {errors.shipToCity && <p className="text-sm text-red-500">{errors.shipToCity.message}</p>}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="shipToAddress1">Address 1 *</Label>
+                <Input
+                  id="shipToAddress1"
+                  {...register("shipToAddress1", { required: "Address 1 is required" })}
+                  disabled={sameAsDivisionAddress}
+                />
+                {errors.shipToAddress1 && <p className="text-sm text-red-500">{errors.shipToAddress1.message}</p>}
+              </div>
+
+              <div>
+                <Label htmlFor="shipToAddress2">Address 2</Label>
+                <Input
+                  id="shipToAddress2"
+                  {...register("shipToAddress2")}
+                  disabled={sameAsDivisionAddress}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="shipToPostalCode">Postal Code *</Label>
+                <Input
+                  id="shipToPostalCode"
+                  {...register("shipToPostalCode", { required: "Postal Code is required" })}
+                  disabled={sameAsDivisionAddress}
+                />
+                {errors.shipToPostalCode && <p className="text-sm text-red-500">{errors.shipToPostalCode.message}</p>}
+              </div>
+
+              <div>
+                <Label htmlFor="shipToCity">City *</Label>
+                <Input
+                  id="shipToCity"
+                  {...register("shipToCity", { required: "City is required" })}
+                  disabled={sameAsDivisionAddress}
+                />
+                {errors.shipToCity && <p className="text-sm text-red-500">{errors.shipToCity.message}</p>}
+              </div>
+
+              <div>
+                <Label htmlFor="shipToState">State *</Label>
+                <Input
+                  id="shipToState"
+                  {...register("shipToState", { required: "State is required" })}
+                  disabled={sameAsDivisionAddress}
+                />
+                {errors.shipToState && <p className="text-sm text-red-500">{errors.shipToState.message}</p>}
+              </div>
+
+              <div>
+                <Label htmlFor="shipToCountry">Country *</Label>
+                <Input
+                  id="shipToCountry"
+                  {...register("shipToCountry", { required: "Country is required" })}
+                  disabled={sameAsDivisionAddress}
+                />
+                {errors.shipToCountry && <p className="text-sm text-red-500">{errors.shipToCountry.message}</p>}
+              </div>
+
+              <div>
+                <Label htmlFor="shipToPhone">Phone *</Label>
+                <Input
+                  id="shipToPhone"
+                  {...register("shipToPhone", { required: "Phone is required" })}
+                  disabled={sameAsDivisionAddress}
+                />
+                {errors.shipToPhone && <p className="text-sm text-red-500">{errors.shipToPhone.message}</p>}
+              </div>
+
+              <div>
+                <Label htmlFor="shipToEmail">Email *</Label>
+                <Input
+                  id="shipToEmail"
+                  type="email"
+                  {...register("shipToEmail", { required: "Email is required" })}
+                  disabled={sameAsDivisionAddress}
+                />
+                {errors.shipToEmail && <p className="text-sm text-red-500">{errors.shipToEmail.message}</p>}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* PO Lines */}
+        <Card>
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <CardTitle>Purchase Order Lines</CardTitle>
+              <Button type="button" onClick={addPOLine}>
+                <Plus className="mr-2 h-4 w-4" />
+                Add PO Line
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <div className="rounded-md border min-w-full">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="min-w-[60px]">Line #</TableHead>
+                      <TableHead className="min-w-[200px]">Item *</TableHead>
+                      <TableHead className="min-w-[200px]">Item Description</TableHead>
+                      <TableHead className="min-w-[80px]">Qty *</TableHead>
+                      <TableHead className="min-w-[80px]">UOM *</TableHead>
+                      <TableHead className="min-w-[100px]">Unit Cost *</TableHead>
+                      <TableHead className="min-w-[120px]">Total Item Cost</TableHead>
+                      <TableHead className="min-w-[80px]">GST %</TableHead>
+                      <TableHead className="min-w-[100px]">GST Value</TableHead>
+                      <TableHead className="min-w-[100px]">Line Total</TableHead>
+                      <TableHead className="min-w-[80px]">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {fields.map((field, index) => {
+                      const selectedItem = items.find(item => item.id === watchedLines[index]?.itemId);
+                      
+                      return (
+                        <TableRow key={field.id}>
+                          <TableCell>{index + 1}</TableCell>
+                          <TableCell>
+                            <div className="space-y-2">
+                              <Input
+                                placeholder="Search by Item ID"
+                                onChange={(e) => searchItems(e.target.value)}
+                                className="mb-2"
+                              />
+                              <Select 
+                                onValueChange={(value) => handleItemChange(index, value)} 
+                                defaultValue={watchedLines[index]?.itemId}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select Item" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {filteredItems.map((item) => (
+                                    <SelectItem key={item.id} value={item.id}>
+                                      {item.id} - {item.description}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              value={selectedItem?.description || ""}
+                              readOnly
+                              className="bg-muted"
+                              placeholder="Item description will appear here"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              {...register(`lines.${index}.quantity`, { 
+                                required: "Quantity is required",
+                                min: { value: 0.01, message: "Quantity must be greater than 0" }
+                              })}
+                              onChange={(e) => {
+                                setValue(`lines.${index}.quantity`, parseFloat(e.target.value) || 0);
+                                calculateLineTotal(index);
+                              }}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              {...register(`lines.${index}.uom`, { required: "UOM is required" })}
+                              readOnly
+                              className="bg-muted"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              {...register(`lines.${index}.unitPrice`, { 
+                                required: "Unit Cost is required",
+                                min: { value: 0, message: "Unit Cost must be non-negative" }
+                              })}
+                              onChange={(e) => {
+                                setValue(`lines.${index}.unitPrice`, parseFloat(e.target.value) || 0);
+                                calculateLineTotal(index);
+                              }}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              value={watchedLines[index]?.totalUnitPrice?.toFixed(2) || "0.00"}
+                              readOnly
+                              className="bg-muted"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              {...register(`lines.${index}.gstPercent`)}
+                              onChange={(e) => {
+                                setValue(`lines.${index}.gstPercent`, parseFloat(e.target.value) || 0);
+                                calculateLineTotal(index);
+                              }}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              value={watchedLines[index]?.gstValue?.toFixed(2) || "0.00"}
+                              readOnly
+                              className="bg-muted"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              value={watchedLines[index]?.lineTotal?.toFixed(2) || "0.00"}
+                              readOnly
+                              className="bg-muted"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => removePOLine(index)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                    {fields.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={11} className="text-center text-muted-foreground">
+                          No line items added yet. Click "Add PO Line" to get started.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
 
-            <div>
-              <Label htmlFor="shipToState">State *</Label>
-              <Input
-                id="shipToState"
-                {...register("shipToState", { required: "State is required" })}
-                disabled={sameAsDivisionAddress}
-              />
-              {errors.shipToState && <p className="text-sm text-red-500">{errors.shipToState.message}</p>}
-            </div>
-
-            <div>
-              <Label htmlFor="shipToCountry">Country *</Label>
-              <Input
-                id="shipToCountry"
-                {...register("shipToCountry", { required: "Country is required" })}
-                disabled={sameAsDivisionAddress}
-              />
-              {errors.shipToCountry && <p className="text-sm text-red-500">{errors.shipToCountry.message}</p>}
-            </div>
-
-            <div>
-              <Label htmlFor="shipToPhone">Phone *</Label>
-              <Input
-                id="shipToPhone"
-                {...register("shipToPhone", { required: "Phone is required" })}
-                disabled={sameAsDivisionAddress}
-              />
-              {errors.shipToPhone && <p className="text-sm text-red-500">{errors.shipToPhone.message}</p>}
-            </div>
-
-            <div>
-              <Label htmlFor="shipToEmail">Email *</Label>
-              <Input
-                id="shipToEmail"
-                type="email"
-                {...register("shipToEmail", { required: "Email is required" })}
-                disabled={sameAsDivisionAddress}
-              />
-              {errors.shipToEmail && <p className="text-sm text-red-500">{errors.shipToEmail.message}</p>}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* PO Lines */}
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle>Purchase Order Lines</CardTitle>
-            <Button type="button" onClick={addPOLine}>
-              <Plus className="mr-2 h-4 w-4" />
-              Add PO Line
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Line #</TableHead>
-                  <TableHead>Item *</TableHead>
-                  <TableHead>Qty *</TableHead>
-                  <TableHead>UOM *</TableHead>
-                  <TableHead>Unit Price *</TableHead>
-                  <TableHead>Total Unit Price</TableHead>
-                  <TableHead>GST %</TableHead>
-                  <TableHead>GST Value</TableHead>
-                  <TableHead>Line Total</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {fields.map((field, index) => (
-                  <TableRow key={field.id}>
-                    <TableCell>{index + 1}</TableCell>
-                    <TableCell>
-                      <Select 
-                        onValueChange={(value) => handleItemChange(index, value)} 
-                        defaultValue={watchedLines[index]?.itemId}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select Item" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {items.map((item) => (
-                            <SelectItem key={item.id} value={item.id}>
-                              {item.id} - {item.description}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        {...register(`lines.${index}.quantity`, { 
-                          required: "Quantity is required",
-                          min: { value: 0.01, message: "Quantity must be greater than 0" }
-                        })}
-                        onChange={(e) => {
-                          setValue(`lines.${index}.quantity`, parseFloat(e.target.value) || 0);
-                          calculateLineTotal(index);
-                        }}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        {...register(`lines.${index}.uom`, { required: "UOM is required" })}
-                        readOnly
-                        className="bg-muted"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        {...register(`lines.${index}.unitPrice`, { 
-                          required: "Unit Price is required",
-                          min: { value: 0, message: "Unit Price must be non-negative" }
-                        })}
-                        onChange={(e) => {
-                          setValue(`lines.${index}.unitPrice`, parseFloat(e.target.value) || 0);
-                          calculateLineTotal(index);
-                        }}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={watchedLines[index]?.totalUnitPrice?.toFixed(2) || "0.00"}
-                        readOnly
-                        className="bg-muted"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        {...register(`lines.${index}.gstPercent`)}
-                        onChange={(e) => {
-                          setValue(`lines.${index}.gstPercent`, parseFloat(e.target.value) || 0);
-                          calculateLineTotal(index);
-                        }}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={watchedLines[index]?.gstValue?.toFixed(2) || "0.00"}
-                        readOnly
-                        className="bg-muted"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={watchedLines[index]?.lineTotal?.toFixed(2) || "0.00"}
-                        readOnly
-                        className="bg-muted"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => removePOLine(index)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {fields.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={10} className="text-center text-muted-foreground">
-                      No line items added yet. Click "Add PO Line" to get started.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-
-          {/* Summary */}
-          {fields.length > 0 && (
-            <div className="mt-4 flex justify-end">
-              <Card className="w-80">
-                <CardHeader>
-                  <CardTitle className="text-lg">Summary</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span>Item Total Price:</span>
-                      <span>₹{itemTotal.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Total GST Value:</span>
-                      <span>₹{totalGST.toFixed(2)}</span>
-                    </div>
-                    <div className="border-t pt-2">
-                      <div className="flex justify-between font-semibold">
+            {/* Summary */}
+            {fields.length > 0 && (
+              <div className="mt-4 flex justify-end">
+                <Card className="w-80">
+                  <CardHeader>
+                    <CardTitle className="text-lg">Summary</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span>Total Item Cost:</span>
+                        <span>₹{itemTotal.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Total GST Value:</span>
+                        <span>₹{totalGST.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between font-bold border-t pt-2">
                         <span>Grand Total:</span>
                         <span>₹{(itemTotal + totalGST).toFixed(2)}</span>
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Notes */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Additional Information</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="notes">Notes</Label>
+              <Textarea
+                id="notes"
+                {...register("notes")}
+                placeholder="Enter any additional notes..."
+              />
             </div>
-          )}
-        </CardContent>
-      </Card>
+            <div>
+              <Label htmlFor="trackingNumber">Tracking Number</Label>
+              <Input
+                id="trackingNumber"
+                {...register("trackingNumber")}
+                placeholder="Enter tracking number if available"
+              />
+            </div>
+          </CardContent>
+        </Card>
 
-      {/* Payment Info and Notes */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Additional Information</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Label htmlFor="notes">Notes</Label>
-            <Textarea
-              id="notes"
-              {...register("notes")}
-              placeholder="Enter any additional notes..."
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="trackingNumber">Tracking Number</Label>
-            <Input
-              id="trackingNumber"
-              {...register("trackingNumber")}
-              placeholder="Enter tracking number"
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Actions */}
-      <div className="flex justify-end space-x-4">
-        <Button type="button" variant="outline" onClick={onCancel}>
-          Cancel
-        </Button>
-        <Button type="submit" disabled={loading}>
-          {loading ? "Saving..." : isEdit ? "Update Purchase Order" : "Create Purchase Order"}
-        </Button>
-      </div>
-    </form>
+        {/* Form Actions */}
+        <div className="flex justify-end space-x-4">
+          <Button type="button" variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button type="submit" disabled={loading}>
+            {loading ? "Saving..." : isEdit ? "Update PO" : "Create PO"}
+          </Button>
+        </div>
+      </form>
+    </div>
   );
 };
 
