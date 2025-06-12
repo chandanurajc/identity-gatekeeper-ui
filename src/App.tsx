@@ -35,6 +35,10 @@ import ItemsList from "./pages/master-data/ItemsList";
 import ItemCreate from "./pages/master-data/ItemCreate";
 import ItemEdit from "./pages/master-data/ItemEdit";
 import ItemView from "./pages/master-data/ItemView";
+import PurchaseOrdersList from "./pages/order-management/PurchaseOrdersList";
+import PurchaseOrderCreate from "./pages/order-management/PurchaseOrderCreate";
+import PurchaseOrderEdit from "./pages/order-management/PurchaseOrderEdit";
+import PurchaseOrderDetail from "./pages/order-management/PurchaseOrderDetail";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PermissionProtectedRoute from "./components/PermissionProtectedRoute";
@@ -335,6 +339,48 @@ const App = () => (
                 <PermissionProtectedRoute requiredPermission="manage_partner">
                   <MainLayout>
                     <PartnersList />
+                  </MainLayout>
+                </PermissionProtectedRoute>
+              } 
+            />
+            
+            {/* Purchase Order Management Routes */}
+            <Route 
+              path="/order-management/purchase-orders" 
+              element={
+                <PermissionProtectedRoute requiredPermission="View PO">
+                  <MainLayout>
+                    <PurchaseOrdersList />
+                  </MainLayout>
+                </PermissionProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/order-management/purchase-orders/create" 
+              element={
+                <PermissionProtectedRoute requiredPermission="Create PO">
+                  <MainLayout>
+                    <PurchaseOrderCreate />
+                  </MainLayout>
+                </PermissionProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/order-management/purchase-orders/:id" 
+              element={
+                <PermissionProtectedRoute requiredPermission="View PO">
+                  <MainLayout>
+                    <PurchaseOrderDetail />
+                  </MainLayout>
+                </PermissionProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/order-management/purchase-orders/:id/edit" 
+              element={
+                <PermissionProtectedRoute requiredPermission="Edit PO">
+                  <MainLayout>
+                    <PurchaseOrderEdit />
                   </MainLayout>
                 </PermissionProtectedRoute>
               } 
