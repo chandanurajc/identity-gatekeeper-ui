@@ -97,9 +97,9 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
 
     try {
       const [divisionsData, suppliersData, itemsData] = await Promise.all([
-        organizationService.getAllOrganizations(currentOrganization.id),
-        organizationService.getAllOrganizations(currentOrganization.id),
-        itemService.getAllItems(currentOrganization.id)
+        organizationService.getOrganizations(),
+        organizationService.getOrganizations(),
+        itemService.getItems()
       ]);
 
       // Filter divisions (type = 'Admin' for divisions in this context)
@@ -220,6 +220,10 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
     }
   };
 
+  const handleSameAsDivisionAddressChange = (checked: boolean | "indeterminate") => {
+    setSameAsDivisionAddress(checked === true);
+  };
+
   const { itemTotal, totalGST } = calculateSummary();
 
   return (
@@ -320,7 +324,7 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
             <Checkbox
               id="sameAsDivisionAddress"
               checked={sameAsDivisionAddress}
-              onCheckedChange={setSameAsDivisionAddress}
+              onCheckedChange={handleSameAsDivisionAddressChange}
             />
             <Label htmlFor="sameAsDivisionAddress">Same as Division's Shipping address?</Label>
           </div>

@@ -32,11 +32,19 @@ export const useMultiTenant = () => {
     );
   };
 
+  // Add currentOrganization object for backward compatibility
+  const currentOrganization = {
+    id: getCurrentOrganizationId(),
+    code: getCurrentOrganizationCode(),
+    name: getCurrentOrganizationName()
+  };
+
   return {
     getCurrentOrganizationCode,
     getCurrentOrganizationId,
     getCurrentOrganizationName,
     isUserFromOrganization,
     filterDataByOrganization,
+    currentOrganization,
   };
 };
