@@ -105,6 +105,7 @@ const ItemView = () => {
           <TabsTrigger value="basic">Basic Information</TabsTrigger>
           <TabsTrigger value="physical">Physical Properties</TabsTrigger>
           <TabsTrigger value="costs">Costs</TabsTrigger>
+          <TabsTrigger value="prices">Prices</TabsTrigger>
         </TabsList>
 
         <TabsContent value="basic">
@@ -194,22 +195,42 @@ const ItemView = () => {
         <TabsContent value="costs">
           <Card>
             <CardHeader>
-              <CardTitle>Item Costs</CardTitle>
+              <CardTitle>Supplier Costs</CardTitle>
             </CardHeader>
             <CardContent>
               {item.costs && item.costs.length > 0 ? (
                 <div className="space-y-2">
                   {item.costs.map((cost, index) => (
                     <div key={index} className="flex justify-between items-center p-2 border rounded">
-                      <span>
-                        {cost.supplierName ? `Supplier: ${cost.supplierName}` : 'Default Price (No Supplier)'}
-                      </span>
-                      <span>Price: ₹{cost.price}</span>
+                      <span>Supplier: {cost.supplierName || cost.supplierId}</span>
+                      <span>Cost: ₹{cost.cost}</span>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-muted-foreground">No item costs defined</p>
+                <p className="text-muted-foreground">No supplier costs defined</p>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="prices">
+          <Card>
+            <CardHeader>
+              <CardTitle>Sales Channel Prices</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {item.prices && item.prices.length > 0 ? (
+                <div className="space-y-2">
+                  {item.prices.map((price, index) => (
+                    <div key={index} className="flex justify-between items-center p-2 border rounded">
+                      <span>Channel: {price.salesChannelName || price.salesChannelId}</span>
+                      <span>Price: ₹{price.price}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-muted-foreground">No sales channel prices defined</p>
               )}
             </CardContent>
           </Card>

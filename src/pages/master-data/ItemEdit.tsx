@@ -103,7 +103,11 @@ const ItemEdit = () => {
     weight: item.weight,
     costs: item.costs?.map(cost => ({
       supplierId: cost.supplierId,
-      price: cost.price,
+      cost: cost.cost,
+    })) || [],
+    prices: item.prices?.map(price => ({
+      salesChannelId: price.salesChannelId,
+      price: price.price,
     })) || [],
   };
 
