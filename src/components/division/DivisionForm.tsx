@@ -51,7 +51,7 @@ const divisionSchema = z.object({
 
 interface DivisionFormProps {
   initialData?: Partial<DivisionFormData>;
-  onSubmit: (data: DivisionFormData) => void;
+  onSubmit: (data: DivisionFormData) => Promise<void>;
   isEditing?: boolean;
 }
 
@@ -88,20 +88,27 @@ const DivisionForm = ({ initialData, onSubmit, isEditing = false }: DivisionForm
   const selectedOrg = organizations.find(org => org.id === selectedOrgId);
 
   const handleSubmit = async (data: DivisionFormData) => {
+    console.log("Form submitted with data:", data);
     setIsSubmitting(true);
     try {
       await onSubmit(data);
+    } catch (error) {
+      console.error("Error submitting form:", error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleContactsChange = (contacts: any[]) => {
-    form.setValue("contacts", contacts);
+    console.log("Contacts changed:", contacts);
+    form.setValue("contacts", contacts, { shouldValidate: true });
+    form.trigger("contacts");
   };
 
   const handleReferencesChange = (references: any[]) => {
-    form.setValue("references", references);
+    console.log("References changed:", references);
+    form.setValue("references", references, { shouldValidate: true });
+    form.trigger("references");
   };
 
   return (
@@ -117,7 +124,7 @@ const DivisionForm = ({ initialData, onSubmit, isEditing = false }: DivisionForm
                 <Select 
                   disabled={isSubmitting || isEditing} 
                   onValueChange={field.onChange} 
-                  defaultValue={field.value}
+                  value={field.value}
                 >
                   <FormControl>
                     <SelectTrigger>
@@ -158,6 +165,7 @@ const DivisionForm = ({ initialData, onSubmit, isEditing = false }: DivisionForm
                       style={{ textTransform: 'uppercase' }}
                       onChange={(e) => field.onChange(e.target.value.toUpperCase())}
                       className="w-24"
+                      disabled={isSubmitting}
                     />
                   </div>
                 </FormControl>
@@ -176,7 +184,7 @@ const DivisionForm = ({ initialData, onSubmit, isEditing = false }: DivisionForm
                   <Input 
                     placeholder="Enter division name" 
                     {...field} 
-                    disabled={isEditing && isSubmitting}
+                    disabled={isSubmitting}
                   />
                 </FormControl>
                 <FormMessage />
@@ -193,7 +201,7 @@ const DivisionForm = ({ initialData, onSubmit, isEditing = false }: DivisionForm
                 <Select 
                   disabled={isSubmitting} 
                   onValueChange={field.onChange} 
-                  defaultValue={field.value}
+                  value={field.value}
                 >
                   <FormControl>
                     <SelectTrigger>
@@ -221,7 +229,7 @@ const DivisionForm = ({ initialData, onSubmit, isEditing = false }: DivisionForm
                 <Select 
                   disabled={isSubmitting} 
                   onValueChange={field.onChange} 
-                  defaultValue={field.value}
+                  value={field.value}
                 >
                   <FormControl>
                     <SelectTrigger>
@@ -247,6 +255,11 @@ const DivisionForm = ({ initialData, onSubmit, isEditing = false }: DivisionForm
             contacts={form.watch("contacts")} 
             onChange={handleContactsChange}
           />
+          {form.formState.errors.contacts && (
+            <p className="text-sm font-medium text-destructive mt-2">
+              {form.formState.errors.contacts?.message || "At least one contact is required"}
+            </p>
+          )}
         </div>
         
         <Separator />

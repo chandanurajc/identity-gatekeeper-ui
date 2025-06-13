@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Contact } from "@/types/division";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
+import { useToast } from "@/hooks/use-toast";
 
 interface ContactFormProps {
   contacts: Contact[];
@@ -19,10 +20,13 @@ export const ContactForm = ({ contacts, onChange }: ContactFormProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
   const [formData, setFormData] = useState<Partial<Contact>>({});
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const { toast } = useToast();
 
   const resetForm = () => {
     setFormData({});
     setEditingContact(null);
+    setFormErrors({});
   };
 
   const handleOpenDialog = (contact?: Contact) => {
@@ -40,28 +44,59 @@ export const ContactForm = ({ contacts, onChange }: ContactFormProps) => {
     resetForm();
   };
 
+  const validateForm = (): boolean => {
+    const errors: Record<string, string> = {};
+
+    if (!formData.type) errors.type = "Contact type is required";
+    if (!formData.firstName?.trim()) errors.firstName = "First name is required";
+    if (!formData.address1?.trim()) errors.address1 = "Address 1 is required";
+    if (!formData.postalCode?.trim()) errors.postalCode = "Postal code is required";
+    if (!formData.city?.trim()) errors.city = "City is required";
+    if (!formData.state?.trim()) errors.state = "State is required";
+    if (!formData.country?.trim()) errors.country = "Country is required";
+    if (!formData.phoneNumber?.trim()) errors.phoneNumber = "Phone number is required";
+
+    // Check for duplicate contact types (only for new contacts or different types)
+    if (formData.type && (!editingContact || editingContact.type !== formData.type)) {
+      const existingContact = contacts.find(c => c.type === formData.type && c.id !== editingContact?.id);
+      if (existingContact) {
+        errors.type = "Contact type already exists";
+      }
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleSave = () => {
-    if (!formData.type || !formData.firstName || !formData.address1 || 
-        !formData.postalCode || !formData.city || !formData.state || 
-        !formData.country || !formData.phoneNumber) {
+    console.log("Saving contact with data:", formData);
+
+    if (!validateForm()) {
+      toast({
+        title: "Validation Error",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
       return;
     }
 
     const contactData: Contact = {
       id: editingContact?.id || uuidv4(),
-      type: formData.type,
-      firstName: formData.firstName,
-      lastName: formData.lastName || "",
-      address1: formData.address1,
-      address2: formData.address2 || "",
-      postalCode: formData.postalCode,
-      city: formData.city,
-      state: formData.state,
-      country: formData.country,
-      phoneNumber: formData.phoneNumber,
-      email: formData.email || "",
-      website: formData.website || "",
+      type: formData.type!,
+      firstName: formData.firstName!.trim(),
+      lastName: formData.lastName?.trim() || "",
+      address1: formData.address1!.trim(),
+      address2: formData.address2?.trim() || "",
+      postalCode: formData.postalCode!.trim(),
+      city: formData.city!.trim(),
+      state: formData.state!.trim(),
+      country: formData.country!.trim(),
+      phoneNumber: formData.phoneNumber!.trim(),
+      email: formData.email?.trim() || "",
+      website: formData.website?.trim() || "",
     };
+
+    console.log("Final contact data:", contactData);
 
     if (editingContact) {
       // Update existing contact
@@ -69,9 +104,18 @@ export const ContactForm = ({ contacts, onChange }: ContactFormProps) => {
         contact.id === editingContact.id ? contactData : contact
       );
       onChange(updatedContacts);
+      toast({
+        title: "Success",
+        description: "Contact updated successfully",
+      });
     } else {
       // Add new contact
-      onChange([...contacts, contactData]);
+      const updatedContacts = [...contacts, contactData];
+      onChange(updatedContacts);
+      toast({
+        title: "Success",
+        description: "Contact added successfully",
+      });
     }
 
     handleCloseDialog();
@@ -80,6 +124,10 @@ export const ContactForm = ({ contacts, onChange }: ContactFormProps) => {
   const handleDelete = (contactId: string) => {
     const updatedContacts = contacts.filter(contact => contact.id !== contactId);
     onChange(updatedContacts);
+    toast({
+      title: "Success",
+      description: "Contact deleted successfully",
+    });
   };
 
   return (
@@ -116,6 +164,7 @@ export const ContactForm = ({ contacts, onChange }: ContactFormProps) => {
                   <SelectItem value="Owner">Owner</SelectItem>
                 </SelectContent>
               </Select>
+              {formErrors.type && <p className="text-sm text-destructive mt-1">{formErrors.type}</p>}
             </div>
 
             <div>
@@ -126,6 +175,7 @@ export const ContactForm = ({ contacts, onChange }: ContactFormProps) => {
                 onChange={(e) => setFormData({...formData, firstName: e.target.value})}
                 placeholder="Enter first name"
               />
+              {formErrors.firstName && <p className="text-sm text-destructive mt-1">{formErrors.firstName}</p>}
             </div>
 
             <div>
@@ -146,6 +196,7 @@ export const ContactForm = ({ contacts, onChange }: ContactFormProps) => {
                 onChange={(e) => setFormData({...formData, phoneNumber: e.target.value})}
                 placeholder="Enter phone number"
               />
+              {formErrors.phoneNumber && <p className="text-sm text-destructive mt-1">{formErrors.phoneNumber}</p>}
             </div>
 
             <div className="md:col-span-2">
@@ -156,6 +207,7 @@ export const ContactForm = ({ contacts, onChange }: ContactFormProps) => {
                 onChange={(e) => setFormData({...formData, address1: e.target.value})}
                 placeholder="Enter address line 1"
               />
+              {formErrors.address1 && <p className="text-sm text-destructive mt-1">{formErrors.address1}</p>}
             </div>
 
             <div className="md:col-span-2">
@@ -176,6 +228,7 @@ export const ContactForm = ({ contacts, onChange }: ContactFormProps) => {
                 onChange={(e) => setFormData({...formData, city: e.target.value})}
                 placeholder="Enter city"
               />
+              {formErrors.city && <p className="text-sm text-destructive mt-1">{formErrors.city}</p>}
             </div>
 
             <div>
@@ -186,6 +239,7 @@ export const ContactForm = ({ contacts, onChange }: ContactFormProps) => {
                 onChange={(e) => setFormData({...formData, state: e.target.value})}
                 placeholder="Enter state"
               />
+              {formErrors.state && <p className="text-sm text-destructive mt-1">{formErrors.state}</p>}
             </div>
 
             <div>
@@ -196,6 +250,7 @@ export const ContactForm = ({ contacts, onChange }: ContactFormProps) => {
                 onChange={(e) => setFormData({...formData, postalCode: e.target.value})}
                 placeholder="Enter postal code"
               />
+              {formErrors.postalCode && <p className="text-sm text-destructive mt-1">{formErrors.postalCode}</p>}
             </div>
 
             <div>
@@ -206,6 +261,7 @@ export const ContactForm = ({ contacts, onChange }: ContactFormProps) => {
                 onChange={(e) => setFormData({...formData, country: e.target.value})}
                 placeholder="Enter country"
               />
+              {formErrors.country && <p className="text-sm text-destructive mt-1">{formErrors.country}</p>}
             </div>
 
             <div>
@@ -235,7 +291,7 @@ export const ContactForm = ({ contacts, onChange }: ContactFormProps) => {
               Cancel
             </Button>
             <Button type="button" onClick={handleSave}>
-              Save
+              Save Contact
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -283,6 +339,12 @@ export const ContactForm = ({ contacts, onChange }: ContactFormProps) => {
           </Card>
         ))}
       </div>
+
+      {contacts.length === 0 && (
+        <div className="text-center py-4 text-muted-foreground">
+          No contacts added yet. Click "Add Contact" to get started.
+        </div>
+      )}
     </div>
   );
 };
