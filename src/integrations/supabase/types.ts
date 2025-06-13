@@ -9,6 +9,145 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      division_contacts: {
+        Row: {
+          address1: string | null
+          address2: string | null
+          city: string | null
+          contact_type: string
+          country: string | null
+          created_on: string
+          division_id: string
+          email: string | null
+          first_name: string
+          id: string
+          last_name: string | null
+          phone_number: string | null
+          postal_code: string | null
+          state: string | null
+          updated_on: string | null
+          website: string | null
+        }
+        Insert: {
+          address1?: string | null
+          address2?: string | null
+          city?: string | null
+          contact_type: string
+          country?: string | null
+          created_on?: string
+          division_id: string
+          email?: string | null
+          first_name: string
+          id?: string
+          last_name?: string | null
+          phone_number?: string | null
+          postal_code?: string | null
+          state?: string | null
+          updated_on?: string | null
+          website?: string | null
+        }
+        Update: {
+          address1?: string | null
+          address2?: string | null
+          city?: string | null
+          contact_type?: string
+          country?: string | null
+          created_on?: string
+          division_id?: string
+          email?: string | null
+          first_name?: string
+          id?: string
+          last_name?: string | null
+          phone_number?: string | null
+          postal_code?: string | null
+          state?: string | null
+          updated_on?: string | null
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "division_contacts_division_id_fkey"
+            columns: ["division_id"]
+            isOneToOne: false
+            referencedRelation: "divisions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      division_references: {
+        Row: {
+          created_on: string
+          division_id: string
+          id: string
+          reference_type: string
+          reference_value: string
+          updated_on: string | null
+        }
+        Insert: {
+          created_on?: string
+          division_id: string
+          id?: string
+          reference_type: string
+          reference_value: string
+          updated_on?: string | null
+        }
+        Update: {
+          created_on?: string
+          division_id?: string
+          id?: string
+          reference_type?: string
+          reference_value?: string
+          updated_on?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "division_references_division_id_fkey"
+            columns: ["division_id"]
+            isOneToOne: false
+            referencedRelation: "divisions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      divisions: {
+        Row: {
+          code: string
+          created_by: string | null
+          created_on: string
+          id: string
+          name: string
+          organization_id: string
+          status: string
+          type: string
+          updated_by: string | null
+          updated_on: string | null
+        }
+        Insert: {
+          code: string
+          created_by?: string | null
+          created_on?: string
+          id?: string
+          name: string
+          organization_id: string
+          status?: string
+          type: string
+          updated_by?: string | null
+          updated_on?: string | null
+        }
+        Update: {
+          code?: string
+          created_by?: string | null
+          created_on?: string
+          id?: string
+          name?: string
+          organization_id?: string
+          status?: string
+          type?: string
+          updated_by?: string | null
+          updated_on?: string | null
+        }
+        Relationships: []
+      }
       item_costs: {
         Row: {
           created_by: string

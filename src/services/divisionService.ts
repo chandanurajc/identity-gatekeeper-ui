@@ -24,16 +24,16 @@ export const divisionService = {
         return [];
       }
 
-      // Fetch divisions (organizations with type 'Admin' for current organization)
+      // Fetch divisions with their references and contacts
       const { data, error } = await supabase
-        .from('organizations')
+        .from('divisions')
         .select(`
           *,
-          organization_references (
+          division_references (
             reference_type,
             reference_value
           ),
-          organization_contacts (
+          division_contacts (
             contact_type,
             first_name,
             last_name,
@@ -48,8 +48,7 @@ export const divisionService = {
             website
           )
         `)
-        .eq('type', 'Admin')
-        .eq('status', 'active')
+        .eq('organization_id', profile.organization_id)
         .order('name');
 
       if (error) {
@@ -62,21 +61,21 @@ export const divisionService = {
         return [];
       }
 
-      const transformedData = data.map(org => ({
-        id: org.id,
-        code: org.code,
-        name: org.name,
-        organizationId: org.id,
-        organizationCode: org.code,
-        organizationName: org.name,
-        type: org.type as 'Supplier' | 'Retailer' | 'Retail customer' | 'Wholesale customer',
-        status: org.status as 'active' | 'inactive',
-        references: org.organization_references?.map(ref => ({
+      const transformedData = data.map(division => ({
+        id: division.id,
+        code: division.code,
+        name: division.name,
+        organizationId: division.organization_id,
+        organizationCode: division.code.substring(0, 4), // First 4 characters
+        organizationName: division.name, // We'll need to get this from organizations table if needed
+        type: division.type as 'Supplier' | 'Retailer' | 'Retail customer' | 'Wholesale customer',
+        status: division.status as 'active' | 'inactive',
+        references: division.division_references?.map(ref => ({
           id: ref.reference_type,
           type: ref.reference_type as 'GST' | 'CIN' | 'PAN',
           value: ref.reference_value
         })) || [],
-        contacts: org.organization_contacts?.map(contact => ({
+        contacts: division.division_contacts?.map(contact => ({
           id: contact.contact_type,
           type: contact.contact_type as 'Registered location' | 'Billing' | 'Shipping' | 'Owner',
           firstName: contact.first_name,
@@ -91,10 +90,10 @@ export const divisionService = {
           email: contact.email,
           website: contact.website
         })) || [],
-        createdBy: org.created_by,
-        createdOn: new Date(org.created_on),
-        updatedBy: org.updated_by,
-        updatedOn: org.updated_on ? new Date(org.updated_on) : undefined,
+        createdBy: division.created_by,
+        createdOn: new Date(division.created_on),
+        updatedBy: division.updated_by,
+        updatedOn: division.updated_on ? new Date(division.updated_on) : undefined,
       }));
 
       console.log("Transformed divisions data:", transformedData);
@@ -120,14 +119,14 @@ export const divisionService = {
     
     try {
       const { data, error } = await supabase
-        .from('organizations')
+        .from('divisions')
         .select(`
           *,
-          organization_references (
+          division_references (
             reference_type,
             reference_value
           ),
-          organization_contacts (
+          division_contacts (
             contact_type,
             first_name,
             last_name,
@@ -156,17 +155,17 @@ export const divisionService = {
         id: data.id,
         code: data.code,
         name: data.name,
-        organizationId: data.id,
-        organizationCode: data.code,
+        organizationId: data.organization_id,
+        organizationCode: data.code.substring(0, 4),
         organizationName: data.name,
         type: data.type as 'Supplier' | 'Retailer' | 'Retail customer' | 'Wholesale customer',
         status: data.status as 'active' | 'inactive',
-        references: data.organization_references?.map(ref => ({
+        references: data.division_references?.map(ref => ({
           id: ref.reference_type,
           type: ref.reference_type as 'GST' | 'CIN' | 'PAN',
           value: ref.reference_value
         })) || [],
-        contacts: data.organization_contacts?.map(contact => ({
+        contacts: data.division_contacts?.map(contact => ({
           id: contact.contact_type,
           type: contact.contact_type as 'Registered location' | 'Billing' | 'Shipping' | 'Owner',
           firstName: contact.first_name,
@@ -212,16 +211,27 @@ export const divisionService = {
         throw new Error("No organization found for user");
       }
 
-      // Generate division code (org code + user defined code)
-      const orgCode = profile.organization_id.toString().substring(0, 4);
-      const divisionCode = `${orgCode}${formData.userDefinedCode}`;
-
-      // Create division (organization record)
-      const { data: divisionData, error: divisionError } = await supabase
+      // Get organization code for division code generation
+      const { data: orgData } = await supabase
         .from('organizations')
+        .select('code')
+        .eq('id', formData.organizationId)
+        .single();
+
+      if (!orgData) {
+        throw new Error("Organization not found");
+      }
+
+      // Generate division code (org code + user defined code)
+      const divisionCode = `${orgData.code}${formData.userDefinedCode}`;
+
+      // Create division record
+      const { data: divisionData, error: divisionError } = await supabase
+        .from('divisions')
         .insert({
           code: divisionCode,
           name: formData.name,
+          organization_id: formData.organizationId,
           type: formData.type,
           status: formData.status,
           created_by: createdBy
@@ -237,13 +247,13 @@ export const divisionService = {
       // Create references
       if (formData.references.length > 0) {
         const referencesData = formData.references.map(ref => ({
-          organization_id: divisionData.id,
+          division_id: divisionData.id,
           reference_type: ref.type,
           reference_value: ref.value
         }));
 
         const { error: refError } = await supabase
-          .from('organization_references')
+          .from('division_references')
           .insert(referencesData);
 
         if (refError) {
@@ -255,7 +265,7 @@ export const divisionService = {
       // Create contacts
       if (formData.contacts.length > 0) {
         const contactsData = formData.contacts.map(contact => ({
-          organization_id: divisionData.id,
+          division_id: divisionData.id,
           contact_type: contact.type,
           first_name: contact.firstName,
           last_name: contact.lastName,
@@ -271,7 +281,7 @@ export const divisionService = {
         }));
 
         const { error: contactError } = await supabase
-          .from('organization_contacts')
+          .from('division_contacts')
           .insert(contactsData);
 
         if (contactError) {
@@ -291,9 +301,9 @@ export const divisionService = {
     console.log("Updating division:", id, formData);
     
     try {
-      // Update division (organization record)
+      // Update division record
       const { error: divisionError } = await supabase
-        .from('organizations')
+        .from('divisions')
         .update({
           name: formData.name,
           type: formData.type,
@@ -310,9 +320,9 @@ export const divisionService = {
 
       // Delete existing references and recreate
       const { error: deleteRefError } = await supabase
-        .from('organization_references')
+        .from('division_references')
         .delete()
-        .eq('organization_id', id);
+        .eq('division_id', id);
 
       if (deleteRefError) {
         console.error("Error deleting references:", deleteRefError);
@@ -322,13 +332,13 @@ export const divisionService = {
       // Create new references
       if (formData.references.length > 0) {
         const referencesData = formData.references.map(ref => ({
-          organization_id: id,
+          division_id: id,
           reference_type: ref.type,
           reference_value: ref.value
         }));
 
         const { error: refError } = await supabase
-          .from('organization_references')
+          .from('division_references')
           .insert(referencesData);
 
         if (refError) {
@@ -339,9 +349,9 @@ export const divisionService = {
 
       // Delete existing contacts and recreate
       const { error: deleteContactError } = await supabase
-        .from('organization_contacts')
+        .from('division_contacts')
         .delete()
-        .eq('organization_id', id);
+        .eq('division_id', id);
 
       if (deleteContactError) {
         console.error("Error deleting contacts:", deleteContactError);
@@ -351,7 +361,7 @@ export const divisionService = {
       // Create new contacts
       if (formData.contacts.length > 0) {
         const contactsData = formData.contacts.map(contact => ({
-          organization_id: id,
+          division_id: id,
           contact_type: contact.type,
           first_name: contact.firstName,
           last_name: contact.lastName,
@@ -367,7 +377,7 @@ export const divisionService = {
         }));
 
         const { error: contactError } = await supabase
-          .from('organization_contacts')
+          .from('division_contacts')
           .insert(contactsData);
 
         if (contactError) {
