@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Division, DivisionFormData } from "@/types/division";
 
@@ -24,11 +23,12 @@ export const divisionService = {
         return [];
       }
 
-      // Fetch divisions with their references and contacts
+      // Fetch divisions with organization info in a single query
       const { data, error } = await supabase
         .from('divisions')
         .select(`
           *,
+          organizations!inner(name, code),
           division_references (
             reference_type,
             reference_value
@@ -66,8 +66,8 @@ export const divisionService = {
         code: division.code,
         name: division.name,
         organizationId: division.organization_id,
-        organizationCode: division.code.substring(0, 4), // First 4 characters
-        organizationName: division.name, // We'll need to get this from organizations table if needed
+        organizationCode: division.organizations.code,
+        organizationName: division.organizations.name,
         type: division.type as 'Supplier' | 'Retailer' | 'Retail customer' | 'Wholesale customer',
         status: division.status as 'active' | 'inactive',
         references: division.division_references?.map(ref => ({
@@ -79,16 +79,16 @@ export const divisionService = {
           id: contact.contact_type,
           type: contact.contact_type as 'Registered location' | 'Billing' | 'Shipping' | 'Owner',
           firstName: contact.first_name,
-          lastName: contact.last_name,
+          lastName: contact.last_name || "",
           address1: contact.address1 || '',
-          address2: contact.address2,
+          address2: contact.address2 || "",
           postalCode: contact.postal_code || '',
           city: contact.city || '',
           state: contact.state || '',
           country: contact.country || '',
           phoneNumber: contact.phone_number || '',
-          email: contact.email,
-          website: contact.website
+          email: contact.email || "",
+          website: contact.website || ""
         })) || [],
         createdBy: division.created_by,
         createdOn: new Date(division.created_on),
@@ -122,6 +122,7 @@ export const divisionService = {
         .from('divisions')
         .select(`
           *,
+          organizations!inner(name, code),
           division_references (
             reference_type,
             reference_value
@@ -156,8 +157,8 @@ export const divisionService = {
         code: data.code,
         name: data.name,
         organizationId: data.organization_id,
-        organizationCode: data.code.substring(0, 4),
-        organizationName: data.name,
+        organizationCode: data.organizations.code,
+        organizationName: data.organizations.name,
         type: data.type as 'Supplier' | 'Retailer' | 'Retail customer' | 'Wholesale customer',
         status: data.status as 'active' | 'inactive',
         references: data.division_references?.map(ref => ({
@@ -169,16 +170,16 @@ export const divisionService = {
           id: contact.contact_type,
           type: contact.contact_type as 'Registered location' | 'Billing' | 'Shipping' | 'Owner',
           firstName: contact.first_name,
-          lastName: contact.last_name,
+          lastName: contact.last_name || "",
           address1: contact.address1 || '',
-          address2: contact.address2,
+          address2: contact.address2 || "",
           postalCode: contact.postal_code || '',
           city: contact.city || '',
           state: contact.state || '',
           country: contact.country || '',
           phoneNumber: contact.phone_number || '',
-          email: contact.email,
-          website: contact.website
+          email: contact.email || "",
+          website: contact.website || ""
         })) || [],
         createdBy: data.created_by,
         createdOn: new Date(data.created_on),
@@ -195,35 +196,40 @@ export const divisionService = {
     console.log("Creating division:", formData);
     
     try {
-      // Get current user's organization
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        throw new Error("User not authenticated");
+      // Validate required fields
+      if (!formData.name || !formData.organizationId || !formData.userDefinedCode) {
+        throw new Error("Missing required fields: name, organizationId, or userDefinedCode");
       }
 
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('organization_id')
-        .eq('id', user.id)
-        .single();
-
-      if (!profile?.organization_id) {
-        throw new Error("No organization found for user");
+      if (!formData.contacts || formData.contacts.length === 0) {
+        throw new Error("At least one contact is required");
       }
 
       // Get organization code for division code generation
-      const { data: orgData } = await supabase
+      const { data: orgData, error: orgError } = await supabase
         .from('organizations')
         .select('code')
         .eq('id', formData.organizationId)
         .single();
 
-      if (!orgData) {
+      if (orgError || !orgData) {
+        console.error("Organization fetch error:", orgError);
         throw new Error("Organization not found");
       }
 
       // Generate division code (org code + user defined code)
       const divisionCode = `${orgData.code}${formData.userDefinedCode}`;
+
+      // Check if division code already exists
+      const { data: existingDivision } = await supabase
+        .from('divisions')
+        .select('code')
+        .eq('code', divisionCode)
+        .single();
+
+      if (existingDivision) {
+        throw new Error(`Division code ${divisionCode} already exists`);
+      }
 
       // Create division record
       const { data: divisionData, error: divisionError } = await supabase
@@ -244,8 +250,8 @@ export const divisionService = {
         throw new Error(`Failed to create division: ${divisionError.message}`);
       }
 
-      // Create references
-      if (formData.references.length > 0) {
+      // Create references if any
+      if (formData.references && formData.references.length > 0) {
         const referencesData = formData.references.map(ref => ({
           division_id: divisionData.id,
           reference_type: ref.type,
@@ -258,26 +264,26 @@ export const divisionService = {
 
         if (refError) {
           console.error("Error creating references:", refError);
-          throw new Error(`Failed to create references: ${refError.message}`);
+          // Don't fail the whole operation for references
         }
       }
 
       // Create contacts
-      if (formData.contacts.length > 0) {
+      if (formData.contacts && formData.contacts.length > 0) {
         const contactsData = formData.contacts.map(contact => ({
           division_id: divisionData.id,
           contact_type: contact.type,
           first_name: contact.firstName,
-          last_name: contact.lastName,
+          last_name: contact.lastName || "",
           address1: contact.address1,
-          address2: contact.address2,
+          address2: contact.address2 || "",
           postal_code: contact.postalCode,
           city: contact.city,
           state: contact.state,
           country: contact.country,
           phone_number: contact.phoneNumber,
-          email: contact.email,
-          website: contact.website
+          email: contact.email || "",
+          website: contact.website || ""
         }));
 
         const { error: contactError } = await supabase
@@ -290,7 +296,13 @@ export const divisionService = {
         }
       }
 
-      return await this.getDivisionById(divisionData.id) as Division;
+      // Return the created division
+      const createdDivision = await this.getDivisionById(divisionData.id);
+      if (!createdDivision) {
+        throw new Error("Failed to fetch created division");
+      }
+
+      return createdDivision;
     } catch (error) {
       console.error("Service error creating division:", error);
       throw error;

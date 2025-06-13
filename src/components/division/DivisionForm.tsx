@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -89,11 +88,22 @@ const DivisionForm = ({ initialData, onSubmit, isEditing = false }: DivisionForm
 
   const handleSubmit = async (data: DivisionFormData) => {
     console.log("Form submitted with data:", data);
+    
+    // Additional validation
+    if (!data.contacts || data.contacts.length === 0) {
+      form.setError("contacts", { 
+        type: "manual", 
+        message: "At least one contact is required" 
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       await onSubmit(data);
     } catch (error) {
       console.error("Error submitting form:", error);
+      // The error will be handled by the parent component
     } finally {
       setIsSubmitting(false);
     }
@@ -102,13 +112,15 @@ const DivisionForm = ({ initialData, onSubmit, isEditing = false }: DivisionForm
   const handleContactsChange = (contacts: any[]) => {
     console.log("Contacts changed:", contacts);
     form.setValue("contacts", contacts, { shouldValidate: true });
-    form.trigger("contacts");
+    // Clear any existing contact errors
+    if (contacts.length > 0) {
+      form.clearErrors("contacts");
+    }
   };
 
   const handleReferencesChange = (references: any[]) => {
     console.log("References changed:", references);
     form.setValue("references", references, { shouldValidate: true });
-    form.trigger("references");
   };
 
   return (
