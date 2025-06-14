@@ -88,8 +88,8 @@ const DivisionForm = ({ initialData, onSubmit, isEditing = false }: DivisionForm
 
   const handleSubmit = async (data: DivisionFormData) => {
     console.log("Form submitted with data:", data);
-    
-    // Additional validation
+    console.log("Contacts at submit time:", data.contacts);
+
     if (!data.contacts || data.contacts.length === 0) {
       form.setError("contacts", { 
         type: "manual", 
@@ -110,8 +110,9 @@ const DivisionForm = ({ initialData, onSubmit, isEditing = false }: DivisionForm
   };
 
   const handleContactsChange = (contacts: any[]) => {
-    console.log("Contacts changed:", contacts);
+    console.log("Contacts changed (DivisionForm):", contacts);
     form.setValue("contacts", contacts, { shouldValidate: true });
+    form.trigger("contacts");
     // Clear any existing contact errors
     if (contacts.length > 0) {
       form.clearErrors("contacts");

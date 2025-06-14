@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -99,19 +98,19 @@ export const ContactForm = ({ contacts, onChange }: ContactFormProps) => {
     console.log("Final contact data:", contactData);
 
     if (editingContact) {
-      // Update existing contact
       const updatedContacts = contacts.map(contact =>
         contact.id === editingContact.id ? contactData : contact
       );
       onChange(updatedContacts);
+      console.log("Updated contacts after edit:", updatedContacts);
       toast({
         title: "Success",
         description: "Contact updated successfully",
       });
     } else {
-      // Add new contact
       const updatedContacts = [...contacts, contactData];
       onChange(updatedContacts);
+      console.log("Updated contacts after add:", updatedContacts);
       toast({
         title: "Success",
         description: "Contact added successfully",
@@ -124,10 +123,7 @@ export const ContactForm = ({ contacts, onChange }: ContactFormProps) => {
   const handleDelete = (contactId: string) => {
     const updatedContacts = contacts.filter(contact => contact.id !== contactId);
     onChange(updatedContacts);
-    toast({
-      title: "Success",
-      description: "Contact deleted successfully",
-    });
+    console.log("Updated contacts after delete:", updatedContacts);
   };
 
   return (
