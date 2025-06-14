@@ -87,10 +87,14 @@ const DivisionForm = ({ initialData, onSubmit, isEditing = false }: DivisionForm
   const selectedOrg = organizations.find(org => org.id === selectedOrgId);
 
   const handleSubmit = async (data: DivisionFormData) => {
-    console.log("Form submitted with data:", data);
-    console.log("Contacts at submit time:", data.contacts);
+    // Get latest contacts value (avoid relying solely on async form propagation)
+    const latestContacts = form.getValues("contacts");
 
-    if (!data.contacts || data.contacts.length === 0) {
+    console.log("Form submitted (data param):", data);
+    console.log("Contacts at submit time (from data):", data.contacts);
+    console.log("Contacts at submit time (from getValues):", latestContacts);
+
+    if (!latestContacts || latestContacts.length === 0) {
       form.setError("contacts", { 
         type: "manual", 
         message: "At least one contact is required" 
@@ -100,7 +104,8 @@ const DivisionForm = ({ initialData, onSubmit, isEditing = false }: DivisionForm
 
     setIsSubmitting(true);
     try {
-      await onSubmit(data);
+      // Replace data.contacts with latestContacts to submit the up-to-date value
+      await onSubmit({ ...data, contacts: latestContacts });
     } catch (error) {
       console.error("Error submitting form:", error);
       // The error will be handled by the parent component
