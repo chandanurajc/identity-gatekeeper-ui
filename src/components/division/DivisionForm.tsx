@@ -291,10 +291,20 @@ const DivisionForm = ({ initialData, onSubmit, isEditing = false }: DivisionForm
         </div>
 
         <div className="flex justify-end space-x-4">
-          <Button type="button" variant="outline" disabled={isSubmitting}>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={isSubmitting}
+            onClick={() => {
+              // You may want to add navigation or reset logic here if desired
+            }}
+          >
             Cancel
           </Button>
-          <Button type="submit" disabled={isSubmitting}>
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+          >
             {isSubmitting ? "Saving..." : isEditing ? "Update Division" : "Create Division"}
           </Button>
         </div>
