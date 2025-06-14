@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Division, DivisionFormData } from "@/types/division";
 
@@ -23,12 +24,11 @@ export const divisionService = {
         return [];
       }
 
-      // Fetch divisions with organization info in a single query
-      const { data, error } = await supabase
+      // First fetch divisions
+      const { data: divisionsData, error: divisionsError } = await supabase
         .from('divisions')
         .select(`
           *,
-          organizations!inner(name, code),
           division_references (
             reference_type,
             reference_value
@@ -51,23 +51,35 @@ export const divisionService = {
         .eq('organization_id', profile.organization_id)
         .order('name');
 
-      if (error) {
-        console.error("Supabase error fetching divisions:", error);
-        throw new Error(`Failed to fetch divisions: ${error.message}`);
+      if (divisionsError) {
+        console.error("Supabase error fetching divisions:", divisionsError);
+        throw new Error(`Failed to fetch divisions: ${divisionsError.message}`);
       }
 
-      if (!data) {
+      if (!divisionsData) {
         console.log("No divisions data returned");
         return [];
       }
 
-      const transformedData = data.map(division => ({
+      // Then fetch organization data
+      const { data: organizationData, error: orgError } = await supabase
+        .from('organizations')
+        .select('id, name, code')
+        .eq('id', profile.organization_id)
+        .single();
+
+      if (orgError || !organizationData) {
+        console.error("Error fetching organization:", orgError);
+        throw new Error("Failed to fetch organization data");
+      }
+
+      const transformedData = divisionsData.map(division => ({
         id: division.id,
         code: division.code,
         name: division.name,
         organizationId: division.organization_id,
-        organizationCode: division.organizations.code,
-        organizationName: division.organizations.name,
+        organizationCode: organizationData.code,
+        organizationName: organizationData.name,
         type: division.type as 'Supplier' | 'Retailer' | 'Retail customer' | 'Wholesale customer',
         status: division.status as 'active' | 'inactive',
         references: division.division_references?.map(ref => ({
@@ -118,11 +130,11 @@ export const divisionService = {
     console.log("Fetching division by ID:", id);
     
     try {
-      const { data, error } = await supabase
+      // First fetch the division
+      const { data: divisionData, error: divisionError } = await supabase
         .from('divisions')
         .select(`
           *,
-          organizations!inner(name, code),
           division_references (
             reference_type,
             reference_value
@@ -145,28 +157,40 @@ export const divisionService = {
         .eq('id', id)
         .single();
 
-      if (error) {
-        console.error("Error fetching division:", error);
+      if (divisionError) {
+        console.error("Error fetching division:", divisionError);
         return null;
       }
 
-      if (!data) return null;
+      if (!divisionData) return null;
+
+      // Then fetch organization data
+      const { data: organizationData, error: orgError } = await supabase
+        .from('organizations')
+        .select('id, name, code')
+        .eq('id', divisionData.organization_id)
+        .single();
+
+      if (orgError || !organizationData) {
+        console.error("Error fetching organization:", orgError);
+        return null;
+      }
 
       return {
-        id: data.id,
-        code: data.code,
-        name: data.name,
-        organizationId: data.organization_id,
-        organizationCode: data.organizations.code,
-        organizationName: data.organizations.name,
-        type: data.type as 'Supplier' | 'Retailer' | 'Retail customer' | 'Wholesale customer',
-        status: data.status as 'active' | 'inactive',
-        references: data.division_references?.map(ref => ({
+        id: divisionData.id,
+        code: divisionData.code,
+        name: divisionData.name,
+        organizationId: divisionData.organization_id,
+        organizationCode: organizationData.code,
+        organizationName: organizationData.name,
+        type: divisionData.type as 'Supplier' | 'Retailer' | 'Retail customer' | 'Wholesale customer',
+        status: divisionData.status as 'active' | 'inactive',
+        references: divisionData.division_references?.map(ref => ({
           id: ref.reference_type,
           type: ref.reference_type as 'GST' | 'CIN' | 'PAN',
           value: ref.reference_value
         })) || [],
-        contacts: data.division_contacts?.map(contact => ({
+        contacts: divisionData.division_contacts?.map(contact => ({
           id: contact.contact_type,
           type: contact.contact_type as 'Registered location' | 'Billing' | 'Shipping' | 'Owner',
           firstName: contact.first_name,
@@ -181,10 +205,10 @@ export const divisionService = {
           email: contact.email || "",
           website: contact.website || ""
         })) || [],
-        createdBy: data.created_by,
-        createdOn: new Date(data.created_on),
-        updatedBy: data.updated_by,
-        updatedOn: data.updated_on ? new Date(data.updated_on) : undefined,
+        createdBy: divisionData.created_by,
+        createdOn: new Date(divisionData.created_on),
+        updatedBy: divisionData.updated_by,
+        updatedOn: divisionData.updated_on ? new Date(divisionData.updated_on) : undefined,
       };
     } catch (error) {
       console.error("Service error fetching division:", error);
