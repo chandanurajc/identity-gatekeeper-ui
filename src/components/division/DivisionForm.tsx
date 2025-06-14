@@ -14,6 +14,7 @@ import { ReferenceForm } from "./ReferenceForm";
 import { useQuery } from "@tanstack/react-query";
 import { organizationService } from "@/services/organizationService";
 import { Organization } from "@/types/organization";
+import { DivisionMainFields } from "./DivisionMainFields";
 
 // Form schema with validation
 const divisionSchema = z.object({
@@ -132,138 +133,14 @@ const DivisionForm = ({ initialData, onSubmit, isEditing = false }: DivisionForm
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <FormField
-            control={form.control}
-            name="organizationId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Organization *</FormLabel>
-                <Select 
-                  disabled={isSubmitting || isEditing} 
-                  onValueChange={field.onChange} 
-                  value={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select organization" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {organizations.map((org) => (
-                      <SelectItem key={org.id} value={org.id}>
-                        {org.code} - {org.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="userDefinedCode"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Division Code *</FormLabel>
-                <FormControl>
-                  <div className="flex items-center space-x-2">
-                    <Input 
-                      value={selectedOrg?.code || "----"}
-                      disabled
-                      className="w-20 text-center bg-gray-100"
-                    />
-                    <span>+</span>
-                    <Input 
-                      placeholder="Enter 3-character code"
-                      {...field} 
-                      maxLength={3}
-                      style={{ textTransform: 'uppercase' }}
-                      onChange={(e) => field.onChange(e.target.value.toUpperCase())}
-                      className="w-24"
-                      disabled={isSubmitting}
-                    />
-                  </div>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Division Name *</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="Enter division name" 
-                    {...field} 
-                    disabled={isSubmitting}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="type"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Division Type *</FormLabel>
-                <Select 
-                  disabled={isSubmitting} 
-                  onValueChange={field.onChange} 
-                  value={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select division type" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="Supplier">Supplier</SelectItem>
-                    <SelectItem value="Retailer">Retailer</SelectItem>
-                    <SelectItem value="Retail customer">Retail Customer</SelectItem>
-                    <SelectItem value="Wholesale customer">Wholesale Customer</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="status"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Status *</FormLabel>
-                <Select 
-                  disabled={isSubmitting} 
-                  onValueChange={field.onChange} 
-                  value={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+        <DivisionMainFields
+          control={form.control}
+          organizations={organizations}
+          selectedOrg={selectedOrg}
+          isSubmitting={isSubmitting}
+          isEditing={isEditing}
+          form={form}
+        />
 
         <Separator />
         
@@ -296,7 +173,7 @@ const DivisionForm = ({ initialData, onSubmit, isEditing = false }: DivisionForm
             variant="outline"
             disabled={isSubmitting}
             onClick={() => {
-              // You may want to add navigation or reset logic here if desired
+              // Add navigation or reset logic if desired
             }}
           >
             Cancel
