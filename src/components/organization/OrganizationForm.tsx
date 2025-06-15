@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -48,7 +47,7 @@ const organizationSchema = z.object({
       email: z.string().email("Invalid email address").optional().or(z.literal("")),
       website: z.string().optional(),
     })
-  ).min(1, "At least one contact is required"),
+  ),
   references: z.array(
     z.object({
       id: z.string(),
@@ -134,17 +133,6 @@ const OrganizationForm = ({ initialData, onSubmit, isEditing = false }: Organiza
         toast({
           title: "Authentication Error",
           description: "You must be logged in to save organizations.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Ensure contacts array is not empty
-      if (!data.contacts || data.contacts.length === 0) {
-        console.error("OrganizationForm: No contacts provided");
-        toast({
-          title: "Validation Error", 
-          description: "At least one contact is required.",
           variant: "destructive",
         });
         return;
@@ -378,16 +366,11 @@ const OrganizationForm = ({ initialData, onSubmit, isEditing = false }: Organiza
         <Separator />
         
         <div>
-          <h3 className="text-lg font-medium mb-4">Contacts *</h3>
+          <h3 className="text-lg font-medium mb-4">Contacts</h3>
           <ContactForm 
             contacts={form.watch("contacts")} 
             onChange={handleContactsChange}
           />
-          {form.formState.errors.contacts && (
-            <p className="text-sm font-medium text-destructive mt-2">
-              {form.formState.errors.contacts.message}
-            </p>
-          )}
         </div>
         
         <Separator />

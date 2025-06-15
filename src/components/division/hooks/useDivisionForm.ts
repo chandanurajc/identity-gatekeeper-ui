@@ -1,4 +1,3 @@
-
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { DivisionFormData } from "@/types/division";
@@ -54,22 +53,9 @@ export function useDivisionForm({ initialData, onSubmit, isEditing = false }: Us
   const selectedOrg = organizations.find(org => org.id === selectedOrgId);
 
   const handleSubmit = async (data: DivisionFormData) => {
-    const latestContacts = form.getValues("contacts");
-    if (!latestContacts || latestContacts.length === 0) {
-      form.setError("contacts", {
-        type: "manual",
-        message: "At least one contact is required",
-      });
-      toast({
-        title: "Validation Error",
-        description: "Please add at least one contact.",
-        variant: "destructive",
-      });
-      return;
-    }
     setIsSubmitting(true);
     try {
-      await onSubmit({ ...data, contacts: latestContacts });
+      await onSubmit({ ...data });
     } catch (error) {
       // error handled by parent
       // do nothing here
@@ -80,17 +66,9 @@ export function useDivisionForm({ initialData, onSubmit, isEditing = false }: Us
 
   /**
    * Fix: Always clear the error and re-validate when contacts are changed.
-   * This ensures the "at least one contact" error is removed when at least one contact exists,
-   * especially if the error was set by a previous invalid submit.
    */
   const handleContactsChange = (contacts: any[]) => {
     form.setValue("contacts", contacts, { shouldValidate: true });
-
-    // Always clear and re-trigger errors after contact edit
-    if (contacts.length > 0) {
-      form.clearErrors("contacts");
-    }
-    // Ensure the field is validated whenever there's a change
     form.trigger("contacts");
   };
 

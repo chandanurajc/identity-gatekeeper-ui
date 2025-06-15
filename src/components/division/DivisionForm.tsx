@@ -1,4 +1,3 @@
-
 import { Separator } from "@/components/ui/separator";
 import { ContactForm } from "./ContactForm";
 import { ReferenceForm } from "./ReferenceForm";
@@ -87,11 +86,7 @@ const DivisionForm = ({ initialData, onSubmit, isEditing = false }: DivisionForm
             contacts={form.watch("contacts")} 
             onChange={handleContactsChange}
           />
-          {form.formState.errors.contacts && (
-            <p className="text-sm font-medium text-destructive mt-2">
-              {form.formState.errors.contacts?.message || "At least one contact is required"}
-            </p>
-          )}
+          {/* Error display removed: "At least one contact is required" */}
         </div>
         
         <Separator />
@@ -129,4 +124,3 @@ const DivisionForm = ({ initialData, onSubmit, isEditing = false }: DivisionForm
 };
 
 export default DivisionForm;
-
