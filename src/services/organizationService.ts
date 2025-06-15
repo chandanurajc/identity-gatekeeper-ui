@@ -154,17 +154,17 @@ export const organizationService = {
         const contacts = organizationData.contacts.map(contact => ({
           organization_id: orgData.id,
           contact_type: contact.type,
-          first_name: contact.firstName || '',
-          last_name: contact.lastName,
-          address1: contact.address1,
-          address2: contact.address2,
-          postalCode: contact.postalCode,
-          city: contact.city,
-          state: contact.state,
-          country: contact.country,
-          phoneNumber: contact.phone_number,
-          email: contact.email,
-          website: contact.website,
+          first_name: contact.firstName?.trim() || '',
+          last_name: contact.lastName?.trim() || null,
+          address1: contact.address1?.trim() || null,
+          address2: contact.address2?.trim() || null,
+          postal_code: contact.postalCode?.trim() || null,
+          city: contact.city?.trim() || null,
+          state: contact.state?.trim() || null,
+          country: contact.country?.trim() || null,
+          phone_number: contact.phoneNumber?.trim() || null,
+          email: contact.email?.trim() || null,
+          website: contact.website?.trim() || null,
         }));
 
         const { error: contactError } = await supabase
