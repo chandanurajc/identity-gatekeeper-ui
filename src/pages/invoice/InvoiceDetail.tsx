@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { invoiceService } from "@/services/invoiceService";
@@ -7,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { format } from "date-fns";
-import { usePermissions } from "@/hooks/usePermissions";
+import { useInvoicePermissions } from "@/hooks/useInvoicePermissions";
 
 const InvoiceDetail = () => {
   const { invoiceId } = useParams<{ invoiceId: string }>();
@@ -17,7 +18,7 @@ const InvoiceDetail = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { canApproveInvoice } = usePermissions();
+  const { canApproveInvoice } = useInvoicePermissions();
 
   const { data: invoice, isLoading, error } = useQuery({
     queryKey: ["invoice", invoiceId, organizationId],

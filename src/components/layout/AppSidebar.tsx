@@ -15,12 +15,13 @@ import { useItemPermissions } from "@/hooks/useItemPermissions";
 import { useItemGroupPermissions } from "@/hooks/useItemGroupPermissions";
 import { usePurchaseOrderPermissions } from "@/hooks/usePurchaseOrderPermissions";
 import { useInventoryPermissions } from "@/hooks/useInventoryPermissions";
+import { useInvoicePermissions } from "@/hooks/useInvoicePermissions";
 import { createModuleGroups } from "./sidebar/moduleGroups";
 import { SidebarNavContent } from "./sidebar/SidebarNavContent";
 import { SidebarFooterContent } from "./sidebar/SidebarFooterContent";
 
 export function AppSidebar() {
-  const { canViewUsers, canViewInvoices } = usePermissions();
+  const { canViewUsers } = usePermissions();
   const { canViewRoles, canViewPermissions } = useRolePermissions();
   const { canViewOrganization } = useOrganizationPermissions();
   const { canViewDivision } = useDivisionPermissions();
@@ -30,6 +31,7 @@ export function AppSidebar() {
   const { canViewItemGroup } = useItemGroupPermissions();
   const { canViewPurchaseOrders, canViewPOReceive } = usePurchaseOrderPermissions();
   const { canViewInventory } = useInventoryPermissions();
+  const { canViewInvoices } = useInvoicePermissions();
   const { setOpen } = useSidebar();
   
   const permissions = {
