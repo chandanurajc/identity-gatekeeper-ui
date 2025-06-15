@@ -2,7 +2,7 @@
 import { SidebarContent } from "@/components/ui/sidebar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SidebarNavGroup } from "./SidebarNavGroup";
-import { ModuleGroup } from "./sidebarConfig";
+import { ModuleGroup } from "./types";
 
 interface SidebarNavContentProps {
   moduleGroups: ModuleGroup[];

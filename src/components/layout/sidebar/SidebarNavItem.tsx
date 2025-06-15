@@ -2,7 +2,7 @@
 import { NavLink } from "react-router-dom";
 import { SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
-import { MenuItem } from "./sidebarConfig";
+import { MenuItem } from "./types";
 
 interface SidebarNavItemProps {
   item: MenuItem;

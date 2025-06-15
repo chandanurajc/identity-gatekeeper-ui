@@ -10,7 +10,7 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { SidebarNavItem } from "./SidebarNavItem";
-import { ModuleGroup } from "./sidebarConfig";
+import { ModuleGroup } from "./types";
 
 interface SidebarNavGroupProps {
   group: ModuleGroup;

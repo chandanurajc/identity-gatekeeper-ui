@@ -1,14 +1,8 @@
+
 import {
-  Home,
-  LayoutDashboard,
-  ListChecks,
-  Package,
-  Settings,
-  Shield,
-  ShoppingBag,
   User,
-  Users,
-  Building2,
+  Shield,
+  ListChecks,
   Building,
   GitBranch,
   Handshake,
@@ -19,137 +13,13 @@ import {
   Truck,
   Warehouse,
 } from "lucide-react";
+import { MenuItem, ModuleGroup } from "./types";
 
-export interface NavItem {
-  title: string;
-  href: string;
-  icon: keyof typeof Icons;
-  label?: string;
-  permission?: string;
+type PermissionsMap = {
+    [key: string]: boolean | undefined;
 }
 
-export interface NavGroup {
-  title: string;
-  items: NavItem[];
-}
-
-export interface NavigationGroup {
-  title: string;
-  items: NavItem[];
-}
-
-export interface MenuItem {
-  label: string;
-  path: string;
-  icon: any;
-  permission?: boolean;
-}
-
-export interface ModuleGroup {
-  name: string;
-  items: MenuItem[];
-}
-
-export const Icons = {
-  home: Home,
-  dashboard: LayoutDashboard,
-  product: Package,
-  orders: ShoppingBag,
-  customers: Users,
-  user: User,
-  settings: Settings,
-  roles: Shield,
-  permissions: ListChecks,
-  shield: Shield,
-  building: Building2,
-  purchaseOrder: ShoppingCart,
-};
-
-export const sidebarConfig: NavigationGroup[] = [
-  {
-    title: "Master Data",
-    items: [
-      {
-        title: "Organizations",
-        href: "/admin/organizations",
-        permission: "view-organization",
-        icon: "shield" as const,
-      },
-      {
-        title: "Divisions",
-        href: "/admin/divisions",
-        permission: "view-division",
-        icon: "shield" as const,
-      },
-      {
-        title: "Partner Management",
-        href: "/master-data/partners",
-        permission: "manage_partner",
-        icon: "shield" as const,
-      },
-      {
-        title: "Item Categories",
-        href: "/master-data/item-category",
-        permission: "view-category",
-        icon: "shield" as const,
-      },
-      {
-        title: "Item Groups",
-        href: "/master-data/item-groups",
-        permission: "view-item-group",
-        icon: "shield" as const,
-      },
-      {
-        title: "Sales Channels",
-        href: "/master-data/sales-channels",
-        permission: "view-sales-channel",
-        icon: "shield" as const,
-      },
-      {
-        title: "Item Master",
-        href: "/master-data/items",
-        permission: "view-item",
-        icon: "shield" as const,
-      },
-    ],
-  },
-  {
-    title: "Order Management",
-    items: [
-      {
-        title: "Purchase Orders",
-        href: "/order-management/purchase-orders",
-        permission: "View PO",
-        icon: "purchaseOrder" as const,
-      },
-    ],
-  },
-  {
-    title: "Admin",
-    items: [
-      {
-        title: "Users",
-        href: "/admin/users",
-        icon: "user",
-        permission: "view-user",
-      },
-      {
-        title: "Roles",
-        href: "/admin/roles",
-        icon: "roles",
-        permission: "view-role",
-      },
-      {
-        title: "Permissions",
-        href: "/admin/permissions",
-        icon: "permissions",
-        permission: "view-permission",
-      },
-    ],
-  },
-];
-
-export const createModuleGroups = (permissions: any): ModuleGroup[] => {
+export const createModuleGroups = (permissions: PermissionsMap): ModuleGroup[] => {
   const moduleGroups: ModuleGroup[] = [];
 
   // Master Data module

@@ -15,7 +15,7 @@ import { useItemPermissions } from "@/hooks/useItemPermissions";
 import { useItemGroupPermissions } from "@/hooks/useItemGroupPermissions";
 import { usePurchaseOrderPermissions } from "@/hooks/usePurchaseOrderPermissions";
 import { useInventoryPermissions } from "@/hooks/useInventoryPermissions";
-import { createModuleGroups } from "./sidebar/sidebarConfig";
+import { createModuleGroups } from "./sidebar/moduleGroups";
 import { SidebarNavContent } from "./sidebar/SidebarNavContent";
 import { SidebarFooterContent } from "./sidebar/SidebarFooterContent";
 
