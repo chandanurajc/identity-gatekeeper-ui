@@ -10,8 +10,8 @@ export const createInvoiceFromReceivedPO = async (poId: string, organizationId: 
         .select(`
             *,
             lines:purchase_order_line(*, item:items(*, itemGroup:item_group_id(*))),
-            supplier:supplier_id(*, contacts:organization_contacts(*)),
-            organization:organization_id(*, contacts:organization_contacts(*))
+            supplier:organizations!supplier_id(*, contacts:organization_contacts(*)),
+            organization:organizations!organization_id(*, contacts:organization_contacts(*))
         `)
         .eq('id', poId)
         .eq('organization_id', organizationId)
