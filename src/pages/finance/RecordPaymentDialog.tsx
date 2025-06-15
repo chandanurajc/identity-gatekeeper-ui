@@ -110,16 +110,16 @@ export function RecordPaymentDialog({
     },
   });
 
-  // ---- FIX: Provide all required default values (no partial, no optional) ----
+  // FIX: Provide a strongly typed defaultValues
   const form = useForm<RecordPaymentFormSchema>({
     resolver: zodResolver(recordPaymentFormSchema),
     defaultValues: {
       paymentDate: new Date(),
       paymentMethod: "Bank Transfer",
       amount: outstandingBalance > 0 ? outstandingBalance : 0,
-      notes: "",
       referenceNumber: "",
-    } as RecordPaymentFormSchema, // ensure all fields present
+      notes: "",
+    } as RecordPaymentFormSchema, // All fields provided, no optionals
   });
 
   function onSubmit(data: RecordPaymentFormSchema) {
