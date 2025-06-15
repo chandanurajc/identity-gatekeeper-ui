@@ -1,3 +1,4 @@
+
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -37,18 +38,20 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { generalLedgerService } from "@/services/generalLedgerService";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
+import { RecordPaymentFormData } from "@/types/generalLedger";
 
 const paymentSchema = z.object({
   paymentDate: z.date({ required_error: "Payment date is required." }),
-  paymentMethod: z.enum(["UPI", "Bank Transfer", "Cheque", "Cash"], {
-    required_error: "Payment method is required.",
-  }),
+  paymentMethod: z.enum(["UPI", "Bank Transfer", "Cheque", "Cash"]).optional(),
   referenceNumber: z.string().optional(),
   amount: z.coerce.number().positive({ message: "Amount must be greater than 0." }),
   notes: z.string().optional(),
+}).refine(data => !!data.paymentMethod, {
+  message: "Payment method is required.",
+  path: ["paymentMethod"],
 });
 
-type PaymentFormData = z.infer<typeof paymentSchema>;
+type PaymentFormSchema = z.infer<typeof paymentSchema>;
 
 interface RecordPaymentDialogProps {
   isOpen: boolean;
@@ -67,17 +70,19 @@ export const RecordPaymentDialog = ({
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const form = useForm<PaymentFormData>({
+  const form = useForm<PaymentFormSchema>({
     resolver: zodResolver(paymentSchema),
     defaultValues: {
       paymentDate: new Date(),
       referenceNumber: "",
       notes: "",
+      amount: 0,
+      paymentMethod: undefined,
     },
   });
 
   const recordPaymentMutation = useMutation({
-    mutationFn: (data: PaymentFormData) => {
+    mutationFn: (data: RecordPaymentFormData) => {
       if (!user?.email) throw new Error("User not authenticated");
       return generalLedgerService.recordPayment(data, billToOrg, remitToOrg, user.email);
     },
@@ -90,7 +95,7 @@ export const RecordPaymentDialog = ({
         referenceNumber: "",
         notes: "",
         amount: 0,
-        paymentMethod: undefined as any,
+        paymentMethod: undefined,
       });
     },
     onError: (error) => {
@@ -102,8 +107,16 @@ export const RecordPaymentDialog = ({
     },
   });
 
-  const onSubmit = (data: PaymentFormData) => {
-    recordPaymentMutation.mutate(data);
+  const onSubmit = (data: PaymentFormSchema) => {
+    if (!data.paymentMethod) {
+      // This path should be unreachable due to the schema refinement
+      return;
+    }
+    const completeData: RecordPaymentFormData = {
+      ...data,
+      paymentMethod: data.paymentMethod,
+    };
+    recordPaymentMutation.mutate(completeData);
   };
 
   return (
@@ -172,7 +185,7 @@ export const RecordPaymentDialog = ({
                     render={({ field }) => (
                         <FormItem>
                         <FormLabel>Payment Method</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
                             <FormControl>
                             <SelectTrigger>
                                 <SelectValue placeholder="Select a payment method" />
