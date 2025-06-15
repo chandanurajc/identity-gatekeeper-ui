@@ -1,4 +1,3 @@
-
 import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
@@ -29,16 +28,11 @@ const GeneralLedgerViewer = () => {
     enabled: !!organizationId,
   });
 
-  const { data: partners } = useQuery({
-    queryKey: ['partners', organizationId],
-    queryFn: () => partnerService.getPartners(organizationId!),
+  const { data: suppliers } = useQuery({
+    queryKey: ['supplierPartners', organizationId],
+    queryFn: () => partnerService.getSupplierPartners(organizationId!),
     enabled: !!organizationId,
   });
-
-  const suppliers = useMemo(() => {
-    if (!partners) return [];
-    return partners.filter(p => p.organizationType === 'Supplier' && p.status === 'active');
-  }, [partners]);
 
   const { data: ledgerEntries, isLoading: isLoadingLedger, error: ledgerError } = useQuery({
     queryKey: ['generalLedger', organizationId, selectedRemitTo, loadTrigger],
@@ -122,4 +116,3 @@ const GeneralLedgerViewer = () => {
 };
 
 export default GeneralLedgerViewer;
-

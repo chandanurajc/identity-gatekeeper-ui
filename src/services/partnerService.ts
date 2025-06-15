@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Partner, PartnerFormData, OrganizationSearchResult } from "@/types/partner";
 
@@ -50,6 +49,61 @@ export const partnerService = {
       
     } catch (error) {
       console.error("Service error fetching partners:", error);
+      throw error;
+    }
+  },
+
+  async getSupplierPartners(currentOrganizationId: string): Promise<Partner[]> {
+    console.log("Fetching supplier partners from Supabase for org:", currentOrganizationId);
+    
+    try {
+      const { data, error } = await supabase
+        .from('partners')
+        .select(`
+          *,
+          organization:organizations!inner(code, name, type)
+        `)
+        .eq('current_organization_id', currentOrganizationId)
+        .eq('status', 'active')
+        .eq('organization.type', 'Supplier')
+        .order('created_on', { ascending: false });
+
+      if (error) {
+        console.error("Supabase error fetching supplier partners:", error);
+        throw new Error(`Failed to fetch supplier partners: ${error.message}`);
+      }
+      
+      if (!data) {
+        return [];
+      }
+
+      const transformedData = data
+        .map(partner => {
+          if (!partner.organization) {
+            // This should not happen with an inner join, but for type safety
+            return null;
+          }
+          return {
+            id: partner.id,
+            organizationId: partner.organization_id,
+            organizationCode: partner.organization.code,
+            organizationName: partner.organization.name,
+            organizationType: partner.organization.type,
+            currentOrganizationId: partner.current_organization_id,
+            status: partner.status as 'active' | 'inactive',
+            partnershipDate: new Date(partner.partnership_date),
+            createdBy: partner.created_by,
+            createdOn: new Date(partner.created_on),
+            updatedBy: partner.updated_by,
+            updatedOn: partner.updated_on ? new Date(partner.updated_on) : undefined,
+          };
+        })
+        .filter((p): p is Partner => p !== null);
+
+      return transformedData;
+      
+    } catch (error) {
+      console.error("Service error fetching supplier partners:", error);
       throw error;
     }
   },
