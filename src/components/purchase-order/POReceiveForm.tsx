@@ -106,7 +106,7 @@ export function POReceiveForm({ purchaseOrder }: POReceiveFormProps) {
   const onSubmit = (data: POReceiveFormData) => {
     const organizationId = getCurrentOrganizationId();
     if (!user || !organizationId) {
-        toast({ variant: "destructive", title: "Error", description: "User or organization not found." });
+        toast.error("Error", { description: "User or organization not found." });
         return;
     }
     const linesToReceive = data.lines.filter(l => l.quantityToReceive > 0);
