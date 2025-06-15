@@ -645,31 +645,34 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
             </div>
 
             {/* Summary */}
-            {fields.length > 0 && (
-              <div className="mt-4 flex justify-end">
-                <Card className="w-80">
-                  <CardHeader>
-                    <CardTitle className="text-lg">Summary</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span>Total Item Cost:</span>
-                        <span>₹{itemTotal.toFixed(2)}</span>
+            {fields.length > 0 && (() => {
+              const { itemTotal, totalGST } = calculateSummary();
+              return (
+                <div className="mt-4 flex justify-end">
+                  <Card className="w-80">
+                    <CardHeader>
+                      <CardTitle className="text-lg">Summary</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <span>Total Item Cost:</span>
+                          <span>₹{itemTotal.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Total GST Value:</span>
+                          <span>₹{totalGST.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between font-bold border-t pt-2">
+                          <span>Grand Total:</span>
+                          <span>₹{(itemTotal + totalGST).toFixed(2)}</span>
+                        </div>
                       </div>
-                      <div className="flex justify-between">
-                        <span>Total GST Value:</span>
-                        <span>₹{totalGST.toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between font-bold border-t pt-2">
-                        <span>Grand Total:</span>
-                        <span>₹{(itemTotal + totalGST).toFixed(2)}</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
+                    </CardContent>
+                  </Card>
+                </div>
+              );
+            })()}
           </CardContent>
         </Card>
 
