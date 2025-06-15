@@ -45,8 +45,8 @@ export const purchaseOrderService = {
       createdOn: new Date(po.created_on),
       updatedBy: po.updated_by,
       updatedOn: po.updated_on ? new Date(po.updated_on) : undefined,
-      division: po.division,
-      supplier: po.supplier
+      division: po.division && typeof po.division === 'object' && 'name' in po.division ? po.division : undefined,
+      supplier: po.supplier && typeof po.supplier === 'object' && 'name' in po.supplier ? po.supplier : undefined
     })) || [];
   },
 
@@ -109,8 +109,8 @@ export const purchaseOrderService = {
       createdOn: new Date(data.created_on),
       updatedBy: data.updated_by,
       updatedOn: data.updated_on ? new Date(data.updated_on) : undefined,
-      division: data.division,
-      supplier: data.supplier,
+      division: data.division && typeof data.division === 'object' && 'name' in data.division ? data.division : undefined,
+      supplier: data.supplier && typeof data.supplier === 'object' && 'name' in data.supplier ? data.supplier : undefined,
       lines: data.purchase_order_line?.map((line: any) => ({
         id: line.id,
         purchaseOrderId: line.purchase_order_id,
