@@ -97,7 +97,7 @@ export const ContactForm = ({ contacts, onChange, readOnly = false }: ContactFor
     onChange(contacts.filter((contact) => contact.id !== id));
   };
 
-  const contactTypes = ['Registered location', 'Billing', 'Shipping', 'Owner'];
+  const contactTypes = ['Registered location', 'Billing', 'Shipping', 'Owner', 'Bill To', 'Remit To'];
 
   return (
     <div className="space-y-4">

@@ -97,6 +97,8 @@ export function ContactDialog({ open, onOpenChange, initialData, onSave, existin
                 <SelectItem value="Billing">Billing</SelectItem>
                 <SelectItem value="Shipping">Shipping</SelectItem>
                 <SelectItem value="Owner">Owner</SelectItem>
+                <SelectItem value="Bill To">Bill To</SelectItem>
+                <SelectItem value="Remit To">Remit To</SelectItem>
               </SelectContent>
             </Select>
             {formErrors.type && <p className="text-sm text-destructive mt-1">{formErrors.type}</p>}

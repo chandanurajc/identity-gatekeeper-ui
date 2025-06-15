@@ -6,7 +6,7 @@ export interface Reference {
 
 export interface Contact {
   id: string;
-  type: 'Registered location' | 'Billing' | 'Shipping' | 'Owner';
+  type: 'Registered location' | 'Billing' | 'Shipping' | 'Owner' | 'Bill To' | 'Remit To';
   firstName: string;
   lastName?: string;
   address1?: string;
