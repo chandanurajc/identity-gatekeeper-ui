@@ -173,11 +173,18 @@ export const purchaseOrderService = {
       .single();
 
     if (poError) {
-      if (poError.code === '23505' && poError.message.includes('purchase_order_po_number_key')) {
-        console.error("[PO] Duplicate PO number error:", poError);
+      console.error("[PO] Error creating purchase order (header):", poError);
+      if (poError.code === '23503') { // Foreign key violation
+        if (poError.message.includes('division_id')) {
+          throw new Error("Invalid Division selected. Please choose an existing Division.");
+        } else if (poError.message.includes('supplier_id')) {
+          throw new Error("Invalid Supplier selected. Please choose an existing Supplier.");
+        } else {
+          throw new Error(`Foreign key error: ${poError.message}`);
+        }
+      } else if (poError.code === '23505' && poError.message.includes('purchase_order_po_number_key')) {
         throw new Error(`Purchase Order number '${formData.poNumber}' already exists. Please refresh the page to get a new number.`);
       }
-      console.error("[PO] Error creating purchase order (header):", poError);
       throw new Error(`Failed to create purchase order: ${poError.message}`);
     }
 
