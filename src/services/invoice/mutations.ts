@@ -1,6 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
 import { Invoice } from '@/types/invoice';
-import { PurchaseOrder } from '@/types/purchaseOrder';
 import { add } from 'date-fns';
 
 export const createInvoiceFromReceivedPO = async (poId: string, organizationId: string, userId: string, userName: string): Promise<Invoice> => {
@@ -9,7 +8,7 @@ export const createInvoiceFromReceivedPO = async (poId: string, organizationId: 
         .from('purchase_order')
         .select(`
             *,
-            lines:purchase_order_line(*, item:items(*, itemGroup:item_groups(*))),
+            lines:purchase_order_line(*, item:items(*, item_group_id(*))),
             supplier:supplier_id(*, contacts:organization_contacts(*)),
             organization:organization_id(*, contacts:organization_contacts(*))
         `)
@@ -22,8 +21,6 @@ export const createInvoiceFromReceivedPO = async (poId: string, organizationId: 
         throw new Error(`Failed to fetch Purchase Order with ID ${poId}: ${poError?.message}`);
     }
     console.log(`[Invoice] Successfully fetched PO ${poId}`);
-
-    const poData = poResult as unknown as PurchaseOrder;
 
     // This check is removed because the calling function `receivePurchaseOrder` is responsible
     // for ensuring this is only called for 'Received' POs, and there could be replication lag.
@@ -39,8 +36,8 @@ export const createInvoiceFromReceivedPO = async (poId: string, organizationId: 
         throw new Error(`Error checking for existing invoice: ${existingInvoiceError.message}`);
     }
     if (existingInvoice) {
-        console.log(`[Invoice] Invoice already exists for PO ${poData.poNumber}. Aborting.`);
-        throw new Error(`An invoice already exists for Purchase Order ${poData.poNumber}.`);
+        console.log(`[Invoice] Invoice already exists for PO ${poResult.po_number}. Aborting.`);
+        throw new Error(`An invoice already exists for Purchase Order ${poResult.po_number}.`);
     }
     console.log(`[Invoice] No existing invoice found for PO ${poId}. Proceeding.`);
 
@@ -53,34 +50,34 @@ export const createInvoiceFromReceivedPO = async (poId: string, organizationId: 
     }
     console.log(`[Invoice] Generated invoice number ${invoiceNumber} for PO ${poId}`);
 
-    const billToContact = poData.organization?.contacts?.find(c => c.type === 'Bill To');
-    const remitToContact = poData.supplier?.contacts?.find(c => c.type === 'Remit To');
-    console.log(`[Invoice] Bill To contact:`, billToContact ? billToContact.firstName : 'Not found');
-    console.log(`[Invoice] Remit To contact:`, remitToContact ? remitToContact.firstName : 'Not found');
+    const billToContact = poResult.organization?.contacts?.find(c => c.type === 'Bill To');
+    const remitToContact = poResult.supplier?.contacts?.find(c => c.type === 'Remit To');
+    console.log(`[Invoice] Bill To contact:`, billToContact ? billToContact.first_name : 'Not found');
+    console.log(`[Invoice] Remit To contact:`, remitToContact ? remitToContact.first_name : 'Not found');
 
-    const paymentTermsDays = parseInt(poData.paymentTerms?.match(/\d+/)?.[0] || '30', 10);
-    const dueDate = add(new Date(poData.poDate), { days: paymentTermsDays });
+    const paymentTermsDays = parseInt(poResult.payment_terms?.match(/\d+/)?.[0] || '30', 10);
+    const dueDate = add(new Date(poResult.po_date), { days: paymentTermsDays });
 
     let totalItemCost = 0;
     let totalGst = 0;
-    const invoiceLinesToInsert = poData.lines?.map(poLine => {
-        totalItemCost += poLine.totalUnitPrice;
-        totalGst += poLine.gstValue;
+    const invoiceLinesToInsert = poResult.lines?.map(poLine => {
+        totalItemCost += poLine.total_unit_price;
+        totalGst += poLine.gst_value;
         return {
             organization_id: organizationId,
-            line_number: poLine.lineNumber,
-            item_id: poLine.itemId,
+            line_number: poLine.line_number,
+            item_id: poLine.item_id,
             item_description: poLine.item?.description,
-            item_group_name: poLine.item?.itemGroup?.name,
+            item_group_name: poLine.item?.item_group?.name,
             classification: poLine.item?.classification,
-            sub_classification: poLine.item?.subClassification,
+            sub_classification: poLine.item?.sub_classification,
             quantity: poLine.quantity,
             uom: poLine.uom,
-            unit_cost: poLine.unitPrice,
-            total_item_cost: poLine.totalUnitPrice,
-            gst_percent: poLine.gstPercent,
-            gst_value: poLine.gstValue,
-            line_total: poLine.lineTotal,
+            unit_cost: poLine.unit_price,
+            total_item_cost: poLine.total_unit_price,
+            gst_percent: poLine.gst_percent,
+            gst_value: poLine.gst_value,
+            line_total: poLine.line_total,
             created_by: userName,
         };
     }) || [];
@@ -92,27 +89,27 @@ export const createInvoiceFromReceivedPO = async (poId: string, organizationId: 
         .insert({
             organization_id: organizationId,
             po_id: poId,
-            po_number: poData.poNumber,
+            po_number: poResult.po_number,
             invoice_number: invoiceNumber,
             due_date: dueDate.toISOString().split('T')[0],
             status: 'Created',
-            bill_to_name: billToContact?.firstName,
+            bill_to_name: billToContact?.first_name,
             bill_to_address1: billToContact?.address1,
             bill_to_address2: billToContact?.address2,
             bill_to_city: billToContact?.city,
             bill_to_state: billToContact?.state,
             bill_to_country: billToContact?.country,
-            bill_to_postal_code: billToContact?.postalCode,
-            bill_to_phone: billToContact?.phoneNumber,
+            bill_to_postal_code: billToContact?.postal_code,
+            bill_to_phone: billToContact?.phone_number,
             bill_to_email: billToContact?.email,
-            remit_to_name: remitToContact?.firstName,
+            remit_to_name: remitToContact?.first_name,
             remit_to_address1: remitToContact?.address1,
             remit_to_address2: remitToContact?.address2,
             remit_to_city: remitToContact?.city,
             remit_to_state: remitToContact?.state,
             remit_to_country: remitToContact?.country,
-            remit_to_postal_code: remitToContact?.postalCode,
-            remit_to_phone: remitToContact?.phoneNumber,
+            remit_to_postal_code: remitToContact?.postal_code,
+            remit_to_phone: remitToContact?.phone_number,
             remit_to_email: remitToContact?.email,
             total_item_cost: totalItemCost,
             total_gst: totalGst,
@@ -144,7 +141,7 @@ export const createInvoiceFromReceivedPO = async (poId: string, organizationId: 
         ...newInvoiceData, 
         lines: linesWithInvoiceId,
         created_on: new Date(newInvoiceData.created_on),
-        updated_on: new Date(newInvoiceData.updated_on) ? new Date(newInvoiceData.updated_on) : undefined,
+        updated_on: newInvoiceData.updated_on ? new Date(newInvoiceData.updated_on) : undefined,
     } as unknown as Invoice;
 };
 
