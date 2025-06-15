@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -8,22 +9,11 @@ import { Plus, Trash2 } from "lucide-react";
 import { PurchaseOrderLine } from "@/types/purchaseOrder";
 import { Item } from "@/types/item";
 
-interface POLinesSectionProps {
-  fields: any;
-  append: (line: PurchaseOrderLine) => void;
-  remove: (idx: number) => void;
-  watchedLines: PurchaseOrderLine[];
-  setValue: any;
-  items: Item[];
-  filteredItems: Item[];
-  searchItems: (s: string) => void;
-  handleItemChange: (idx: number, id: string) => void;
-  calculateLineTotal: (idx: number) => void;
-  errors: any;
-  addPOLine: () => void;
-}
+// --- UI Clean: helper styles for lean table ---
+const sectionTitleClass = "text-base font-semibold text-muted-foreground tracking-tight mb-0.5";
+const summaryCardClass = "w-72 border border-muted-foreground/10 rounded-lg bg-muted/60";
 
-const PurchaseOrderLinesSection: React.FC<POLinesSectionProps> = ({
+const PurchaseOrderLinesSection = ({
   fields,
   append,
   remove,
@@ -37,7 +27,6 @@ const PurchaseOrderLinesSection: React.FC<POLinesSectionProps> = ({
   errors,
   addPOLine,
 }) => {
-
   const calculateSummary = () => {
     const itemTotal = watchedLines.reduce((sum, line) => sum + (line.totalUnitPrice || 0), 0);
     const totalGST = watchedLines.reduce((sum, line) => sum + (line.gstValue || 0), 0);
@@ -45,47 +34,46 @@ const PurchaseOrderLinesSection: React.FC<POLinesSectionProps> = ({
   };
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="bg-card rounded-xl shadow-none border border-muted-foreground/10 mb-4">
+      <CardHeader className="pb-1 border-none bg-transparent">
         <div className="flex justify-between items-center">
-          <CardTitle>Purchase Order Lines</CardTitle>
-          <Button type="button" onClick={addPOLine}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add PO Line
+          <CardTitle className={sectionTitleClass}>PO Lines</CardTitle>
+          <Button type="button" onClick={addPOLine} size="sm">
+            <Plus className="mr-1 h-4 w-4" /> Add Line
           </Button>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-2">
         <div className="overflow-x-auto">
-          <div className="rounded-md border min-w-full">
+          <div className="rounded-md border border-muted-foreground/10 min-w-full">
             <Table>
-              <TableHeader>
+              <TableHeader className="bg-muted/60">
                 <TableRow>
-                  <TableHead className="min-w-[60px]">Line #</TableHead>
-                  <TableHead className="min-w-[200px]">Item *</TableHead>
-                  <TableHead className="min-w-[200px]">Item Description</TableHead>
-                  <TableHead className="min-w-[80px]">Qty *</TableHead>
-                  <TableHead className="min-w-[80px]">UOM *</TableHead>
-                  <TableHead className="min-w-[100px]">Unit Cost *</TableHead>
-                  <TableHead className="min-w-[120px]">Total Item Cost</TableHead>
-                  <TableHead className="min-w-[80px]">GST %</TableHead>
-                  <TableHead className="min-w-[100px]">GST Value</TableHead>
-                  <TableHead className="min-w-[100px]">Line Total</TableHead>
-                  <TableHead className="min-w-[80px]">Actions</TableHead>
+                  <TableHead className="min-w-[44px] py-1">#</TableHead>
+                  <TableHead className="min-w-[135px] py-1">Item *</TableHead>
+                  <TableHead className="min-w-[135px] py-1">Desc.</TableHead>
+                  <TableHead className="min-w-[56px] py-1">Qty *</TableHead>
+                  <TableHead className="min-w-[56px] py-1">UOM *</TableHead>
+                  <TableHead className="min-w-[75px] py-1">Cost *</TableHead>
+                  <TableHead className="min-w-[85px] py-1">Total</TableHead>
+                  <TableHead className="min-w-[56px] py-1">GST %</TableHead>
+                  <TableHead className="min-w-[72px] py-1">GST Val</TableHead>
+                  <TableHead className="min-w-[70px] py-1">Total</TableHead>
+                  <TableHead className="min-w-[42px] py-1">-</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {fields.map((field: any, index: number) => {
+                {fields.map((field, index) => {
                   const selectedItem = items.find(item => item.id === watchedLines[index]?.itemId);
                   return (
                     <TableRow key={field.id}>
-                      <TableCell>{index + 1}</TableCell>
+                      <TableCell className="py-1">{index + 1}</TableCell>
                       <TableCell>
-                        <div className="space-y-2">
+                        <div className="space-y-1">
                           <Input
-                            placeholder="Search by Item ID"
+                            placeholder="Search by ID"
                             onChange={(e) => searchItems(e.target.value)}
-                            className="mb-2"
+                            className="mb-1"
                           />
                           <Select 
                             onValueChange={(value) => handleItemChange(index, value)} 
@@ -109,7 +97,7 @@ const PurchaseOrderLinesSection: React.FC<POLinesSectionProps> = ({
                           value={selectedItem?.description || ""}
                           readOnly
                           className="bg-muted"
-                          placeholder="Item description will appear here"
+                          placeholder="Item description"
                         />
                       </TableCell>
                       <TableCell>
@@ -182,9 +170,11 @@ const PurchaseOrderLinesSection: React.FC<POLinesSectionProps> = ({
                       <TableCell>
                         <Button
                           type="button"
-                          variant="destructive"
-                          size="sm"
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 p-0"
                           onClick={() => remove(index)}
+                          aria-label="Remove line"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -194,8 +184,8 @@ const PurchaseOrderLinesSection: React.FC<POLinesSectionProps> = ({
                 })}
                 {fields.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={11} className="text-center text-muted-foreground">
-                      No line items added yet. Click "Add PO Line" to get started.
+                    <TableCell colSpan={11} className="text-center text-muted-foreground py-3">
+                      No line items added yet. Click "Add Line" to get started.
                     </TableCell>
                   </TableRow>
                 )}
@@ -206,25 +196,23 @@ const PurchaseOrderLinesSection: React.FC<POLinesSectionProps> = ({
         {fields.length > 0 && (() => {
           const { itemTotal, totalGST } = calculateSummary();
           return (
-            <div className="mt-4 flex justify-end">
-              <Card className="w-80">
-                <CardHeader>
-                  <CardTitle className="text-lg">Summary</CardTitle>
+            <div className="mt-2 flex justify-end">
+              <Card className={summaryCardClass}>
+                <CardHeader className="pb-1 border-none bg-transparent">
+                  <CardTitle className="text-sm font-medium mb-0">Summary</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span>Total Item Cost:</span>
-                      <span>₹{itemTotal.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Total GST Value:</span>
-                      <span>₹{totalGST.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between font-bold border-t pt-2">
-                      <span>Grand Total:</span>
-                      <span>₹{(itemTotal + totalGST).toFixed(2)}</span>
-                    </div>
+                <CardContent className="space-y-1.5 py-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Items:</span>
+                    <span>₹{itemTotal.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span>GST:</span>
+                    <span>₹{totalGST.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between font-bold border-t pt-1 text-base">
+                    <span>Total:</span>
+                    <span>₹{(itemTotal + totalGST).toFixed(2)}</span>
                   </div>
                 </CardContent>
               </Card>

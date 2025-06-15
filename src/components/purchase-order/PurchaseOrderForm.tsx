@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,8 +8,6 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Trash2, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { PurchaseOrderFormData, PurchaseOrderLine, ShippingAddress } from "@/types/purchaseOrder";
 import { divisionService } from "@/services/divisionService";
@@ -19,9 +18,14 @@ import { useMultiTenant } from "@/hooks/useMultiTenant";
 import { Division } from "@/types/division";
 import { Organization } from "@/types/organization";
 import { Item } from "@/types/item";
-import { Controller } from "react-hook-form";
 import ShipToAddressSection from "./ShipToAddressSection";
 import PurchaseOrderLinesSection from "./PurchaseOrderLinesSection";
+
+// --- UI Clean: helper styles for lean form ---
+const sectionTitleClass = "text-base font-semibold text-muted-foreground tracking-tight mb-0.5";
+const cardBaseClass = "bg-card rounded-xl shadow-none border border-muted-foreground/10 mb-4";
+const cardContentCondensedClass = "grid grid-cols-1 md:grid-cols-2 gap-3 py-3";
+const actionBarClass = "flex justify-end space-x-3 border-none mt-2";
 
 interface PurchaseOrderFormProps {
   initialData?: PurchaseOrderFormData;
@@ -78,8 +82,6 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
   const watchedLines = watch("lines");
   const watchedDivisionId = watch("divisionId");
   const watchedSupplierId = watch("supplierId");
-
-  // One source of truth: form field!
   const watchedSameAsDivisionAddress = watch("sameAsDivisionAddress");
 
   useEffect(() => {
@@ -94,7 +96,6 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
     }
   }, [isEdit]);
 
-  // Move below helpers for shipping fields so they can be passed down
   const resetShippingFields = () => {
     setValue("shipToAddress1", "");
     setValue("shipToAddress2", "");
@@ -106,7 +107,6 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
     setValue("shipToEmail", "");
   };
 
-  // Effect for "Same as division address" toggled
   useEffect(() => {
     if (watchedSameAsDivisionAddress && watchedDivisionId) {
       loadDivisionShippingAddress();
@@ -118,25 +118,18 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
 
   const fetchDropdownData = async () => {
     if (!currentOrganization?.id) return;
-
     try {
       const [divisionsData, suppliersData, itemsData] = await Promise.all([
         divisionService.getActiveDivisions(),
         organizationService.getOrganizations(),
         itemService.getItems()
       ]);
-
       setDivisions(divisionsData);
       setSuppliers(suppliersData.filter(org => org.type === 'Supplier' && org.status === 'active'));
       setItems(itemsData);
-      setFilteredItems(itemsData.slice(0, 5)); // Show top 5 by default
+      setFilteredItems(itemsData.slice(0, 5));
     } catch (error) {
-      console.error("Error fetching dropdown data:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load form data",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: "Failed to load form data", variant: "destructive" });
     }
   };
 
@@ -144,13 +137,8 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
     try {
       const poNumber = await purchaseOrderService.generatePONumber();
       setValue("poNumber", poNumber);
-    } catch (error) {
-      console.error("Error generating PO number:", error);
-      toast({
-        title: "Error",
-        description: "Failed to generate PO number",
-        variant: "destructive",
-      });
+    } catch {
+      toast({ title: "Error", description: "Failed to generate PO number", variant: "destructive" });
     }
   };
 
@@ -169,13 +157,8 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
       } else {
         resetShippingFields();
       }
-    } catch (error) {
-      console.error("Error loading division shipping address:", error);
-      toast({
-        title: "Warning",
-        description: "Could not load division shipping address",
-        variant: "default",
-      });
+    } catch {
+      toast({title: "Warning", description: "Could not load division shipping address", variant: "default"});
       resetShippingFields();
     }
   };
@@ -185,12 +168,10 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
       setFilteredItems(items.slice(0, 5));
       return;
     }
-
     const filtered = items.filter(item => 
       item.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.description.toLowerCase().includes(searchTerm.toLowerCase())
     ).slice(0, 5);
-    
     setFilteredItems(filtered);
   };
 
@@ -224,18 +205,12 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
     try {
       const item = await itemService.getItemById(itemId);
       if (!item || !item.costs) return null;
-
-      // First priority: cost for selected supplier
       const supplierCost = item.costs.find(cost => cost.supplierId === supplierId);
       if (supplierCost) return supplierCost.cost;
-
-      // Second priority: cost with blank supplier (default cost)
       const defaultCost = item.costs.find(cost => !cost.supplierId || cost.supplierId === "");
       if (defaultCost) return defaultCost.cost;
-
       return null;
-    } catch (error) {
-      console.error("Error fetching item cost:", error);
+    } catch {
       return null;
     }
   };
@@ -246,15 +221,10 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
       setValue(`lines.${lineIndex}.itemId`, itemId);
       setValue(`lines.${lineIndex}.uom`, selectedItem.uom || "");
       setValue(`lines.${lineIndex}.gstPercent`, selectedItem.gstPercentage || 0);
-      
-      // Fetch item cost for selected supplier
       if (watchedSupplierId) {
         const itemCost = await getItemCostForSupplier(itemId, watchedSupplierId);
-        if (itemCost !== null) {
-          setValue(`lines.${lineIndex}.unitPrice`, itemCost);
-        }
+        if (itemCost !== null) setValue(`lines.${lineIndex}.unitPrice`, itemCost);
       }
-      
       calculateLineTotal(lineIndex);
     }
   };
@@ -265,17 +235,10 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
       const totalUnitPrice = line.quantity * line.unitPrice;
       const gstValue = (totalUnitPrice * line.gstPercent) / 100;
       const lineTotal = totalUnitPrice + gstValue;
-
       setValue(`lines.${lineIndex}.totalUnitPrice`, totalUnitPrice);
       setValue(`lines.${lineIndex}.gstValue`, gstValue);
       setValue(`lines.${lineIndex}.lineTotal`, lineTotal);
     }
-  };
-
-  const calculateSummary = () => {
-    const itemTotal = watchedLines.reduce((sum, line) => sum + (line.totalUnitPrice || 0), 0);
-    const totalGST = watchedLines.reduce((sum, line) => sum + (line.gstValue || 0), 0);
-    return { itemTotal, totalGST };
   };
 
   const onFormSubmit = async (data: PurchaseOrderFormData) => {
@@ -283,21 +246,20 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
     try {
       await onSubmit(data);
     } catch (error) {
-      console.error("Error submitting form:", error);
+      // error handling is outside for clarity/UI
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="space-y-6">
-      <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
-        {/* Header Fields */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Purchase Order Details</CardTitle>
+    <div className="space-y-4 max-w-4xl mx-auto">
+      <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4">
+        <Card className={cardBaseClass}>
+          <CardHeader className="pb-1 border-none bg-transparent">
+            <CardTitle className={sectionTitleClass}>Purchase Order Details</CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <CardContent className={cardContentCondensedClass}>
             <div>
               <Label htmlFor="poNumber">PO Number *</Label>
               <Input
@@ -306,9 +268,8 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
                 readOnly={isEdit}
                 className={isEdit ? "bg-muted" : ""}
               />
-              {errors.poNumber && <p className="text-sm text-red-500">{errors.poNumber.message}</p>}
+              {errors.poNumber && <p className="text-xs text-red-500">{errors.poNumber.message}</p>}
             </div>
-
             <div>
               <Label htmlFor="divisionId">Division *</Label>
               <Select onValueChange={(value) => setValue("divisionId", value)} defaultValue={watch("divisionId")}>
@@ -323,9 +284,8 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
                   ))}
                 </SelectContent>
               </Select>
-              {errors.divisionId && <p className="text-sm text-red-500">Division is required</p>}
+              {errors.divisionId && <p className="text-xs text-red-500">Division is required</p>}
             </div>
-
             <div>
               <Label htmlFor="supplierId">Supplier *</Label>
               <Select onValueChange={(value) => setValue("supplierId", value)} defaultValue={watch("supplierId")}>
@@ -340,9 +300,8 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
                   ))}
                 </SelectContent>
               </Select>
-              {errors.supplierId && <p className="text-sm text-red-500">Supplier is required</p>}
+              {errors.supplierId && <p className="text-xs text-red-500">Supplier is required</p>}
             </div>
-
             <div>
               <Label htmlFor="poDate">PO Date *</Label>
               <Input
@@ -350,9 +309,8 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
                 type="date"
                 {...register("poDate", { required: "PO Date is required" })}
               />
-              {errors.poDate && <p className="text-sm text-red-500">{errors.poDate.message}</p>}
+              {errors.poDate && <p className="text-xs text-red-500">{errors.poDate.message}</p>}
             </div>
-
             <div>
               <Label htmlFor="requestedDeliveryDate">Requested Delivery Date</Label>
               <Input
@@ -361,7 +319,6 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
                 {...register("requestedDeliveryDate")}
               />
             </div>
-
             <div>
               <Label htmlFor="paymentTerms">Payment Terms</Label>
               <Select onValueChange={(value) => setValue("paymentTerms", value)} defaultValue={watch("paymentTerms")}>
@@ -378,7 +335,6 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
           </CardContent>
         </Card>
 
-        {/* Ship to Address Section (refactored) */}
         <ShipToAddressSection
           control={control}
           register={register}
@@ -388,7 +344,6 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
           resetShippingFields={resetShippingFields}
         />
 
-        {/* PO Lines Section (refactored) */}
         <PurchaseOrderLinesSection
           fields={fields}
           append={append}
@@ -405,17 +360,18 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
         />
 
         {/* Notes */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Additional Information</CardTitle>
+        <Card className={cardBaseClass}>
+          <CardHeader className="pb-1 border-none bg-transparent">
+            <CardTitle className={sectionTitleClass}>Additional Information</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-2 py-3">
             <div>
               <Label htmlFor="notes">Notes</Label>
               <Textarea
                 id="notes"
                 {...register("notes")}
                 placeholder="Enter any additional notes..."
+                className="min-h-[50px]"
               />
             </div>
             <div>
@@ -430,7 +386,7 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
         </Card>
 
         {/* Form Actions */}
-        <div className="flex justify-end space-x-4">
+        <div className={actionBarClass}>
           <Button type="button" variant="outline" onClick={onCancel}>
             Cancel
           </Button>

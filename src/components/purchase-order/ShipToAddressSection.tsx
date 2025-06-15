@@ -5,18 +5,10 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { PurchaseOrderFormData } from "@/types/purchaseOrder";
 
-interface ShipToAddressSectionProps {
-  control: any;
-  register: any;
-  errors: any;
-  watchedDivisionId: string;
-  loadDivisionShippingAddress: () => void;
-  resetShippingFields: () => void;
-}
+const sectionTitleClass = "text-base font-semibold text-muted-foreground tracking-tight mb-0.5";
 
-const ShipToAddressSection: React.FC<ShipToAddressSectionProps> = ({
+const ShipToAddressSection = ({
   control,
   register,
   errors,
@@ -24,10 +16,8 @@ const ShipToAddressSection: React.FC<ShipToAddressSectionProps> = ({
   loadDivisionShippingAddress,
   resetShippingFields
 }) => {
-  // Watch the checkbox value
   const sameAsDivisionAddress = useWatch({ control, name: "sameAsDivisionAddress" });
 
-  // Effect to run loading when checked
   useEffect(() => {
     if (sameAsDivisionAddress && watchedDivisionId) {
       loadDivisionShippingAddress();
@@ -38,12 +28,12 @@ const ShipToAddressSection: React.FC<ShipToAddressSectionProps> = ({
   }, [sameAsDivisionAddress, watchedDivisionId]);
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Ship to Address</CardTitle>
+    <Card className="bg-card rounded-xl shadow-none border border-muted-foreground/10 mb-4">
+      <CardHeader className="pb-1 border-none bg-transparent">
+        <CardTitle className={sectionTitleClass}>Ship to Address</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex items-center space-x-2">
+      <CardContent className="space-y-3 py-3">
+        <div className="flex items-center space-x-2 mb-1">
           <Controller
             name="sameAsDivisionAddress"
             control={control}
@@ -57,7 +47,7 @@ const ShipToAddressSection: React.FC<ShipToAddressSectionProps> = ({
           />
           <Label htmlFor="sameAsDivisionAddress">Same as Division's Shipping address?</Label>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
             <Label htmlFor="shipToAddress1">Address 1 *</Label>
             <Input
@@ -65,7 +55,7 @@ const ShipToAddressSection: React.FC<ShipToAddressSectionProps> = ({
               {...register("shipToAddress1", { required: "Address 1 is required" })}
               disabled={sameAsDivisionAddress}
             />
-            {errors.shipToAddress1 && <p className="text-sm text-red-500">{errors.shipToAddress1.message}</p>}
+            {errors.shipToAddress1 && <p className="text-xs text-red-500">{errors.shipToAddress1.message}</p>}
           </div>
           <div>
             <Label htmlFor="shipToAddress2">Address 2</Label>
@@ -82,7 +72,7 @@ const ShipToAddressSection: React.FC<ShipToAddressSectionProps> = ({
               {...register("shipToPostalCode", { required: "Postal Code is required" })}
               disabled={sameAsDivisionAddress}
             />
-            {errors.shipToPostalCode && <p className="text-sm text-red-500">{errors.shipToPostalCode.message}</p>}
+            {errors.shipToPostalCode && <p className="text-xs text-red-500">{errors.shipToPostalCode.message}</p>}
           </div>
           <div>
             <Label htmlFor="shipToCity">City *</Label>
@@ -91,7 +81,7 @@ const ShipToAddressSection: React.FC<ShipToAddressSectionProps> = ({
               {...register("shipToCity", { required: "City is required" })}
               disabled={sameAsDivisionAddress}
             />
-            {errors.shipToCity && <p className="text-sm text-red-500">{errors.shipToCity.message}</p>}
+            {errors.shipToCity && <p className="text-xs text-red-500">{errors.shipToCity.message}</p>}
           </div>
           <div>
             <Label htmlFor="shipToState">State *</Label>
@@ -100,7 +90,7 @@ const ShipToAddressSection: React.FC<ShipToAddressSectionProps> = ({
               {...register("shipToState", { required: "State is required" })}
               disabled={sameAsDivisionAddress}
             />
-            {errors.shipToState && <p className="text-sm text-red-500">{errors.shipToState.message}</p>}
+            {errors.shipToState && <p className="text-xs text-red-500">{errors.shipToState.message}</p>}
           </div>
           <div>
             <Label htmlFor="shipToCountry">Country *</Label>
@@ -109,7 +99,7 @@ const ShipToAddressSection: React.FC<ShipToAddressSectionProps> = ({
               {...register("shipToCountry", { required: "Country is required" })}
               disabled={sameAsDivisionAddress}
             />
-            {errors.shipToCountry && <p className="text-sm text-red-500">{errors.shipToCountry.message}</p>}
+            {errors.shipToCountry && <p className="text-xs text-red-500">{errors.shipToCountry.message}</p>}
           </div>
           <div>
             <Label htmlFor="shipToPhone">Phone *</Label>
@@ -118,7 +108,7 @@ const ShipToAddressSection: React.FC<ShipToAddressSectionProps> = ({
               {...register("shipToPhone", { required: "Phone is required" })}
               disabled={sameAsDivisionAddress}
             />
-            {errors.shipToPhone && <p className="text-sm text-red-500">{errors.shipToPhone.message}</p>}
+            {errors.shipToPhone && <p className="text-xs text-red-500">{errors.shipToPhone.message}</p>}
           </div>
           <div>
             <Label htmlFor="shipToEmail">Email *</Label>
@@ -128,7 +118,7 @@ const ShipToAddressSection: React.FC<ShipToAddressSectionProps> = ({
               {...register("shipToEmail", { required: "Email is required" })}
               disabled={sameAsDivisionAddress}
             />
-            {errors.shipToEmail && <p className="text-sm text-red-500">{errors.shipToEmail.message}</p>}
+            {errors.shipToEmail && <p className="text-xs text-red-500">{errors.shipToEmail.message}</p>}
           </div>
         </div>
       </CardContent>
