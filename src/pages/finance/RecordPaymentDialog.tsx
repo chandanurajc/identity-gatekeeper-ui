@@ -115,18 +115,21 @@ export function RecordPaymentDialog({
     },
   });
 
-  const form = useForm<RecordPaymentFormSchema>({
+  // Explicitly define defaultValues with all fields and type annotation
+  const defaultValues: RecordPaymentFormData = {
+    paymentDate: new Date(),
+    paymentMethod: "Bank Transfer",
+    amount: outstandingBalance > 0 ? outstandingBalance : 0,
+    referenceNumber: "",
+    notes: "",
+  };
+
+  const form = useForm<RecordPaymentFormData>({
     resolver: zodResolver(recordPaymentFormSchema),
-    defaultValues: {
-      paymentDate: new Date(),
-      paymentMethod: "Bank Transfer",
-      amount: outstandingBalance > 0 ? outstandingBalance : 0,
-      referenceNumber: "",
-      notes: "",
-    },
+    defaultValues,
   });
 
-  function onSubmit(data: RecordPaymentFormSchema) {
+  function onSubmit(data: RecordPaymentFormData) {
     recordPaymentMutate(data);
   }
 
