@@ -1,3 +1,4 @@
+
 "use client"
 
 import { ColumnDef } from "@tanstack/react-table"
@@ -29,21 +30,30 @@ export const columns: ColumnDef<Invoice>[] = [
     ),
   },
   {
-    accessorKey: "remit_to_name",
+    id: "parties",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Remit To" />
+      <DataTableColumnHeader column={column} title="Parties" />
     ),
+    cell: ({ row }) => {
+      const invoice = row.original;
+      return (
+        <div>
+          <div>
+            <span className="text-xs text-muted-foreground">Bill To: </span>
+            <span>{invoice.bill_to_name}</span>
+          </div>
+          <div>
+            <span className="text-xs text-muted-foreground">Remit To: </span>
+            <span>{invoice.remit_to_name}</span>
+          </div>
+        </div>
+      )
+    }
   },
   {
     accessorKey: "invoice_type",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Invoice Type" />
-    ),
-  },
-  {
-    accessorKey: "bill_to_name",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Bill To" />
     ),
   },
   {

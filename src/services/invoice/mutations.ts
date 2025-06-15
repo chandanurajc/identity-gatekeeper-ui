@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Invoice } from '@/types/invoice';
 import { add } from 'date-fns';
@@ -25,8 +26,8 @@ export const createInvoiceFromReceivedPO = async (poId: string, organizationId: 
         .select(`
             *,
             lines:purchase_order_line(*, item:items(*, itemGroup:item_group_id(*))),
-            supplier:organizations!supplier_id(*, contacts:organization_contacts(*)),
-            organization:organizations!organization_id(*, contacts:organization_contacts(*))
+            supplier:organizations!supplier_id(*, contacts:organization_contacts(*), references:organization_references(*)),
+            organization:organizations!organization_id(*, contacts:organization_contacts(*), references:organization_references(*))
         `)
         .eq('id', poId)
         .eq('organization_id', organizationId)
@@ -70,6 +71,13 @@ export const createInvoiceFromReceivedPO = async (poId: string, organizationId: 
     const remitToContact = poResult.supplier?.contacts?.find(c => c.contact_type === 'Remit To');
     console.log(`[Invoice] Bill To contact:`, billToContact ? `${billToContact.first_name} (type: ${billToContact.contact_type})` : 'Not found, strictly searching for "Bill To" type.');
     console.log(`[Invoice] Remit To contact:`, remitToContact ? `${remitToContact.first_name} (type: ${remitToContact.contact_type})` : 'Not found, strictly searching for "Remit To" type.');
+
+    const billToPan = poResult.organization?.references?.find(r => r.reference_type === 'PAN')?.reference_value;
+    const billToCin = poResult.organization?.references?.find(r => r.reference_type === 'CIN')?.reference_value;
+    const remitToPan = poResult.supplier?.references?.find(r => r.reference_type === 'PAN')?.reference_value;
+    const remitToCin = poResult.supplier?.references?.find(r => r.reference_type === 'CIN')?.reference_value;
+    console.log(`[Invoice] Bill To PAN: ${billToPan}, CIN: ${billToCin}`);
+    console.log(`[Invoice] Remit To PAN: ${remitToPan}, CIN: ${remitToCin}`);
 
     const paymentTermsDays = parseInt(poResult.payment_terms?.match(/\d+/)?.[0] || '30', 10);
     const dueDate = add(new Date(poResult.po_date), { days: paymentTermsDays });
@@ -119,6 +127,8 @@ export const createInvoiceFromReceivedPO = async (poId: string, organizationId: 
             bill_to_postal_code: billToContact?.postal_code,
             bill_to_phone: billToContact?.phone_number,
             bill_to_email: billToContact?.email,
+            bill_to_pan: billToPan,
+            bill_to_cin: billToCin,
             remit_to_name: remitToContact?.first_name,
             remit_to_address1: remitToContact?.address1,
             remit_to_address2: remitToContact?.address2,
@@ -128,6 +138,8 @@ export const createInvoiceFromReceivedPO = async (poId: string, organizationId: 
             remit_to_postal_code: remitToContact?.postal_code,
             remit_to_phone: remitToContact?.phone_number,
             remit_to_email: remitToContact?.email,
+            remit_to_pan: remitToPan,
+            remit_to_cin: remitToCin,
             total_item_cost: totalItemCost,
             total_gst: totalGst,
             total_invoice_amount: totalInvoiceAmount,

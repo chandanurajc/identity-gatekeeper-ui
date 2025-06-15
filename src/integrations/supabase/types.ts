@@ -219,10 +219,12 @@ export type Database = {
         Row: {
           bill_to_address1: string | null
           bill_to_address2: string | null
+          bill_to_cin: string | null
           bill_to_city: string | null
           bill_to_country: string | null
           bill_to_email: string | null
           bill_to_name: string | null
+          bill_to_pan: string | null
           bill_to_phone: string | null
           bill_to_postal_code: string | null
           bill_to_state: string | null
@@ -239,10 +241,12 @@ export type Database = {
           po_number: string
           remit_to_address1: string | null
           remit_to_address2: string | null
+          remit_to_cin: string | null
           remit_to_city: string | null
           remit_to_country: string | null
           remit_to_email: string | null
           remit_to_name: string | null
+          remit_to_pan: string | null
           remit_to_phone: string | null
           remit_to_postal_code: string | null
           remit_to_state: string | null
@@ -256,10 +260,12 @@ export type Database = {
         Insert: {
           bill_to_address1?: string | null
           bill_to_address2?: string | null
+          bill_to_cin?: string | null
           bill_to_city?: string | null
           bill_to_country?: string | null
           bill_to_email?: string | null
           bill_to_name?: string | null
+          bill_to_pan?: string | null
           bill_to_phone?: string | null
           bill_to_postal_code?: string | null
           bill_to_state?: string | null
@@ -276,10 +282,12 @@ export type Database = {
           po_number: string
           remit_to_address1?: string | null
           remit_to_address2?: string | null
+          remit_to_cin?: string | null
           remit_to_city?: string | null
           remit_to_country?: string | null
           remit_to_email?: string | null
           remit_to_name?: string | null
+          remit_to_pan?: string | null
           remit_to_phone?: string | null
           remit_to_postal_code?: string | null
           remit_to_state?: string | null
@@ -293,10 +301,12 @@ export type Database = {
         Update: {
           bill_to_address1?: string | null
           bill_to_address2?: string | null
+          bill_to_cin?: string | null
           bill_to_city?: string | null
           bill_to_country?: string | null
           bill_to_email?: string | null
           bill_to_name?: string | null
+          bill_to_pan?: string | null
           bill_to_phone?: string | null
           bill_to_postal_code?: string | null
           bill_to_state?: string | null
@@ -313,10 +323,12 @@ export type Database = {
           po_number?: string
           remit_to_address1?: string | null
           remit_to_address2?: string | null
+          remit_to_cin?: string | null
           remit_to_city?: string | null
           remit_to_country?: string | null
           remit_to_email?: string | null
           remit_to_name?: string | null
+          remit_to_pan?: string | null
           remit_to_phone?: string | null
           remit_to_postal_code?: string | null
           remit_to_state?: string | null

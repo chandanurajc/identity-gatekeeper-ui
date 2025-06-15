@@ -77,6 +77,8 @@ const InvoiceDetail = () => {
                     {invoice.bill_to_address2 && <p>{invoice.bill_to_address2}</p>}
                     <p>{invoice.bill_to_city}, {invoice.bill_to_state} {invoice.bill_to_postal_code}</p>
                     <p>{invoice.bill_to_country}</p>
+                    {invoice.bill_to_pan && <p className="text-sm text-muted-foreground">PAN: {invoice.bill_to_pan}</p>}
+                    {invoice.bill_to_cin && <p className="text-sm text-muted-foreground">CIN: {invoice.bill_to_cin}</p>}
                   </div>
                 </div>
                 <div>
@@ -87,6 +89,8 @@ const InvoiceDetail = () => {
                     {invoice.remit_to_address2 && <p>{invoice.remit_to_address2}</p>}
                     <p>{invoice.remit_to_city}, {invoice.remit_to_state} {invoice.remit_to_postal_code}</p>
                     <p>{invoice.remit_to_country}</p>
+                    {invoice.remit_to_pan && <p className="text-sm text-muted-foreground">PAN: {invoice.remit_to_pan}</p>}
+                    {invoice.remit_to_cin && <p className="text-sm text-muted-foreground">CIN: {invoice.remit_to_cin}</p>}
                   </div>
                 </div>
               </div>
