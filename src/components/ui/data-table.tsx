@@ -12,6 +12,7 @@ import {
   getSortedRowModel,
   SortingState,
   useReactTable,
+  Table as TanstackTable,
 } from "@tanstack/react-table"
 
 import {
@@ -30,6 +31,7 @@ interface DataTableProps<TData, TValue> {
   data: TData[],
   filterColumn?: string
   filterPlaceholder?: string
+  toolbar?: (table: TanstackTable<TData>) => React.ReactNode
 }
 
 export function DataTable<TData, TValue>({
@@ -37,6 +39,7 @@ export function DataTable<TData, TValue>({
   data,
   filterColumn,
   filterPlaceholder,
+  toolbar,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
@@ -58,7 +61,9 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className="space-y-4">
-      {filterColumn && (
+      {toolbar ? (
+        toolbar(table)
+      ) : filterColumn ? (
         <div className="flex items-center py-4">
           <Input
             placeholder={filterPlaceholder || `Filter by ${filterColumn}...`}
@@ -69,7 +74,7 @@ export function DataTable<TData, TValue>({
             className="max-w-sm"
           />
         </div>
-      )}
+      ) : null}
       <div className="rounded-md border">
         <Table>
           <TableHeader>
