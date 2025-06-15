@@ -31,6 +31,11 @@ import { generalLedgerService } from "@/services/generalLedgerService";
 import { Organization } from "@/types/organization";
 import { RecordPaymentFormData } from "@/types/generalLedger";
 import { useAuth } from "@/context/AuthContext";
+import { PaymentDateField } from "./record-payment-fields/PaymentDateField";
+import { PaymentMethodField } from "./record-payment-fields/PaymentMethodField";
+import { AmountField } from "./record-payment-fields/AmountField";
+import { ReferenceNumberField } from "./record-payment-fields/ReferenceNumberField";
+import { NotesField } from "./record-payment-fields/NotesField";
 
 const paymentMethodEnum = z.enum(["Bank Transfer", "UPI", "Cheque", "Cash"]);
 
@@ -110,7 +115,6 @@ export function RecordPaymentDialog({
     },
   });
 
-  // FIX: Provide a strongly typed defaultValues
   const form = useForm<RecordPaymentFormSchema>({
     resolver: zodResolver(recordPaymentFormSchema),
     defaultValues: {
@@ -119,7 +123,7 @@ export function RecordPaymentDialog({
       amount: outstandingBalance > 0 ? outstandingBalance : 0,
       referenceNumber: "",
       notes: "",
-    } as RecordPaymentFormSchema, // All fields provided, no optionals
+    },
   });
 
   function onSubmit(data: RecordPaymentFormSchema) {
@@ -127,7 +131,6 @@ export function RecordPaymentDialog({
   }
 
   return (
-    // ---- FIX: remove 'open' prop from DialogContent (not supported) ----
     <DialogContent onOpenAutoFocus={e => e.preventDefault()} onInteractOutside={e => e.preventDefault()} onEscapeKeyDown={() => onOpenChange(false)}>
       <DialogHeader>
         <DialogTitle>Record Payment</DialogTitle>
@@ -137,113 +140,11 @@ export function RecordPaymentDialog({
       </DialogHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <FormField
-            control={form.control}
-            name="paymentDate"
-            render={({ field }) => (
-              <FormItem className="flex flex-col">
-                <FormLabel>Payment Date</FormLabel>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button
-                        variant={"outline"}
-                        className={cn(
-                          "w-full pl-3 text-left font-normal",
-                          !field.value && "text-muted-foreground"
-                        )}
-                      >
-                        {field.value ? (
-                          format(field.value, "PPP")
-                        ) : (
-                          <span>Pick a date</span>
-                        )}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={field.value}
-                      onSelect={field.onChange}
-                      disabled={(date) =>
-                        date > new Date() || date < new Date("1900-01-01")
-                      }
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="paymentMethod"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Payment Method</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a payment method" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
-                    <SelectItem value="UPI">UPI</SelectItem>
-                    <SelectItem value="Cheque">Cheque</SelectItem>
-                    <SelectItem value="Cash">Cash</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="amount"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Amount</FormLabel>
-                <FormControl>
-                  <Input type="number" placeholder="Enter amount" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="referenceNumber"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Reference Number</FormLabel>
-                <FormControl>
-                  <Input placeholder="e.g. PMT-12345" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <FormField
-            control={form.control}
-            name="notes"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Notes</FormLabel>
-                <FormControl>
-                  <Textarea placeholder="Add any relevant notes" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <PaymentDateField control={form.control} />
+          <PaymentMethodField control={form.control} />
+          <AmountField control={form.control} />
+          <ReferenceNumberField control={form.control} />
+          <NotesField control={form.control} />
           <DialogFooter>
             <Button type="submit" disabled={isPending}>
               {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
