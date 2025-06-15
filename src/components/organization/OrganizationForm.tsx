@@ -34,7 +34,7 @@ const organizationSchema = z.object({
   contacts: z.array(
     z.object({
       id: z.string(),
-      type: z.enum(["Registered location", "Billing", "Shipping", "Owner"]),
+      type: z.enum(["Registered location", "Billing", "Shipping", "Owner", "Bill To", "Remit To"]),
       firstName: z.string().min(2, "First name must be at least 2 characters"),
       lastName: z.string().optional(),
       address1: z.string().optional(),
@@ -220,24 +220,33 @@ const OrganizationForm = ({ initialData, onSubmit, isEditing = false }: Organiza
   const onInvalidSubmit = (errors: any) => {
     console.log("=== FORM VALIDATION FAILED ===");
     console.log("OrganizationForm: Validation errors:", errors);
-    console.log("OrganizationForm: Current form values:", form.getValues());
     
-    // Create detailed error messages
-    const errorFields = Object.keys(errors);
-    const errorMessages = errorFields.map(field => {
-      const error = errors[field];
-      if (error?.message) {
-        return `${field}: ${error.message}`;
+    const messages: string[] = [];
+    
+    Object.entries(errors).forEach(([field, error]: [string, any]) => {
+      if ((field === 'contacts' || field === 'references') && Array.isArray(error)) {
+        error.forEach((itemError, index) => {
+          if (itemError) {
+            Object.entries(itemError).forEach(([itemField, itemFieldError]: [string, any]) => {
+              if (itemFieldError?.message) {
+                const prefix = field === 'contacts' ? 'Contact' : 'Reference';
+                messages.push(`${prefix} ${index + 1}, ${itemField}: ${itemFieldError.message}`);
+              }
+            });
+          }
+        });
+      } else if (error?.message) {
+        messages.push(`${field.charAt(0).toUpperCase() + field.slice(1)}: ${error.message}`);
       }
-      return `${field}: Invalid value`;
     });
     
-    console.log("OrganizationForm: Error fields:", errorFields);
-    console.log("OrganizationForm: Error messages:", errorMessages);
+    if (messages.length === 0 && Object.keys(errors).length > 0) {
+      messages.push("Some fields have invalid values. Please review the form.");
+    }
     
     toast({
       title: "Validation Error",
-      description: `Please fix the following errors: ${errorMessages.join(', ')}`,
+      description: messages.join('; '),
       variant: "destructive",
     });
   };

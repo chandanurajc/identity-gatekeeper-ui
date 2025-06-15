@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Organization, OrganizationFormData, Reference, Contact } from "@/types/organization";
 
@@ -362,7 +361,7 @@ export const organizationService = {
       if (organizationData.contacts && organizationData.contacts.length > 0) {
         console.log("OrganizationService: Creating new contacts:", organizationData.contacts);
         
-        const allowedContactTypes = ['Registered location', 'Billing', 'Shipping', 'Owner'];
+        const allowedContactTypes = ['Registered location', 'Billing', 'Shipping', 'Owner', 'Bill To', 'Remit To'];
         const validContacts = organizationData.contacts.filter(contact => {
           const validType = allowedContactTypes.includes(contact.type);
           const hasFirstName = contact.firstName && contact.firstName.trim();
