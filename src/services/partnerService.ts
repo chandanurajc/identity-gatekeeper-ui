@@ -3,8 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Partner, PartnerFormData, OrganizationSearchResult } from "@/types/partner";
 
 export const partnerService = {
-  async getPartners(): Promise<Partner[]> {
-    console.log("Fetching partners from Supabase...");
+  async getPartners(currentOrganizationId: string): Promise<Partner[]> {
+    console.log("Fetching partners from Supabase for org:", currentOrganizationId);
     
     try {
       const { data, error } = await supabase
@@ -14,6 +14,7 @@ export const partnerService = {
           organization:organizations!partners_organization_id_fkey(code, name, type),
           current_organization:organizations!partners_current_organization_id_fkey(id, code, name)
         `)
+        .eq('current_organization_id', currentOrganizationId)
         .order('created_on', { ascending: false });
 
       if (error) {

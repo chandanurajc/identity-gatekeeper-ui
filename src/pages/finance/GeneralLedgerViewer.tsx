@@ -1,5 +1,5 @@
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
 import { useMultiTenant } from "@/hooks/useMultiTenant";
@@ -29,27 +29,35 @@ const GeneralLedgerViewer = () => {
     enabled: !!organizationId,
   });
 
-  const { data: suppliers } = useQuery({
-    queryKey: ['partners', organizationId, 'Supplier'],
-    queryFn: () => partnerService.getPartners(organizationId!, 'Supplier'),
+  const { data: partners } = useQuery({
+    queryKey: ['partners', organizationId],
+    queryFn: () => partnerService.getPartners(organizationId!),
     enabled: !!organizationId,
   });
 
-  const { data: ledgerEntries, isLoading: isLoadingLedger } = useQuery({
+  const suppliers = useMemo(() => {
+    if (!partners) return [];
+    return partners.filter(p => p.organizationType === 'Supplier' && p.status === 'active');
+  }, [partners]);
+
+  const { data: ledgerEntries, isLoading: isLoadingLedger, error: ledgerError } = useQuery({
     queryKey: ['generalLedger', organizationId, selectedRemitTo, loadTrigger],
     queryFn: async () => {
         if (!organizationId || !selectedRemitTo || loadTrigger === 0) return [];
         return generalLedgerService.getLedgerEntries(organizationId, selectedRemitTo);
     },
     enabled: !!organizationId && !!selectedRemitTo && loadTrigger > 0,
-    onError: (error: Error) => {
+  });
+
+  useEffect(() => {
+    if (ledgerError) {
         toast({
             variant: "destructive",
             title: "Error fetching ledger",
-            description: error.message,
+            description: ledgerError.message,
         });
     }
-  });
+  }, [ledgerError, toast]);
 
   const processedData = useMemo(() => {
     if (!ledgerEntries) return [];
@@ -85,7 +93,7 @@ const GeneralLedgerViewer = () => {
                 </SelectTrigger>
                 <SelectContent>
                   {suppliers?.map(s => (
-                    <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                    <SelectItem key={s.id} value={s.id}>{s.organizationName}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -96,11 +104,16 @@ const GeneralLedgerViewer = () => {
           </div>
           
           {loadTrigger > 0 && (
-            <DataTable
-              columns={columns}
-              data={processedData}
-              isLoading={isLoadingLedger}
-            />
+            isLoadingLedger ? (
+              <div className="flex justify-center items-center h-24">
+                <p>Loading ledger...</p>
+              </div>
+            ) : (
+              <DataTable
+                columns={columns}
+                data={processedData}
+              />
+            )
           )}
         </CardContent>
       </Card>
