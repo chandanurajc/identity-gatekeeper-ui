@@ -70,54 +70,57 @@ const GeneralLedgerViewer = () => {
     }
   }, [ledgerEntries]);
 
-  // Running balance and debit/credit assignment logic (fixed, with debug)
+  // Running balance and debit/credit assignment logic
   const processedData = useMemo(() => {
     if (!ledgerEntries) return [];
     let runningBalance = 0;
 
-    // Sort by transaction_date ASC, then by created_on ASC for stability
     const sortedEntries = [...ledgerEntries].sort((a, b) => {
       const aDate = new Date(a.transaction_date).getTime();
       const bDate = new Date(b.transaction_date).getTime();
       if (aDate !== bDate) return aDate - bDate;
-      // Fallback to created_on if same trans date
       return new Date(a.created_on).getTime() - new Date(b.created_on).getTime();
     });
 
     const processed = sortedEntries.map((entry) => {
       let debit = 0;
       let credit = 0;
+      let amount = Number(entry.amount);
+      if (isNaN(amount)) {
+        console.warn(`[GeneralLedger] BAD ENTRY: amount is not a number for entry`, entry);
+        amount = 0;
+      }
       // Correct accounting logic
       if (entry.transaction_type === "Payable Invoice" || entry.transaction_type === "Debit Note") {
-        credit = entry.amount;
-        runningBalance += entry.amount;
+        credit = amount;
+        runningBalance += amount;
       } else if (entry.transaction_type === "Payment" || entry.transaction_type === "Credit Note") {
-        debit = entry.amount;
-        runningBalance -= entry.amount;
+        debit = amount;
+        runningBalance -= amount;
       }
       // Diagnostic for each row
-      console.log(`[GeneralLedger] After ${entry.transaction_type} (${entry.amount}): Balance = ${runningBalance}`);
+      console.log(`[GeneralLedger] After ${entry.transaction_type} (${amount}): Balance = ${runningBalance}`);
       return {
         ...entry,
         debit,
         credit,
-        balance: runningBalance > 0 ? runningBalance : 0,
+        balance: runningBalance,  // Always show actual running balance (can be negative)
       };
     });
     console.log("[GeneralLedger] Processed data for table:", processed);
     return processed;
   }, [ledgerEntries]);
 
-  // Outstanding balance remains the same: sum all credits minus debits, never negative
+  // Outstanding balance remains the same: sum all credits minus debits, can be negative if overpaid
   const outstandingBalance = useMemo(() => {
     if (!ledgerEntries || ledgerEntries.length === 0) return 0;
     const totalCredit = ledgerEntries
       .filter(e => e.transaction_type === "Payable Invoice" || e.transaction_type === "Debit Note")
-      .reduce((acc, entry) => acc + entry.amount, 0);
+      .reduce((acc, entry) => acc + Number(entry.amount), 0);
     const totalDebit = ledgerEntries
       .filter(e => e.transaction_type === "Payment" || e.transaction_type === "Credit Note")
-      .reduce((acc, entry) => acc + entry.amount, 0);
-    return Math.max(totalCredit - totalDebit, 0);
+      .reduce((acc, entry) => acc + Number(entry.amount), 0);
+    return totalCredit - totalDebit;
   }, [ledgerEntries]);
 
   return (
