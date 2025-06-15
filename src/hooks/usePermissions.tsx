@@ -41,7 +41,7 @@ export const usePermissions = () => {
               "view-organization", "create-organization", "edit-organization",
               "view-division", "create-division", "edit-division",
               "view-category", "create-category", "edit-category",
-              "View PO", "Create PO", "Edit PO",
+              "View PO", "Create PO", "Edit PO", "Cancel PO",
               "access_admin", "access_settings"
             ];
             setPermissions(allPermissions);
@@ -177,6 +177,7 @@ export const usePermissions = () => {
         canViewPurchaseOrders: false,
         canCreatePurchaseOrder: false,
         canEditPurchaseOrder: false,
+        canCancelPurchaseOrder: false,
         // PO Receive permissions
         canViewPOReceive: false,
         canCreatePOReceive: false,
@@ -228,6 +229,7 @@ export const usePermissions = () => {
         canViewPurchaseOrders: true,
         canCreatePurchaseOrder: true,
         canEditPurchaseOrder: true,
+        canCancelPurchaseOrder: true,
         // PO Receive permissions
         canViewPOReceive: true,
         canCreatePOReceive: true,
@@ -278,6 +280,7 @@ export const usePermissions = () => {
       canViewPurchaseOrders: permissions.includes("View PO"),
       canCreatePurchaseOrder: permissions.includes("Create PO"),
       canEditPurchaseOrder: permissions.includes("Edit PO"),
+      canCancelPurchaseOrder: permissions.includes("Cancel PO"),
       // PO Receive permissions
       canViewPOReceive: permissions.includes("View PO Receive"),
       canCreatePOReceive: permissions.includes("Create PO Receive"),

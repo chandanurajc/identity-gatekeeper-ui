@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -105,6 +106,8 @@ const PurchaseOrdersList = () => {
       case "Created": return "secondary";
       case "Approved": return "default";
       case "Received": return "default";
+      case "Partially Received": return "outline";
+      case "Cancelled": return "destructive";
       default: return "secondary";
     }
   };
@@ -133,7 +136,8 @@ const PurchaseOrdersList = () => {
               {canEditPurchaseOrder && (
                 <Button
                   onClick={() => navigate(`/order-management/purchase-orders/${selectedOrders[0]}/edit`)}
-                  disabled={selectedOrders.length !== 1}
+                  disabled={selectedOrders.length !== 1 || purchaseOrders.find(order => order.id === selectedOrders[0])?.status !== 'Created'}
+                  title={selectedOrders.length === 1 && purchaseOrders.find(order => order.id === selectedOrders[0])?.status !== 'Created' ? 'Can only edit POs with "Created" status' : ''}
                 >
                   <Edit className="mr-2 h-4 w-4" />
                   Edit

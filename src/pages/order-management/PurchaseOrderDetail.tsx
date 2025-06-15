@@ -1,31 +1,33 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Edit, ArrowLeft } from "lucide-react";
+import { Edit, ArrowLeft, XCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { purchaseOrderService } from "@/services/purchaseOrderService";
 import { usePurchaseOrderPermissions } from "@/hooks/usePurchaseOrderPermissions";
 import { PurchaseOrder } from "@/types/purchaseOrder";
 import { format } from "date-fns";
+import PermissionButton from "@/components/PermissionButton";
+import { useAuth } from "@/context/AuthContext";
 
 const PurchaseOrderDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { canViewPurchaseOrders, canEditPurchaseOrder } = usePurchaseOrderPermissions();
+  const { user } = useAuth();
+  const { canEditPurchaseOrder } = usePurchaseOrderPermissions();
   
   const [purchaseOrder, setPurchaseOrder] = useState<PurchaseOrder | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (id && canViewPurchaseOrders) {
+    if (id && canEditPurchaseOrder) {
       fetchPurchaseOrder();
     }
-  }, [id, canViewPurchaseOrders]);
+  }, [id, canEditPurchaseOrder]);
 
   const fetchPurchaseOrder = async () => {
     if (!id) return;
@@ -55,11 +57,41 @@ const PurchaseOrderDetail = () => {
     }
   };
 
+  const handleCancelPO = async () => {
+    if (!id || !user) return;
+
+    if (purchaseOrder?.status !== 'Created') {
+      toast({
+        title: "Action not allowed",
+        description: "This purchase order cannot be cancelled as it's not in 'Created' status.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await purchaseOrderService.cancelPurchaseOrder(id, user.id);
+      toast({
+        title: "Success",
+        description: "Purchase order has been cancelled.",
+      });
+      fetchPurchaseOrder(); // Refresh data
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to cancel purchase order.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
       case "Created": return "secondary";
       case "Approved": return "default";
       case "Received": return "default";
+      case "Partially Received": return "outline";
+      case "Cancelled": return "destructive";
       default: return "secondary";
     }
   };
@@ -74,13 +106,13 @@ const PurchaseOrderDetail = () => {
     return { itemTotal, totalGST, grandTotal };
   };
 
-  if (!canViewPurchaseOrders) {
+  if (!canEditPurchaseOrder) {
     return (
       <div className="container mx-auto py-8">
         <Card>
           <CardContent className="pt-6">
             <p className="text-center text-muted-foreground">
-              You don't have permission to view purchase orders.
+              You don't have permission to view or edit purchase orders.
             </p>
           </CardContent>
         </Card>
@@ -126,12 +158,28 @@ const PurchaseOrderDetail = () => {
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Purchase Orders
         </Button>
-        {canEditPurchaseOrder && (
-          <Button onClick={() => navigate(`/order-management/purchase-orders/${id}/edit`)}>
-            <Edit className="mr-2 h-4 w-4" />
-            Edit Purchase Order
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {canEditPurchaseOrder && (
+            <Button 
+              onClick={() => navigate(`/order-management/purchase-orders/${id}/edit`)}
+              disabled={purchaseOrder.status !== 'Created'}
+              title={purchaseOrder.status !== 'Created' ? 'Can only edit POs with "Created" status' : ''}
+              >
+              <Edit className="mr-2 h-4 w-4" />
+              Edit Purchase Order
+            </Button>
+          )}
+          <PermissionButton
+            permission="Cancel PO"
+            onClick={handleCancelPO}
+            disabled={purchaseOrder.status !== 'Created'}
+            variant="destructive"
+            title={purchaseOrder.status !== 'Created' ? 'Can only cancel POs with "Created" status' : ''}
+          >
+            <XCircle className="mr-2 h-4 w-4" />
+            Cancel PO
+          </PermissionButton>
+        </div>
       </div>
 
       {/* Header Information */}

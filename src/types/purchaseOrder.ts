@@ -16,7 +16,7 @@ export interface PurchaseOrder {
   paymentTerms: string;
   notes?: string;
   trackingNumber?: string;
-  status: 'Created' | 'Approved' | 'Received' | 'Partially Received';
+  status: 'Created' | 'Approved' | 'Received' | 'Partially Received' | 'Cancelled';
   organizationId: string;
   createdBy: string;
   createdOn: Date;

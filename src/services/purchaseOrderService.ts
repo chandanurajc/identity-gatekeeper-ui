@@ -8,7 +8,8 @@ import {
 import { 
   createPurchaseOrder, 
   updatePurchaseOrder,
-  receivePurchaseOrder
+  receivePurchaseOrder,
+  cancelPurchaseOrder
 } from './purchaseOrder/mutations';
 
 export const purchaseOrderService = {
@@ -17,6 +18,7 @@ export const purchaseOrderService = {
   createPurchaseOrder,
   updatePurchaseOrder,
   receivePurchaseOrder,
+  cancelPurchaseOrder,
   generatePONumber,
   getDivisionShippingAddress,
 };
