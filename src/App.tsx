@@ -40,10 +40,10 @@ const App = () => (
               } 
             />
             
-            <AdminRoutes />
-            <MasterDataRoutes />
-            <OrderManagementRoutes />
-            <InventoryRoutes />
+            {AdminRoutes()}
+            {MasterDataRoutes()}
+            {OrderManagementRoutes()}
+            {InventoryRoutes()}
             
             {/* Settings Route */}
             <Route 
