@@ -1,3 +1,4 @@
+
 export interface Reference {
   id: string;
   type: 'GST' | 'CIN' | 'PAN' | 'GS1Code';
@@ -7,7 +8,7 @@ export interface Reference {
 export interface Contact {
   id: string;
   type: 'Registered location' | 'Billing' | 'Shipping' | 'Owner' | 'Bill To' | 'Remit To';
-  firstName: string;
+  firstName?: string;
   lastName?: string;
   address1?: string;
   address2?: string;

@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -35,7 +36,7 @@ const organizationSchema = z.object({
     z.object({
       id: z.string(),
       type: z.enum(["Registered location", "Billing", "Shipping", "Owner", "Bill To", "Remit To"]),
-      firstName: z.string().min(2, "First name must be at least 2 characters"),
+      firstName: z.string().optional(),
       lastName: z.string().optional(),
       address1: z.string().optional(),
       address2: z.string().optional(),

@@ -190,7 +190,7 @@ export const organizationService = {
         const contacts = organizationData.contacts.map(contact => ({
           organization_id: orgData.id,
           contact_type: contact.type,
-          first_name: contact.firstName,
+          first_name: contact.firstName || '',
           last_name: contact.lastName,
           address1: contact.address1,
           address2: contact.address2,
@@ -364,23 +364,19 @@ export const organizationService = {
         const allowedContactTypes = ['Registered location', 'Billing', 'Shipping', 'Owner', 'Bill To', 'Remit To'];
         const validContacts = organizationData.contacts.filter(contact => {
           const validType = allowedContactTypes.includes(contact.type);
-          const hasFirstName = contact.firstName && contact.firstName.trim();
           
           if (!validType) {
             console.error("OrganizationService: Invalid contact type:", contact.type, "Allowed:", allowedContactTypes);
           }
-          if (!hasFirstName) {
-            console.error("OrganizationService: Missing first name for contact:", contact.type);
-          }
           
-          return validType && hasFirstName;
+          return validType;
         });
         
         if (validContacts.length > 0) {
           const contacts = validContacts.map(contact => ({
             organization_id: id,
             contact_type: contact.type,
-            first_name: contact.firstName.trim(),
+            first_name: contact.firstName?.trim() || '',
             last_name: contact.lastName?.trim() || null,
             address1: contact.address1?.trim() || null,
             address2: contact.address2?.trim() || null,
