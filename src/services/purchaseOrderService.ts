@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { PurchaseOrder, PurchaseOrderFormData, PurchaseOrderLine } from "@/types/purchaseOrder";
 
@@ -316,17 +317,38 @@ export const purchaseOrderService = {
   },
 
   async generatePONumber(): Promise<string> {
-    // Get the count of existing POs to generate next number
-    const { count, error } = await supabase
+    const { data, error } = await supabase
       .from('purchase_order')
-      .select('*', { count: 'exact', head: true });
+      .select('po_number')
+      .order('po_number', { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
     if (error) {
-      console.error("Error getting PO count:", error);
+      console.error("Error getting latest PO number:", error);
       throw new Error(`Failed to generate PO number: ${error.message}`);
     }
 
-    const nextNumber = (count || 0) + 1;
+    if (!data?.po_number) {
+      return 'PO000001';
+    }
+    
+    const latestPoNumberStr = data.po_number.replace('PO', '');
+    const latestPoNumber = parseInt(latestPoNumberStr, 10);
+
+    if (isNaN(latestPoNumber)) {
+        console.error("Failed to parse PO number, falling back to count", data.po_number);
+        const { count, error: countError } = await supabase
+            .from('purchase_order')
+            .select('*', { count: 'exact', head: true });
+
+        if (countError) {
+            throw new Error(`Failed to generate PO number on fallback: ${countError.message}`);
+        }
+        return `PO${String((count || 0) + 1).padStart(6, '0')}`;
+    }
+
+    const nextNumber = latestPoNumber + 1;
     return `PO${String(nextNumber).padStart(6, '0')}`;
   },
 
