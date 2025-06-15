@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { PurchaseOrder, PurchaseOrderFormData, PurchaseOrderLine } from "@/types/purchaseOrder";
 
@@ -294,20 +293,22 @@ export const purchaseOrderService = {
   },
 
   async getDivisionShippingAddress(divisionId: string): Promise<any> {
-    console.log("Fetching division shipping address:", divisionId);
+    console.log("Fetching division shipping address (from division_contacts):", divisionId);
     
+    // Fetch from the division_contacts table instead of organization_contacts
     const { data, error } = await supabase
-      .from('organization_contacts')
+      .from('division_contacts')
       .select('*')
-      .eq('organization_id', divisionId)
+      .eq('division_id', divisionId)
       .eq('contact_type', 'Shipping')
-      .single();
+      .maybeSingle();
 
     if (error && error.code !== 'PGRST116') {
-      console.error("Error fetching division shipping address:", error);
+      console.error("Error fetching division shipping address (division_contacts):", error);
       throw new Error(`Failed to fetch division shipping address: ${error.message}`);
     }
 
+    // Return the contact data or null if not found
     return data;
   }
 };

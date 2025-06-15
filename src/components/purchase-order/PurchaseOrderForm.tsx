@@ -137,6 +137,7 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
     try {
       const address = await purchaseOrderService.getDivisionShippingAddress(watchedDivisionId);
       if (address) {
+        // division_contacts fields: address1, address2, postal_code, city, state, country, phone_number, email
         setValue("shipToAddress1", address.address1 || "");
         setValue("shipToAddress2", address.address2 || "");
         setValue("shipToPostalCode", address.postal_code || "");
