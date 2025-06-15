@@ -1,8 +1,10 @@
+
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import {
+  Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -134,28 +136,34 @@ export function RecordPaymentDialog({
   }
 
   return (
-    <DialogContent onOpenAutoFocus={e => e.preventDefault()} onInteractOutside={e => e.preventDefault()} onEscapeKeyDown={() => onOpenChange(false)}>
-      <DialogHeader>
-        <DialogTitle>Record Payment</DialogTitle>
-        <DialogDescription>
-          Record a payment made to the selected supplier.
-        </DialogDescription>
-      </DialogHeader>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <PaymentDateField control={form.control} />
-          <PaymentMethodField control={form.control} />
-          <AmountField control={form.control} />
-          <ReferenceNumberField control={form.control} />
-          <NotesField control={form.control} />
-          <DialogFooter>
-            <Button type="submit" disabled={isPending}>
-              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Record Payment
-            </Button>
-          </DialogFooter>
-        </form>
-      </Form>
-    </DialogContent>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent
+        onOpenAutoFocus={e => e.preventDefault()}
+        onInteractOutside={e => e.preventDefault()}
+        onEscapeKeyDown={() => onOpenChange(false)}
+      >
+        <DialogHeader>
+          <DialogTitle>Record Payment</DialogTitle>
+          <DialogDescription>
+            Record a payment made to the selected supplier.
+          </DialogDescription>
+        </DialogHeader>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <PaymentDateField control={form.control} />
+            <PaymentMethodField control={form.control} />
+            <AmountField control={form.control} />
+            <ReferenceNumberField control={form.control} />
+            <NotesField control={form.control} />
+            <DialogFooter>
+              <Button type="submit" disabled={isPending}>
+                {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Record Payment
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
   );
 }
