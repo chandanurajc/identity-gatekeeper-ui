@@ -4,6 +4,17 @@ import { ContactForm } from "./ContactForm";
 import { ReferenceForm } from "./ReferenceForm";
 import { DivisionMainFields } from "./DivisionMainFields";
 import { useDivisionForm } from "./hooks/useDivisionForm";
+import React from "react";
+
+// Helper loader UI
+function Loader() {
+  return <div className="text-center py-8">Loading form data...</div>;
+}
+
+// Helper error UI
+function ErrorMsg({message}:{message:string}) {
+  return <div className="text-center py-8 text-destructive">{message}</div>;
+}
 
 interface DivisionFormProps {
   initialData?: Partial<import("@/types/division").DivisionFormData>;
@@ -23,7 +34,21 @@ const DivisionForm = ({ initialData, onSubmit, isEditing = false }: DivisionForm
     handleReferencesChange,
     isEditing: isEditingFromHook,
     toast,
+    orgsLoading,
+    orgsError,
   } = useDivisionForm({ initialData, onSubmit, isEditing });
+
+  // Debug logs
+  React.useEffect(() => {
+    console.log("[DivisionForm] Props:", { initialData, onSubmit, isEditing });
+    console.log("[DivisionForm] orgsLoading:", orgsLoading, "organizations:", organizations, "orgsError:", orgsError);
+  }, [initialData, onSubmit, isEditing, orgsLoading, organizations, orgsError]);
+
+  if (orgsLoading) return <Loader />;
+  if (orgsError) return <ErrorMsg message={orgsError} />;
+  if (!organizations || organizations.length === 0) {
+    return <ErrorMsg message="No organizations found. Cannot create division." />;
+  }
 
   return (
     <form
@@ -45,7 +70,7 @@ const DivisionForm = ({ initialData, onSubmit, isEditing = false }: DivisionForm
     >
       <DivisionMainFields
         control={form.control}
-        organizations={organizations}
+        organizations={organizations || []}
         selectedOrg={selectedOrg}
         isSubmitting={isSubmitting}
         isEditing={isEditingFromHook}
@@ -101,3 +126,4 @@ const DivisionForm = ({ initialData, onSubmit, isEditing = false }: DivisionForm
 };
 
 export default DivisionForm;
+

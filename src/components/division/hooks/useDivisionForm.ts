@@ -9,6 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { organizationService } from "@/services/organizationService";
 import { Organization } from "@/types/organization";
 
+// Newly add orgsLoading/orgsError for loading/error state
 interface UseDivisionFormProps {
   initialData?: Partial<DivisionFormData>;
   onSubmit: (data: DivisionFormData) => Promise<void>;
@@ -20,12 +21,21 @@ export function useDivisionForm({ initialData, onSubmit, isEditing = false }: Us
   const { toast } = useToast();
 
   // Fetch organizations for dropdown
-  const { data: organizationsData = [] } = useQuery({
+  const {
+    data: organizationsData = [],
+    isLoading: orgsLoading,
+    error: orgsQueryError
+  } = useQuery({
     queryKey: ['organizations'],
     queryFn: organizationService.getOrganizations,
   });
 
   const organizations: Organization[] = Array.isArray(organizationsData) ? organizationsData : [];
+  const orgsError = orgsQueryError ? (typeof orgsQueryError === "object" && "message" in orgsQueryError ? orgsQueryError.message : String(orgsQueryError)) : undefined;
+
+  // Debug organization query
+  if (orgsLoading) console.log("[useDivisionForm] Organizations loading...");
+  if (orgsError) console.error("[useDivisionForm] Organizations query error:", orgsError);
 
   const form = useForm<DivisionFormData>({
     resolver: zodResolver(divisionSchema),
@@ -95,10 +105,11 @@ export function useDivisionForm({ initialData, onSubmit, isEditing = false }: Us
     selectedOrg,
     isSubmitting,
     isEditing,
+    orgsLoading,
+    orgsError,
     handleSubmit,
     handleContactsChange,
     handleReferencesChange,
     toast,
   };
 }
-
