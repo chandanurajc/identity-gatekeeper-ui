@@ -73,6 +73,11 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
     defaultValues: initialData || defaultFormData
   });
 
+  useEffect(() => {
+    register("divisionId", { required: "Division is required" });
+    register("supplierId", { required: "Supplier is required" });
+  }, [register]);
+
   const { fields, append, remove } = useFieldArray({
     control,
     name: "lines"
