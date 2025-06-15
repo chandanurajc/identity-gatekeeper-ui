@@ -1,17 +1,17 @@
 
 export interface InventoryStock {
     id: string;
-    organizationId: string;
-    itemId: string;
-    divisionId: string;
+    organization_id: string;
+    item_id: string;
+    division_id: string;
     quantity: number;
     uom: string;
-    transactionType: 'PO_RECEIVE' | 'ADJUSTMENT_IN' | 'ADJUSTMENT_OUT' | 'SALES_ORDER';
-    referenceNumber?: string;
-    createdBy: string;
-    createdOn: Date;
-    updatedBy?: string;
-    updatedOn?: Date;
+    transaction_type: 'PO_RECEIVE' | 'ADJUSTMENT_IN' | 'ADJUSTMENT_OUT' | 'SALES_ORDER';
+    reference_number?: string;
+    created_by: string;
+    created_on: Date;
+    updated_by?: string;
+    updated_on?: Date;
 }
 
 export interface InventoryStockLedgerItem extends InventoryStock {

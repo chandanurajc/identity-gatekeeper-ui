@@ -244,6 +244,12 @@ export const createModuleGroups = (permissions: any): ModuleGroup[] => {
       icon: Warehouse,
       permission: true,
     });
+    inventoryItems.push({
+      label: "Inventory Stock Ledger",
+      path: "/inventory/stock-ledger",
+      icon: ListChecks,
+      permission: true,
+    });
   }
 
   if (inventoryItems.length > 0) {
