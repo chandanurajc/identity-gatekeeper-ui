@@ -68,18 +68,25 @@ export function useDivisionForm({ initialData, onSubmit, isEditing = false }: Us
     }
   };
 
-  // Fix: Always clear the error and re-validate when contacts are changed and at least one exists.
+  /**
+   * Fix: Always clear the error and re-validate when contacts are changed.
+   * This ensures the "at least one contact" error is removed when at least one contact exists,
+   * especially if the error was set by a previous invalid submit.
+   */
   const handleContactsChange = (contacts: any[]) => {
     form.setValue("contacts", contacts, { shouldValidate: true });
 
+    // Always clear and re-trigger errors after contact edit
     if (contacts.length > 0) {
       form.clearErrors("contacts");
     }
+    // Ensure the field is validated whenever there's a change
     form.trigger("contacts");
   };
 
   const handleReferencesChange = (references: any[]) => {
     form.setValue("references", references, { shouldValidate: true });
+    form.trigger("references");
   };
 
   return {
@@ -94,3 +101,4 @@ export function useDivisionForm({ initialData, onSubmit, isEditing = false }: Us
     toast,
   };
 }
+
