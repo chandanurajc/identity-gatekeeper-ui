@@ -142,7 +142,7 @@ export const purchaseOrderService = {
   async createPurchaseOrder(formData: PurchaseOrderFormData, organizationId: string, userId: string): Promise<PurchaseOrder> {
     const poDate = formData.poDate;
     if (!poDate) {
-      throw new Error("[PO] PO Date is required.");
+      throw new Error("PO Date is required.");
     }
 
     const poHeader = {
@@ -166,35 +166,24 @@ export const purchaseOrderService = {
       created_by: userId
     };
 
-    let { data: poData, error: poError } = await supabase
+    const { data: poData, error: poError } = await supabase
       .from('purchase_order')
       .insert(poHeader)
       .select()
       .single();
 
-    if (poError && poError.code === '23505' && poError.message.includes('purchase_order_po_number_key')) {
-        console.warn("[PO] Duplicate PO number detected. Regenerating and retrying once.");
-        const newPoNumber = await this.generatePONumber();
-        const { data: retryData, error: retryError } = await supabase
-            .from('purchase_order')
-            .insert({ ...poHeader, po_number: newPoNumber })
-            .select()
-            .single();
-        
-        if (retryError) {
-            console.error("[PO] Error on retry creating PO header:", retryError);
-            throw new Error(`[PO] Failed to create purchase order on retry: ${retryError.message}`);
-        }
-        poData = retryData;
-    } else if (poError) {
-        console.error("[PO] Error creating purchase order (header):", poError);
-        throw new Error(`[PO] Failed to create purchase order: ${poError.message}`);
+    if (poError) {
+      if (poError.code === '23505' && poError.message.includes('purchase_order_po_number_key')) {
+        console.error("[PO] Duplicate PO number error:", poError);
+        throw new Error(`Purchase Order number '${formData.poNumber}' already exists. Please refresh the page to get a new number.`);
+      }
+      console.error("[PO] Error creating purchase order (header):", poError);
+      throw new Error(`Failed to create purchase order: ${poError.message}`);
     }
-
 
     if (!poData?.id) {
       console.error("[PO] PO header insert did not return an ID", poData);
-      throw new Error("[PO] Purchase order header creation failed: No ID returned");
+      throw new Error("Purchase order header creation failed: No ID returned.");
     }
 
     if (formData.lines.length > 0) {
@@ -222,7 +211,7 @@ export const purchaseOrderService = {
       if (lineError) {
         console.error("[PO] Error creating purchase order lines:", lineError);
         // Note: This leaves an orphaned PO header. A transaction would be ideal here.
-        throw new Error(`[PO] Failed to create purchase order lines: ${lineError.message}`);
+        throw new Error(`Failed to create purchase order lines: ${lineError.message}`);
       }
     }
 
