@@ -1,6 +1,43 @@
 import { supabase } from "@/integrations/supabase/client";
 import { Organization, OrganizationFormData, Reference, Contact } from "@/types/organization";
 
+// Helper function to transform Supabase data to the application's Organization type
+const transformSupabaseOrg = (org: any): Organization => {
+  if (!org) return org;
+  return {
+    id: org.id,
+    name: org.name,
+    code: org.code,
+    alias: org.description,
+    type: org.type as Organization['type'],
+    status: org.status as 'active' | 'inactive',
+    references: (org.organization_references || []).map((ref: any) => ({
+      id: ref.id,
+      type: ref.reference_type as 'GST' | 'CIN' | 'PAN' | 'GS1Code',
+      value: ref.reference_value,
+    })),
+    contacts: (org.organization_contacts || []).map((contact: any) => ({
+      id: contact.id,
+      type: contact.contact_type,
+      firstName: contact.first_name,
+      lastName: contact.last_name,
+      address1: contact.address1,
+      address2: contact.address2,
+      postalCode: contact.postal_code,
+      city: contact.city,
+      state: contact.state,
+      country: contact.country,
+      phoneNumber: contact.phone_number,
+      email: contact.email,
+      website: contact.website,
+    })),
+    createdBy: org.created_by,
+    createdOn: org.created_on ? new Date(org.created_on) : undefined,
+    updatedBy: org.updated_by,
+    updatedOn: org.updated_on ? new Date(org.updated_on) : undefined,
+  };
+};
+
 export const organizationService = {
   async getOrganizations(): Promise<Organization[]> {
     console.log("Fetching organizations from Supabase...");
@@ -27,44 +64,7 @@ export const organizationService = {
         return [];
       }
 
-      // Transform database data to match Organization interface
-      const transformedData = data.map(org => {
-        console.log("Transforming organization:", org);
-        
-        return {
-          id: org.id,
-          name: org.name,
-          code: org.code,
-          alias: org.description,
-          type: org.type as Organization['type'],
-          status: org.status as 'active' | 'inactive',
-          references: (org.organization_references || []).map((ref: any) => ({
-            id: ref.id,
-            type: ref.reference_type as 'GST' | 'CIN' | 'PAN' | 'GS1Code',
-            value: ref.reference_value,
-          })),
-          contacts: (org.organization_contacts || []).map((contact: any) => ({
-            id: contact.id,
-            type: contact.contact_type,
-            firstName: contact.first_name,
-            lastName: contact.last_name,
-            address1: contact.address1,
-            address2: contact.address2,
-            postalCode: contact.postal_code,
-            city: contact.city,
-            state: contact.state,
-            country: contact.country,
-            phoneNumber: contact.phone_number,
-            email: contact.email,
-            website: contact.website,
-          })),
-          createdBy: org.created_by,
-          createdOn: org.created_on ? new Date(org.created_on) : undefined,
-          updatedBy: org.updated_by,
-          updatedOn: org.updated_on ? new Date(org.updated_on) : undefined,
-        };
-      });
-
+      const transformedData = data.map(transformSupabaseOrg);
       console.log("Transformed organizations data:", transformedData);
       return transformedData;
       
@@ -93,45 +93,9 @@ export const organizationService = {
         throw new Error(`Failed to fetch organization: ${error.message}`);
       }
 
-      if (!data) {
-        console.log("Organization not found");
-        return null;
-      }
-
       console.log("Organization fetched successfully:", data);
       
-      return {
-        id: data.id,
-        name: data.name,
-        code: data.code,
-        alias: data.description,
-        type: data.type as Organization['type'],
-        status: data.status as 'active' | 'inactive',
-        references: (data.organization_references || []).map((ref: any) => ({
-          id: ref.id,
-          type: ref.reference_type as 'GST' | 'CIN' | 'PAN' | 'GS1Code',
-          value: ref.reference_value,
-        })),
-        contacts: (data.organization_contacts || []).map((contact: any) => ({
-          id: contact.id,
-          type: contact.contact_type,
-          firstName: contact.first_name,
-          lastName: contact.last_name,
-          address1: contact.address1,
-          address2: contact.address2,
-          postalCode: contact.postal_code,
-          city: contact.city,
-          state: contact.state,
-          country: contact.country,
-          phoneNumber: contact.phone_number,
-          email: contact.email,
-          website: contact.website,
-        })),
-        createdBy: data.created_by,
-        createdOn: data.created_on ? new Date(data.created_on) : undefined,
-        updatedBy: data.updated_by,
-        updatedOn: data.updated_on ? new Date(data.updated_on) : undefined,
-      };
+      return transformSupabaseOrg(data);
     } catch (error) {
       console.error("Service error fetching organization:", error);
       throw error;
@@ -194,11 +158,11 @@ export const organizationService = {
           last_name: contact.lastName,
           address1: contact.address1,
           address2: contact.address2,
-          postal_code: contact.postalCode,
+          postalCode: contact.postalCode,
           city: contact.city,
           state: contact.state,
           country: contact.country,
-          phone_number: contact.phoneNumber,
+          phoneNumber: contact.phone_number,
           email: contact.email,
           website: contact.website,
         }));
