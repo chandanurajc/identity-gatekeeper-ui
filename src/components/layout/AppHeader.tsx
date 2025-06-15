@@ -3,6 +3,7 @@ import { useAuth } from "@/context/AuthContext";
 import { Input } from "@/components/ui/input";
 import { HeaderUserMenu } from "./HeaderUserMenu";
 import { Search, Building } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export function AppHeader() {
   const { user } = useAuth();
@@ -10,14 +11,14 @@ export function AppHeader() {
   return (
     <header className="flex h-14 items-center gap-4 bg-background px-4 lg:px-6 w-full border-b">
       {/* App Logo */}
-      <div className="flex items-center gap-2">
+      <Link to="/dashboard" className="flex items-center gap-2 font-semibold text-foreground no-underline">
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
           <Building className="h-4 w-4" />
         </div>
-        <div className="hidden md:block text-sm font-semibold">
+        <div className="hidden md:block">
           App Portal
         </div>
-      </div>
+      </Link>
       
       {/* Search Bar */}
       <div className="flex-1 max-w-md">
