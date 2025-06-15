@@ -40,6 +40,7 @@ import PurchaseOrderCreate from "./pages/order-management/PurchaseOrderCreate";
 import PurchaseOrderEdit from "./pages/order-management/PurchaseOrderEdit";
 import PurchaseOrderDetail from "./pages/order-management/PurchaseOrderDetail";
 import PurchaseOrderReceiveList from "./pages/order-management/PurchaseOrderReceiveList";
+import PurchaseOrderReceiveEntry from "./pages/order-management/PurchaseOrderReceiveEntry";
 import StockLedgerList from "./pages/inventory/StockLedgerList";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -394,6 +395,17 @@ const App = () => (
                 <PermissionProtectedRoute requiredPermission="View PO Receive">
                   <MainLayout>
                     <PurchaseOrderReceiveList />
+                  </MainLayout>
+                </PermissionProtectedRoute>
+              } 
+            />
+
+            <Route 
+              path="/order-management/po-receive/:id" 
+              element={
+                <PermissionProtectedRoute requiredPermission="Create PO Receive">
+                  <MainLayout>
+                    <PurchaseOrderReceiveEntry />
                   </MainLayout>
                 </PermissionProtectedRoute>
               } 
