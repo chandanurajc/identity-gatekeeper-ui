@@ -61,7 +61,7 @@ export const partnerService = {
         .from('partners')
         .select(`
           *,
-          organization:organizations!inner(code, name, type)
+          organization:organizations!partners_organization_id_fkey(code, name, type)
         `)
         .eq('current_organization_id', currentOrganizationId)
         .eq('status', 'active')
@@ -94,7 +94,7 @@ export const partnerService = {
             partnershipDate: new Date(partner.partnership_date),
             createdBy: partner.created_by,
             createdOn: new Date(partner.created_on),
-            updatedBy: partner.updated_by,
+            updatedBy: partner.updated_by ?? undefined,
             updatedOn: partner.updated_on ? new Date(partner.updated_on) : undefined,
           };
         })
