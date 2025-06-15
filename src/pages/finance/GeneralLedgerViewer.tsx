@@ -93,7 +93,7 @@ const GeneralLedgerViewer = () => {
                 </SelectTrigger>
                 <SelectContent>
                   {suppliers?.map(s => (
-                    <SelectItem key={s.id} value={s.id}>{s.organizationName}</SelectItem>
+                    <SelectItem key={s.id} value={s.organizationId}>{s.organizationName}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -122,3 +122,4 @@ const GeneralLedgerViewer = () => {
 };
 
 export default GeneralLedgerViewer;
+

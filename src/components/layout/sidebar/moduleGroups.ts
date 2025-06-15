@@ -1,3 +1,4 @@
+
 import {
   User,
   Shield,
@@ -131,26 +132,16 @@ export const createModuleGroups = (permissions: PermissionsMap): ModuleGroup[] =
     });
   }
 
-  // Invoicing module
-  const invoicingItems: MenuItem[] = [];
+  // Finance module
+  const financeItems: MenuItem[] = [];
   if (permissions.canViewInvoices) {
-    invoicingItems.push({
-      label: "Invoices",
+    financeItems.push({
+      label: "Invoice Management",
       path: "/invoices",
       icon: FileText,
       permission: true,
     });
   }
-
-  if (invoicingItems.length > 0) {
-    moduleGroups.push({
-      name: "Invoicing",
-      items: invoicingItems,
-    });
-  }
-
-  // Finance module
-  const financeItems: MenuItem[] = [];
   if (permissions.canViewGeneralLedger) {
     financeItems.push({
       label: "General Ledger",
