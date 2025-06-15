@@ -58,6 +58,10 @@ const DivisionForm = ({ initialData, onSubmit, isEditing = false }: DivisionForm
           // React Hook Form validation
           const isValid = await form.trigger();
           if (!isValid) {
+            // Debug: Show all field errors in console for troubleshooting
+            const errorsCopy = JSON.parse(JSON.stringify(form.formState.errors || {}));
+            console.error("[DivisionForm] Validation failed. Errors:", errorsCopy);
+
             toast({
               title: "Validation Error",
               description: "Please fix form errors before submitting.",
