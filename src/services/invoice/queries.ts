@@ -8,7 +8,7 @@ export const getInvoices = async (organizationId: string): Promise<Invoice[]> =>
     .select(`
       *,
       purchase_order (
-        supplier:supplier_id (
+        supplier:organizations!supplier_id (
           name
         )
       )
@@ -42,7 +42,7 @@ export const getInvoiceById = async (invoiceId: string, organizationId: string):
       *,
       lines:invoice_line(*),
       purchase_order (
-        supplier:supplier_id (
+        supplier:organizations!supplier_id (
           name
         )
       )
