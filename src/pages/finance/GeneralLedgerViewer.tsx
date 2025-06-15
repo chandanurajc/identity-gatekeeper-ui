@@ -44,7 +44,7 @@ const GeneralLedgerViewer = () => {
     enabled: !!selectedRemitTo,
   });
 
-  const { data: ledgerEntries, isLoading: isLoadingLedger, error: ledgerError } = useQuery({
+  const { data: ledgerEntries, isLoading: isLoadingLedger, error: ledgerError, refetch: refetchLedger } = useQuery({
     queryKey: ['generalLedger', organizationId, selectedRemitTo, loadTrigger],
     queryFn: async () => {
         if (!organizationId || !selectedRemitTo || loadTrigger === 0) return [];
@@ -63,23 +63,31 @@ const GeneralLedgerViewer = () => {
     }
   }, [ledgerError, toast]);
 
-  // Running balance and debit/credit assignment logic (fixed)
+  // Diagnostic logging for ledger entries
+  useEffect(() => {
+    if (ledgerEntries) {
+      console.log("[GeneralLedger] Loaded ledgerEntries:", ledgerEntries);
+    }
+  }, [ledgerEntries]);
+
+  // Running balance and debit/credit assignment logic (fixed, with debug)
   const processedData = useMemo(() => {
     if (!ledgerEntries) return [];
     let runningBalance = 0;
 
-    // Standard accounting: Credits (e.g. invoices) increase liabilities, Debits (e.g. payments) reduce them.
-    const sortedEntries = [...ledgerEntries].sort((a, b) =>
-      new Date(a.transaction_date).getTime() - new Date(b.transaction_date).getTime()
-    );
+    // Sort by transaction_date ASC, then by created_on ASC for stability
+    const sortedEntries = [...ledgerEntries].sort((a, b) => {
+      const aDate = new Date(a.transaction_date).getTime();
+      const bDate = new Date(b.transaction_date).getTime();
+      if (aDate !== bDate) return aDate - bDate;
+      // Fallback to created_on if same trans date
+      return new Date(a.created_on).getTime() - new Date(b.created_on).getTime();
+    });
 
-    const processed = sortedEntries.map((entry: GeneralLedgerEntry) => {
+    const processed = sortedEntries.map((entry) => {
       let debit = 0;
       let credit = 0;
-
-      // Swap logic per standard:
-      // - Invoices and Debit Notes (liability up): CREDIT
-      // - Payments and Credit Notes (liability down): DEBIT
+      // Correct accounting logic
       if (entry.transaction_type === "Payable Invoice" || entry.transaction_type === "Debit Note") {
         credit = entry.amount;
         runningBalance += entry.amount;
@@ -87,15 +95,16 @@ const GeneralLedgerViewer = () => {
         debit = entry.amount;
         runningBalance -= entry.amount;
       }
-
+      // Diagnostic for each row
+      console.log(`[GeneralLedger] After ${entry.transaction_type} (${entry.amount}): Balance = ${runningBalance}`);
       return {
         ...entry,
         debit,
         credit,
-        balance: runningBalance > 0 ? runningBalance : 0, // Don't show negatives; payable can't be negative
+        balance: runningBalance > 0 ? runningBalance : 0,
       };
     });
-
+    console.log("[GeneralLedger] Processed data for table:", processed);
     return processed;
   }, [ledgerEntries]);
 
@@ -179,6 +188,9 @@ const GeneralLedgerViewer = () => {
           outstandingBalance={outstandingBalance}
           onPaymentSuccess={() => {
             setLoadTrigger(t => t + 1);
+            if (refetchLedger) {
+              refetchLedger(); // Force refetch in case query client is slow
+            }
             setIsPaymentDialogOpen(false);
           }}
         />
