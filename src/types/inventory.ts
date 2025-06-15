@@ -22,3 +22,13 @@ export interface InventoryStockLedgerItem extends InventoryStock {
         name: string;
     };
 }
+
+export interface InventoryStockSummaryItem {
+  item_id: string;
+  item_description: string;
+  division_id: string;
+  division_name: string;
+  quantity_available: number;
+  uom: string;
+  last_updated_on: string;
+}

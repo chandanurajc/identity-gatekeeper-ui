@@ -1,4 +1,3 @@
-
 import {
   Home,
   LayoutDashboard,
@@ -240,8 +239,8 @@ export const createModuleGroups = (permissions: any): ModuleGroup[] => {
   const inventoryItems: MenuItem[] = [];
   if (permissions.canViewInventory) {
     inventoryItems.push({
-      label: "Stock Ledger",
-      path: "/inventory/stock-ledger",
+      label: "Inventory Visibility",
+      path: "/inventory/visibility",
       icon: Warehouse,
       permission: true,
     });

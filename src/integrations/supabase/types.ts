@@ -1118,6 +1118,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_inventory_stock_summary: {
+        Args: { p_organization_id: string; p_include_zero_stock?: boolean }
+        Returns: {
+          item_id: string
+          item_description: string
+          division_id: string
+          division_name: string
+          quantity_available: number
+          uom: string
+          last_updated_on: string
+        }[]
+      }
       get_user_organization_id: {
         Args: { user_id: string }
         Returns: string
