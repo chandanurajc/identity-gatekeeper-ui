@@ -66,10 +66,10 @@ export const createInvoiceFromReceivedPO = async (poId: string, organizationId: 
     }
     console.log(`[Invoice] Generated invoice number ${invoiceNumber} for PO ${poId}`);
 
-    const billToContact = findContact(poResult.organization?.contacts, ['Bill To', 'Billing', 'Registered location']);
-    const remitToContact = findContact(poResult.supplier?.contacts, ['Remit To', 'Billing', 'Registered location']);
-    console.log(`[Invoice] Bill To contact:`, billToContact ? `${billToContact.first_name} (type: ${billToContact.contact_type})` : 'Not found');
-    console.log(`[Invoice] Remit To contact:`, remitToContact ? `${remitToContact.first_name} (type: ${remitToContact.contact_type})` : 'Not found');
+    const billToContact = poResult.organization?.contacts?.find(c => c.contact_type === 'Bill To');
+    const remitToContact = poResult.supplier?.contacts?.find(c => c.contact_type === 'Remit To');
+    console.log(`[Invoice] Bill To contact:`, billToContact ? `${billToContact.first_name} (type: ${billToContact.contact_type})` : 'Not found, strictly searching for "Bill To" type.');
+    console.log(`[Invoice] Remit To contact:`, remitToContact ? `${remitToContact.first_name} (type: ${remitToContact.contact_type})` : 'Not found, strictly searching for "Remit To" type.');
 
     const paymentTermsDays = parseInt(poResult.payment_terms?.match(/\d+/)?.[0] || '30', 10);
     const dueDate = add(new Date(poResult.po_date), { days: paymentTermsDays });
