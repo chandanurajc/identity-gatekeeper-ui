@@ -140,40 +140,55 @@ export const purchaseOrderService = {
   },
 
   async createPurchaseOrder(formData: PurchaseOrderFormData, organizationId: string, userId: string): Promise<PurchaseOrder> {
-    console.log("Creating purchase order:", formData);
+    // Log all critical payload fields for debugging
+    console.log("[PO] Attempting to create purchase order with:", {
+      organizationId,
+      userId,
+      formData,
+      lines: formData.lines,
+    });
 
-    // Start transaction
+    // Compose PO header payload
+    const poHeader = {
+      po_number: formData.poNumber,
+      division_id: formData.divisionId,
+      supplier_id: formData.supplierId,
+      po_date: formData.poDate.toISOString().split('T')[0],
+      requested_delivery_date: formData.requestedDeliveryDate?.toISOString().split('T')[0],
+      ship_to_address_1: formData.shipToAddress1,
+      ship_to_address_2: formData.shipToAddress2,
+      ship_to_postal_code: formData.shipToPostalCode,
+      ship_to_city: formData.shipToCity,
+      ship_to_state: formData.shipToState,
+      ship_to_country: formData.shipToCountry,
+      ship_to_phone: formData.shipToPhone,
+      ship_to_email: formData.shipToEmail,
+      payment_terms: formData.paymentTerms,
+      notes: formData.notes,
+      tracking_number: formData.trackingNumber,
+      organization_id: organizationId,
+      created_by: userId
+    };
+
+    console.log("[PO] Inserting PO header:", poHeader);
+
+    // Start transaction -- PO header insert
     const { data: poData, error: poError } = await supabase
       .from('purchase_order')
-      .insert({
-        po_number: formData.poNumber,
-        division_id: formData.divisionId,
-        supplier_id: formData.supplierId,
-        po_date: formData.poDate.toISOString().split('T')[0],
-        requested_delivery_date: formData.requestedDeliveryDate?.toISOString().split('T')[0],
-        ship_to_address_1: formData.shipToAddress1,
-        ship_to_address_2: formData.shipToAddress2,
-        ship_to_postal_code: formData.shipToPostalCode,
-        ship_to_city: formData.shipToCity,
-        ship_to_state: formData.shipToState,
-        ship_to_country: formData.shipToCountry,
-        ship_to_phone: formData.shipToPhone,
-        ship_to_email: formData.shipToEmail,
-        payment_terms: formData.paymentTerms,
-        notes: formData.notes,
-        tracking_number: formData.trackingNumber,
-        organization_id: organizationId,
-        created_by: userId
-      })
+      .insert(poHeader)
       .select()
       .single();
 
     if (poError) {
-      console.error("Error creating purchase order:", poError);
-      throw new Error(`Failed to create purchase order: ${poError.message}`);
+      console.error("[PO] Error creating purchase order (header):", poError);
+      throw new Error(`[PO] Failed to create purchase order: ${poError.message}`);
+    }
+    if (!poData?.id) {
+      console.error("[PO] PO header insert did not return an ID", poData);
+      throw new Error("[PO] Purchase order header creation failed: No ID returned");
     }
 
-    // Create purchase order lines
+    // PO Lines
     if (formData.lines.length > 0) {
       const lineData = formData.lines.map(line => ({
         purchase_order_id: poData.id,
@@ -181,8 +196,8 @@ export const purchaseOrderService = {
         item_id: line.itemId,
         quantity: line.quantity,
         uom: line.uom,
-        unit_price: line.unitPrice, // This maps to unit cost in UI
-        total_unit_price: line.totalUnitPrice, // This maps to total item cost in UI
+        unit_price: line.unitPrice,
+        total_unit_price: line.totalUnitPrice,
         gst_percent: line.gstPercent,
         gst_value: line.gstValue,
         line_total: line.lineTotal,
@@ -190,17 +205,25 @@ export const purchaseOrderService = {
         created_by: userId
       }));
 
+      console.log("[PO] Inserting PO lines:", lineData);
+
       const { error: lineError } = await supabase
         .from('purchase_order_line')
         .insert(lineData);
 
       if (lineError) {
-        console.error("Error creating purchase order lines:", lineError);
-        throw new Error(`Failed to create purchase order lines: ${lineError.message}`);
+        console.error("[PO] Error creating purchase order lines:", lineError);
+        throw new Error(`[PO] Failed to create purchase order lines: ${lineError.message}`);
       }
     }
 
-    return await this.getPurchaseOrderById(poData.id) as PurchaseOrder;
+    // Fetch the newly created PO (should never fail here, but log if so)
+    const createdPO = await this.getPurchaseOrderById(poData.id);
+    if (!createdPO) {
+      console.error("[PO] Could not fetch created PO by ID, returned null!", poData.id);
+      throw new Error("[PO] Could not verify created purchase order (fetch returned null).");
+    }
+    return createdPO;
   },
 
   async updatePurchaseOrder(id: string, formData: PurchaseOrderFormData, organizationId: string, userId: string): Promise<PurchaseOrder> {
