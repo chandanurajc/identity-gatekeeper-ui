@@ -1,3 +1,5 @@
+
+import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { PurchaseOrder, PurchaseOrderFormData, PurchaseOrderLine } from "@/types/purchaseOrder";
 
@@ -148,13 +150,24 @@ export const purchaseOrderService = {
       lines: formData.lines,
     });
 
+    // Ensure dates are valid before formatting
+    const poDate = new Date(formData.poDate);
+    if (isNaN(poDate.getTime())) {
+      throw new Error("[PO] Invalid PO Date provided.");
+    }
+
+    const requestedDeliveryDate = formData.requestedDeliveryDate ? new Date(formData.requestedDeliveryDate) : null;
+    if (requestedDeliveryDate && isNaN(requestedDeliveryDate.getTime())) {
+      throw new Error("[PO] Invalid Requested Delivery Date provided.");
+    }
+
     // Compose PO header payload
     const poHeader = {
       po_number: formData.poNumber,
       division_id: formData.divisionId,
       supplier_id: formData.supplierId,
-      po_date: formData.poDate.toISOString().split('T')[0],
-      requested_delivery_date: formData.requestedDeliveryDate?.toISOString().split('T')[0],
+      po_date: format(poDate, 'yyyy-MM-dd'),
+      requested_delivery_date: requestedDeliveryDate ? format(requestedDeliveryDate, 'yyyy-MM-dd') : undefined,
       ship_to_address_1: formData.shipToAddress1,
       ship_to_address_2: formData.shipToAddress2,
       ship_to_postal_code: formData.shipToPostalCode,
@@ -229,14 +242,25 @@ export const purchaseOrderService = {
   async updatePurchaseOrder(id: string, formData: PurchaseOrderFormData, organizationId: string, userId: string): Promise<PurchaseOrder> {
     console.log("Updating purchase order:", id, formData);
 
+    // Ensure dates are valid before formatting
+    const poDate = new Date(formData.poDate);
+    if (isNaN(poDate.getTime())) {
+      throw new Error("[PO] Invalid PO Date provided for update.");
+    }
+
+    const requestedDeliveryDate = formData.requestedDeliveryDate ? new Date(formData.requestedDeliveryDate) : null;
+    if (requestedDeliveryDate && isNaN(requestedDeliveryDate.getTime())) {
+      throw new Error("[PO] Invalid Requested Delivery Date provided for update.");
+    }
+
     // Update purchase order header
     const { error: poError } = await supabase
       .from('purchase_order')
       .update({
         division_id: formData.divisionId,
         supplier_id: formData.supplierId,
-        po_date: formData.poDate.toISOString().split('T')[0],
-        requested_delivery_date: formData.requestedDeliveryDate?.toISOString().split('T')[0],
+        po_date: format(poDate, 'yyyy-MM-dd'),
+        requested_delivery_date: requestedDeliveryDate ? format(requestedDeliveryDate, 'yyyy-MM-dd') : undefined,
         ship_to_address_1: formData.shipToAddress1,
         ship_to_address_2: formData.shipToAddress2,
         ship_to_postal_code: formData.shipToPostalCode,
