@@ -4,9 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Edit, ArrowLeft, XCircle } from "lucide-react";
+import { Edit, ArrowLeft, XCircle, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { purchaseOrderService } from "@/services/purchaseOrderService";
+import { invoiceService } from "@/services/invoiceService";
 import { usePurchaseOrderPermissions } from "@/hooks/usePurchaseOrderPermissions";
 import { PurchaseOrder } from "@/types/purchaseOrder";
 import { format } from "date-fns";
@@ -22,6 +23,7 @@ const PurchaseOrderDetail = () => {
   
   const [purchaseOrder, setPurchaseOrder] = useState<PurchaseOrder | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isCreatingInvoice, setIsCreatingInvoice] = useState(false);
 
   useEffect(() => {
     if (id && canEditPurchaseOrder) {
@@ -82,6 +84,28 @@ const PurchaseOrderDetail = () => {
         description: error.message || "Failed to cancel purchase order.",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleCreateInvoice = async () => {
+    if (!id || !user || !purchaseOrder) return;
+
+    setIsCreatingInvoice(true);
+    try {
+      const newInvoice = await invoiceService.createInvoiceFromReceivedPO(id, purchaseOrder.organizationId, user.id, user.email);
+      toast({
+        title: "Success",
+        description: `Invoice ${newInvoice.invoice_number} has been created.`,
+      });
+      fetchPurchaseOrder(); // Refresh data
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create invoice.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCreatingInvoice(false);
     }
   };
 
@@ -159,6 +183,17 @@ const PurchaseOrderDetail = () => {
           Back to Purchase Orders
         </Button>
         <div className="flex items-center gap-2">
+          {purchaseOrder.status === 'Received' && (
+            <PermissionButton
+              permission="Create Invoice"
+              onClick={handleCreateInvoice}
+              disabled={isCreatingInvoice}
+              title="Create Invoice from this PO"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              {isCreatingInvoice ? 'Creating...' : 'Create Invoice'}
+            </PermissionButton>
+          )}
           {canEditPurchaseOrder && (
             <Button 
               onClick={() => navigate(`/order-management/purchase-orders/${id}/edit`)}
