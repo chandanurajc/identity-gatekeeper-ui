@@ -2,6 +2,22 @@ import { supabase } from '@/integrations/supabase/client';
 import { Invoice } from '@/types/invoice';
 import { add } from 'date-fns';
 
+const findContact = (contacts: any[] | undefined, preferredTypes: string[]) => {
+    if (!contacts || contacts.length === 0) {
+        console.log(`[Invoice] No contacts provided to search within.`);
+        return undefined;
+    }
+    for (const type of preferredTypes) {
+        const contact = contacts.find(c => c.contact_type === type);
+        if (contact) {
+            console.log(`[Invoice] Found contact of type '${type}'`);
+            return contact;
+        }
+    }
+    console.log(`[Invoice] No contact found for preferred types: ${preferredTypes.join(', ')}. Defaulting to the first available contact.`);
+    return contacts[0];
+};
+
 export const createInvoiceFromReceivedPO = async (poId: string, organizationId: string, userId: string, userName: string): Promise<Invoice> => {
     console.log(`[Invoice] Starting invoice creation from PO ${poId}`);
     const { data: poResult, error: poError } = await supabase
@@ -50,10 +66,10 @@ export const createInvoiceFromReceivedPO = async (poId: string, organizationId: 
     }
     console.log(`[Invoice] Generated invoice number ${invoiceNumber} for PO ${poId}`);
 
-    const billToContact = poResult.organization?.contacts?.find(c => c.contact_type === 'Bill To');
-    const remitToContact = poResult.supplier?.contacts?.find(c => c.contact_type === 'Remit To');
-    console.log(`[Invoice] Bill To contact:`, billToContact ? billToContact.first_name : 'Not found');
-    console.log(`[Invoice] Remit To contact:`, remitToContact ? remitToContact.first_name : 'Not found');
+    const billToContact = findContact(poResult.organization?.contacts, ['Bill To', 'Billing', 'Registered location']);
+    const remitToContact = findContact(poResult.supplier?.contacts, ['Remit To', 'Billing', 'Registered location']);
+    console.log(`[Invoice] Bill To contact:`, billToContact ? `${billToContact.first_name} (type: ${billToContact.contact_type})` : 'Not found');
+    console.log(`[Invoice] Remit To contact:`, remitToContact ? `${remitToContact.first_name} (type: ${remitToContact.contact_type})` : 'Not found');
 
     const paymentTermsDays = parseInt(poResult.payment_terms?.match(/\d+/)?.[0] || '30', 10);
     const dueDate = add(new Date(poResult.po_date), { days: paymentTermsDays });
