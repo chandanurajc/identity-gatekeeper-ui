@@ -90,6 +90,8 @@ export const RecordPaymentDialog = ({
         paymentDate: new Date(),
         referenceNumber: "",
         notes: "",
+        amount: undefined,
+        paymentMethod: undefined
       });
     },
     onError: (error) => {

@@ -1,4 +1,6 @@
 
+import { GeneralLedgerEntry } from '@/types/generalLedger';
+
 export interface GeneralLedgerEntry {
   id: string;
   bill_to_orgid: string;
