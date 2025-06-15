@@ -6,7 +6,7 @@ import { InventoryStockLedgerItem } from "@/types/inventory";
 import { ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { format } from "date-fns";
+import { format, isValid } from "date-fns";
 
 export const columns: ColumnDef<InventoryStockLedgerItem>[] = [
   {
@@ -17,7 +17,16 @@ export const columns: ColumnDef<InventoryStockLedgerItem>[] = [
         <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
     ),
-    cell: ({ row }) => format(new Date(row.getValue("createdOn")), "dd/MM/yyyy"),
+    cell: ({ row }) => {
+      const dateValue = row.getValue("createdOn");
+      if (dateValue) {
+        const date = new Date(dateValue as string);
+        if (isValid(date)) {
+          return format(date, "dd/MM/yyyy");
+        }
+      }
+      return "N/A";
+    },
   },
   {
     id: "item",
