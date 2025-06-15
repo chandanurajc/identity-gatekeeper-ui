@@ -146,10 +146,9 @@ export async function receivePurchaseOrder(
         await invoiceService.createInvoiceFromReceivedPO(poId, organizationId, userId, updatedByUsername);
         console.log(`[PO Receive] Successfully triggered invoice creation for PO ${poId}`);
       } catch (invoiceError: any) {
-        // Log the error but don't fail the entire receive process, as the items are already in stock.
-        // This could be enhanced with a retry mechanism or a background job queue.
-        console.error(`[PO Receive] Failed to create invoice for PO ${poId}. This may need to be done manually. Error:`, invoiceError.message);
-        return { warning: `PO received successfully, but automated invoice creation failed. Please create it manually. Error: ${invoiceError.message}` };
+        // Log the full error for debugging but don't fail the entire receive process.
+        console.error(`[PO Receive] Failed to create invoice for PO ${poId}. This may need to be done manually. Full error:`, invoiceError);
+        return { warning: `PO received successfully, but automated invoice creation failed. Please create the invoice manually.` };
       }
     }
   }

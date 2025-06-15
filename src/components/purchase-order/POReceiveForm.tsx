@@ -1,4 +1,3 @@
-
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -11,7 +10,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { purchaseOrderService } from "@/services/purchaseOrderService";
 import { useAuth } from "@/context/AuthContext";
 import { useMultiTenant } from "@/hooks/useMultiTenant";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { Label } from "@/components/ui/label";
 
@@ -87,22 +86,18 @@ export function POReceiveForm({ purchaseOrder }: POReceiveFormProps) {
       queryClient.invalidateQueries({ queryKey: ["invoices"] });
 
       if (data?.warning) {
-        toast({
-          variant: "default",
-          title: "Warning",
+        toast.warning("PO Received with a Warning", {
           description: data.warning,
           duration: 10000,
         });
       } else {
-        toast({ title: "Success", description: "Purchase Order received successfully." });
+        toast.success("Purchase Order received successfully.");
       }
       
       navigate("/order-management/po-receive"); // Redirect to PO receive list after receive
     },
     onError: (error) => {
-      toast({
-        variant: "destructive",
-        title: "Error",
+      toast.error("Failed to receive Purchase Order", {
         description: error.message,
       });
     },
