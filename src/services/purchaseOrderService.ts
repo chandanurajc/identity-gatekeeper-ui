@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { PurchaseOrder, PurchaseOrderFormData, PurchaseOrderLine } from "@/types/purchaseOrder";
 
@@ -320,7 +319,7 @@ export const purchaseOrderService = {
     const { data, error } = await supabase
       .from('purchase_order')
       .select('po_number')
-      .order('po_number', { ascending: false })
+      .order('created_on', { ascending: false })
       .limit(1)
       .maybeSingle();
 
@@ -337,15 +336,15 @@ export const purchaseOrderService = {
     const latestPoNumber = parseInt(latestPoNumberStr, 10);
 
     if (isNaN(latestPoNumber)) {
-        console.error("Failed to parse PO number, falling back to count", data.po_number);
-        const { count, error: countError } = await supabase
-            .from('purchase_order')
-            .select('*', { count: 'exact', head: true });
+      console.error("Failed to parse PO number, falling back to count", data.po_number);
+      const { count, error: countError } = await supabase
+          .from('purchase_order')
+          .select('*', { count: 'exact', head: true });
 
-        if (countError) {
-            throw new Error(`Failed to generate PO number on fallback: ${countError.message}`);
-        }
-        return `PO${String((count || 0) + 1).padStart(6, '0')}`;
+      if (countError) {
+          throw new Error(`Failed to generate PO number on fallback: ${countError.message}`);
+      }
+      return `PO${String((count || 0) + 1).padStart(6, '0')}`;
     }
 
     const nextNumber = latestPoNumber + 1;
