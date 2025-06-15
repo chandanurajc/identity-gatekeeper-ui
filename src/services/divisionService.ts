@@ -3,39 +3,53 @@ import { Division, DivisionFormData } from "@/types/division";
 
 export const divisionService = {
   async getDivisions(): Promise<Division[]> {
+    const startAll = Date.now();
     console.log("Fetching divisions from Supabase...");
-    
     try {
-      // Get current user's organization
-      const { data: { user } } = await supabase.auth.getUser();
+      // 1. Get current user's organization
+      const startAuth = Date.now();
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      console.log(`[DivisionsService] Supabase getUser time: ${Date.now() - startAuth}ms`);
+      if (userError) {
+        console.error("[DivisionsService] Error fetching user:", userError);
+        return [];
+      }
       if (!user) {
         throw new Error("User not authenticated");
       }
 
-      const { data: profile } = await supabase
+      const startProfile = Date.now();
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('organization_id')
         .eq('id', user.id)
         .single();
+      console.log(`[DivisionsService] Supabase get profile time: ${Date.now() - startProfile}ms`);
 
+      if (profileError) {
+        console.error("[DivisionsService] Error fetching profile:", profileError);
+        return [];
+      }
       if (!profile?.organization_id) {
-        console.log("No organization found for user");
+        console.log("[DivisionsService] No organization found for user");
         return [];
       }
 
-      // First fetch organization data
+      // 2. Fetch organization data JUST ONCE, not per division
+      const startOrg = Date.now();
       const { data: orgData, error: orgError } = await supabase
         .from('organizations')
         .select('code, name')
         .eq('id', profile.organization_id)
         .single();
-
+      console.log(`[DivisionsService] Supabase get org time: ${Date.now() - startOrg}ms`);
       if (orgError || !orgData) {
-        console.error("Error fetching organization:", orgError);
+        console.error("[DivisionsService] Error fetching organization:", orgError);
         throw new Error("Failed to fetch organization data");
       }
 
-      // Then fetch divisions with their related data
+      // 3. Fetch divisions for this organization
+      const startDivs = Date.now();
       const { data: divisionsData, error: divisionsError } = await supabase
         .from('divisions')
         .select(`
@@ -61,17 +75,19 @@ export const divisionService = {
         `)
         .eq('organization_id', profile.organization_id)
         .order('name');
+      console.log(`[DivisionsService] Supabase get divisions time: ${Date.now() - startDivs}ms`);
 
       if (divisionsError) {
-        console.error("Supabase error fetching divisions:", divisionsError);
+        console.error("[DivisionsService] Supabase error fetching divisions:", divisionsError);
         throw new Error(`Failed to fetch divisions: ${divisionsError.message}`);
       }
 
       if (!divisionsData) {
-        console.log("No divisions data returned");
+        console.log("[DivisionsService] No divisions data returned");
         return [];
       }
 
+      // 4. Transform division data and log results
       const transformedData = divisionsData.map(division => ({
         id: division.id,
         code: division.code,
@@ -102,15 +118,17 @@ export const divisionService = {
           website: contact.website || ""
         })) || [],
         createdBy: division.created_by,
-        createdOn: new Date(division.created_on),
+        createdOn: division.created_on ? new Date(division.created_on) : undefined,
         updatedBy: division.updated_by,
         updatedOn: division.updated_on ? new Date(division.updated_on) : undefined,
       }));
 
+      console.log(`[DivisionsService] Transformed divisions count: ${transformedData.length}`);
+      console.log(`[DivisionsService] Total time: ${Date.now() - startAll}ms`);
       return transformedData;
-      
+
     } catch (error) {
-      console.error("Service error fetching divisions:", error);
+      console.error("[DivisionsService] Service error fetching divisions:", error);
       throw error;
     }
   },
