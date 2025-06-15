@@ -1,3 +1,4 @@
+
 import { z } from "zod";
 
 // Moved from DivisionForm.tsx:
@@ -27,7 +28,9 @@ export const divisionSchema = z.object({
         email: z.string().email("Invalid email address").optional(),
         website: z.string().optional(),
       })
-    ),
+    )
+    // NO min(1)!
+    ,
   references: z
     .array(
       z.object({

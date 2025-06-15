@@ -14,6 +14,7 @@ import { ContactForm } from "./ContactForm";
 import { ReferenceForm } from "./ReferenceForm";
 
 // Form schema with updated reference types
+import { z } from "zod";
 const organizationSchema = z.object({
   name: z.string()
     .min(3, "Name must be at least 3 characters")
@@ -47,7 +48,9 @@ const organizationSchema = z.object({
       email: z.string().email("Invalid email address").optional().or(z.literal("")),
       website: z.string().optional(),
     })
-  ),
+  )
+  // NO min(1) for contacts!
+  ,
   references: z.array(
     z.object({
       id: z.string(),

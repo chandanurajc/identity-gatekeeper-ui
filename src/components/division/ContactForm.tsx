@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
@@ -69,6 +70,7 @@ export const ContactForm = ({ contacts, onChange }: ContactFormProps) => {
         existingTypes={existingTypes}
       />
       <ContactList contacts={contacts} onEdit={handleOpenDialog} onDelete={handleDelete} />
+      {/* No manual validation or error here */}
     </div>
   );
 };

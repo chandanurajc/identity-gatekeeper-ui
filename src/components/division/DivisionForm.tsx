@@ -86,7 +86,7 @@ const DivisionForm = ({ initialData, onSubmit, isEditing = false }: DivisionForm
             contacts={form.watch("contacts")} 
             onChange={handleContactsChange}
           />
-          {/* Error display removed: "At least one contact is required" */}
+          {/* No error message for minimum contacts enforced here */}
         </div>
         
         <Separator />
