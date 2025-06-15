@@ -1,4 +1,3 @@
-
 import {
   User,
   Shield,
@@ -14,6 +13,7 @@ import {
   Warehouse,
   List,
   FileText,
+  BookCopy,
 } from "lucide-react";
 import { MenuItem, ModuleGroup } from "./types";
 
@@ -149,6 +149,23 @@ export const createModuleGroups = (permissions: PermissionsMap): ModuleGroup[] =
     });
   }
 
+  // Finance module
+  const financeItems: MenuItem[] = [];
+  if (permissions.canViewGeneralLedger) {
+    financeItems.push({
+      label: "General Ledger",
+      path: "/finance/general-ledger",
+      icon: BookCopy,
+      permission: true,
+    });
+  }
+
+  if (financeItems.length > 0) {
+    moduleGroups.push({
+      name: "Finance",
+      items: financeItems,
+    });
+  }
 
   // Admin module
   const adminItems: MenuItem[] = [];

@@ -21,7 +21,7 @@ import { SidebarNavContent } from "./sidebar/SidebarNavContent";
 import { SidebarFooterContent } from "./sidebar/SidebarFooterContent";
 
 export function AppSidebar() {
-  const { canViewUsers } = usePermissions();
+  const { canViewUsers, hasPermission } = usePermissions();
   const { canViewRoles, canViewPermissions } = useRolePermissions();
   const { canViewOrganization } = useOrganizationPermissions();
   const { canViewDivision } = useDivisionPermissions();
@@ -48,6 +48,7 @@ export function AppSidebar() {
     canViewPOReceive,
     canViewInventory,
     canViewInvoices,
+    canViewGeneralLedger: hasPermission("View General Ledger"),
   };
 
   const moduleGroups = createModuleGroups(permissions);
