@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { PurchaseOrder, PurchaseOrderFormData, PurchaseOrderLine } from "@/types/purchaseOrder";
 
@@ -9,8 +10,8 @@ export const purchaseOrderService = {
       .from('purchase_order')
       .select(`
         *,
-        division:divisions!purchase_order_division_id_fkey(name, code),
-        supplier:organizations!purchase_order_supplier_id_fkey(name, code)
+        division:divisions(name, code),
+        supplier:organizations(name, code)
       `)
       .eq('organization_id', organizationId)
       .order('created_on', { ascending: false });
@@ -56,8 +57,8 @@ export const purchaseOrderService = {
       .from('purchase_order')
       .select(`
         *,
-        division:divisions!purchase_order_division_id_fkey(name, code),
-        supplier:organizations!purchase_order_supplier_id_fkey(name, code),
+        division:divisions(name, code),
+        supplier:organizations(name, code),
         purchase_order_line (
           *,
           items (
@@ -147,8 +148,8 @@ export const purchaseOrderService = {
 
     const poHeader = {
       po_number: formData.poNumber,
-      division_id: formData.divisionId || null,
-      supplier_id: formData.supplierId || null,
+      division_id: formData.divisionId ? formData.divisionId : null,
+      supplier_id: formData.supplierId ? formData.supplierId : null,
       po_date: poDate,
       requested_delivery_date: formData.requestedDeliveryDate || null,
       ship_to_address_1: formData.shipToAddress1,
@@ -252,8 +253,8 @@ export const purchaseOrderService = {
     const { error: poError } = await supabase
       .from('purchase_order')
       .update({
-        division_id: formData.divisionId || null,
-        supplier_id: formData.supplierId || null,
+        division_id: formData.divisionId ? formData.divisionId : null,
+        supplier_id: formData.supplierId ? formData.supplierId : null,
         po_date: poDate,
         requested_delivery_date: formData.requestedDeliveryDate || null,
         ship_to_address_1: formData.shipToAddress1,
