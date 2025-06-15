@@ -223,10 +223,6 @@ export const divisionService = {
         throw new Error("Missing required fields: name, organizationId, or userDefinedCode");
       }
 
-      if (!formData.contacts || formData.contacts.length === 0) {
-        throw new Error("At least one contact is required");
-      }
-
       // Get organization code for division code generation
       const { data: orgData, error: orgError } = await supabase
         .from('organizations')
