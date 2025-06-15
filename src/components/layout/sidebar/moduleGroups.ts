@@ -12,7 +12,7 @@ import {
   ShoppingCart,
   Truck,
   Warehouse,
-  History,
+  List,
 } from "lucide-react";
 import { MenuItem, ModuleGroup } from "./types";
 
@@ -118,7 +118,7 @@ export const createModuleGroups = (permissions: PermissionsMap): ModuleGroup[] =
     inventoryItems.push({
       label: "Inventory Ledger",
       path: "/inventory/stock-ledger",
-      icon: History,
+      icon: List,
       permission: true,
     });
   }
