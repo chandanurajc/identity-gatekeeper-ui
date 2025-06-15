@@ -11,7 +11,7 @@ export const InvoiceRoutes = () => (
     <Route 
       path="/invoices" 
       element={
-        <PermissionProtectedRoute requiredPermission="view-invoice">
+        <PermissionProtectedRoute requiredPermission="View Invoices">
           <MainLayout>
             <InvoicesList />
           </MainLayout>
@@ -21,7 +21,7 @@ export const InvoiceRoutes = () => (
     <Route 
       path="/invoices/:invoiceId" 
       element={
-        <PermissionProtectedRoute requiredPermission="view-invoice">
+        <PermissionProtectedRoute requiredPermission="View Invoices">
           <MainLayout>
             <InvoiceDetail />
           </MainLayout>

@@ -56,6 +56,10 @@ const InvoiceDetail = () => {
               <CardDescription>
                 From PO: {invoice.po_number}
               </CardDescription>
+              <div className="text-sm text-muted-foreground mt-2">
+                <p>Type: {invoice.invoice_type}</p>
+                <p>Created: {format(new Date(invoice.created_on), 'PPP')}</p>
+              </div>
             </div>
             <div>
               <span className="text-sm text-muted-foreground">Status: </span>
@@ -64,7 +68,7 @@ const InvoiceDetail = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid md:grid-cols-2 gap-4">
+          <div className="grid md:grid-cols-2 gap-6">
             <div>
               <h3 className="font-semibold mb-2">Bill To</h3>
               <p>{invoice.bill_to_name}</p>
@@ -81,10 +85,26 @@ const InvoiceDetail = () => {
               <p>{invoice.remit_to_city}, {invoice.remit_to_state} {invoice.remit_to_postal_code}</p>
               <p>{invoice.remit_to_country}</p>
             </div>
-            <div>
-              <h3 className="font-semibold mb-2">Details</h3>
-              <p><strong>Due Date:</strong> {format(new Date(invoice.due_date), 'PPP')}</p>
-              <p><strong>Total Amount:</strong> {new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(invoice.total_invoice_amount)}</p>
+          </div>
+          <div className="mt-6 pt-6 border-t">
+            <h3 className="font-semibold mb-2">Details & Summary</h3>
+            <div className="grid md:grid-cols-4 gap-4">
+              <div>
+                <div className="text-sm text-muted-foreground">Due Date</div>
+                <div>{format(new Date(invoice.due_date), 'PPP')}</div>
+              </div>
+              <div>
+                <div className="text-sm text-muted-foreground">Total Item Cost</div>
+                <div>{new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(invoice.total_item_cost)}</div>
+              </div>
+              <div>
+                <div className="text-sm text-muted-foreground">Total GST</div>
+                <div>{new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(invoice.total_gst)}</div>
+              </div>
+              <div>
+                <div className="text-sm text-muted-foreground">Total Invoice Amount</div>
+                <div className="font-bold">{new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(invoice.total_invoice_amount)}</div>
+              </div>
             </div>
           </div>
         </CardContent>
@@ -108,19 +128,29 @@ const InvoiceDetail = () => {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Line</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item ID</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Qty</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">UOM</th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Unit Cost</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total Item Cost</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">GST %</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">GST Value</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Line Total</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {invoice.lines?.map((line) => (
                   <tr key={line.id}>
                     <td className="px-6 py-4 whitespace-nowrap">{line.line_number}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">{line.item_id}</td>
                     <td className="px-6 py-4 whitespace-nowrap">{line.item_description}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">{line.quantity}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">{line.uom}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">{new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(line.unit_cost)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">{new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(line.total_item_cost)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">{line.gst_percent}%</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">{new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(line.gst_value)}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">{new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(line.line_total)}</td>
                   </tr>
                 ))}

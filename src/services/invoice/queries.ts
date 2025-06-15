@@ -5,14 +5,7 @@ import { Invoice } from '@/types/invoice';
 export const getInvoices = async (organizationId: string): Promise<Invoice[]> => {
   const { data, error } = await supabase
     .from('invoice')
-    .select(`
-      *,
-      purchase_order (
-        supplier:organizations!supplier_id (
-          name
-        )
-      )
-    `)
+    .select(`*`)
     .eq('organization_id', organizationId)
     .order('created_on', { ascending: false });
 
@@ -21,16 +14,13 @@ export const getInvoices = async (organizationId: string): Promise<Invoice[]> =>
     throw new Error(error.message);
   }
 
-  // The join gives us purchase_order: { supplier: { name: 'Supplier Name' } } which we flatten
   return data.map(invoice => {
-    const supplierName = invoice.purchase_order?.supplier?.name || 'N/A';
-    // a bit of gymnastics to remove the nested purchase_order object
-    const { purchase_order, ...rest } = invoice;
     return {
-      ...rest,
-      supplier: { name: supplierName },
-      created_on: new Date(rest.created_on),
-      updated_on: rest.updated_on ? new Date(rest.updated_on) : undefined,
+      ...invoice,
+      // For compatibility with column accessor 'supplier.name'
+      supplier: { name: invoice.remit_to_name || 'N/A' },
+      created_on: new Date(invoice.created_on),
+      updated_on: invoice.updated_on ? new Date(invoice.updated_on) : undefined,
     };
   }) as unknown as Invoice[];
 };
@@ -40,12 +30,7 @@ export const getInvoiceById = async (invoiceId: string, organizationId: string):
     .from('invoice')
     .select(`
       *,
-      lines:invoice_line(*),
-      purchase_order (
-        supplier:organizations!supplier_id (
-          name
-        )
-      )
+      lines:invoice_line(*)
     `)
     .eq('id', invoiceId)
     .eq('organization_id', organizationId)
@@ -57,14 +42,11 @@ export const getInvoiceById = async (invoiceId: string, organizationId: string):
   }
 
   if (!data) return null;
-
-  const supplierName = data.purchase_order?.supplier?.name || 'N/A';
-  const { purchase_order, ...rest } = data;
   
   return {
-    ...rest,
-    supplier: { name: supplierName },
-    created_on: new Date(rest.created_on),
-    updated_on: rest.updated_on ? new Date(rest.updated_on) : undefined,
+    ...data,
+    supplier: { name: data.remit_to_name || 'N/A' },
+    created_on: new Date(data.created_on),
+    updated_on: data.updated_on ? new Date(data.updated_on) : undefined,
   } as unknown as Invoice;
 };

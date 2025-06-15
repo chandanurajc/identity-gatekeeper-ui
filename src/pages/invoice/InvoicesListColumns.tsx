@@ -30,9 +30,21 @@ export const columns: ColumnDef<Invoice>[] = [
     ),
   },
   {
-    accessorKey: "supplier.name",
+    accessorKey: "remit_to_name",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Supplier" />
+    ),
+  },
+  {
+    accessorKey: "invoice_type",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Invoice Type" />
+    ),
+  },
+  {
+    accessorKey: "bill_to_name",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Bill To" />
     ),
   },
   {
@@ -75,12 +87,32 @@ export const columns: ColumnDef<Invoice>[] = [
     },
   },
   {
-    accessorKey: "created_on",
+    id: "created",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Created On" />
+      <DataTableColumnHeader column={column} title="Created" />
     ),
     cell: ({ row }) => {
-        return <span>{format(row.original.created_on, 'PPP')}</span>
+      return (
+        <div>
+          <span>{format(row.original.created_on, 'PPP')}</span>
+          <div className="text-xs text-muted-foreground">{row.original.created_by}</div>
+        </div>
+      )
+    }
+  },
+  {
+    id: "updated",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Updated" />
+    ),
+    cell: ({ row }) => {
+      if (!row.original.updated_on) return "-";
+      return (
+        <div>
+          <span>{format(row.original.updated_on, 'PPP')}</span>
+          <div className="text-xs text-muted-foreground">{row.original.updated_by}</div>
+        </div>
+      )
     }
   },
 ]
