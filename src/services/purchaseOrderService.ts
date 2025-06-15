@@ -1,4 +1,4 @@
-import { format } from "date-fns";
+
 import { supabase } from "@/integrations/supabase/client";
 import { PurchaseOrder, PurchaseOrderFormData, PurchaseOrderLine } from "@/types/purchaseOrder";
 
@@ -145,29 +145,29 @@ export const purchaseOrderService = {
     console.log("[PO] Attempting to create purchase order with:", {
       organizationId,
       userId,
-      formData,
-      lines: formData.lines,
+      poDate: formData.poDate,
+      requestedDeliveryDate: formData.requestedDeliveryDate,
     });
 
-    // The 'poDate' from react-hook-form should be a Date object.
-    // We just need to validate it and format it.
     const poDate = formData.poDate;
-    if (!poDate || isNaN(poDate.getTime())) {
+    if (!poDate || !(poDate instanceof Date) || isNaN(poDate.getTime())) {
       console.error("[PO] Invalid poDate received from form:", formData.poDate);
-      throw new Error("[PO] Invalid PO Date provided. It might be empty or in a wrong format.");
+      throw new Error("[PO] Invalid PO Date provided. It must be a valid Date object.");
     }
 
     const requestedDeliveryDate = formData.requestedDeliveryDate;
-    if (requestedDeliveryDate && isNaN(requestedDeliveryDate.getTime())) {
+    if (requestedDeliveryDate && (!(requestedDeliveryDate instanceof Date) || isNaN(requestedDeliveryDate.getTime()))) {
       console.error("[PO] Invalid requestedDeliveryDate received from form:", formData.requestedDeliveryDate);
       throw new Error("[PO] Invalid Requested Delivery Date provided.");
     }
 
-    const formattedPoDate = format(poDate, 'yyyy-MM-dd');
-    const formattedRequestedDeliveryDate = requestedDeliveryDate ? format(requestedDeliveryDate, 'yyyy-MM-dd') : undefined;
+    // Convert to YYYY-MM-DD format safely, avoiding timezone issues.
+    // .toISOString() returns UTC time, e.g., "2024-06-15T13:45:00.000Z". We just need the date part.
+    const formattedPoDate = poDate.toISOString().split('T')[0];
+    const formattedRequestedDeliveryDate = requestedDeliveryDate ? requestedDeliveryDate.toISOString().split('T')[0] : null;
 
-    console.log(`[PO] Formatted po_date for insert: '${formattedPoDate}' (type: ${typeof formattedPoDate})`);
-    console.log(`[PO] Formatted requested_delivery_date for insert: '${formattedRequestedDeliveryDate}' (type: ${typeof formattedRequestedDeliveryDate})`);
+    console.log(`[PO] Formatted po_date for insert: '${formattedPoDate}'`);
+    console.log(`[PO] Formatted requested_delivery_date for insert: '${formattedRequestedDeliveryDate}'`);
 
     // Compose PO header payload
     const poHeader = {
@@ -251,16 +251,19 @@ export const purchaseOrderService = {
     console.log("Updating purchase order:", id, formData);
 
     const poDate = formData.poDate;
-    if (!poDate || isNaN(poDate.getTime())) {
+    if (!poDate || !(poDate instanceof Date) || isNaN(poDate.getTime())) {
       console.error("[PO] Invalid poDate received from form for update:", formData.poDate);
       throw new Error("[PO] Invalid PO Date provided for update.");
     }
 
     const requestedDeliveryDate = formData.requestedDeliveryDate;
-    if (requestedDeliveryDate && isNaN(requestedDeliveryDate.getTime())) {
+    if (requestedDeliveryDate && (!(requestedDeliveryDate instanceof Date) || isNaN(requestedDeliveryDate.getTime()))) {
       console.error("[PO] Invalid requestedDeliveryDate received from form for update:", formData.requestedDeliveryDate);
       throw new Error("[PO] Invalid Requested Delivery Date provided for update.");
     }
+
+    const formattedPoDate = poDate.toISOString().split('T')[0];
+    const formattedRequestedDeliveryDate = requestedDeliveryDate ? requestedDeliveryDate.toISOString().split('T')[0] : null;
 
     // Update purchase order header
     const { error: poError } = await supabase
@@ -268,8 +271,8 @@ export const purchaseOrderService = {
       .update({
         division_id: formData.divisionId,
         supplier_id: formData.supplierId,
-        po_date: format(poDate, 'yyyy-MM-dd'),
-        requested_delivery_date: requestedDeliveryDate ? format(requestedDeliveryDate, 'yyyy-MM-dd') : undefined,
+        po_date: formattedPoDate,
+        requested_delivery_date: formattedRequestedDeliveryDate,
         ship_to_address_1: formData.shipToAddress1,
         ship_to_address_2: formData.shipToAddress2,
         ship_to_postal_code: formData.shipToPostalCode,
