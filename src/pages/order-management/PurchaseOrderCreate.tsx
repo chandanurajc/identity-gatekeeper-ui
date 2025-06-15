@@ -27,6 +27,14 @@ const PurchaseOrderCreate = () => {
       return;
     }
 
+    console.log("Submitting PO Form Data:", JSON.stringify(data, null, 2));
+    console.log("Value of poDate from form:", data.poDate);
+    console.log("Type of poDate from form:", typeof data.poDate);
+    if (data.poDate) {
+      console.log("Is poDate a valid Date object?", data.poDate instanceof Date && !isNaN(data.poDate.getTime()));
+    }
+
+
     try {
       const createdPO = await purchaseOrderService.createPurchaseOrder(
         data, 
@@ -90,4 +98,3 @@ const PurchaseOrderCreate = () => {
 };
 
 export default PurchaseOrderCreate;
-

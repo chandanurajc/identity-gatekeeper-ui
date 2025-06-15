@@ -1,4 +1,3 @@
-
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { PurchaseOrder, PurchaseOrderFormData, PurchaseOrderLine } from "@/types/purchaseOrder";
@@ -164,13 +163,19 @@ export const purchaseOrderService = {
       throw new Error("[PO] Invalid Requested Delivery Date provided.");
     }
 
+    const formattedPoDate = format(poDate, 'yyyy-MM-dd');
+    const formattedRequestedDeliveryDate = requestedDeliveryDate ? format(requestedDeliveryDate, 'yyyy-MM-dd') : undefined;
+
+    console.log(`[PO] Formatted po_date for insert: '${formattedPoDate}' (type: ${typeof formattedPoDate})`);
+    console.log(`[PO] Formatted requested_delivery_date for insert: '${formattedRequestedDeliveryDate}' (type: ${typeof formattedRequestedDeliveryDate})`);
+
     // Compose PO header payload
     const poHeader = {
       po_number: formData.poNumber,
       division_id: formData.divisionId,
       supplier_id: formData.supplierId,
-      po_date: format(poDate, 'yyyy-MM-dd'),
-      requested_delivery_date: requestedDeliveryDate ? format(requestedDeliveryDate, 'yyyy-MM-dd') : undefined,
+      po_date: formattedPoDate,
+      requested_delivery_date: formattedRequestedDeliveryDate,
       ship_to_address_1: formData.shipToAddress1,
       ship_to_address_2: formData.shipToAddress2,
       ship_to_postal_code: formData.shipToPostalCode,
