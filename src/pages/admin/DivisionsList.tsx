@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -33,32 +32,97 @@ const DivisionsList = () => {
   const { toast } = useToast();
   const { canViewDivision, canCreateDivision, canEditDivision } = useDivisionPermissions();
 
+  // Additional diagnostic state
+  const [diagnosticInfo, setDiagnosticInfo] = useState<any>(null);
+
   // Fetch divisions
   const fetchDivisions = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await divisionService.getAllDivisions();
-      setDivisions(data || []);
-    } catch (err) {
-      console.error("Error fetching divisions:", err);
-      const errorMessage = err instanceof Error ? err.message : "Failed to fetch divisions";
-      setError(errorMessage);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to fetch divisions. Please try again.",
+
+      // Diagnostics about authentication/organization
+      const { data: { user }, error: userError } = await import("@/integrations/supabase/client").then(m => m.supabase.auth.getUser());
+      if (!user || userError) {
+        setDiagnosticInfo({ phase: "user", user, userError });
+        setError("No authenticated user found. Please log in again.");
+        return;
+      }
+      const { data: profile, error: profileError } = await import("@/integrations/supabase/client").then(m => m.supabase
+        .from('profiles')
+        .select('organization_id')
+        .eq('id', user.id)
+        .single());
+      if (!profile || profileError) {
+        setDiagnosticInfo({ phase: "profile", profile, profileError });
+        setError("No profile found for this user. Check that your profile exists and has an organization assigned.");
+        return;
+      }
+      const { data: org, error: orgError } = await import("@/integrations/supabase/client").then(m => m.supabase
+        .from('organizations')
+        .select('id, code, name')
+        .eq('id', profile.organization_id)
+        .single());
+      if (!org || orgError) {
+        setDiagnosticInfo({ phase: "organization", org, orgError });
+        setError("No organization found for the current profile. Check that your organization exists.");
+        return;
+      }
+      // Same divisions fetch as before, but trace what's being used
+      const { data: divData, error: divError } = await import("@/integrations/supabase/client").then(m => m.supabase
+        .from('divisions')
+        .select("*")
+        .eq('organization_id', profile.organization_id));
+      setDiagnosticInfo({
+        phase: "divisions",
+        user,
+        profile,
+        org,
+        divData,
+        divError
       });
+      if (divError) {
+        setError("Failed to fetch divisions from database.");
+        return;
+      }
+      if (!divData || divData.length === 0) {
+        setError(null); // not an error! Just empty state
+        setDivisions([]);
+        return;
+      }
+
+      // Simulate the mapping from the divisionService
+      setDivisions(divData.map((d: any) => ({
+        id: d.id,
+        code: d.code,
+        name: d.name,
+        organizationId: d.organization_id,
+        organizationCode: org.code,
+        organizationName: org.name,
+        type: d.type,
+        status: d.status,
+        references: [],
+        contacts: [],
+        createdBy: d.created_by,
+        createdOn: d.created_on ? new Date(d.created_on) : undefined,
+        updatedBy: d.updated_by,
+        updatedOn: d.updated_on ? new Date(d.updated_on) : undefined,
+      })));
+      setError(null);
+    } catch (err: any) {
+      setError("Unknown error: " + (err && err.message ? err.message : String(err)));
+      setDiagnosticInfo({ phase: "exception", err });
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, []);
 
   useEffect(() => {
     if (canViewDivision) {
       fetchDivisions();
     } else {
       setLoading(false);
+      setError("You don't have permission to view divisions.");
     }
   }, [canViewDivision, fetchDivisions]);
   
@@ -145,37 +209,51 @@ const DivisionsList = () => {
   if (loading) {
     return (
       <div className="container mx-auto py-8">
-        <Card>
-          <CardContent className="py-8">
-            <div className="flex items-center justify-center h-64">
-              <div className="flex items-center space-x-2">
-                <RefreshCw className="h-6 w-6 animate-spin" />
-                <div className="text-lg">
-                  Loading divisions...
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="flex flex-col items-center justify-center h-64">
+          <div className="flex items-center space-x-2">
+            {/* Prefer the loader icon from lucide-react */}
+            <span className="animate-spin text-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx={12} cy={12} r={10} stroke="currentColor" strokeWidth={4} fill="none" opacity=".25"/><path d="M20 12A8 8 0 1 1 4 12" stroke="currentColor" strokeWidth={4}/></svg>
+            </span>
+            <span className="text-lg">Loading divisions…</span>
+          </div>
+        </div>
       </div>
     );
   }
 
-  // Error state
+  // Error state, show diagnostics if present
   if (error) {
     return (
       <div className="container mx-auto py-8">
-        <Card>
-          <CardContent className="py-8">
-            <div className="text-center">
-              <p className="text-red-600 mb-4">Error: {error}</p>
-              <Button onClick={handleRefresh} variant="outline">
-                <RefreshCw className="mr-2 h-4 w-4" />
-                Retry
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="p-6 bg-destructive/5 border border-destructive rounded-lg">
+          <div className="mb-3 text-destructive font-semibold">{error}</div>
+          {diagnosticInfo && (
+            <pre className="text-xs text-gray-500 bg-gray-100 rounded p-2 overflow-x-auto mb-4">
+              {JSON.stringify(diagnosticInfo, null, 2)}
+            </pre>
+          )}
+          <Button onClick={fetchDivisions} variant="outline">Reload</Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Empty state (no error)
+  if (!loading && divisions.length === 0) {
+    return (
+      <div className="container mx-auto py-8">
+        <div className="p-6 bg-muted rounded-lg text-center">
+          <div className="mb-2 text-lg font-semibold">No divisions found for your organization.</div>
+          <div className="mb-4 text-sm text-muted-foreground">Try adding a division, or check that your user/profile/organization setup is correct.</div>
+          <Button onClick={fetchDivisions} variant="outline">Reload</Button>
+          {diagnosticInfo && (
+            <details className="mt-4">
+              <summary className="cursor-pointer text-muted-foreground text-xs">Diagnostics</summary>
+              <pre className="text-xs text-gray-500 bg-gray-100 rounded p-2 overflow-x-auto">{JSON.stringify(diagnosticInfo, null, 2)}</pre>
+            </details>
+          )}
+        </div>
       </div>
     );
   }
@@ -409,4 +487,3 @@ const DivisionsList = () => {
 };
 
 export default DivisionsList;
-
