@@ -1,10 +1,10 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Invoice } from '@/types/invoice';
 import { PurchaseOrder } from '@/types/purchaseOrder';
 import { add } from 'date-fns';
 
 export const createInvoiceFromReceivedPO = async (poId: string, organizationId: string, userId: string, userName: string): Promise<Invoice> => {
+    console.log(`[Invoice] Starting invoice creation from PO ${poId}`);
     const { data: poResult, error: poError } = await supabase
         .from('purchase_order')
         .select(`
@@ -18,10 +18,11 @@ export const createInvoiceFromReceivedPO = async (poId: string, organizationId: 
         .single();
     
     if (poError || !poResult) {
+        console.error(`[Invoice] Error fetching PO ${poId}:`, poError);
         throw new Error(`Failed to fetch Purchase Order with ID ${poId}: ${poError?.message}`);
     }
+    console.log(`[Invoice] Successfully fetched PO ${poId}`);
 
-    // Cast to our camelCase type
     const poData = poResult as unknown as PurchaseOrder;
 
     // This check is removed because the calling function `receivePurchaseOrder` is responsible
@@ -34,21 +35,23 @@ export const createInvoiceFromReceivedPO = async (poId: string, organizationId: 
         .maybeSingle();
 
     if (existingInvoiceError) {
+        console.error(`[Invoice] Error checking for existing invoice for PO ${poId}:`, existingInvoiceError);
         throw new Error(`Error checking for existing invoice: ${existingInvoiceError.message}`);
     }
     if (existingInvoice) {
+        console.log(`[Invoice] Invoice already exists for PO ${poData.poNumber}. Aborting.`);
         throw new Error(`An invoice already exists for Purchase Order ${poData.poNumber}.`);
     }
-
-    const billToContact = poData.organization?.contacts?.find(c => c.type === 'Bill To');
-    const remitToContact = poData.supplier?.contacts?.find(c => c.type === 'Remit To');
+    console.log(`[Invoice] No existing invoice found for PO ${poId}. Proceeding.`);
 
     const { data: invoiceNumber, error: invoiceNumberError } = await supabase.rpc('generate_invoice_number', {
         p_organization_id: organizationId
     });
     if (invoiceNumberError || !invoiceNumber) {
+        console.error(`[Invoice] Error generating invoice number for PO ${poId}:`, invoiceNumberError);
         throw new Error(`Failed to generate invoice number: ${invoiceNumberError.message}`);
     }
+    console.log(`[Invoice] Generated invoice number ${invoiceNumber} for PO ${poId}`);
 
     const paymentTermsDays = parseInt(poData.paymentTerms?.match(/\d+/)?.[0] || '30', 10);
     const dueDate = add(new Date(poData.poDate), { days: paymentTermsDays });
@@ -115,16 +118,22 @@ export const createInvoiceFromReceivedPO = async (poId: string, organizationId: 
         .single();
     
     if (createInvoiceError || !newInvoiceData) {
+        console.error(`[Invoice] Error inserting invoice record for PO ${poId}:`, createInvoiceError);
         throw new Error(`Failed to create invoice: ${createInvoiceError.message}`);
     }
+    console.log(`[Invoice] Successfully created invoice header ${newInvoiceData.id} for PO ${poId}`);
 
     const linesWithInvoiceId = invoiceLinesToInsert.map(line => ({ ...line, invoice_id: newInvoiceData.id }));
     const { error: linesInsertError } = await supabase.from('invoice_line').insert(linesWithInvoiceId);
 
     if (linesInsertError) {
+        console.error(`[Invoice] Error inserting invoice lines for invoice ${newInvoiceData.id}. Rolling back invoice creation. Error:`, linesInsertError);
         await supabase.from('invoice').delete().eq('id', newInvoiceData.id);
         throw new Error(`Failed to insert invoice lines: ${linesInsertError.message}`);
     }
+    
+    console.log(`[Invoice] Successfully created invoice lines for invoice ${newInvoiceData.id}`);
+    console.log(`[Invoice] Finished invoice creation from PO ${poId}`);
 
     return { 
         ...newInvoiceData, 

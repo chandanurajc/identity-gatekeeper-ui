@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { PurchaseOrder, POReceiveLineData } from "@/types/purchaseOrder";
 import { getUserNameById } from "@/lib/userUtils";
@@ -109,8 +108,16 @@ export async function receivePurchaseOrder(
     throw new Error("Could not refetch PO to update status.");
   }
   
+  console.log("Checking PO lines for status update:", updatedPO.lines.map(l => ({ 
+    id: l.id, 
+    qty: l.quantity, 
+    received: l.receivedQuantity 
+  })));
+  
   const allLinesFullyReceived = updatedPO.lines.every(line => (line.receivedQuantity || 0) >= line.quantity);
   const anyLinePartiallyReceived = updatedPO.lines.some(line => (line.receivedQuantity || 0) > 0);
+
+  console.log({ allLinesFullyReceived, anyLinePartiallyReceived });
 
   let newStatus: PurchaseOrder['status'] = po.status;
   if (allLinesFullyReceived) {
@@ -118,6 +125,8 @@ export async function receivePurchaseOrder(
   } else if (anyLinePartiallyReceived) {
     newStatus = 'Partially Received';
   }
+
+  console.log(`PO status determined as: ${newStatus}. Original status: ${po.status}`);
 
   if (newStatus !== po.status) {
     const updatedByUsername = await getUserNameById(userId);
