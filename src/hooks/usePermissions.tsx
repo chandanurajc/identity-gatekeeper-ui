@@ -42,6 +42,7 @@ export const usePermissions = () => {
               "view-division", "create-division", "edit-division",
               "view-category", "create-category", "edit-category",
               "View PO", "Create PO", "Edit PO", "Cancel PO",
+              "View Invoices", "Approve Invoice",
               "access_admin", "access_settings"
             ];
             setPermissions(allPermissions);
@@ -181,6 +182,9 @@ export const usePermissions = () => {
         // PO Receive permissions
         canViewPOReceive: false,
         canCreatePOReceive: false,
+        // Invoice permissions
+        canViewInvoices: false,
+        canApproveInvoice: false,
         // Inventory permissions
         canViewInventory: false,
         // Module access
@@ -233,6 +237,9 @@ export const usePermissions = () => {
         // PO Receive permissions
         canViewPOReceive: true,
         canCreatePOReceive: true,
+        // Invoice permissions
+        canViewInvoices: true,
+        canApproveInvoice: true,
         // Inventory
         canViewInventory: true,
         // Module access
@@ -284,6 +291,9 @@ export const usePermissions = () => {
       // PO Receive permissions
       canViewPOReceive: permissions.includes("View PO Receive"),
       canCreatePOReceive: permissions.includes("Create PO Receive"),
+      // Invoice permissions
+      canViewInvoices: permissions.includes("View Invoices"),
+      canApproveInvoice: permissions.includes("Approve Invoice"),
       // Inventory permissions
       canViewInventory: permissions.includes("View Inventory"),
       // Module access

@@ -1,3 +1,6 @@
+
+import { Organization } from './organization';
+
 export interface PurchaseOrder {
   id: string;
   poNumber: string;
@@ -28,10 +31,8 @@ export interface PurchaseOrder {
     name: string;
     code: string;
   };
-  supplier?: {
-    name: string;
-    code: string;
-  };
+  supplier?: Organization;
+  organization?: Organization;
   lines?: PurchaseOrderLine[];
 }
 
