@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { PurchaseOrder, PurchaseOrderFormData, PurchaseOrderLine } from "@/types/purchaseOrder";
 
@@ -152,7 +153,7 @@ export const purchaseOrderService = {
       division_id: formData.divisionId,
       supplier_id: formData.supplierId,
       po_date: poDate,
-      requested_delivery_date: requestedDeliveryDate || null,
+      requested_delivery_date: requestedDeliveryDate ? requestedDeliveryDate : null,
       ship_to_address_1: formData.shipToAddress1,
       ship_to_address_2: formData.shipToAddress2,
       ship_to_postal_code: formData.shipToPostalCode,
@@ -232,7 +233,7 @@ export const purchaseOrderService = {
         division_id: formData.divisionId,
         supplier_id: formData.supplierId,
         po_date: poDate,
-        requested_delivery_date: requestedDeliveryDate || null,
+        requested_delivery_date: requestedDeliveryDate ? requestedDeliveryDate : null,
         ship_to_address_1: formData.shipToAddress1,
         ship_to_address_2: formData.shipToAddress2,
         ship_to_postal_code: formData.shipToPostalCode,
