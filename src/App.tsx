@@ -39,6 +39,8 @@ import PurchaseOrdersList from "./pages/order-management/PurchaseOrdersList";
 import PurchaseOrderCreate from "./pages/order-management/PurchaseOrderCreate";
 import PurchaseOrderEdit from "./pages/order-management/PurchaseOrderEdit";
 import PurchaseOrderDetail from "./pages/order-management/PurchaseOrderDetail";
+import PurchaseOrderReceiveList from "./pages/order-management/PurchaseOrderReceiveList";
+import StockLedgerList from "./pages/inventory/StockLedgerList";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PermissionProtectedRoute from "./components/PermissionProtectedRoute";
@@ -381,6 +383,29 @@ const App = () => (
                 <PermissionProtectedRoute requiredPermission="Edit PO">
                   <MainLayout>
                     <PurchaseOrderEdit />
+                  </MainLayout>
+                </PermissionProtectedRoute>
+              } 
+            />
+
+            <Route 
+              path="/order-management/po-receive" 
+              element={
+                <PermissionProtectedRoute requiredPermission="View PO Receive">
+                  <MainLayout>
+                    <PurchaseOrderReceiveList />
+                  </MainLayout>
+                </PermissionProtectedRoute>
+              } 
+            />
+
+            {/* Inventory Management Routes */}
+            <Route 
+              path="/inventory/stock-ledger" 
+              element={
+                <PermissionProtectedRoute requiredPermission="view-inventory">
+                  <MainLayout>
+                    <StockLedgerList />
                   </MainLayout>
                 </PermissionProtectedRoute>
               } 
