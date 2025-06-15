@@ -6,6 +6,7 @@ import { InventoryStockLedgerItem } from "@/types/inventory";
 import { ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { format } from "date-fns";
 
 export const columns: ColumnDef<InventoryStockLedgerItem>[] = [
   {
@@ -16,7 +17,7 @@ export const columns: ColumnDef<InventoryStockLedgerItem>[] = [
         <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
     ),
-    cell: ({ row }) => new Date(row.getValue("createdOn")).toLocaleString(),
+    cell: ({ row }) => format(new Date(row.getValue("createdOn")), "dd/MM/yyyy"),
   },
   {
     accessorKey: "item.description",
@@ -40,7 +41,11 @@ export const columns: ColumnDef<InventoryStockLedgerItem>[] = [
       if (type === 'PO_RECEIVE' || type === 'ADJUSTMENT_IN') variant = 'default';
       if (type === 'ADJUSTMENT_OUT' || type === 'SALES_ORDER') variant = 'destructive';
       
-      const formattedType = type.replace(/_/g, ' ').toLowerCase();
+      const formatTransactionType = (t: string) => {
+        if (t === 'PO_RECEIVE') return 'PO Receive';
+        return t.replace(/_/g, ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
+      };
+      const formattedType = formatTransactionType(type);
       
       return <Badge variant={variant}>{formattedType}</Badge>;
     },
