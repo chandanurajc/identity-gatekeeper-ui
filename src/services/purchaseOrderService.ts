@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { PurchaseOrder, PurchaseOrderFormData, PurchaseOrderLine } from "@/types/purchaseOrder";
 
@@ -210,11 +209,33 @@ export const purchaseOrderService = {
       }
     }
 
-    const createdPO = await this.getPurchaseOrderById(poData.id);
-    if (!createdPO) {
-      console.error("[PO] Could not fetch created PO by ID, returned null!", poData.id);
-      throw new Error("[PO] Could not verify created purchase order (fetch returned null).");
-    }
+    // Construct the PO from available data to avoid re-fetching, which was causing issues.
+    // The calling UI only needs the poNumber for the success message.
+    const createdPO: PurchaseOrder = {
+      id: poData.id,
+      poNumber: poData.po_number,
+      divisionId: poData.division_id,
+      supplierId: poData.supplier_id,
+      poDate: poData.po_date,
+      requestedDeliveryDate: poData.requested_delivery_date || undefined,
+      shipToAddress1: poData.ship_to_address_1,
+      shipToAddress2: poData.ship_to_address_2,
+      shipToPostalCode: poData.ship_to_postal_code,
+      shipToCity: poData.ship_to_city,
+      shipToState: poData.ship_to_state,
+      shipToCountry: poData.ship_to_country,
+      shipToPhone: poData.ship_to_phone,
+      shipToEmail: poData.ship_to_email,
+      paymentTerms: poData.payment_terms,
+      notes: poData.notes,
+      trackingNumber: poData.tracking_number,
+      status: poData.status as 'Created' | 'Approved' | 'Received',
+      organizationId: poData.organization_id,
+      createdBy: poData.created_by,
+      createdOn: new Date(poData.created_on),
+      lines: formData.lines.map(line => ({ ...line, purchaseOrderId: poData.id }))
+    };
+    
     return createdPO;
   },
 
