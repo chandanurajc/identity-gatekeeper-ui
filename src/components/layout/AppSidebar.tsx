@@ -1,4 +1,5 @@
 
+```tsx
 import { 
   Sidebar, 
   SidebarHeader,
@@ -20,7 +21,7 @@ import { SidebarNavContent } from "./sidebar/SidebarNavContent";
 import { SidebarFooterContent } from "./sidebar/SidebarFooterContent";
 
 export function AppSidebar() {
-  const { canViewUsers } = usePermissions();
+  const { canViewUsers, canViewInvoices } = usePermissions();
   const { canViewRoles, canViewPermissions } = useRolePermissions();
   const { canViewOrganization } = useOrganizationPermissions();
   const { canViewDivision } = useDivisionPermissions();
@@ -45,6 +46,7 @@ export function AppSidebar() {
     canViewPurchaseOrders,
     canViewPOReceive,
     canViewInventory,
+    canViewInvoices,
   };
 
   const moduleGroups = createModuleGroups(permissions);
@@ -70,3 +72,4 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
+```

@@ -1,4 +1,5 @@
 
+```ts
 import {
   User,
   Shield,
@@ -13,6 +14,7 @@ import {
   Truck,
   Warehouse,
   List,
+  FileText,
 } from "lucide-react";
 import { MenuItem, ModuleGroup } from "./types";
 
@@ -130,6 +132,24 @@ export const createModuleGroups = (permissions: PermissionsMap): ModuleGroup[] =
     });
   }
 
+  // Invoicing module
+  const invoicingItems: MenuItem[] = [];
+  if (permissions.canViewInvoices) {
+    invoicingItems.push({
+      label: "Invoices",
+      path: "/invoices",
+      icon: FileText,
+      permission: true,
+    });
+  }
+
+  if (invoicingItems.length > 0) {
+    moduleGroups.push({
+      name: "Invoicing",
+      items: invoicingItems,
+    });
+  }
+
 
   // Admin module
   const adminItems: MenuItem[] = [];
@@ -188,3 +208,4 @@ export const createModuleGroups = (permissions: PermissionsMap): ModuleGroup[] =
 
   return moduleGroups;
 };
+```
