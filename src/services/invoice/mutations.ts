@@ -53,6 +53,11 @@ export const createInvoiceFromReceivedPO = async (poId: string, organizationId: 
     }
     console.log(`[Invoice] Generated invoice number ${invoiceNumber} for PO ${poId}`);
 
+    const billToContact = poData.organization?.contacts?.find(c => c.type === 'Bill To');
+    const remitToContact = poData.supplier?.contacts?.find(c => c.type === 'Remit To');
+    console.log(`[Invoice] Bill To contact:`, billToContact ? billToContact.firstName : 'Not found');
+    console.log(`[Invoice] Remit To contact:`, remitToContact ? remitToContact.firstName : 'Not found');
+
     const paymentTermsDays = parseInt(poData.paymentTerms?.match(/\d+/)?.[0] || '30', 10);
     const dueDate = add(new Date(poData.poDate), { days: paymentTermsDays });
 
