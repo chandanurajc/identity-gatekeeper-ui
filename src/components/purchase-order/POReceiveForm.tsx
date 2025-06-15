@@ -2,7 +2,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { POReceiveFormData, PurchaseOrder } from "@/types/purchaseOrder";
+import { POReceiveFormData, PurchaseOrder, POReceiveLineData } from "@/types/purchaseOrder";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +18,13 @@ import { Label } from "@/components/ui/label";
 
 interface POReceiveFormProps {
   purchaseOrder: PurchaseOrder;
+}
+
+interface ReceivePOVariables {
+    poId: string;
+    linesToReceive: POReceiveLineData[];
+    organizationId: string;
+    userId: string;
 }
 
 const receiveSchema = z.object({
@@ -68,8 +75,9 @@ export function POReceiveForm({ purchaseOrder }: POReceiveFormProps) {
     },
   });
 
-  const { mutate: receivePO, isPending } = useMutation({
-    mutationFn: purchaseOrderService.receivePurchaseOrder,
+  const { mutate: receivePO, isPending } = useMutation<void, Error, ReceivePOVariables>({
+    mutationFn: ({ poId, linesToReceive, organizationId, userId }) => 
+      purchaseOrderService.receivePurchaseOrder( poId, linesToReceive, organizationId, userId ),
     onSuccess: () => {
       toast({ title: "Success", description: "Purchase Order received successfully." });
       queryClient.invalidateQueries({ queryKey: ["purchaseOrders"] });
