@@ -234,6 +234,7 @@ export type Database = {
           invoice_number: string
           invoice_type: string
           organization_id: string
+          payment_terms: string | null
           po_id: string
           po_number: string
           remit_to_address1: string | null
@@ -270,6 +271,7 @@ export type Database = {
           invoice_number: string
           invoice_type?: string
           organization_id: string
+          payment_terms?: string | null
           po_id: string
           po_number: string
           remit_to_address1?: string | null
@@ -306,6 +308,7 @@ export type Database = {
           invoice_number?: string
           invoice_type?: string
           organization_id?: string
+          payment_terms?: string | null
           po_id?: string
           po_number?: string
           remit_to_address1?: string | null

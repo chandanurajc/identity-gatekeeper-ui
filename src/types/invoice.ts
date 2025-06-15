@@ -9,6 +9,7 @@ export interface Invoice {
   status: 'Created' | 'Approved' | 'Paid';
   created_date: string;
   due_date: string;
+  payment_terms?: string;
   bill_to_name?: string;
   bill_to_address1?: string;
   bill_to_address2?: string;

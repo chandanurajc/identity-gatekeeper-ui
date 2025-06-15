@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useToast } from "@/components/ui/use-toast";
 import { format } from "date-fns";
 import { useInvoicePermissions } from "@/hooks/useInvoicePermissions";
+import { Separator } from "@/components/ui/separator";
 
 const InvoiceDetail = () => {
   const { invoiceId } = useParams<{ invoiceId: string }>();
@@ -47,7 +48,7 @@ const InvoiceDetail = () => {
   if (!invoice) return <div>Invoice not found.</div>;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <Card>
         <CardHeader>
           <div className="flex justify-between items-start">
@@ -56,57 +57,68 @@ const InvoiceDetail = () => {
               <CardDescription>
                 From PO: {invoice.po_number}
               </CardDescription>
-              <div className="text-sm text-muted-foreground mt-2">
-                <p>Type: {invoice.invoice_type}</p>
-                <p>Created: {format(new Date(invoice.created_on), 'PPP')}</p>
-              </div>
             </div>
-            <div>
-              <span className="text-sm text-muted-foreground">Status: </span>
-              <span className="font-semibold">{invoice.status}</span>
+            <div className="text-right">
+              <div className="text-lg font-semibold">{invoice.status}</div>
+              <div className="text-sm text-muted-foreground">
+                Created: {format(new Date(invoice.created_on), 'PPP')}
+              </div>
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-6">
           <div className="grid md:grid-cols-2 gap-6">
             <div>
-              <h3 className="font-semibold mb-2">Bill To</h3>
-              <p>{invoice.bill_to_name}</p>
-              <p>{invoice.bill_to_address1}</p>
-              {invoice.bill_to_address2 && <p>{invoice.bill_to_address2}</p>}
-              <p>{invoice.bill_to_city}, {invoice.bill_to_state} {invoice.bill_to_postal_code}</p>
-              <p>{invoice.bill_to_country}</p>
+              <h3 className="font-semibold mb-2 text-muted-foreground uppercase">Bill To</h3>
+              <div className="space-y-1">
+                <p className="font-semibold">{invoice.bill_to_name}</p>
+                <p>{invoice.bill_to_address1}</p>
+                {invoice.bill_to_address2 && <p>{invoice.bill_to_address2}</p>}
+                <p>{invoice.bill_to_city}, {invoice.bill_to_state} {invoice.bill_to_postal_code}</p>
+                <p>{invoice.bill_to_country}</p>
+              </div>
             </div>
             <div>
-              <h3 className="font-semibold mb-2">Remit To</h3>
-              <p>{invoice.remit_to_name}</p>
-              <p>{invoice.remit_to_address1}</p>
-              {invoice.remit_to_address2 && <p>{invoice.remit_to_address2}</p>}
-              <p>{invoice.remit_to_city}, {invoice.remit_to_state} {invoice.remit_to_postal_code}</p>
-              <p>{invoice.remit_to_country}</p>
+              <h3 className="font-semibold mb-2 text-muted-foreground uppercase">Remit To</h3>
+              <div className="space-y-1">
+                <p className="font-semibold">{invoice.remit_to_name}</p>
+                <p>{invoice.remit_to_address1}</p>
+                {invoice.remit_to_address2 && <p>{invoice.remit_to_address2}</p>}
+                <p>{invoice.remit_to_city}, {invoice.remit_to_state} {invoice.remit_to_postal_code}</p>
+                <p>{invoice.remit_to_country}</p>
+              </div>
             </div>
           </div>
-          <div className="mt-6 pt-6 border-t">
-            <h3 className="font-semibold mb-2">Details & Summary</h3>
-            <div className="grid md:grid-cols-4 gap-4">
-              <div>
-                <div className="text-sm text-muted-foreground">Due Date</div>
-                <div>{format(new Date(invoice.due_date), 'PPP')}</div>
-              </div>
-              <div>
-                <div className="text-sm text-muted-foreground">Total Item Cost</div>
-                <div>{new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(invoice.total_item_cost)}</div>
-              </div>
+          <Separator />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div>
+              <div className="text-sm text-muted-foreground">Due Date</div>
+              <div className="font-semibold">{format(new Date(invoice.due_date), 'PPP')}</div>
+            </div>
+            <div>
+              <div className="text-sm text-muted-foreground">Payment Terms</div>
+              <div className="font-semibold">{invoice.payment_terms || 'N/A'}</div>
+            </div>
+          </div>
+          <Separator />
+           <div className="grid md:grid-cols-3 gap-6 text-right">
+             <div />
+             <div>
+                <div className="text-sm text-muted-foreground">Subtotal</div>
+                <div className="font-semibold">{new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(invoice.total_item_cost)}</div>
+             </div>
               <div>
                 <div className="text-sm text-muted-foreground">Total GST</div>
-                <div>{new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(invoice.total_gst)}</div>
-              </div>
-              <div>
+                <div className="font-semibold">{new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(invoice.total_gst)}</div>
+             </div>
+           </div>
+           <Separator />
+           <div className="flex justify-end">
+            <div className="text-right">
                 <div className="text-sm text-muted-foreground">Total Invoice Amount</div>
-                <div className="font-bold">{new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(invoice.total_invoice_amount)}</div>
-              </div>
+                <div className="font-bold text-2xl">{new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(invoice.total_invoice_amount)}</div>
             </div>
-          </div>
+           </div>
         </CardContent>
         <CardFooter className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => navigate('/invoices')}>Back to List</Button>
@@ -147,11 +159,11 @@ const InvoiceDetail = () => {
                     <td className="px-6 py-4 whitespace-nowrap">{line.item_description}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">{line.quantity}</td>
                     <td className="px-6 py-4 whitespace-nowrap">{line.uom}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">{new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(line.unit_cost)}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">{new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(line.total_item_cost)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">{new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(line.unit_cost)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">{new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(line.total_item_cost)}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">{line.gst_percent}%</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">{new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(line.gst_value)}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">{new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(line.line_total)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">{new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(line.gst_value)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">{new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(line.line_total)}</td>
                   </tr>
                 ))}
               </tbody>
