@@ -180,7 +180,11 @@ export const createInvoiceFromReceivedPO = async (poId: string, organizationId: 
 export const approveInvoice = async (invoiceId: string, organizationId: string, userId: string, userName: string): Promise<Invoice> => {
     const { data: currentInvoice, error: fetchError } = await supabase
         .from('invoice')
-        .select('status, invoice_line(id)')
+        .select(`
+            *,
+            bill_to_org:organizations!bill_to_organization_id(*, contacts:organization_contacts(*)),
+            remit_to_org:organizations!remit_to_organization_id(*, contacts:organization_contacts(*))
+        `)
         .eq('id', invoiceId)
         .eq('organization_id', organizationId)
         .single();
@@ -193,8 +197,12 @@ export const approveInvoice = async (invoiceId: string, organizationId: string, 
         throw new Error('Invoice is already approved.');
     }
     
-    // The select on line 140 was changed to use a join which supabase returns as an array
-    if (!currentInvoice.invoice_line || (Array.isArray(currentInvoice.invoice_line) && currentInvoice.invoice_line.length === 0)) {
+    const { count: lineCount, error: lineCountError } = await supabase
+        .from('invoice_line')
+        .select('*', { count: 'exact', head: true })
+        .eq('invoice_id', invoiceId);
+    
+    if (lineCountError || lineCount === 0) {
         throw new Error('Cannot approve an invoice with no line items.');
     }
 
@@ -211,6 +219,45 @@ export const approveInvoice = async (invoiceId: string, organizationId: string, 
 
     if (updateError || !updatedInvoiceData) {
         throw new Error(`Failed to approve invoice: ${updateError.message}`);
+    }
+
+    if (currentInvoice.bill_to_organization_id && currentInvoice.remit_to_organization_id && currentInvoice.bill_to_org && currentInvoice.remit_to_org) {
+        const billToContact = currentInvoice.bill_to_org.contacts?.find(c => c.contact_type === 'Bill To') || currentInvoice.bill_to_org.contacts?.[0];
+        const remitToContact = currentInvoice.remit_to_org.contacts?.find(c => c.contact_type === 'Remit To') || currentInvoice.remit_to_org.contacts?.[0];
+
+        const { error: glError } = await supabase.from('general_ledger').insert({
+            bill_to_orgid: currentInvoice.bill_to_organization_id,
+            remit_to_orgid: currentInvoice.remit_to_organization_id,
+            transaction_type: 'Payable Invoice',
+            transaction_date: new Date().toISOString().split('T')[0],
+            reference_number: currentInvoice.invoice_number,
+            amount: -currentInvoice.total_invoice_amount,
+            created_by: userName,
+            bill_to_name: currentInvoice.bill_to_org.name,
+            bill_to_address1: billToContact?.address1,
+            bill_to_address2: billToContact?.address2,
+            bill_to_city: billToContact?.city,
+            bill_to_state: billToContact?.state,
+            bill_to_country: billToContact?.country,
+            bill_to_postal_code: billToContact?.postal_code,
+            bill_to_email: billToContact?.email,
+            bill_to_phone: billToContact?.phone_number,
+            remit_to_name: currentInvoice.remit_to_org.name,
+            remit_to_address1: remitToContact?.address1,
+            remit_to_address2: remitToContact?.address2,
+            remit_to_city: remitToContact?.city,
+            remit_to_state: remitToContact?.state,
+            remit_to_country: remitToContact?.country,
+            remit_to_postal_code: remitToContact?.postal_code,
+            remit_to_email: remitToContact?.email,
+            remit_to_phone: remitToContact?.phone_number,
+        });
+
+        if (glError) {
+            console.error('Failed to post to General Ledger. Invoice was approved, but GL entry failed. Manual correction may be needed.', glError);
+        }
+    } else {
+        console.warn(`Skipping GL posting for invoice ${invoiceId}: missing bill_to_organization_id, remit_to_organization_id, or organization details.`);
     }
 
     await supabase.from('invoice_audit_log').insert({

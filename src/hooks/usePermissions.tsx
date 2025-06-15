@@ -185,6 +185,7 @@ export const usePermissions = () => {
         // Invoice permissions
         canViewInvoices: false,
         canApproveInvoice: false,
+        canViewGeneralLedger: false,
         // Inventory permissions
         canViewInventory: false,
         // Module access
@@ -240,6 +241,7 @@ export const usePermissions = () => {
         // Invoice permissions
         canViewInvoices: true,
         canApproveInvoice: true,
+        canViewGeneralLedger: true,
         // Inventory
         canViewInventory: true,
         // Module access
@@ -294,6 +296,7 @@ export const usePermissions = () => {
       // Invoice permissions
       canViewInvoices: permissions.includes("View Invoices"),
       canApproveInvoice: permissions.includes("Approve Invoice"),
+      canViewGeneralLedger: permissions.includes("View General Ledger"),
       // Inventory permissions
       canViewInventory: permissions.includes("View Inventory"),
       // Module access

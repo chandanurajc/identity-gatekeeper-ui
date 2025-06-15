@@ -148,6 +148,111 @@ export type Database = {
         }
         Relationships: []
       }
+      general_ledger: {
+        Row: {
+          amount: number
+          bill_to_address1: string | null
+          bill_to_address2: string | null
+          bill_to_city: string | null
+          bill_to_country: string | null
+          bill_to_email: string | null
+          bill_to_name: string | null
+          bill_to_orgid: string
+          bill_to_phone: string | null
+          bill_to_postal_code: string | null
+          bill_to_state: string | null
+          created_by: string | null
+          created_on: string
+          id: string
+          reference_number: string
+          remit_to_address1: string | null
+          remit_to_address2: string | null
+          remit_to_city: string | null
+          remit_to_country: string | null
+          remit_to_email: string | null
+          remit_to_name: string | null
+          remit_to_orgid: string
+          remit_to_phone: string | null
+          remit_to_postal_code: string | null
+          remit_to_state: string | null
+          transaction_date: string
+          transaction_type: Database["public"]["Enums"]["gl_transaction_type"]
+        }
+        Insert: {
+          amount: number
+          bill_to_address1?: string | null
+          bill_to_address2?: string | null
+          bill_to_city?: string | null
+          bill_to_country?: string | null
+          bill_to_email?: string | null
+          bill_to_name?: string | null
+          bill_to_orgid: string
+          bill_to_phone?: string | null
+          bill_to_postal_code?: string | null
+          bill_to_state?: string | null
+          created_by?: string | null
+          created_on?: string
+          id?: string
+          reference_number: string
+          remit_to_address1?: string | null
+          remit_to_address2?: string | null
+          remit_to_city?: string | null
+          remit_to_country?: string | null
+          remit_to_email?: string | null
+          remit_to_name?: string | null
+          remit_to_orgid: string
+          remit_to_phone?: string | null
+          remit_to_postal_code?: string | null
+          remit_to_state?: string | null
+          transaction_date: string
+          transaction_type: Database["public"]["Enums"]["gl_transaction_type"]
+        }
+        Update: {
+          amount?: number
+          bill_to_address1?: string | null
+          bill_to_address2?: string | null
+          bill_to_city?: string | null
+          bill_to_country?: string | null
+          bill_to_email?: string | null
+          bill_to_name?: string | null
+          bill_to_orgid?: string
+          bill_to_phone?: string | null
+          bill_to_postal_code?: string | null
+          bill_to_state?: string | null
+          created_by?: string | null
+          created_on?: string
+          id?: string
+          reference_number?: string
+          remit_to_address1?: string | null
+          remit_to_address2?: string | null
+          remit_to_city?: string | null
+          remit_to_country?: string | null
+          remit_to_email?: string | null
+          remit_to_name?: string | null
+          remit_to_orgid?: string
+          remit_to_phone?: string | null
+          remit_to_postal_code?: string | null
+          remit_to_state?: string | null
+          transaction_date?: string
+          transaction_type?: Database["public"]["Enums"]["gl_transaction_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "general_ledger_bill_to_orgid_fkey"
+            columns: ["bill_to_orgid"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "general_ledger_remit_to_orgid_fkey"
+            columns: ["remit_to_orgid"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inventory_stock: {
         Row: {
           created_by: string
@@ -1445,6 +1550,11 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user" | "guest"
+      gl_transaction_type:
+        | "Payable Invoice"
+        | "Payment"
+        | "Credit Note"
+        | "Debit Note"
       invoice_status: "Created" | "Approved"
     }
     CompositeTypes: {
@@ -1562,6 +1672,12 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user", "guest"],
+      gl_transaction_type: [
+        "Payable Invoice",
+        "Payment",
+        "Credit Note",
+        "Debit Note",
+      ],
       invoice_status: ["Created", "Approved"],
     },
   },

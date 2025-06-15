@@ -5,6 +5,7 @@ import PermissionProtectedRoute from "@/components/PermissionProtectedRoute";
 import { MainLayout } from "@/layouts/MainLayout";
 import InvoicesList from "@/pages/invoice/InvoicesList";
 import InvoiceDetail from "@/pages/invoice/InvoiceDetail";
+import GeneralLedgerViewer from "@/pages/finance/GeneralLedgerViewer";
 
 export const InvoiceRoutes = () => (
   <React.Fragment>
@@ -24,6 +25,16 @@ export const InvoiceRoutes = () => (
         <PermissionProtectedRoute requiredPermission="View Invoices">
           <MainLayout>
             <InvoiceDetail />
+          </MainLayout>
+        </PermissionProtectedRoute>
+      } 
+    />
+    <Route 
+      path="/finance/general-ledger" 
+      element={
+        <PermissionProtectedRoute requiredPermission="View General Ledger">
+          <MainLayout>
+            <GeneralLedgerViewer />
           </MainLayout>
         </PermissionProtectedRoute>
       } 
