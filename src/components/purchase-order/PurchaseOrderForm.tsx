@@ -137,7 +137,6 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
     try {
       const address = await purchaseOrderService.getDivisionShippingAddress(watchedDivisionId);
       if (address) {
-        // division_contacts fields: address1, address2, postal_code, city, state, country, phone_number, email
         setValue("shipToAddress1", address.address1 || "");
         setValue("shipToAddress2", address.address2 || "");
         setValue("shipToPostalCode", address.postal_code || "");
@@ -146,6 +145,15 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
         setValue("shipToCountry", address.country || "");
         setValue("shipToPhone", address.phone_number || "");
         setValue("shipToEmail", address.email || "");
+      } else {
+        setValue("shipToAddress1", "");
+        setValue("shipToAddress2", "");
+        setValue("shipToPostalCode", "");
+        setValue("shipToCity", "");
+        setValue("shipToState", "");
+        setValue("shipToCountry", "");
+        setValue("shipToPhone", "");
+        setValue("shipToEmail", "");
       }
     } catch (error) {
       console.error("Error loading division shipping address:", error);

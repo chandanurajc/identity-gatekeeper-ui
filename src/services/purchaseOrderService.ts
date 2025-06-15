@@ -294,21 +294,30 @@ export const purchaseOrderService = {
 
   async getDivisionShippingAddress(divisionId: string): Promise<any> {
     console.log("Fetching division shipping address (from division_contacts):", divisionId);
-    
-    // Fetch from the division_contacts table instead of organization_contacts
+
+    // Fetch ALL shipping contacts, not just one
     const { data, error } = await supabase
       .from('division_contacts')
       .select('*')
       .eq('division_id', divisionId)
-      .eq('contact_type', 'Shipping')
-      .maybeSingle();
+      .eq('contact_type', 'Shipping');
 
     if (error && error.code !== 'PGRST116') {
       console.error("Error fetching division shipping address (division_contacts):", error);
       throw new Error(`Failed to fetch division shipping address: ${error.message}`);
     }
-
-    // Return the contact data or null if not found
-    return data;
+    // If multiple shipping contacts, pick the first (if any)
+    if (data && data.length > 0) {
+      // Prefer contacts with valid address1 field
+      const sorted = [...data].sort((a, b) => {
+        // entries with non-empty address1 should come first
+        if (a.address1 && !b.address1) return -1;
+        if (!a.address1 && b.address1) return 1;
+        return 0;
+      });
+      return sorted[0];
+    }
+    // Return null if none found
+    return null;
   }
 };
