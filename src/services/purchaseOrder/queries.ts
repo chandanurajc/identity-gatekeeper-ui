@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { PurchaseOrder } from "@/types/purchaseOrder";
+import { isUUID } from "@/lib/userUtils";
 
 export async function getAllPurchaseOrders(organizationId: string): Promise<PurchaseOrder[]> {
   console.log("Fetching purchase orders for organization:", organizationId);
@@ -20,7 +21,29 @@ export async function getAllPurchaseOrders(organizationId: string): Promise<Purc
     throw new Error(`Failed to fetch purchase orders: ${error.message}`);
   }
 
-  return data?.map(po => ({
+  if (!data) return [];
+
+  const userIdentifiers = new Set<string>();
+  data.forEach(po => {
+    if (isUUID(po.created_by)) userIdentifiers.add(po.created_by);
+    if (po.updated_by && isUUID(po.updated_by)) userIdentifiers.add(po.updated_by);
+  });
+
+  const usernameMap = new Map<string, string>();
+  if (userIdentifiers.size > 0) {
+    const { data: profiles, error: profileError } = await supabase
+      .from('profiles')
+      .select('id, username')
+      .in('id', Array.from(userIdentifiers));
+
+    if (profileError) {
+      console.error('Error fetching usernames for PO list:', profileError);
+    } else {
+      profiles?.forEach(p => usernameMap.set(p.id, p.username));
+    }
+  }
+
+  return data.map(po => ({
     id: po.id,
     poNumber: po.po_number,
     divisionId: po.division_id,
@@ -40,13 +63,13 @@ export async function getAllPurchaseOrders(organizationId: string): Promise<Purc
     trackingNumber: po.tracking_number,
     status: po.status as 'Created' | 'Approved' | 'Received',
     organizationId: po.organization_id,
-    createdBy: po.created_by,
+    createdBy: usernameMap.get(po.created_by) || po.created_by,
     createdOn: new Date(po.created_on),
-    updatedBy: po.updated_by,
+    updatedBy: (po.updated_by && (usernameMap.get(po.updated_by) || po.updated_by)) || undefined,
     updatedOn: po.updated_on ? new Date(po.updated_on) : undefined,
     division: po.division,
     supplier: po.supplier
-  })) || [];
+  }));
 }
 
 export async function getPurchaseOrderById(id: string): Promise<PurchaseOrder | null> {
@@ -84,6 +107,24 @@ export async function getPurchaseOrderById(id: string): Promise<PurchaseOrder | 
 
   if (!data) return null;
 
+  const userIdentifiers = new Set<string>();
+  if (isUUID(data.created_by)) userIdentifiers.add(data.created_by);
+  if (data.updated_by && isUUID(data.updated_by)) userIdentifiers.add(data.updated_by);
+
+  const usernameMap = new Map<string, string>();
+  if (userIdentifiers.size > 0) {
+    const { data: profiles, error: profileError } = await supabase
+      .from('profiles')
+      .select('id, username')
+      .in('id', Array.from(userIdentifiers));
+
+    if (profileError) {
+      console.error(`Error fetching usernames for PO ${id}:`, profileError);
+    } else {
+      profiles?.forEach(p => usernameMap.set(p.id, p.username));
+    }
+  }
+
   return {
     id: data.id,
     poNumber: data.po_number,
@@ -104,9 +145,9 @@ export async function getPurchaseOrderById(id: string): Promise<PurchaseOrder | 
     trackingNumber: data.tracking_number,
     status: data.status as 'Created' | 'Approved' | 'Received',
     organizationId: data.organization_id,
-    createdBy: data.created_by,
+    createdBy: usernameMap.get(data.created_by) || data.created_by,
     createdOn: new Date(data.created_on),
-    updatedBy: data.updated_by,
+    updatedBy: (data.updated_by && (usernameMap.get(data.updated_by) || data.updated_by)) || undefined,
     updatedOn: data.updated_on ? new Date(data.updated_on) : undefined,
     division: data.division,
     supplier: data.supplier,
