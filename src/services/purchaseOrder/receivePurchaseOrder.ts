@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { PurchaseOrder, POReceiveLineData } from "@/types/purchaseOrder";
 import { getUserNameById } from "@/lib/userUtils";
@@ -103,19 +104,33 @@ export async function receivePurchaseOrder(
   }
 
   // 4. Update PO Status
-  const updatedPO = await getPurchaseOrderById(poId);
-  if (!updatedPO?.lines) {
-    throw new Error("Could not refetch PO to update status.");
+  // To avoid issues with DB replication lag, we'll calculate the new status based on our in-memory data
+  // instead of re-fetching the entire PO.
+  const inMemoryUpdatedPO = { ...po };
+  inMemoryUpdatedPO.lines = po.lines?.map(poLine => {
+    const receivedLine = linesToReceive.find(rtl => rtl.purchaseOrderLineId === poLine.id);
+    if (receivedLine) {
+      return {
+        ...poLine,
+        receivedQuantity: (poLine.receivedQuantity || 0) + receivedLine.quantityToReceive,
+      };
+    }
+    return poLine;
+  });
+
+  if (!inMemoryUpdatedPO?.lines) {
+    // This case should not be reached if the initial 'po' object was valid.
+    throw new Error("Could not determine PO lines to update status.");
   }
   
-  console.log("Checking PO lines for status update:", updatedPO.lines.map(l => ({ 
+  console.log("Checking PO lines for status update:", inMemoryUpdatedPO.lines.map(l => ({ 
     id: l.id, 
     qty: l.quantity, 
     received: l.receivedQuantity 
   })));
   
-  const allLinesFullyReceived = updatedPO.lines.every(line => (line.receivedQuantity || 0) >= line.quantity);
-  const anyLinePartiallyReceived = updatedPO.lines.some(line => (line.receivedQuantity || 0) > 0);
+  const allLinesFullyReceived = inMemoryUpdatedPO.lines.every(line => (line.receivedQuantity || 0) >= line.quantity);
+  const anyLinePartiallyReceived = inMemoryUpdatedPO.lines.some(line => (line.receivedQuantity || 0) > 0);
 
   console.log({ allLinesFullyReceived, anyLinePartiallyReceived });
 
