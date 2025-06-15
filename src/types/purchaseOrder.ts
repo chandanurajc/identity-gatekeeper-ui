@@ -4,8 +4,8 @@ export interface PurchaseOrder {
   poNumber: string;
   divisionId: string;
   supplierId: string;
-  poDate: Date;
-  requestedDeliveryDate?: Date;
+  poDate: string;
+  requestedDeliveryDate?: string;
   shipToAddress1?: string;
   shipToAddress2?: string;
   shipToPostalCode?: string;
