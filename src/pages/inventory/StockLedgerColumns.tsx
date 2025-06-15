@@ -39,7 +39,10 @@ export const columns: ColumnDef<InventoryStockLedgerItem>[] = [
       let variant: "default" | "secondary" | "destructive" | "outline" = "secondary";
       if (type === 'PO_RECEIVE' || type === 'ADJUSTMENT_IN') variant = 'default';
       if (type === 'ADJUSTMENT_OUT' || type === 'SALES_ORDER') variant = 'destructive';
-      return <Badge variant={variant}>{type.replace(/_/g, ' ')}</Badge>;
+      
+      const formattedType = type.replace(/_/g, ' ').toLowerCase();
+      
+      return <Badge variant={variant}>{formattedType}</Badge>;
     },
   },
   {

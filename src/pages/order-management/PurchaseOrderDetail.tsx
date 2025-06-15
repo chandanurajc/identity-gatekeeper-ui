@@ -230,6 +230,7 @@ const PurchaseOrderDetail = () => {
                   <TableHead>Item Description</TableHead>
                   <TableHead>Classification</TableHead>
                   <TableHead>Quantity</TableHead>
+                  <TableHead>Received Qty</TableHead>
                   <TableHead>UOM</TableHead>
                   <TableHead>Unit Price</TableHead>
                   <TableHead>Total Unit Price</TableHead>
@@ -256,6 +257,7 @@ const PurchaseOrderDetail = () => {
                         </div>
                       </TableCell>
                       <TableCell>{line.quantity}</TableCell>
+                      <TableCell>{line.receivedQuantity || 0}</TableCell>
                       <TableCell>{line.uom}</TableCell>
                       <TableCell>₹{line.unitPrice.toFixed(2)}</TableCell>
                       <TableCell>₹{line.totalUnitPrice.toFixed(2)}</TableCell>
@@ -266,7 +268,7 @@ const PurchaseOrderDetail = () => {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={10} className="text-center text-muted-foreground">
+                    <TableCell colSpan={11} className="text-center text-muted-foreground">
                       No line items found
                     </TableCell>
                   </TableRow>
