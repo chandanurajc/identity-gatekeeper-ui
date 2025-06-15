@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Invoice } from '@/types/invoice';
 import { add } from 'date-fns';
@@ -51,8 +50,8 @@ export const createInvoiceFromReceivedPO = async (poId: string, organizationId: 
     }
     console.log(`[Invoice] Generated invoice number ${invoiceNumber} for PO ${poId}`);
 
-    const billToContact = poResult.organization?.contacts?.find(c => c.type === 'Bill To');
-    const remitToContact = poResult.supplier?.contacts?.find(c => c.type === 'Remit To');
+    const billToContact = poResult.organization?.contacts?.find(c => c.contact_type === 'Bill To');
+    const remitToContact = poResult.supplier?.contacts?.find(c => c.contact_type === 'Remit To');
     console.log(`[Invoice] Bill To contact:`, billToContact ? billToContact.first_name : 'Not found');
     console.log(`[Invoice] Remit To contact:`, remitToContact ? remitToContact.first_name : 'Not found');
 
