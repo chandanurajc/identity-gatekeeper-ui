@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Partner, PartnerFormData, OrganizationSearchResult } from "@/types/partner";
 
@@ -78,13 +77,9 @@ export const partnerService = {
         return [];
       }
 
-      const transformedData = data
-        .map(partner => {
-          if (!partner.organization) {
-            // This should not happen with an inner join, but for type safety
-            return null;
-          }
-          
+      const transformedData: Partner[] = [];
+      for (const partner of data) {
+        if (partner.organization) {
           const mappedPartner: Partner = {
             id: partner.id,
             organizationId: partner.organization_id,
@@ -104,10 +99,9 @@ export const partnerService = {
           if (partner.updated_on) {
             mappedPartner.updatedOn = new Date(partner.updated_on);
           }
-
-          return mappedPartner;
-        })
-        .filter((p): p is Partner => p !== null);
+          transformedData.push(mappedPartner);
+        }
+      }
 
       return transformedData;
       
