@@ -1,4 +1,3 @@
-
 import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
@@ -64,45 +63,50 @@ const GeneralLedgerViewer = () => {
     }
   }, [ledgerError, toast]);
 
-  const outstandingBalance = useMemo(() => {
-    if (!ledgerEntries || ledgerEntries.length === 0) return 0;
-
-    const balance = ledgerEntries.reduce((acc, entry) => {
-        if (['Payable Invoice', 'Debit Note'].includes(entry.transaction_type)) {
-            return acc + entry.amount;
-        } else { // 'Payment', 'Credit Note'
-            return acc - entry.amount;
-        }
-    }, 0);
-
-    return balance > 0 ? balance : 0;
-  }, [ledgerEntries]);
-
+  // Running balance and debit/credit assignment logic (fixed)
   const processedData = useMemo(() => {
     if (!ledgerEntries) return [];
     let runningBalance = 0;
 
-    const reversedEntries = [...ledgerEntries].reverse();
+    // In accounting, positive means you owe (Payables up), and is a debit; credits reduce your payable.
+    // Present so that balance always increases on debit (invoice), decreases on credit (payment).
+    const sortedEntries = [...ledgerEntries].sort((a, b) =>
+      new Date(a.transaction_date).getTime() - new Date(b.transaction_date).getTime()
+    );
 
-    const processed = reversedEntries.map((entry: GeneralLedgerEntry) => {
-      const credit_types = ['Payable Invoice', 'Debit Note'];
-      const debit_types = ['Payment', 'Credit Note'];
+    const processed = sortedEntries.map((entry: GeneralLedgerEntry) => {
+      let debit = 0;
+      let credit = 0;
 
-      if (credit_types.includes(entry.transaction_type)) {
+      if (entry.transaction_type === "Payable Invoice" || entry.transaction_type === "Debit Note") {
+        debit = entry.amount;
         runningBalance += entry.amount;
-      } else if (debit_types.includes(entry.transaction_type)) {
+      } else if (entry.transaction_type === "Payment" || entry.transaction_type === "Credit Note") {
+        credit = entry.amount;
         runningBalance -= entry.amount;
       }
 
       return {
         ...entry,
-        debit: debit_types.includes(entry.transaction_type) ? entry.amount : 0,
-        credit: credit_types.includes(entry.transaction_type) ? entry.amount : 0,
-        balance: runningBalance,
+        debit,
+        credit,
+        balance: runningBalance > 0 ? runningBalance : 0, // Don't show negatives; payable can't be negative
       };
     });
-    
-    return processed.reverse();
+
+    return processed;
+  }, [ledgerEntries]);
+
+  // Outstanding balance is the same concept: sum all debit minus all credit, never negative
+  const outstandingBalance = useMemo(() => {
+    if (!ledgerEntries || ledgerEntries.length === 0) return 0;
+    const totalDebit = ledgerEntries
+      .filter(e => e.transaction_type === "Payable Invoice" || e.transaction_type === "Debit Note")
+      .reduce((acc, entry) => acc + entry.amount, 0);
+    const totalCredit = ledgerEntries
+      .filter(e => e.transaction_type === "Payment" || e.transaction_type === "Credit Note")
+      .reduce((acc, entry) => acc + entry.amount, 0);
+    return Math.max(totalDebit - totalCredit, 0);
   }, [ledgerEntries]);
 
   return (
@@ -166,10 +170,15 @@ const GeneralLedgerViewer = () => {
       </Card>
       {billToOrg && remitToOrg && (
         <RecordPaymentDialog
-          isOpen={isPaymentDialogOpen}
+          open={isPaymentDialogOpen}
           onOpenChange={setIsPaymentDialogOpen}
           billToOrg={billToOrg}
           remitToOrg={remitToOrg}
+          outstandingBalance={outstandingBalance}
+          onPaymentSuccess={() => {
+            setLoadTrigger(t => t + 1);
+            setIsPaymentDialogOpen(false);
+          }}
         />
       )}
     </div>

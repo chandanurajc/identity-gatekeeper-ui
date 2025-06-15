@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -29,55 +28,78 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/components/ui/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { recordPayment } from "@/services/generalLedgerService";
+import { generalLedgerService } from "@/services/generalLedgerService";
+import { Organization } from "@/types/organization";
+import { RecordPaymentFormData } from "@/types/generalLedger";
+import { useAuth } from "@/context/AuthContext";
+
+const paymentMethodEnum = z.enum(["Bank Transfer", "UPI", "Cheque", "Cash"]);
 
 const recordPaymentFormSchema = z.object({
-  paymentDate: z.date({
-    required_error: "Payment date is required.",
-  }),
-  paymentMethod: z.enum(["Bank Transfer", "UPI", "Cheque", "Cash"]),
+  paymentDate: z.date({ required_error: "Payment date is required." }),
+  paymentMethod: paymentMethodEnum,
   amount: z.coerce.number().positive("Amount must be positive"),
   referenceNumber: z.string().optional(),
   notes: z.string().optional(),
+}).superRefine((data, ctx) => {
+  // Enforce reference number for all except Cash
+  const needsRef = data.paymentMethod !== "Cash";
+  if (needsRef) {
+    if (!data.referenceNumber || data.referenceNumber.trim() === "") {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Reference number is required for this payment method.",
+        path: ["referenceNumber"],
+      });
+    } else if (!/^PMT-[A-Za-z0-9]+$/.test(data.referenceNumber)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Reference number must be in format PMT-XXXX (letters/numbers).",
+        path: ["referenceNumber"],
+      });
+    }
+  }
 });
 
-type RecordPaymentFormData = z.infer<typeof recordPaymentFormSchema>;
+type RecordPaymentFormSchema = z.infer<typeof recordPaymentFormSchema>;
 
 interface RecordPaymentDialogProps {
-  billToOrgId: string;
-  remitToOrgId: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  billToOrg: Organization;
+  remitToOrg: Organization;
   outstandingBalance: number;
   onPaymentSuccess: () => void;
 }
 
-export function RecordPaymentDialog({ billToOrgId, remitToOrgId, outstandingBalance, onPaymentSuccess }: RecordPaymentDialogProps) {
+export function RecordPaymentDialog({
+  open,
+  onOpenChange,
+  billToOrg,
+  remitToOrg,
+  outstandingBalance,
+  onPaymentSuccess,
+}: RecordPaymentDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
-  const { mutate: recordPaymentMutate, isPending } = useMutation<
-    unknown,
-    Error,
-    RecordPaymentFormData
-  >({
-    mutationFn: (data: RecordPaymentFormData) => {
-      const paymentData = {
-        organization_id: billToOrgId,
-        transaction_date: data.paymentDate.toISOString(),
-        bill_to_orgid: billToOrgId,
-        remit_to_orgid: remitToOrgId,
-        amount: data.amount,
-        notes: `Payment Method: ${data.paymentMethod}. ${data.notes || ''}`.trim(),
-        reference_number: data.referenceNumber,
-      };
-      return recordPayment(paymentData);
+  const { mutate: recordPaymentMutate, isPending } = useMutation<unknown, Error, RecordPaymentFormData>({
+    mutationFn: async (data: RecordPaymentFormData) => {
+      await generalLedgerService.recordPayment(
+        data,
+        billToOrg,
+        remitToOrg,
+        user?.email ?? ""
+      );
     },
     onSuccess: () => {
       toast({
         title: "Success",
         description: "Payment recorded successfully.",
       });
-      queryClient.invalidateQueries({ queryKey: ["generalLedger", billToOrgId, remitToOrgId] });
-      queryClient.invalidateQueries({ queryKey: ["totalPayables", billToOrgId] });
+      queryClient.invalidateQueries({ queryKey: ["generalLedger", billToOrg.id, remitToOrg.id] });
+      queryClient.invalidateQueries({ queryKey: ["totalPayables", billToOrg.id] });
       onPaymentSuccess();
     },
     onError: (error) => {
@@ -89,7 +111,7 @@ export function RecordPaymentDialog({ billToOrgId, remitToOrgId, outstandingBala
     },
   });
 
-  const form = useForm<RecordPaymentFormData>({
+  const form = useForm<RecordPaymentFormSchema>({
     resolver: zodResolver(recordPaymentFormSchema),
     defaultValues: {
       paymentDate: new Date(),
@@ -100,12 +122,12 @@ export function RecordPaymentDialog({ billToOrgId, remitToOrgId, outstandingBala
     },
   });
 
-  function onSubmit(data: RecordPaymentFormData) {
+  function onSubmit(data: RecordPaymentFormSchema) {
     recordPaymentMutate(data);
   }
 
   return (
-    <DialogContent className="sm:max-w-md">
+    <DialogContent open={open} onOpenAutoFocus={e => e.preventDefault()} onInteractOutside={e => e.preventDefault()} onEscapeKeyDown={() => onOpenChange(false)}>
       <DialogHeader>
         <DialogTitle>Record Payment</DialogTitle>
         <DialogDescription>
@@ -162,7 +184,7 @@ export function RecordPaymentDialog({ billToOrgId, remitToOrgId, outstandingBala
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Payment Method</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select a payment method" />
@@ -201,7 +223,7 @@ export function RecordPaymentDialog({ billToOrgId, remitToOrgId, outstandingBala
               <FormItem>
                 <FormLabel>Reference Number</FormLabel>
                 <FormControl>
-                  <Input placeholder="e.g. Cheque number, UTR" {...field} />
+                  <Input placeholder="e.g. PMT-12345" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
