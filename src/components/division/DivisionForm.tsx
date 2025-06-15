@@ -125,11 +125,12 @@ const DivisionForm = ({ initialData, onSubmit, isEditing = false }: DivisionForm
   const handleContactsChange = (contacts: any[]) => {
     console.log("Contacts changed (DivisionForm):", contacts);
     form.setValue("contacts", contacts, { shouldValidate: true });
-    form.trigger("contacts");
-    // Clear any existing contact errors
+    // Immediately clear any error if there is at least one contact
     if (contacts.length > 0) {
       form.clearErrors("contacts");
     }
+    // Always trigger validation for this field
+    form.trigger("contacts");
   };
 
   const handleReferencesChange = (references: any[]) => {
