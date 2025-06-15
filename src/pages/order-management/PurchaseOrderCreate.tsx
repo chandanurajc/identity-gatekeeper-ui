@@ -40,11 +40,15 @@ const PurchaseOrderCreate = () => {
       });
       
       navigate("/order-management/purchase-orders");
-    } catch (error) {
-      console.error("Error creating purchase order:", error);
+    } catch (error: any) {
+      // Extract and show a more informative error message, fallback to default.
+      const message =
+        (error && typeof error === "object" && ("message" in error) && error.message)
+          ? error.message
+          : "Failed to create purchase order. Please check required fields or try again later.";
       toast({
         title: "Error",
-        description: "Failed to create purchase order",
+        description: message,
         variant: "destructive",
       });
     }
@@ -86,3 +90,4 @@ const PurchaseOrderCreate = () => {
 };
 
 export default PurchaseOrderCreate;
+
