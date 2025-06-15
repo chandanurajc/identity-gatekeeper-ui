@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Partner, PartnerFormData, OrganizationSearchResult } from "@/types/partner";
 
@@ -83,7 +84,8 @@ export const partnerService = {
             // This should not happen with an inner join, but for type safety
             return null;
           }
-          return {
+          
+          const mappedPartner: Partner = {
             id: partner.id,
             organizationId: partner.organization_id,
             organizationCode: partner.organization.code,
@@ -94,9 +96,16 @@ export const partnerService = {
             partnershipDate: new Date(partner.partnership_date),
             createdBy: partner.created_by,
             createdOn: new Date(partner.created_on),
-            updatedBy: partner.updated_by ?? undefined,
-            updatedOn: partner.updated_on ? new Date(partner.updated_on) : undefined,
           };
+
+          if (partner.updated_by) {
+            mappedPartner.updatedBy = partner.updated_by;
+          }
+          if (partner.updated_on) {
+            mappedPartner.updatedOn = new Date(partner.updated_on);
+          }
+
+          return mappedPartner;
         })
         .filter((p): p is Partner => p !== null);
 
