@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { PurchaseOrder, PurchaseOrderFormData, PurchaseOrderLine } from "@/types/purchaseOrder";
 
@@ -141,41 +140,19 @@ export const purchaseOrderService = {
   },
 
   async createPurchaseOrder(formData: PurchaseOrderFormData, organizationId: string, userId: string): Promise<PurchaseOrder> {
-    // Log all critical payload fields for debugging
-    console.log("[PO] Attempting to create purchase order with:", {
-      organizationId,
-      userId,
-      poDate: formData.poDate,
-      requestedDeliveryDate: formData.requestedDeliveryDate,
-    });
-
     const poDate = formData.poDate;
-    if (!poDate || !(poDate instanceof Date) || isNaN(poDate.getTime())) {
-      console.error("[PO] Invalid poDate received from form:", formData.poDate);
-      throw new Error("[PO] Invalid PO Date provided. It must be a valid Date object.");
+    if (!poDate) {
+      throw new Error("[PO] PO Date is required.");
     }
 
     const requestedDeliveryDate = formData.requestedDeliveryDate;
-    if (requestedDeliveryDate && (!(requestedDeliveryDate instanceof Date) || isNaN(requestedDeliveryDate.getTime()))) {
-      console.error("[PO] Invalid requestedDeliveryDate received from form:", formData.requestedDeliveryDate);
-      throw new Error("[PO] Invalid Requested Delivery Date provided.");
-    }
 
-    // Convert to YYYY-MM-DD format safely, avoiding timezone issues.
-    // .toISOString() returns UTC time, e.g., "2024-06-15T13:45:00.000Z". We just need the date part.
-    const formattedPoDate = poDate.toISOString().split('T')[0];
-    const formattedRequestedDeliveryDate = requestedDeliveryDate ? requestedDeliveryDate.toISOString().split('T')[0] : null;
-
-    console.log(`[PO] Formatted po_date for insert: '${formattedPoDate}'`);
-    console.log(`[PO] Formatted requested_delivery_date for insert: '${formattedRequestedDeliveryDate}'`);
-
-    // Compose PO header payload
     const poHeader = {
       po_number: formData.poNumber,
       division_id: formData.divisionId,
       supplier_id: formData.supplierId,
-      po_date: formattedPoDate,
-      requested_delivery_date: formattedRequestedDeliveryDate,
+      po_date: poDate,
+      requested_delivery_date: requestedDeliveryDate || null,
       ship_to_address_1: formData.shipToAddress1,
       ship_to_address_2: formData.shipToAddress2,
       ship_to_postal_code: formData.shipToPostalCode,
@@ -191,9 +168,6 @@ export const purchaseOrderService = {
       created_by: userId
     };
 
-    console.log("[PO] Inserting PO header:", poHeader);
-
-    // Start transaction -- PO header insert
     const { data: poData, error: poError } = await supabase
       .from('purchase_order')
       .insert(poHeader)
@@ -209,7 +183,6 @@ export const purchaseOrderService = {
       throw new Error("[PO] Purchase order header creation failed: No ID returned");
     }
 
-    // PO Lines
     if (formData.lines.length > 0) {
       const lineData = formData.lines.map(line => ({
         purchase_order_id: poData.id,
@@ -238,7 +211,6 @@ export const purchaseOrderService = {
       }
     }
 
-    // Fetch the newly created PO (should never fail here, but log if so)
     const createdPO = await this.getPurchaseOrderById(poData.id);
     if (!createdPO) {
       console.error("[PO] Could not fetch created PO by ID, returned null!", poData.id);
@@ -248,31 +220,19 @@ export const purchaseOrderService = {
   },
 
   async updatePurchaseOrder(id: string, formData: PurchaseOrderFormData, organizationId: string, userId: string): Promise<PurchaseOrder> {
-    console.log("Updating purchase order:", id, formData);
-
     const poDate = formData.poDate;
-    if (!poDate || !(poDate instanceof Date) || isNaN(poDate.getTime())) {
-      console.error("[PO] Invalid poDate received from form for update:", formData.poDate);
+    if (!poDate) {
       throw new Error("[PO] Invalid PO Date provided for update.");
     }
-
     const requestedDeliveryDate = formData.requestedDeliveryDate;
-    if (requestedDeliveryDate && (!(requestedDeliveryDate instanceof Date) || isNaN(requestedDeliveryDate.getTime()))) {
-      console.error("[PO] Invalid requestedDeliveryDate received from form for update:", formData.requestedDeliveryDate);
-      throw new Error("[PO] Invalid Requested Delivery Date provided for update.");
-    }
 
-    const formattedPoDate = poDate.toISOString().split('T')[0];
-    const formattedRequestedDeliveryDate = requestedDeliveryDate ? requestedDeliveryDate.toISOString().split('T')[0] : null;
-
-    // Update purchase order header
     const { error: poError } = await supabase
       .from('purchase_order')
       .update({
         division_id: formData.divisionId,
         supplier_id: formData.supplierId,
-        po_date: formattedPoDate,
-        requested_delivery_date: formattedRequestedDeliveryDate,
+        po_date: poDate,
+        requested_delivery_date: requestedDeliveryDate || null,
         ship_to_address_1: formData.shipToAddress1,
         ship_to_address_2: formData.shipToAddress2,
         ship_to_postal_code: formData.shipToPostalCode,

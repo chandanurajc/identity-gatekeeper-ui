@@ -52,7 +52,7 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
     poNumber: "",
     divisionId: "",
     supplierId: "",
-    poDate: new Date(),
+    poDate: new Date().toISOString().split('T')[0],
     requestedDeliveryDate: undefined,
     sameAsDivisionAddress: false,
     shipToAddress1: "",
@@ -306,7 +306,7 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
               <Input
                 id="poDate"
                 type="date"
-                {...register("poDate", { required: "PO Date is required", valueAsDate: true })}
+                {...register("poDate", { required: "PO Date is required" })}
               />
               {errors.poDate && <p className="text-xs text-red-500">{errors.poDate.message}</p>}
             </div>
@@ -315,7 +315,7 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
               <Input
                 id="requestedDeliveryDate"
                 type="date"
-                {...register("requestedDeliveryDate", { valueAsDate: true })}
+                {...register("requestedDeliveryDate")}
               />
             </div>
             <div>
