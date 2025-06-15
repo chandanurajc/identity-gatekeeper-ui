@@ -118,6 +118,8 @@ export const createInvoiceFromReceivedPO = async (poId: string, organizationId: 
             due_date: dueDate.toISOString().split('T')[0],
             payment_terms: poResult.payment_terms,
             status: 'Created',
+            bill_to_organization_id: poResult.organization_id,
+            remit_to_organization_id: poResult.supplier_id,
             bill_to_name: billToContact?.first_name,
             bill_to_address1: billToContact?.address1,
             bill_to_address2: billToContact?.address2,

@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { invoiceService } from "@/services/invoiceService";
+import { organizationService } from "@/services/organizationService";
 import { useMultiTenant } from "@/hooks/useMultiTenant";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,24 @@ const InvoiceDetail = () => {
     queryKey: ["invoice", invoiceId, organizationId],
     queryFn: () => invoiceService.getInvoiceById(invoiceId!, organizationId!),
     enabled: !!invoiceId && !!organizationId,
+  });
+
+  const { data: billToOrg } = useQuery({
+    queryKey: ['organization', invoice?.bill_to_organization_id],
+    queryFn: async () => {
+        if (!invoice?.bill_to_organization_id) return null;
+        return organizationService.getOrganizationById(invoice.bill_to_organization_id);
+    },
+    enabled: !!invoice?.bill_to_organization_id
+  });
+
+  const { data: remitToOrg } = useQuery({
+    queryKey: ['organization', invoice?.remit_to_organization_id],
+    queryFn: async () => {
+        if (!invoice?.remit_to_organization_id) return null;
+        return organizationService.getOrganizationById(invoice.remit_to_organization_id);
+    },
+    enabled: !!invoice?.remit_to_organization_id
   });
 
   const approveMutation = useMutation({
@@ -72,7 +91,8 @@ const InvoiceDetail = () => {
                 <div>
                   <h3 className="font-semibold mb-2 text-muted-foreground uppercase">Bill To</h3>
                   <div className="space-y-1">
-                    <p className="font-semibold">{invoice.bill_to_name}</p>
+                    <p className="font-semibold">{billToOrg?.name}</p>
+                    {invoice.bill_to_name && <p className="text-sm">{invoice.bill_to_name}</p>}
                     <p>{invoice.bill_to_address1}</p>
                     {invoice.bill_to_address2 && <p>{invoice.bill_to_address2}</p>}
                     <p>{invoice.bill_to_city}, {invoice.bill_to_state} {invoice.bill_to_postal_code}</p>
@@ -84,7 +104,8 @@ const InvoiceDetail = () => {
                 <div>
                   <h3 className="font-semibold mb-2 text-muted-foreground uppercase">Remit To</h3>
                   <div className="space-y-1">
-                    <p className="font-semibold">{invoice.remit_to_name}</p>
+                    <p className="font-semibold">{remitToOrg?.name}</p>
+                    {invoice.remit_to_name && <p className="text-sm">{invoice.remit_to_name}</p>}
                     <p>{invoice.remit_to_address1}</p>
                     {invoice.remit_to_address2 && <p>{invoice.remit_to_address2}</p>}
                     <p>{invoice.remit_to_city}, {invoice.remit_to_state} {invoice.remit_to_postal_code}</p>

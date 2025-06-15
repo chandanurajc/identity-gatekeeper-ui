@@ -3,6 +3,8 @@ export interface Invoice {
   id: string;
   organization_id: string;
   po_id: string;
+  bill_to_organization_id?: string;
+  remit_to_organization_id?: string;
   invoice_number: string;
   po_number: string;
   invoice_type: 'Payable';

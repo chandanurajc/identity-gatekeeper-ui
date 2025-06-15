@@ -224,6 +224,7 @@ export type Database = {
           bill_to_country: string | null
           bill_to_email: string | null
           bill_to_name: string | null
+          bill_to_organization_id: string | null
           bill_to_pan: string | null
           bill_to_phone: string | null
           bill_to_postal_code: string | null
@@ -246,6 +247,7 @@ export type Database = {
           remit_to_country: string | null
           remit_to_email: string | null
           remit_to_name: string | null
+          remit_to_organization_id: string | null
           remit_to_pan: string | null
           remit_to_phone: string | null
           remit_to_postal_code: string | null
@@ -265,6 +267,7 @@ export type Database = {
           bill_to_country?: string | null
           bill_to_email?: string | null
           bill_to_name?: string | null
+          bill_to_organization_id?: string | null
           bill_to_pan?: string | null
           bill_to_phone?: string | null
           bill_to_postal_code?: string | null
@@ -287,6 +290,7 @@ export type Database = {
           remit_to_country?: string | null
           remit_to_email?: string | null
           remit_to_name?: string | null
+          remit_to_organization_id?: string | null
           remit_to_pan?: string | null
           remit_to_phone?: string | null
           remit_to_postal_code?: string | null
@@ -306,6 +310,7 @@ export type Database = {
           bill_to_country?: string | null
           bill_to_email?: string | null
           bill_to_name?: string | null
+          bill_to_organization_id?: string | null
           bill_to_pan?: string | null
           bill_to_phone?: string | null
           bill_to_postal_code?: string | null
@@ -328,6 +333,7 @@ export type Database = {
           remit_to_country?: string | null
           remit_to_email?: string | null
           remit_to_name?: string | null
+          remit_to_organization_id?: string | null
           remit_to_pan?: string | null
           remit_to_phone?: string | null
           remit_to_postal_code?: string | null
@@ -341,6 +347,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "invoice_bill_to_organization_id_fkey"
+            columns: ["bill_to_organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "invoice_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
@@ -352,6 +365,13 @@ export type Database = {
             columns: ["po_id"]
             isOneToOne: true
             referencedRelation: "purchase_order"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_remit_to_organization_id_fkey"
+            columns: ["remit_to_organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
