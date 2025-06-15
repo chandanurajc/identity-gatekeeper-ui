@@ -1,15 +1,16 @@
+
 "use client"
 
 import { ColumnDef } from "@tanstack/react-table"
 import { Invoice } from "@/types/invoice"
-import { DataTableColumnHeader } from "@/components/ui/data-table"
+import { DataTableColumnHeader } from "@/components/ui/data-table-column-header"
 import { Badge } from "@/components/ui/badge"
 import { format } from 'date-fns'
 import { Link } from "react-router-dom"
 
 export const columns: ColumnDef<Invoice>[] = [
   {
-    accessorKey: "invoiceNumber",
+    accessorKey: "invoice_number",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Invoice #" />
     ),
@@ -17,13 +18,13 @@ export const columns: ColumnDef<Invoice>[] = [
       const invoice = row.original;
       return (
         <Link to={`/invoices/${invoice.id}`} className="font-medium text-blue-600 hover:underline">
-          {invoice.invoiceNumber}
+          {invoice.invoice_number}
         </Link>
       )
     }
   },
   {
-    accessorKey: "poNumber",
+    accessorKey: "po_number",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="PO #" />
     ),
@@ -35,21 +36,21 @@ export const columns: ColumnDef<Invoice>[] = [
     ),
   },
   {
-    accessorKey: "dueDate",
+    accessorKey: "due_date",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Due Date" />
     ),
     cell: ({ row }) => {
-      return <span>{format(new Date(row.original.dueDate), 'PPP')}</span>
+      return <span>{format(new Date(row.original.due_date), 'PPP')}</span>
     }
   },
   {
-    accessorKey: "totalInvoiceAmount",
+    accessorKey: "total_invoice_amount",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Total" />
     ),
     cell: ({ row }) => {
-      const amount = row.getValue("totalInvoiceAmount") as number;
+      const amount = row.getValue("total_invoice_amount") as number;
       const formatted = new Intl.NumberFormat("en-US", {
         style: "currency",
         currency: "USD",
@@ -74,12 +75,12 @@ export const columns: ColumnDef<Invoice>[] = [
     },
   },
   {
-    accessorKey: "createdOn",
+    accessorKey: "created_on",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Created On" />
     ),
     cell: ({ row }) => {
-        return <span>{format(row.original.createdOn, 'PPP')}</span>
+        return <span>{format(row.original.created_on, 'PPP')}</span>
     }
   },
 ]

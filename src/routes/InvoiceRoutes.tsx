@@ -1,5 +1,4 @@
 
-```tsx
 import React from 'react';
 import { Route } from "react-router-dom";
 import PermissionProtectedRoute from "@/components/PermissionProtectedRoute";
@@ -31,4 +30,3 @@ export const InvoiceRoutes = () => (
     />
   </React.Fragment>
 );
-```

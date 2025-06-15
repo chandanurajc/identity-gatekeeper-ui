@@ -6,7 +6,7 @@ export interface Invoice {
   invoice_number: string;
   po_number: string;
   invoice_type: 'Payable';
-  status: 'Created' | 'Approved';
+  status: 'Created' | 'Approved' | 'Paid';
   created_date: string;
   due_date: string;
   bill_to_name?: string;

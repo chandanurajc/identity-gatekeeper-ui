@@ -1,5 +1,4 @@
 
-```tsx
 import { 
   Sidebar, 
   SidebarHeader,
@@ -72,4 +71,3 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
-```

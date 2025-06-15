@@ -1,5 +1,4 @@
 
-```tsx
 import { useQuery } from "@tanstack/react-query";
 import { invoiceService } from "@/services/invoiceService";
 import { useMultiTenant } from "@/hooks/useMultiTenant";
@@ -31,4 +30,3 @@ const InvoicesList = () => {
 };
 
 export default InvoicesList;
-```

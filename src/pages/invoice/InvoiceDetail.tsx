@@ -1,5 +1,3 @@
-
-```tsx
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { invoiceService } from "@/services/invoiceService";
@@ -52,9 +50,9 @@ const InvoiceDetail = () => {
         <CardHeader>
           <div className="flex justify-between items-start">
             <div>
-              <CardTitle>Invoice {invoice.invoiceNumber}</CardTitle>
+              <CardTitle>Invoice {invoice.invoice_number}</CardTitle>
               <CardDescription>
-                From PO: {invoice.poNumber}
+                From PO: {invoice.po_number}
               </CardDescription>
             </div>
             <div>
@@ -67,24 +65,24 @@ const InvoiceDetail = () => {
           <div className="grid md:grid-cols-2 gap-4">
             <div>
               <h3 className="font-semibold mb-2">Bill To</h3>
-              <p>{invoice.billToName}</p>
-              <p>{invoice.billToAddress1}</p>
-              {invoice.billToAddress2 && <p>{invoice.billToAddress2}</p>}
-              <p>{invoice.billToCity}, {invoice.billToState} {invoice.billToPostalCode}</p>
-              <p>{invoice.billToCountry}</p>
+              <p>{invoice.bill_to_name}</p>
+              <p>{invoice.bill_to_address1}</p>
+              {invoice.bill_to_address2 && <p>{invoice.bill_to_address2}</p>}
+              <p>{invoice.bill_to_city}, {invoice.bill_to_state} {invoice.bill_to_postal_code}</p>
+              <p>{invoice.bill_to_country}</p>
             </div>
             <div>
               <h3 className="font-semibold mb-2">Remit To</h3>
-              <p>{invoice.remitToName}</p>
-              <p>{invoice.remitToAddress1}</p>
-              {invoice.remitToAddress2 && <p>{invoice.remitToAddress2}</p>}
-              <p>{invoice.remitToCity}, {invoice.remitToState} {invoice.remitToPostalCode}</p>
-              <p>{invoice.remitToCountry}</p>
+              <p>{invoice.remit_to_name}</p>
+              <p>{invoice.remit_to_address1}</p>
+              {invoice.remit_to_address2 && <p>{invoice.remit_to_address2}</p>}
+              <p>{invoice.remit_to_city}, {invoice.remit_to_state} {invoice.remit_to_postal_code}</p>
+              <p>{invoice.remit_to_country}</p>
             </div>
             <div>
               <h3 className="font-semibold mb-2">Details</h3>
-              <p><strong>Due Date:</strong> {format(new Date(invoice.dueDate), 'PPP')}</p>
-              <p><strong>Total Amount:</strong> {new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(invoice.totalInvoiceAmount)}</p>
+              <p><strong>Due Date:</strong> {format(new Date(invoice.due_date), 'PPP')}</p>
+              <p><strong>Total Amount:</strong> {new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(invoice.total_invoice_amount)}</p>
             </div>
           </div>
         </CardContent>
@@ -117,11 +115,11 @@ const InvoiceDetail = () => {
               <tbody className="bg-white divide-y divide-gray-200">
                 {invoice.lines?.map((line) => (
                   <tr key={line.id}>
-                    <td className="px-6 py-4 whitespace-nowrap">{line.lineNumber}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">{line.itemDescription}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">{line.line_number}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">{line.item_description}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">{line.quantity}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">{new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(line.unitCost)}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">{new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(line.lineTotal)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">{new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(line.unit_cost)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">{new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(line.line_total)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -134,4 +132,3 @@ const InvoiceDetail = () => {
 };
 
 export default InvoiceDetail;
-```
