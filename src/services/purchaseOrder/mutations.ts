@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { PurchaseOrder, PurchaseOrderFormData, POReceiveLineData } from "@/types/purchaseOrder";
 import { InventoryStock } from "@/types/inventory";
@@ -220,7 +221,7 @@ export async function receivePurchaseOrder(
   linesToReceive: POReceiveLineData[],
   organizationId: string,
   userId: string
-): Promise<void> {
+): Promise<{ warning?: string }> {
   console.log("Starting PO Receive process for PO:", poId);
 
   const po = await getPurchaseOrderById(poId);
@@ -350,10 +351,11 @@ export async function receivePurchaseOrder(
         // Log the error but don't fail the entire receive process, as the items are already in stock.
         // This could be enhanced with a retry mechanism or a background job queue.
         console.error(`[PO Receive] Failed to create invoice for PO ${poId}. This may need to be done manually. Error:`, invoiceError.message);
-        // We could potentially throw a specific warning to be caught by the UI here.
+        return { warning: `PO received successfully, but automated invoice creation failed. Please create it manually. Error: ${invoiceError.message}` };
       }
     }
   }
 
   console.log("PO Receive process completed for PO:", poId);
+  return {};
 }

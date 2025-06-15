@@ -13,7 +13,6 @@ import { useAuth } from "@/context/AuthContext";
 import { useMultiTenant } from "@/hooks/useMultiTenant";
 import { toast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
-import { Textarea } from "@/components/ui/textarea"; // Assuming it exists
 import { Label } from "@/components/ui/label";
 
 interface POReceiveFormProps {
@@ -25,6 +24,10 @@ interface ReceivePOVariables {
     linesToReceive: POReceiveLineData[];
     organizationId: string;
     userId: string;
+}
+
+interface ReceivePOResponse {
+  warning?: string;
 }
 
 const receiveSchema = z.object({
@@ -75,13 +78,25 @@ export function POReceiveForm({ purchaseOrder }: POReceiveFormProps) {
     },
   });
 
-  const { mutate: receivePO, isPending } = useMutation<void, Error, ReceivePOVariables>({
+  const { mutate: receivePO, isPending } = useMutation<ReceivePOResponse, Error, ReceivePOVariables>({
     mutationFn: ({ poId, linesToReceive, organizationId, userId }) => 
       purchaseOrderService.receivePurchaseOrder( poId, linesToReceive, organizationId, userId ),
-    onSuccess: () => {
-      toast({ title: "Success", description: "Purchase Order received successfully." });
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["purchaseOrders"] });
       queryClient.invalidateQueries({ queryKey: ["purchaseOrder", purchaseOrder.id] });
+      queryClient.invalidateQueries({ queryKey: ["invoices"] });
+
+      if (data?.warning) {
+        toast({
+          variant: "default",
+          title: "Warning",
+          description: data.warning,
+          duration: 10000,
+        });
+      } else {
+        toast({ title: "Success", description: "Purchase Order received successfully." });
+      }
+      
       navigate("/order-management/po-receive"); // Redirect to PO receive list after receive
     },
     onError: (error) => {
