@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, Edit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { purchaseOrderService } from "@/services/purchaseOrderService";
 import { usePurchaseOrderPermissions } from "@/hooks/usePurchaseOrderPermissions";
@@ -130,12 +129,23 @@ const PurchaseOrdersList = () => {
         <CardHeader>
           <div className="flex justify-between items-center">
             <CardTitle>Purchase Orders</CardTitle>
-            {canCreatePurchaseOrder && (
-              <Button onClick={() => navigate("/order-management/purchase-orders/create")}>
-                <Plus className="mr-2 h-4 w-4" />
-                Create Purchase Order
-              </Button>
-            )}
+            <div className="flex items-center gap-2">
+              {canEditPurchaseOrder && (
+                <Button
+                  onClick={() => navigate(`/order-management/purchase-orders/${selectedOrders[0]}/edit`)}
+                  disabled={selectedOrders.length !== 1}
+                >
+                  <Edit className="mr-2 h-4 w-4" />
+                  Edit
+                </Button>
+              )}
+              {canCreatePurchaseOrder && (
+                <Button onClick={() => navigate("/order-management/purchase-orders/create")}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Create Purchase Order
+                </Button>
+              )}
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -156,11 +166,6 @@ const PurchaseOrdersList = () => {
               <p className="text-sm text-muted-foreground">
                 {selectedOrders.length} order(s) selected
               </p>
-              {selectedOrders.length > 1 && (
-                <p className="text-sm text-muted-foreground mt-1">
-                  Edit is disabled when multiple orders are selected
-                </p>
-              )}
             </div>
           )}
 
@@ -212,17 +217,16 @@ const PurchaseOrdersList = () => {
                   </TableHead>
                   <TableHead>Updated By</TableHead>
                   <TableHead>Updated On</TableHead>
-                  {canEditPurchaseOrder && <TableHead>Actions</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={10} className="text-center">Loading...</TableCell>
+                    <TableCell colSpan={9} className="text-center">Loading...</TableCell>
                   </TableRow>
                 ) : filteredAndSortedOrders.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={10} className="text-center">No purchase orders found</TableCell>
+                    <TableCell colSpan={9} className="text-center">No purchase orders found</TableCell>
                   </TableRow>
                 ) : (
                   filteredAndSortedOrders.map((order) => (
@@ -255,18 +259,6 @@ const PurchaseOrdersList = () => {
                       <TableCell>
                         {order.updatedOn ? format(order.updatedOn, "dd/MM/yyyy HH:mm") : "-"}
                       </TableCell>
-                      {canEditPurchaseOrder && (
-                        <TableCell>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            disabled={selectedOrders.length > 1}
-                            onClick={() => navigate(`/order-management/purchase-orders/${order.id}/edit`)}
-                          >
-                            Edit
-                          </Button>
-                        </TableCell>
-                      )}
                     </TableRow>
                   ))
                 )}

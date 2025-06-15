@@ -144,6 +144,8 @@ export const purchaseOrderService = {
     if (!poDate) {
       throw new Error("PO Date is required.");
     }
+    
+    const createdByUsername = await this.getUserNameById(userId);
 
     const poHeader = {
       po_number: formData.poNumber,
@@ -163,7 +165,7 @@ export const purchaseOrderService = {
       notes: formData.notes,
       tracking_number: formData.trackingNumber,
       organization_id: organizationId,
-      created_by: userId
+      created_by: createdByUsername
     };
 
     const { data: poData, error: poError } = await supabase
@@ -206,7 +208,7 @@ export const purchaseOrderService = {
         gst_value: line.gstValue,
         line_total: line.lineTotal,
         organization_id: organizationId,
-        created_by: userId
+        created_by: createdByUsername
       }));
 
       console.log("[PO] Inserting PO lines:", lineData);
@@ -256,6 +258,8 @@ export const purchaseOrderService = {
       throw new Error("[PO] Invalid PO Date provided for update.");
     }
 
+    const updatedByUsername = await this.getUserNameById(userId);
+
     const { error: poError } = await supabase
       .from('purchase_order')
       .update({
@@ -274,7 +278,7 @@ export const purchaseOrderService = {
         payment_terms: formData.paymentTerms,
         notes: formData.notes,
         tracking_number: formData.trackingNumber,
-        updated_by: userId,
+        updated_by: updatedByUsername,
         updated_on: new Date().toISOString()
       })
       .eq('id', id)
@@ -310,7 +314,7 @@ export const purchaseOrderService = {
         gst_value: line.gstValue,
         line_total: line.lineTotal,
         organization_id: organizationId,
-        created_by: userId
+        created_by: updatedByUsername
       }));
 
       const { error: lineError } = await supabase
@@ -389,5 +393,20 @@ export const purchaseOrderService = {
     }
     // Return null if none found
     return null;
+  },
+
+  async getUserNameById(userId: string): Promise<string> {
+    if (!userId) return 'Unknown';
+    const { data, error } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('id', userId)
+        .single();
+
+    if (error) {
+        console.error(`Error fetching username for user ID ${userId}:`, error);
+        return userId; // Fallback to userId if not found
+    }
+    return data?.username || userId;
   }
 };
