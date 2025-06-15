@@ -1,5 +1,3 @@
-
-```tsx
 "use client"
 
 import { ColumnDef } from "@tanstack/react-table"
@@ -51,13 +49,13 @@ export const columns: ColumnDef<Invoice>[] = [
       <DataTableColumnHeader column={column} title="Total" />
     ),
     cell: ({ row }) => {
-      const amount = parseFloat(row.getValue("totalInvoiceAmount"))
+      const amount = row.getValue("totalInvoiceAmount") as number;
       const formatted = new Intl.NumberFormat("en-US", {
         style: "currency",
         currency: "USD",
-      }).format(amount)
+      }).format(amount);
  
-      return <div className="text-right font-medium">{formatted}</div>
+      return <div className="text-right font-medium">{formatted}</div>;
     },
   },
   {
@@ -85,4 +83,3 @@ export const columns: ColumnDef<Invoice>[] = [
     }
   },
 ]
-```
