@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Division, DivisionFormData } from "@/types/division";
 
@@ -24,7 +23,19 @@ export const divisionService = {
         return [];
       }
 
-      // First fetch divisions
+      // First fetch organization data
+      const { data: orgData, error: orgError } = await supabase
+        .from('organizations')
+        .select('code, name')
+        .eq('id', profile.organization_id)
+        .single();
+
+      if (orgError || !orgData) {
+        console.error("Error fetching organization:", orgError);
+        throw new Error("Failed to fetch organization data");
+      }
+
+      // Then fetch divisions with their related data
       const { data: divisionsData, error: divisionsError } = await supabase
         .from('divisions')
         .select(`
@@ -61,25 +72,13 @@ export const divisionService = {
         return [];
       }
 
-      // Then fetch organization data
-      const { data: organizationData, error: orgError } = await supabase
-        .from('organizations')
-        .select('id, name, code')
-        .eq('id', profile.organization_id)
-        .single();
-
-      if (orgError || !organizationData) {
-        console.error("Error fetching organization:", orgError);
-        throw new Error("Failed to fetch organization data");
-      }
-
       const transformedData = divisionsData.map(division => ({
         id: division.id,
         code: division.code,
         name: division.name,
         organizationId: division.organization_id,
-        organizationCode: organizationData.code,
-        organizationName: organizationData.name,
+        organizationCode: orgData.code,
+        organizationName: orgData.name,
         type: division.type as 'Supplier' | 'Retailer' | 'Retail customer' | 'Wholesale customer',
         status: division.status as 'active' | 'inactive',
         references: division.division_references?.map(ref => ({
@@ -108,7 +107,6 @@ export const divisionService = {
         updatedOn: division.updated_on ? new Date(division.updated_on) : undefined,
       }));
 
-      console.log("Transformed divisions data:", transformedData);
       return transformedData;
       
     } catch (error) {
