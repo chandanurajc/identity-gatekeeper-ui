@@ -41,7 +41,6 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
   const [items, setItems] = useState<Item[]>([]);
   const [filteredItems, setFilteredItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(false);
-  const [sameAsDivisionAddress, setSameAsDivisionAddress] = useState(false);
 
   const defaultFormData: PurchaseOrderFormData = {
     poNumber: "",
@@ -77,6 +76,9 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
   const watchedDivisionId = watch("divisionId");
   const watchedSupplierId = watch("supplierId");
 
+  // One source of truth: form field!
+  const watchedSameAsDivisionAddress = watch("sameAsDivisionAddress");
+
   useEffect(() => {
     if (currentOrganization?.id) {
       fetchDropdownData();
@@ -89,11 +91,27 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
     }
   }, [isEdit]);
 
+  // Helper to reset ship-to fields
+  const resetShippingFields = () => {
+    setValue("shipToAddress1", "");
+    setValue("shipToAddress2", "");
+    setValue("shipToPostalCode", "");
+    setValue("shipToCity", "");
+    setValue("shipToState", "");
+    setValue("shipToCountry", "");
+    setValue("shipToPhone", "");
+    setValue("shipToEmail", "");
+  };
+
+  // Effect for "Same as division address" toggled
   useEffect(() => {
-    if (sameAsDivisionAddress && watchedDivisionId) {
+    if (watchedSameAsDivisionAddress && watchedDivisionId) {
       loadDivisionShippingAddress();
+    } else if (!watchedSameAsDivisionAddress) {
+      resetShippingFields();
     }
-  }, [sameAsDivisionAddress, watchedDivisionId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [watchedSameAsDivisionAddress, watchedDivisionId]);
 
   const fetchDropdownData = async () => {
     if (!currentOrganization?.id) return;
@@ -146,14 +164,7 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
         setValue("shipToPhone", address.phone_number || "");
         setValue("shipToEmail", address.email || "");
       } else {
-        setValue("shipToAddress1", "");
-        setValue("shipToAddress2", "");
-        setValue("shipToPostalCode", "");
-        setValue("shipToCity", "");
-        setValue("shipToState", "");
-        setValue("shipToCountry", "");
-        setValue("shipToPhone", "");
-        setValue("shipToEmail", "");
+        resetShippingFields();
       }
     } catch (error) {
       console.error("Error loading division shipping address:", error);
@@ -162,6 +173,7 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
         description: "Could not load division shipping address",
         variant: "default",
       });
+      resetShippingFields();
     }
   };
 
@@ -274,12 +286,6 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
     }
   };
 
-  const handleSameAsDivisionAddressChange = (checked: boolean | "indeterminate") => {
-    setSameAsDivisionAddress(checked === true);
-  };
-
-  const { itemTotal, totalGST } = calculateSummary();
-
   return (
     <div className="space-y-6">
       <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
@@ -376,10 +382,13 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center space-x-2">
+              {/* One source of truth: form field! */}
               <Checkbox
                 id="sameAsDivisionAddress"
-                checked={sameAsDivisionAddress}
-                onCheckedChange={handleSameAsDivisionAddressChange}
+                // Use value and onCheckedChange from register
+                checked={watchedSameAsDivisionAddress}
+                // This will sync the field as a boolean in the form:
+                onCheckedChange={value => setValue("sameAsDivisionAddress", value === true)}
               />
               <Label htmlFor="sameAsDivisionAddress">Same as Division's Shipping address?</Label>
             </div>
@@ -390,7 +399,7 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
                 <Input
                   id="shipToAddress1"
                   {...register("shipToAddress1", { required: "Address 1 is required" })}
-                  disabled={sameAsDivisionAddress}
+                  disabled={watchedSameAsDivisionAddress}
                 />
                 {errors.shipToAddress1 && <p className="text-sm text-red-500">{errors.shipToAddress1.message}</p>}
               </div>
@@ -400,7 +409,7 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
                 <Input
                   id="shipToAddress2"
                   {...register("shipToAddress2")}
-                  disabled={sameAsDivisionAddress}
+                  disabled={watchedSameAsDivisionAddress}
                 />
               </div>
 
@@ -409,7 +418,7 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
                 <Input
                   id="shipToPostalCode"
                   {...register("shipToPostalCode", { required: "Postal Code is required" })}
-                  disabled={sameAsDivisionAddress}
+                  disabled={watchedSameAsDivisionAddress}
                 />
                 {errors.shipToPostalCode && <p className="text-sm text-red-500">{errors.shipToPostalCode.message}</p>}
               </div>
@@ -419,7 +428,7 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
                 <Input
                   id="shipToCity"
                   {...register("shipToCity", { required: "City is required" })}
-                  disabled={sameAsDivisionAddress}
+                  disabled={watchedSameAsDivisionAddress}
                 />
                 {errors.shipToCity && <p className="text-sm text-red-500">{errors.shipToCity.message}</p>}
               </div>
@@ -429,7 +438,7 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
                 <Input
                   id="shipToState"
                   {...register("shipToState", { required: "State is required" })}
-                  disabled={sameAsDivisionAddress}
+                  disabled={watchedSameAsDivisionAddress}
                 />
                 {errors.shipToState && <p className="text-sm text-red-500">{errors.shipToState.message}</p>}
               </div>
@@ -439,7 +448,7 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
                 <Input
                   id="shipToCountry"
                   {...register("shipToCountry", { required: "Country is required" })}
-                  disabled={sameAsDivisionAddress}
+                  disabled={watchedSameAsDivisionAddress}
                 />
                 {errors.shipToCountry && <p className="text-sm text-red-500">{errors.shipToCountry.message}</p>}
               </div>
@@ -449,7 +458,7 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
                 <Input
                   id="shipToPhone"
                   {...register("shipToPhone", { required: "Phone is required" })}
-                  disabled={sameAsDivisionAddress}
+                  disabled={watchedSameAsDivisionAddress}
                 />
                 {errors.shipToPhone && <p className="text-sm text-red-500">{errors.shipToPhone.message}</p>}
               </div>
@@ -460,7 +469,7 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
                   id="shipToEmail"
                   type="email"
                   {...register("shipToEmail", { required: "Email is required" })}
-                  disabled={sameAsDivisionAddress}
+                  disabled={watchedSameAsDivisionAddress}
                 />
                 {errors.shipToEmail && <p className="text-sm text-red-500">{errors.shipToEmail.message}</p>}
               </div>
