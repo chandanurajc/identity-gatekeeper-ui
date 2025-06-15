@@ -1,4 +1,3 @@
-
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -90,9 +89,9 @@ export const RecordPaymentDialog = ({
         paymentDate: new Date(),
         referenceNumber: "",
         notes: "",
-        amount: undefined,
-        paymentMethod: undefined,
-      } as any);
+        amount: 0,
+        paymentMethod: undefined as any,
+      });
     },
     onError: (error) => {
       toast({
