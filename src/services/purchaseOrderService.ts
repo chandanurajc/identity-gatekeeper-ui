@@ -5,12 +5,10 @@ import {
   generatePONumber, 
   getDivisionShippingAddress 
 } from './purchaseOrder/queries';
-import { 
-  createPurchaseOrder, 
-  updatePurchaseOrder,
-  receivePurchaseOrder,
-  cancelPurchaseOrder
-} from './purchaseOrder/mutations';
+import { createPurchaseOrder } from './purchaseOrder/createPurchaseOrder';
+import { updatePurchaseOrder } from './purchaseOrder/updatePurchaseOrder';
+import { receivePurchaseOrder } from './purchaseOrder/receivePurchaseOrder';
+import { cancelPurchaseOrder } from './purchaseOrder/cancelPurchaseOrder';
 
 export const purchaseOrderService = {
   getAllPurchaseOrders,
