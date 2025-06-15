@@ -1,4 +1,3 @@
-
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -111,6 +110,7 @@ export function RecordPaymentDialog({
     },
   });
 
+  // ---- FIX: Provide all required default values (no partial, no optional) ----
   const form = useForm<RecordPaymentFormSchema>({
     resolver: zodResolver(recordPaymentFormSchema),
     defaultValues: {
@@ -119,7 +119,7 @@ export function RecordPaymentDialog({
       amount: outstandingBalance > 0 ? outstandingBalance : 0,
       notes: "",
       referenceNumber: "",
-    },
+    } as RecordPaymentFormSchema, // ensure all fields present
   });
 
   function onSubmit(data: RecordPaymentFormSchema) {
@@ -127,7 +127,8 @@ export function RecordPaymentDialog({
   }
 
   return (
-    <DialogContent open={open} onOpenAutoFocus={e => e.preventDefault()} onInteractOutside={e => e.preventDefault()} onEscapeKeyDown={() => onOpenChange(false)}>
+    // ---- FIX: remove 'open' prop from DialogContent (not supported) ----
+    <DialogContent onOpenAutoFocus={e => e.preventDefault()} onInteractOutside={e => e.preventDefault()} onEscapeKeyDown={() => onOpenChange(false)}>
       <DialogHeader>
         <DialogTitle>Record Payment</DialogTitle>
         <DialogDescription>
