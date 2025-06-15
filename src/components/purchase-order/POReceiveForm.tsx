@@ -82,7 +82,7 @@ export function POReceiveForm({ purchaseOrder }: POReceiveFormProps) {
       toast({ title: "Success", description: "Purchase Order received successfully." });
       queryClient.invalidateQueries({ queryKey: ["purchaseOrders"] });
       queryClient.invalidateQueries({ queryKey: ["purchaseOrder", purchaseOrder.id] });
-      navigate("/order-management/purchase-orders"); // Redirect to PO list after receive
+      navigate("/order-management/po-receive"); // Redirect to PO receive list after receive
     },
     onError: (error) => {
       toast({
