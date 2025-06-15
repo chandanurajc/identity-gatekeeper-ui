@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { PurchaseOrder, PurchaseOrderFormData, PurchaseOrderLine } from "@/types/purchaseOrder";
 
@@ -146,14 +145,12 @@ export const purchaseOrderService = {
       throw new Error("[PO] PO Date is required.");
     }
 
-    const requestedDeliveryDate = formData.requestedDeliveryDate;
-
     const poHeader = {
       po_number: formData.poNumber,
       division_id: formData.divisionId,
       supplier_id: formData.supplierId,
       po_date: poDate,
-      requested_delivery_date: requestedDeliveryDate ? requestedDeliveryDate : null,
+      requested_delivery_date: formData.requestedDeliveryDate || null,
       ship_to_address_1: formData.shipToAddress1,
       ship_to_address_2: formData.shipToAddress2,
       ship_to_postal_code: formData.shipToPostalCode,
@@ -225,7 +222,6 @@ export const purchaseOrderService = {
     if (!poDate) {
       throw new Error("[PO] Invalid PO Date provided for update.");
     }
-    const requestedDeliveryDate = formData.requestedDeliveryDate;
 
     const { error: poError } = await supabase
       .from('purchase_order')
@@ -233,7 +229,7 @@ export const purchaseOrderService = {
         division_id: formData.divisionId,
         supplier_id: formData.supplierId,
         po_date: poDate,
-        requested_delivery_date: requestedDeliveryDate ? requestedDeliveryDate : null,
+        requested_delivery_date: formData.requestedDeliveryDate || null,
         ship_to_address_1: formData.shipToAddress1,
         ship_to_address_2: formData.shipToAddress2,
         ship_to_postal_code: formData.shipToPostalCode,
