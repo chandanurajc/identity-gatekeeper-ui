@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { PurchaseOrder, PurchaseOrderFormData, PurchaseOrderLine } from "@/types/purchaseOrder";
 
@@ -11,7 +10,7 @@ export const purchaseOrderService = {
       .select(`
         *,
         division:divisions(name, code),
-        supplier:organizations(name, code)
+        supplier:organizations!supplier_id(name, code)
       `)
       .eq('organization_id', organizationId)
       .order('created_on', { ascending: false });
@@ -45,8 +44,8 @@ export const purchaseOrderService = {
       createdOn: new Date(po.created_on),
       updatedBy: po.updated_by,
       updatedOn: po.updated_on ? new Date(po.updated_on) : undefined,
-      division: po.division?.name ? po.division : undefined,
-      supplier: po.supplier?.name ? po.supplier : undefined
+      division: po.division,
+      supplier: po.supplier
     })) || [];
   },
 
@@ -58,7 +57,7 @@ export const purchaseOrderService = {
       .select(`
         *,
         division:divisions(name, code),
-        supplier:organizations(name, code),
+        supplier:organizations!supplier_id(name, code),
         purchase_order_line (
           *,
           items (
@@ -109,8 +108,8 @@ export const purchaseOrderService = {
       createdOn: new Date(data.created_on),
       updatedBy: data.updated_by,
       updatedOn: data.updated_on ? new Date(data.updated_on) : undefined,
-      division: data.division?.name ? data.division : undefined,
-      supplier: data.supplier?.name ? data.supplier : undefined,
+      division: data.division,
+      supplier: data.supplier,
       lines: data.purchase_order_line?.map((line: any) => ({
         id: line.id,
         purchaseOrderId: line.purchase_order_id,
