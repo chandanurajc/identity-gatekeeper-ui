@@ -21,6 +21,7 @@ import { Item } from "@/types/item";
 import ShipToAddressSection from "./ShipToAddressSection";
 import PurchaseOrderLinesSection from "./PurchaseOrderLinesSection";
 import {
+  Form,
   FormControl,
   FormField,
   FormItem,
@@ -76,9 +77,11 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
     lines: []
   };
 
-  const { register, control, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm<PurchaseOrderFormData>({
+  const form = useForm<PurchaseOrderFormData>({
     defaultValues: initialData || defaultFormData
   });
+
+  const { register, control, handleSubmit, watch, setValue, reset, formState: { errors } } = form;
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -249,6 +252,7 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
   };
 
   const onFormSubmit = async (data: PurchaseOrderFormData) => {
+    console.log("Submitting PO Form Data:", JSON.stringify(data, null, 2));
     setLoading(true);
     try {
       await onSubmit(data);
@@ -261,160 +265,162 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
 
   return (
     <div className="w-full max-w-7xl px-2 mx-auto">
-      <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6 w-full">
-        {/* Purchase Order Details */}
-        <section className="bg-transparent">
-          <h2 className={sectionTitleClass}>Purchase Order Details</h2>
-          <div className={formGridClass + " mt-2"}>
-            <div>
-              <Label htmlFor="poNumber">PO Number *</Label>
-              <Input
-                id="poNumber"
-                {...register("poNumber", { required: "PO Number is required" })}
-                readOnly={isEdit}
-                className={isEdit ? "bg-muted" : ""}
+      <Form {...form}>
+        <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6 w-full">
+          {/* Purchase Order Details */}
+          <section className="bg-transparent">
+            <h2 className={sectionTitleClass}>Purchase Order Details</h2>
+            <div className={formGridClass + " mt-2"}>
+              <div>
+                <Label htmlFor="poNumber">PO Number *</Label>
+                <Input
+                  id="poNumber"
+                  {...register("poNumber", { required: "PO Number is required" })}
+                  readOnly={isEdit}
+                  className={isEdit ? "bg-muted" : ""}
+                />
+                {errors.poNumber && <p className="text-xs text-red-500">{errors.poNumber.message}</p>}
+              </div>
+              <FormField
+                control={control}
+                name="divisionId"
+                rules={{ required: "Division is required" }}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Division *</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value || ''}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select Division" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {divisions.map((division) => (
+                          <SelectItem key={division.id} value={division.id}>
+                            {division.name} ({division.code})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-              {errors.poNumber && <p className="text-xs text-red-500">{errors.poNumber.message}</p>}
-            </div>
-            <FormField
-              control={control}
-              name="divisionId"
-              rules={{ required: "Division is required" }}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Division *</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value || ''}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Division" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {divisions.map((division) => (
-                        <SelectItem key={division.id} value={division.id}>
-                          {division.name} ({division.code})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={control}
-              name="supplierId"
-              rules={{ required: "Supplier is required" }}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Supplier *</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value || ''}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Supplier" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {suppliers.map((supplier) => (
-                        <SelectItem key={supplier.id} value={supplier.id}>
-                          {supplier.name} ({supplier.code})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div>
-              <Label htmlFor="poDate">PO Date *</Label>
-              <Input
-                id="poDate"
-                type="date"
-                {...register("poDate", { required: "PO Date is required" })}
+              <FormField
+                control={control}
+                name="supplierId"
+                rules={{ required: "Supplier is required" }}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Supplier *</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value || ''}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select Supplier" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {suppliers.map((supplier) => (
+                          <SelectItem key={supplier.id} value={supplier.id}>
+                            {supplier.name} ({supplier.code})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-              {errors.poDate && <p className="text-xs text-red-500">{errors.poDate.message}</p>}
+              <div>
+                <Label htmlFor="poDate">PO Date *</Label>
+                <Input
+                  id="poDate"
+                  type="date"
+                  {...register("poDate", { required: "PO Date is required" })}
+                />
+                {errors.poDate && <p className="text-xs text-red-500">{errors.poDate.message}</p>}
+              </div>
+              <div>
+                <Label htmlFor="requestedDeliveryDate">Requested Delivery Date</Label>
+                <Input
+                  id="requestedDeliveryDate"
+                  type="date"
+                  {...register("requestedDeliveryDate")}
+                />
+              </div>
+              <div>
+                <Label htmlFor="paymentTerms">Payment Terms</Label>
+                <Select onValueChange={(value) => setValue("paymentTerms", value)} defaultValue={watch("paymentTerms")}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Payment Terms" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Net 30">Net 30</SelectItem>
+                    <SelectItem value="Net 60">Net 60</SelectItem>
+                    <SelectItem value="Due on receipt">Due on receipt</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <div>
-              <Label htmlFor="requestedDeliveryDate">Requested Delivery Date</Label>
-              <Input
-                id="requestedDeliveryDate"
-                type="date"
-                {...register("requestedDeliveryDate")}
-              />
+          </section>
+          {/* Ship to Address section */}
+          <ShipToAddressSection
+            control={control}
+            register={register}
+            errors={errors}
+            watchedDivisionId={watchedDivisionId}
+            loadDivisionShippingAddress={loadDivisionShippingAddress}
+            resetShippingFields={resetShippingFields}
+          />
+          {/* PO Lines Section */}
+          <PurchaseOrderLinesSection
+            fields={fields}
+            append={append}
+            remove={removePOLine}
+            watchedLines={watchedLines}
+            setValue={setValue}
+            items={items}
+            filteredItems={filteredItems}
+            searchItems={searchItems}
+            handleItemChange={handleItemChange}
+            calculateLineTotal={calculateLineTotal}
+            errors={errors}
+            addPOLine={addPOLine}
+          />
+          {/* Notes */}
+          <section className="bg-transparent">
+            <h2 className={sectionTitleClass}>Additional Information</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+              <div>
+                <Label htmlFor="notes">Notes</Label>
+                <Textarea
+                  id="notes"
+                  {...register("notes")}
+                  placeholder="Enter any additional notes..."
+                  className="min-h-[50px]"
+                />
+              </div>
+              <div>
+                <Label htmlFor="trackingNumber">Tracking Number</Label>
+                <Input
+                  id="trackingNumber"
+                  {...register("trackingNumber")}
+                  placeholder="Enter tracking number if available"
+                />
+              </div>
             </div>
-            <div>
-              <Label htmlFor="paymentTerms">Payment Terms</Label>
-              <Select onValueChange={(value) => setValue("paymentTerms", value)} defaultValue={watch("paymentTerms")}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Payment Terms" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Net 30">Net 30</SelectItem>
-                  <SelectItem value="Net 60">Net 60</SelectItem>
-                  <SelectItem value="Due on receipt">Due on receipt</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          </section>
+          {/* Form Actions */}
+          <div className="flex justify-end gap-3 border-none mt-2 p-0">
+            <Button type="button" variant="outline" onClick={onCancel}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? "Saving..." : isEdit ? "Update PO" : "Create PO"}
+            </Button>
           </div>
-        </section>
-        {/* Ship to Address section */}
-        <ShipToAddressSection
-          control={control}
-          register={register}
-          errors={errors}
-          watchedDivisionId={watchedDivisionId}
-          loadDivisionShippingAddress={loadDivisionShippingAddress}
-          resetShippingFields={resetShippingFields}
-        />
-        {/* PO Lines Section */}
-        <PurchaseOrderLinesSection
-          fields={fields}
-          append={append}
-          remove={removePOLine}
-          watchedLines={watchedLines}
-          setValue={setValue}
-          items={items}
-          filteredItems={filteredItems}
-          searchItems={searchItems}
-          handleItemChange={handleItemChange}
-          calculateLineTotal={calculateLineTotal}
-          errors={errors}
-          addPOLine={addPOLine}
-        />
-        {/* Notes */}
-        <section className="bg-transparent">
-          <h2 className={sectionTitleClass}>Additional Information</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-            <div>
-              <Label htmlFor="notes">Notes</Label>
-              <Textarea
-                id="notes"
-                {...register("notes")}
-                placeholder="Enter any additional notes..."
-                className="min-h-[50px]"
-              />
-            </div>
-            <div>
-              <Label htmlFor="trackingNumber">Tracking Number</Label>
-              <Input
-                id="trackingNumber"
-                {...register("trackingNumber")}
-                placeholder="Enter tracking number if available"
-              />
-            </div>
-          </div>
-        </section>
-        {/* Form Actions */}
-        <div className="flex justify-end gap-3 border-none mt-2 p-0">
-          <Button type="button" variant="outline" onClick={onCancel}>
-            Cancel
-          </Button>
-          <Button type="submit" disabled={loading}>
-            {loading ? "Saving..." : isEdit ? "Update PO" : "Create PO"}
-          </Button>
-        </div>
-      </form>
+        </form>
+      </Form>
     </div>
   );
 };
