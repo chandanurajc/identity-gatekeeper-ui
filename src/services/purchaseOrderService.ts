@@ -150,14 +150,17 @@ export const purchaseOrderService = {
       lines: formData.lines,
     });
 
-    // Ensure dates are valid before formatting
-    const poDate = new Date(formData.poDate);
-    if (isNaN(poDate.getTime())) {
-      throw new Error("[PO] Invalid PO Date provided.");
+    // The 'poDate' from react-hook-form should be a Date object.
+    // We just need to validate it and format it.
+    const poDate = formData.poDate;
+    if (!poDate || isNaN(poDate.getTime())) {
+      console.error("[PO] Invalid poDate received from form:", formData.poDate);
+      throw new Error("[PO] Invalid PO Date provided. It might be empty or in a wrong format.");
     }
 
-    const requestedDeliveryDate = formData.requestedDeliveryDate ? new Date(formData.requestedDeliveryDate) : null;
+    const requestedDeliveryDate = formData.requestedDeliveryDate;
     if (requestedDeliveryDate && isNaN(requestedDeliveryDate.getTime())) {
+      console.error("[PO] Invalid requestedDeliveryDate received from form:", formData.requestedDeliveryDate);
       throw new Error("[PO] Invalid Requested Delivery Date provided.");
     }
 
@@ -242,14 +245,15 @@ export const purchaseOrderService = {
   async updatePurchaseOrder(id: string, formData: PurchaseOrderFormData, organizationId: string, userId: string): Promise<PurchaseOrder> {
     console.log("Updating purchase order:", id, formData);
 
-    // Ensure dates are valid before formatting
-    const poDate = new Date(formData.poDate);
-    if (isNaN(poDate.getTime())) {
+    const poDate = formData.poDate;
+    if (!poDate || isNaN(poDate.getTime())) {
+      console.error("[PO] Invalid poDate received from form for update:", formData.poDate);
       throw new Error("[PO] Invalid PO Date provided for update.");
     }
 
-    const requestedDeliveryDate = formData.requestedDeliveryDate ? new Date(formData.requestedDeliveryDate) : null;
+    const requestedDeliveryDate = formData.requestedDeliveryDate;
     if (requestedDeliveryDate && isNaN(requestedDeliveryDate.getTime())) {
+      console.error("[PO] Invalid requestedDeliveryDate received from form for update:", formData.requestedDeliveryDate);
       throw new Error("[PO] Invalid Requested Delivery Date provided for update.");
     }
 
