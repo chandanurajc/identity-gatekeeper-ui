@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { invoiceService } from "@/services/invoiceService";
@@ -66,59 +65,64 @@ const InvoiceDetail = () => {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid md:grid-cols-2 gap-6">
-            <div>
-              <h3 className="font-semibold mb-2 text-muted-foreground uppercase">Bill To</h3>
-              <div className="space-y-1">
-                <p className="font-semibold">{invoice.bill_to_name}</p>
-                <p>{invoice.bill_to_address1}</p>
-                {invoice.bill_to_address2 && <p>{invoice.bill_to_address2}</p>}
-                <p>{invoice.bill_to_city}, {invoice.bill_to_state} {invoice.bill_to_postal_code}</p>
-                <p>{invoice.bill_to_country}</p>
+        <CardContent>
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="md:col-span-2 space-y-6">
+              <div className="grid sm:grid-cols-2 gap-6">
+                <div>
+                  <h3 className="font-semibold mb-2 text-muted-foreground uppercase">Bill To</h3>
+                  <div className="space-y-1">
+                    <p className="font-semibold">{invoice.bill_to_name}</p>
+                    <p>{invoice.bill_to_address1}</p>
+                    {invoice.bill_to_address2 && <p>{invoice.bill_to_address2}</p>}
+                    <p>{invoice.bill_to_city}, {invoice.bill_to_state} {invoice.bill_to_postal_code}</p>
+                    <p>{invoice.bill_to_country}</p>
+                  </div>
+                </div>
+                <div>
+                  <h3 className="font-semibold mb-2 text-muted-foreground uppercase">Remit To</h3>
+                  <div className="space-y-1">
+                    <p className="font-semibold">{invoice.remit_to_name}</p>
+                    <p>{invoice.remit_to_address1}</p>
+                    {invoice.remit_to_address2 && <p>{invoice.remit_to_address2}</p>}
+                    <p>{invoice.remit_to_city}, {invoice.remit_to_state} {invoice.remit_to_postal_code}</p>
+                    <p>{invoice.remit_to_country}</p>
+                  </div>
+                </div>
               </div>
             </div>
-            <div>
-              <h3 className="font-semibold mb-2 text-muted-foreground uppercase">Remit To</h3>
-              <div className="space-y-1">
-                <p className="font-semibold">{invoice.remit_to_name}</p>
-                <p>{invoice.remit_to_address1}</p>
-                {invoice.remit_to_address2 && <p>{invoice.remit_to_address2}</p>}
-                <p>{invoice.remit_to_city}, {invoice.remit_to_state} {invoice.remit_to_postal_code}</p>
-                <p>{invoice.remit_to_country}</p>
-              </div>
+            <div className="md:col-span-1">
+              <Card className="bg-slate-50">
+                <CardHeader>
+                  <CardTitle className="text-lg">Invoice Summary</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4 text-sm">
+                   <div className="flex justify-between">
+                    <span className="text-muted-foreground">Due Date</span>
+                    <span className="font-semibold">{format(new Date(invoice.due_date), 'PPP')}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Payment Terms</span>
+                    <span className="font-semibold">{invoice.payment_terms || 'N/A'}</span>
+                  </div>
+                  <Separator/>
+                   <div className="flex justify-between">
+                    <span className="text-muted-foreground">Subtotal</span>
+                    <span className="font-semibold">{new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(invoice.total_item_cost)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Total GST</span>
+                    <span className="font-semibold">{new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(invoice.total_gst)}</span>
+                  </div>
+                  <Separator/>
+                  <div className="flex justify-between items-baseline">
+                    <span className="text-base font-bold">Total Amount</span>
+                    <span className="text-xl font-bold">{new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(invoice.total_invoice_amount)}</span>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
-          <Separator />
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div>
-              <div className="text-sm text-muted-foreground">Due Date</div>
-              <div className="font-semibold">{format(new Date(invoice.due_date), 'PPP')}</div>
-            </div>
-            <div>
-              <div className="text-sm text-muted-foreground">Payment Terms</div>
-              <div className="font-semibold">{invoice.payment_terms || 'N/A'}</div>
-            </div>
-          </div>
-          <Separator />
-           <div className="grid md:grid-cols-3 gap-6 text-right">
-             <div />
-             <div>
-                <div className="text-sm text-muted-foreground">Subtotal</div>
-                <div className="font-semibold">{new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(invoice.total_item_cost)}</div>
-             </div>
-              <div>
-                <div className="text-sm text-muted-foreground">Total GST</div>
-                <div className="font-semibold">{new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(invoice.total_gst)}</div>
-             </div>
-           </div>
-           <Separator />
-           <div className="flex justify-end">
-            <div className="text-right">
-                <div className="text-sm text-muted-foreground">Total Invoice Amount</div>
-                <div className="font-bold text-2xl">{new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(invoice.total_invoice_amount)}</div>
-            </div>
-           </div>
         </CardContent>
         <CardFooter className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => navigate('/invoices')}>Back to List</Button>

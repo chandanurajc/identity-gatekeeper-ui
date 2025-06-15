@@ -1,4 +1,3 @@
-
 "use client"
 
 import { ColumnDef } from "@tanstack/react-table"
@@ -32,7 +31,7 @@ export const columns: ColumnDef<Invoice>[] = [
   {
     accessorKey: "remit_to_name",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Supplier" />
+      <DataTableColumnHeader column={column} title="Remit To" />
     ),
   },
   {
