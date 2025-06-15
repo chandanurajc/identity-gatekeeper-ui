@@ -33,6 +33,9 @@ export const columns: ColumnDef<InventoryStockLedgerItem>[] = [
     header: "Transaction Type",
     cell: ({ row }) => {
       const type = row.getValue("transactionType") as string;
+      if (!type) {
+        return <Badge variant="outline">N/A</Badge>;
+      }
       let variant: "default" | "secondary" | "destructive" | "outline" = "secondary";
       if (type === 'PO_RECEIVE' || type === 'ADJUSTMENT_IN') variant = 'default';
       if (type === 'ADJUSTMENT_OUT' || type === 'SALES_ORDER') variant = 'destructive';
