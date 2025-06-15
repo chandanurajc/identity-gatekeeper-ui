@@ -147,8 +147,8 @@ export const purchaseOrderService = {
 
     const poHeader = {
       po_number: formData.poNumber,
-      division_id: formData.divisionId,
-      supplier_id: formData.supplierId,
+      division_id: formData.divisionId || null,
+      supplier_id: formData.supplierId || null,
       po_date: poDate,
       requested_delivery_date: formData.requestedDeliveryDate || null,
       ship_to_address_1: formData.shipToAddress1,
@@ -166,16 +166,32 @@ export const purchaseOrderService = {
       created_by: userId
     };
 
-    const { data: poData, error: poError } = await supabase
+    let { data: poData, error: poError } = await supabase
       .from('purchase_order')
       .insert(poHeader)
       .select()
       .single();
 
-    if (poError) {
-      console.error("[PO] Error creating purchase order (header):", poError);
-      throw new Error(`[PO] Failed to create purchase order: ${poError.message}`);
+    if (poError && poError.code === '23505' && poError.message.includes('purchase_order_po_number_key')) {
+        console.warn("[PO] Duplicate PO number detected. Regenerating and retrying once.");
+        const newPoNumber = await this.generatePONumber();
+        const { data: retryData, error: retryError } = await supabase
+            .from('purchase_order')
+            .insert({ ...poHeader, po_number: newPoNumber })
+            .select()
+            .single();
+        
+        if (retryError) {
+            console.error("[PO] Error on retry creating PO header:", retryError);
+            throw new Error(`[PO] Failed to create purchase order on retry: ${retryError.message}`);
+        }
+        poData = retryData;
+    } else if (poError) {
+        console.error("[PO] Error creating purchase order (header):", poError);
+        throw new Error(`[PO] Failed to create purchase order: ${poError.message}`);
     }
+
+
     if (!poData?.id) {
       console.error("[PO] PO header insert did not return an ID", poData);
       throw new Error("[PO] Purchase order header creation failed: No ID returned");
@@ -205,12 +221,11 @@ export const purchaseOrderService = {
 
       if (lineError) {
         console.error("[PO] Error creating purchase order lines:", lineError);
+        // Note: This leaves an orphaned PO header. A transaction would be ideal here.
         throw new Error(`[PO] Failed to create purchase order lines: ${lineError.message}`);
       }
     }
 
-    // Construct the PO from available data to avoid re-fetching, which was causing issues.
-    // The calling UI only needs the poNumber for the success message.
     const createdPO: PurchaseOrder = {
       id: poData.id,
       poNumber: poData.po_number,
@@ -248,8 +263,8 @@ export const purchaseOrderService = {
     const { error: poError } = await supabase
       .from('purchase_order')
       .update({
-        division_id: formData.divisionId,
-        supplier_id: formData.supplierId,
+        division_id: formData.divisionId || null,
+        supplier_id: formData.supplierId || null,
         po_date: poDate,
         requested_delivery_date: formData.requestedDeliveryDate || null,
         ship_to_address_1: formData.shipToAddress1,
