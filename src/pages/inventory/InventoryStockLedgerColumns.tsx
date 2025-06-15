@@ -6,6 +6,7 @@ import { InventoryStockLedgerItem } from "@/types/inventory";
 import { ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format, isValid } from "date-fns";
+import { Link } from "react-router-dom";
 
 export const columns: ColumnDef<InventoryStockLedgerItem>[] = [
   {
@@ -25,6 +26,19 @@ export const columns: ColumnDef<InventoryStockLedgerItem>[] = [
         }
       }
       return "N/A";
+    },
+  },
+  {
+    accessorKey: "item_id",
+    header: ({ column }) => (
+      <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        Item ID
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
+    cell: ({ row }) => {
+      const itemId = row.getValue("item_id") as string;
+      return <Link to={`/master-data/items/${itemId}`} className="text-blue-600 hover:underline">{itemId}</Link>;
     },
   },
   {

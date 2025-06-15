@@ -11,7 +11,17 @@ import type { Table } from "@tanstack/react-table";
 
 function StockLedgerToolbar<TData>({ table }: { table: Table<TData> }) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 py-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 py-4">
+      <Input
+        placeholder="Filter by item ID..."
+        value={
+          (table.getColumn("item_id")?.getFilterValue() as string) ?? ""
+        }
+        onChange={(event) =>
+          table.getColumn("item_id")?.setFilterValue(event.target.value)
+        }
+        className="max-w-sm"
+      />
       <Input
         placeholder="Filter by item..."
         value={
