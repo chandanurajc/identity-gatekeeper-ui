@@ -1,3 +1,4 @@
+
 import React, { useEffect } from "react";
 import { Controller, useWatch } from "react-hook-form";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -43,8 +44,8 @@ const ShipToAddressSection = ({
         />
         <Label htmlFor="sameAsDivisionAddress">Same as Division's Shipping address?</Label>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="md:col-span-2">
           <Label htmlFor="shipToAddress1">Address 1 *</Label>
           <Input
             id="shipToAddress1"
@@ -60,15 +61,6 @@ const ShipToAddressSection = ({
             {...register("shipToAddress2")}
             disabled={sameAsDivisionAddress}
           />
-        </div>
-        <div>
-          <Label htmlFor="shipToPostalCode">Postal Code *</Label>
-          <Input
-            id="shipToPostalCode"
-            {...register("shipToPostalCode", { required: "Postal Code is required" })}
-            disabled={sameAsDivisionAddress}
-          />
-          {errors.shipToPostalCode && <p className="text-xs text-red-500">{errors.shipToPostalCode.message}</p>}
         </div>
         <div>
           <Label htmlFor="shipToCity">City *</Label>
@@ -87,6 +79,15 @@ const ShipToAddressSection = ({
             disabled={sameAsDivisionAddress}
           />
           {errors.shipToState && <p className="text-xs text-red-500">{errors.shipToState.message}</p>}
+        </div>
+        <div>
+          <Label htmlFor="shipToPostalCode">Postal Code *</Label>
+          <Input
+            id="shipToPostalCode"
+            {...register("shipToPostalCode", { required: "Postal Code is required" })}
+            disabled={sameAsDivisionAddress}
+          />
+          {errors.shipToPostalCode && <p className="text-xs text-red-500">{errors.shipToPostalCode.message}</p>}
         </div>
         <div>
           <Label htmlFor="shipToCountry">Country *</Label>

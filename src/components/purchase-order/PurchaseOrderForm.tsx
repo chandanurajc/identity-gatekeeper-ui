@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,7 +23,7 @@ import PurchaseOrderLinesSection from "./PurchaseOrderLinesSection";
 
 // --- UI Clean: helper styles for lean form ---
 const sectionTitleClass = "text-base font-semibold text-muted-foreground tracking-tight mb-1";
-const formGridClass = "grid grid-cols-1 md:grid-cols-2 gap-4";
+const formGridClass = "grid grid-cols-1 md:grid-cols-3 gap-4";
 // Removed card backgrounds, added 'w-full' max, padding reduced, removed cardBaseClass etc
 
 interface PurchaseOrderFormProps {
@@ -80,7 +81,7 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
   const watchedLines = watch("lines");
   const watchedDivisionId = watch("divisionId");
   const watchedSupplierId = watch("supplierId");
-  const watchedSameAsDivisionAddress = watch("sameAsDivisionAddress");
+  // watchedSameAsDivisionAddress is no longer needed here, it's handled in ShipToAddressSection
 
   useEffect(() => {
     if (currentOrganization?.id) {
@@ -105,14 +106,15 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
     setValue("shipToEmail", "");
   };
 
-  useEffect(() => {
+  // This useEffect is redundant, as ShipToAddressSection has its own.
+  /* useEffect(() => {
     if (watchedSameAsDivisionAddress && watchedDivisionId) {
       loadDivisionShippingAddress();
     } else if (!watchedSameAsDivisionAddress) {
       resetShippingFields();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [watchedSameAsDivisionAddress, watchedDivisionId]);
+  }, [watchedSameAsDivisionAddress, watchedDivisionId]); */
 
   const fetchDropdownData = async () => {
     if (!currentOrganization?.id) return;
@@ -251,8 +253,8 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
   };
 
   return (
-    <div className="w-full max-w-5xl px-2 mx-auto">
-      <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4 w-full">
+    <div className="w-full max-w-7xl px-2 mx-auto">
+      <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6 w-full">
         {/* Purchase Order Details */}
         <section className="bg-transparent">
           <h2 className={sectionTitleClass}>Purchase Order Details</h2>
@@ -304,7 +306,7 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
               <Input
                 id="poDate"
                 type="date"
-                {...register("poDate", { required: "PO Date is required" })}
+                {...register("poDate", { required: "PO Date is required", valueAsDate: true })}
               />
               {errors.poDate && <p className="text-xs text-red-500">{errors.poDate.message}</p>}
             </div>
@@ -313,7 +315,7 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
               <Input
                 id="requestedDeliveryDate"
                 type="date"
-                {...register("requestedDeliveryDate")}
+                {...register("requestedDeliveryDate", { valueAsDate: true })}
               />
             </div>
             <div>
@@ -358,7 +360,7 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
         {/* Notes */}
         <section className="bg-transparent">
           <h2 className={sectionTitleClass}>Additional Information</h2>
-          <div className={formGridClass + " mt-2"}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
             <div>
               <Label htmlFor="notes">Notes</Label>
               <Textarea
