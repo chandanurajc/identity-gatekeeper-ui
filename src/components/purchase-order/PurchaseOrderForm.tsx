@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,9 +21,10 @@ import ShipToAddressSection from "./ShipToAddressSection";
 import PurchaseOrderLinesSection from "./PurchaseOrderLinesSection";
 
 // --- UI Clean: helper styles for lean form ---
-const sectionTitleClass = "text-base font-semibold text-muted-foreground tracking-tight mb-0.5";
-const cardBaseClass = "bg-card rounded-xl shadow-none border border-muted-foreground/10 mb-4";
-const cardContentCondensedClass = "grid grid-cols-1 md:grid-cols-2 gap-3 py-3";
+const sectionTitleClass = "text-lg font-semibold text-muted-foreground tracking-tight mb-2";
+// Smaller cards, minimal border, softer bg
+const cardBaseClass = "bg-white rounded-lg shadow-sm border border-muted/30 mb-3"; 
+const cardContentCondensedClass = "grid grid-cols-1 md:grid-cols-2 gap-4 py-4";
 const actionBarClass = "flex justify-end space-x-3 border-none mt-2";
 
 interface PurchaseOrderFormProps {
@@ -253,11 +253,12 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
   };
 
   return (
-    <div className="space-y-4 max-w-4xl mx-auto">
+    <div className="w-full max-w-[1200px] px-4 mx-auto">
       <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4">
+        {/* Purchase Order Details */}
         <Card className={cardBaseClass}>
-          <CardHeader className="pb-1 border-none bg-transparent">
-            <CardTitle className={sectionTitleClass}>Purchase Order Details</CardTitle>
+          <CardHeader className="pb-2 border-none bg-transparent">
+            <CardTitle className={sectionTitleClass}>Create Purchase Order</CardTitle>
           </CardHeader>
           <CardContent className={cardContentCondensedClass}>
             <div>
@@ -335,6 +336,7 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
           </CardContent>
         </Card>
 
+        {/* Ship to Address section */}
         <ShipToAddressSection
           control={control}
           register={register}
@@ -344,6 +346,7 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
           resetShippingFields={resetShippingFields}
         />
 
+        {/* PO Lines Section */}
         <PurchaseOrderLinesSection
           fields={fields}
           append={append}
@@ -361,10 +364,10 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
 
         {/* Notes */}
         <Card className={cardBaseClass}>
-          <CardHeader className="pb-1 border-none bg-transparent">
-            <CardTitle className={sectionTitleClass}>Additional Information</CardTitle>
+          <CardHeader className="pb-2 border-none bg-transparent">
+            <CardTitle className="text-lg font-semibold text-muted-foreground tracking-tight mb-2">Additional Information</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2 py-3">
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
             <div>
               <Label htmlFor="notes">Notes</Label>
               <Textarea

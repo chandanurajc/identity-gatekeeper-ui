@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 
-const sectionTitleClass = "text-base font-semibold text-muted-foreground tracking-tight mb-0.5";
+const sectionTitleClass = "text-lg font-semibold text-muted-foreground tracking-tight mb-2";
 
 const ShipToAddressSection = ({
   control,
@@ -28,11 +28,11 @@ const ShipToAddressSection = ({
   }, [sameAsDivisionAddress, watchedDivisionId]);
 
   return (
-    <Card className="bg-card rounded-xl shadow-none border border-muted-foreground/10 mb-4">
-      <CardHeader className="pb-1 border-none bg-transparent">
+    <Card className="rounded-lg border border-muted/30 mb-3 shadow-sm bg-white">
+      <CardHeader className="pb-2 bg-transparent">
         <CardTitle className={sectionTitleClass}>Ship to Address</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3 py-3">
+      <CardContent className="space-y-3 py-2">
         <div className="flex items-center space-x-2 mb-1">
           <Controller
             name="sameAsDivisionAddress"
@@ -47,7 +47,7 @@ const ShipToAddressSection = ({
           />
           <Label htmlFor="sameAsDivisionAddress">Same as Division's Shipping address?</Label>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <Label htmlFor="shipToAddress1">Address 1 *</Label>
             <Input

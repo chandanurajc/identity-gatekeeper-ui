@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -10,8 +9,8 @@ import { PurchaseOrderLine } from "@/types/purchaseOrder";
 import { Item } from "@/types/item";
 
 // --- UI Clean: helper styles for lean table ---
-const sectionTitleClass = "text-base font-semibold text-muted-foreground tracking-tight mb-0.5";
-const summaryCardClass = "w-72 border border-muted-foreground/10 rounded-lg bg-muted/60";
+const sectionTitleClass = "text-lg font-semibold text-muted-foreground tracking-tight mb-2";
+const summaryCardClass = "w-80 border border-muted/30 rounded-lg bg-muted/40";
 
 const PurchaseOrderLinesSection = ({
   fields,
@@ -34,32 +33,32 @@ const PurchaseOrderLinesSection = ({
   };
 
   return (
-    <Card className="bg-card rounded-xl shadow-none border border-muted-foreground/10 mb-4">
-      <CardHeader className="pb-1 border-none bg-transparent">
+    <Card className="rounded-lg border border-muted/30 mb-3 shadow-sm bg-white">
+      <CardHeader className="pb-2 bg-transparent border-none">
         <div className="flex justify-between items-center">
           <CardTitle className={sectionTitleClass}>PO Lines</CardTitle>
           <Button type="button" onClick={addPOLine} size="sm">
-            <Plus className="mr-1 h-4 w-4" /> Add Line
+            + Add Line
           </Button>
         </div>
       </CardHeader>
-      <CardContent className="pt-2">
+      <CardContent className="pt-0">
         <div className="overflow-x-auto">
-          <div className="rounded-md border border-muted-foreground/10 min-w-full">
+          <div className="rounded border border-muted/30 min-w-full">
             <Table>
-              <TableHeader className="bg-muted/60">
+              <TableHeader className="bg-muted/40">
                 <TableRow>
-                  <TableHead className="min-w-[44px] py-1">#</TableHead>
-                  <TableHead className="min-w-[135px] py-1">Item *</TableHead>
-                  <TableHead className="min-w-[135px] py-1">Desc.</TableHead>
-                  <TableHead className="min-w-[56px] py-1">Qty *</TableHead>
-                  <TableHead className="min-w-[56px] py-1">UOM *</TableHead>
-                  <TableHead className="min-w-[75px] py-1">Cost *</TableHead>
-                  <TableHead className="min-w-[85px] py-1">Total</TableHead>
-                  <TableHead className="min-w-[56px] py-1">GST %</TableHead>
-                  <TableHead className="min-w-[72px] py-1">GST Val</TableHead>
-                  <TableHead className="min-w-[70px] py-1">Total</TableHead>
-                  <TableHead className="min-w-[42px] py-1">-</TableHead>
+                  <TableHead className="min-w-[36px] py-1">#</TableHead>
+                  <TableHead className="min-w-[120px] py-1">Item *</TableHead>
+                  <TableHead className="min-w-[120px] py-1">Desc.</TableHead>
+                  <TableHead className="min-w-[44px] py-1">Qty *</TableHead>
+                  <TableHead className="min-w-[48px] py-1">UOM *</TableHead>
+                  <TableHead className="min-w-[68px] py-1">Cost *</TableHead>
+                  <TableHead className="min-w-[68px] py-1">Total</TableHead>
+                  <TableHead className="min-w-[52px] py-1">GST %</TableHead>
+                  <TableHead className="min-w-[68px] py-1">GST Val</TableHead>
+                  <TableHead className="min-w-[56px] py-1">Total</TableHead>
+                  <TableHead className="min-w-[32px] py-1"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -96,7 +95,7 @@ const PurchaseOrderLinesSection = ({
                         <Input
                           value={selectedItem?.description || ""}
                           readOnly
-                          className="bg-muted"
+                          className="bg-muted/40"
                           placeholder="Item description"
                         />
                       </TableCell>
@@ -115,7 +114,7 @@ const PurchaseOrderLinesSection = ({
                         <Input
                           value={watchedLines[index]?.uom || ""}
                           readOnly
-                          className="bg-muted"
+                          className="bg-muted/40"
                         />
                       </TableCell>
                       <TableCell>
@@ -135,7 +134,7 @@ const PurchaseOrderLinesSection = ({
                           step="0.01"
                           value={watchedLines[index]?.totalUnitPrice?.toFixed(2) || "0.00"}
                           readOnly
-                          className="bg-muted"
+                          className="bg-muted/40"
                         />
                       </TableCell>
                       <TableCell>
@@ -155,7 +154,7 @@ const PurchaseOrderLinesSection = ({
                           step="0.01"
                           value={watchedLines[index]?.gstValue?.toFixed(2) || "0.00"}
                           readOnly
-                          className="bg-muted"
+                          className="bg-muted/40"
                         />
                       </TableCell>
                       <TableCell>
@@ -164,7 +163,7 @@ const PurchaseOrderLinesSection = ({
                           step="0.01"
                           value={watchedLines[index]?.lineTotal?.toFixed(2) || "0.00"}
                           readOnly
-                          className="bg-muted"
+                          className="bg-muted/40"
                         />
                       </TableCell>
                       <TableCell>
@@ -176,7 +175,8 @@ const PurchaseOrderLinesSection = ({
                           onClick={() => remove(index)}
                           aria-label="Remove line"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <span className="sr-only">Remove</span>
+                          <span aria-hidden>×</span>
                         </Button>
                       </TableCell>
                     </TableRow>
