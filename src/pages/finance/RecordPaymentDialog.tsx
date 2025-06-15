@@ -1,4 +1,3 @@
-
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -47,24 +46,6 @@ const recordPaymentFormSchema = z.object({
   amount: z.coerce.number().positive("Amount must be positive"),
   referenceNumber: z.string().optional(),
   notes: z.string().optional(),
-}).superRefine((data, ctx) => {
-  // Enforce reference number for all except Cash
-  const needsRef = data.paymentMethod !== "Cash";
-  if (needsRef) {
-    if (!data.referenceNumber || data.referenceNumber.trim() === "") {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Reference number is required for this payment method.",
-        path: ["referenceNumber"],
-      });
-    } else if (!/^PMT-[A-Za-z0-9]+$/.test(data.referenceNumber)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Reference number must be in format PMT-XXXX (letters/numbers).",
-        path: ["referenceNumber"],
-      });
-    }
-  }
 });
 
 type RecordPaymentFormSchema = z.infer<typeof recordPaymentFormSchema>;
