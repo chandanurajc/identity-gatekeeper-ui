@@ -31,7 +31,7 @@ export interface PurchaseOrder {
     name: string;
     code: string;
   };
-  supplier?: Organization;
+  supplier?: Partial<Organization>;
   organization?: Organization;
   lines?: PurchaseOrderLine[];
 }

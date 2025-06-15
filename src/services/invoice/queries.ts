@@ -29,8 +29,10 @@ export const getInvoices = async (organizationId: string): Promise<Invoice[]> =>
     return {
       ...rest,
       supplier: { name: supplierName },
+      created_on: new Date(rest.created_on),
+      updated_on: rest.updated_on ? new Date(rest.updated_on) : undefined,
     };
-  }) as Invoice[];
+  }) as unknown as Invoice[];
 };
 
 export const getInvoiceById = async (invoiceId: string, organizationId: string): Promise<Invoice | null> => {
@@ -62,5 +64,7 @@ export const getInvoiceById = async (invoiceId: string, organizationId: string):
   return {
     ...rest,
     supplier: { name: supplierName },
-  } as Invoice;
+    created_on: new Date(rest.created_on),
+    updated_on: rest.updated_on ? new Date(rest.updated_on) : undefined,
+  } as unknown as Invoice;
 };

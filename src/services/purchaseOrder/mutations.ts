@@ -3,6 +3,7 @@ import { PurchaseOrder, PurchaseOrderFormData, POReceiveLineData } from "@/types
 import { InventoryStock } from "@/types/inventory";
 import { getUserNameById } from "@/lib/userUtils";
 import { getPurchaseOrderById } from "./queries";
+import { invoiceService } from "@/services/invoiceService";
 
 export async function createPurchaseOrder(formData: PurchaseOrderFormData, organizationId: string, userId: string): Promise<PurchaseOrder> {
   const poDate = formData.poDate;
@@ -329,14 +330,28 @@ export async function receivePurchaseOrder(
   }
 
   if (newStatus !== po.status) {
+    const updatedByUsername = await getUserNameById(userId);
     const { error: poStatusError } = await supabase
       .from('purchase_order')
-      .update({ status: newStatus, updated_by: createdByUsername, updated_on: new Date().toISOString() })
+      .update({ status: newStatus, updated_by: updatedByUsername, updated_on: new Date().toISOString() })
       .eq('id', poId);
 
     if (poStatusError) {
       console.error("Error updating PO status:", poStatusError);
       throw new Error(`Failed to update PO status: ${poStatusError.message}`);
+    }
+
+    if (newStatus === 'Received') {
+      try {
+        console.log(`[PO Receive] PO ${poId} is fully received. Triggering invoice creation...`);
+        await invoiceService.createInvoiceFromReceivedPO(poId, organizationId, userId, updatedByUsername);
+        console.log(`[PO Receive] Successfully triggered invoice creation for PO ${poId}`);
+      } catch (invoiceError: any) {
+        // Log the error but don't fail the entire receive process, as the items are already in stock.
+        // This could be enhanced with a retry mechanism or a background job queue.
+        console.error(`[PO Receive] Failed to create invoice for PO ${poId}. This may need to be done manually. Error:`, invoiceError.message);
+        // We could potentially throw a specific warning to be caught by the UI here.
+      }
     }
   }
 

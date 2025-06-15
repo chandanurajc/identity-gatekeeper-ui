@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Invoice } from '@/types/invoice';
 import { PurchaseOrder } from '@/types/purchaseOrder';
@@ -21,6 +20,7 @@ export const createInvoiceFromReceivedPO = async (poId: string, organizationId: 
         throw new Error(`Failed to fetch Purchase Order with ID ${poId}: ${poError?.message}`);
     }
 
+    // Cast to our camelCase type
     const poData = poResult as unknown as PurchaseOrder;
 
     if (poData.status !== 'Received') {
@@ -37,7 +37,7 @@ export const createInvoiceFromReceivedPO = async (poId: string, organizationId: 
         throw new Error(`Error checking for existing invoice: ${existingInvoiceError.message}`);
     }
     if (existingInvoice) {
-        throw new Error(`An invoice already exists for Purchase Order ${poData.po_number}.`);
+        throw new Error(`An invoice already exists for Purchase Order ${poData.poNumber}.`);
     }
 
     const billToContact = poData.organization?.contacts?.find(c => c.type === 'Bill To');
@@ -50,41 +50,41 @@ export const createInvoiceFromReceivedPO = async (poId: string, organizationId: 
         throw new Error(`Failed to generate invoice number: ${invoiceNumberError.message}`);
     }
 
-    const paymentTermsDays = parseInt(poData.payment_terms?.match(/\d+/)?.[0] || '30', 10);
-    const dueDate = add(new Date(poData.po_date), { days: paymentTermsDays });
+    const paymentTermsDays = parseInt(poData.paymentTerms?.match(/\d+/)?.[0] || '30', 10);
+    const dueDate = add(new Date(poData.poDate), { days: paymentTermsDays });
 
     let totalItemCost = 0;
     let totalGst = 0;
     const invoiceLinesToInsert = poData.lines?.map(poLine => {
-        totalItemCost += poLine.total_unit_price;
-        totalGst += poLine.gst_value;
+        totalItemCost += poLine.totalUnitPrice;
+        totalGst += poLine.gstValue;
         return {
             organization_id: organizationId,
-            line_number: poLine.line_number,
-            item_id: poLine.item_id,
+            line_number: poLine.lineNumber,
+            item_id: poLine.itemId,
             item_description: poLine.item?.description,
             item_group_name: poLine.item?.itemGroup?.name,
             classification: poLine.item?.classification,
             sub_classification: poLine.item?.subClassification,
             quantity: poLine.quantity,
             uom: poLine.uom,
-            unit_cost: poLine.unit_price,
-            total_item_cost: poLine.total_unit_price,
-            gst_percent: poLine.gst_percent,
-            gst_value: poLine.gst_value,
-            line_total: poLine.line_total,
+            unit_cost: poLine.unitPrice,
+            total_item_cost: poLine.totalUnitPrice,
+            gst_percent: poLine.gstPercent,
+            gst_value: poLine.gstValue,
+            line_total: poLine.lineTotal,
             created_by: userName,
         };
     }) || [];
 
     const totalInvoiceAmount = totalItemCost + totalGst;
 
-    const { data: newInvoice, error: createInvoiceError } = await supabase
+    const { data: newInvoiceData, error: createInvoiceError } = await supabase
         .from('invoice')
         .insert({
             organization_id: organizationId,
             po_id: poId,
-            po_number: poData.po_number,
+            po_number: poData.poNumber,
             invoice_number: invoiceNumber,
             due_date: dueDate.toISOString().split('T')[0],
             status: 'Created',
@@ -114,19 +114,24 @@ export const createInvoiceFromReceivedPO = async (poId: string, organizationId: 
         .select()
         .single();
     
-    if (createInvoiceError || !newInvoice) {
+    if (createInvoiceError || !newInvoiceData) {
         throw new Error(`Failed to create invoice: ${createInvoiceError.message}`);
     }
 
-    const linesWithInvoiceId = invoiceLinesToInsert.map(line => ({ ...line, invoice_id: newInvoice.id }));
+    const linesWithInvoiceId = invoiceLinesToInsert.map(line => ({ ...line, invoice_id: newInvoiceData.id }));
     const { error: linesInsertError } = await supabase.from('invoice_line').insert(linesWithInvoiceId);
 
     if (linesInsertError) {
-        await supabase.from('invoice').delete().eq('id', newInvoice.id);
+        await supabase.from('invoice').delete().eq('id', newInvoiceData.id);
         throw new Error(`Failed to insert invoice lines: ${linesInsertError.message}`);
     }
 
-    return { ...newInvoice, lines: linesWithInvoiceId } as Invoice;
+    return { 
+        ...newInvoiceData, 
+        lines: linesWithInvoiceId,
+        created_on: new Date(newInvoiceData.created_on),
+        updated_on: new Date(newInvoiceData.updated_on) ? new Date(newInvoiceData.updated_on) : undefined,
+    } as unknown as Invoice;
 };
 
 
@@ -146,11 +151,12 @@ export const approveInvoice = async (invoiceId: string, organizationId: string, 
         throw new Error('Invoice is already approved.');
     }
     
-    if (!currentInvoice.invoice_line || currentInvoice.invoice_line.length === 0) {
+    // The select on line 140 was changed to use a join which supabase returns as an array
+    if (!currentInvoice.invoice_line || (Array.isArray(currentInvoice.invoice_line) && currentInvoice.invoice_line.length === 0)) {
         throw new Error('Cannot approve an invoice with no line items.');
     }
 
-    const { data: updatedInvoice, error: updateError } = await supabase
+    const { data: updatedInvoiceData, error: updateError } = await supabase
         .from('invoice')
         .update({
             status: 'Approved',
@@ -161,8 +167,8 @@ export const approveInvoice = async (invoiceId: string, organizationId: string, 
         .select()
         .single();
 
-    if (updateError || !updatedInvoice) {
-        throw new Error(`Failed to approve invoice: ${updateError?.message}`);
+    if (updateError || !updatedInvoiceData) {
+        throw new Error(`Failed to approve invoice: ${updateError.message}`);
     }
 
     await supabase.from('invoice_audit_log').insert({
@@ -176,5 +182,9 @@ export const approveInvoice = async (invoiceId: string, organizationId: string, 
         },
     });
 
-    return updatedInvoice as Invoice;
+    return {
+        ...updatedInvoiceData,
+        created_on: new Date(updatedInvoiceData.created_on),
+        updated_on: updatedInvoiceData.updated_on ? new Date(updatedInvoiceData.updated_on) : undefined,
+    } as unknown as Invoice;
 };
