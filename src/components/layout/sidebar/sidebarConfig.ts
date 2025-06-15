@@ -1,4 +1,3 @@
-
 import {
   Home,
   LayoutDashboard,
@@ -17,6 +16,7 @@ import {
   Radio,
   Box,
   ShoppingCart,
+  Truck,
 } from "lucide-react";
 
 export interface NavItem {
@@ -214,6 +214,15 @@ export const createModuleGroups = (permissions: any): ModuleGroup[] => {
       label: "Purchase Orders",
       path: "/order-management/purchase-orders",
       icon: ShoppingCart,
+      permission: true,
+    });
+  }
+
+  if (permissions.canViewPOReceive) {
+    orderManagementItems.push({
+      label: "PO Receive",
+      path: "/order-management/po-receive",
+      icon: Truck,
       permission: true,
     });
   }

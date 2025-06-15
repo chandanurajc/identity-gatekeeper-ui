@@ -27,7 +27,7 @@ export function AppSidebar() {
   const { canViewSalesChannel } = useSalesChannelPermissions();
   const { canViewItem } = useItemPermissions();
   const { canViewItemGroup } = useItemGroupPermissions();
-  const { canViewPurchaseOrders } = usePurchaseOrderPermissions();
+  const { canViewPurchaseOrders, canViewPOReceive } = usePurchaseOrderPermissions();
   const { setOpen } = useSidebar();
   
   const permissions = {
@@ -41,6 +41,7 @@ export function AppSidebar() {
     canViewItem,
     canViewItemGroup,
     canViewPurchaseOrders,
+    canViewPOReceive,
   };
 
   const moduleGroups = createModuleGroups(permissions);
