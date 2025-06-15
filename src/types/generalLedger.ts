@@ -9,9 +9,19 @@ export interface GeneralLedgerEntry {
   amount: number;
   created_by?: string;
   created_on: Date;
+  payment_method?: string;
+  notes?: string;
   
   // Optional for display
   balance?: number;
   debit?: number;
   credit?: number;
+}
+
+export interface RecordPaymentFormData {
+  paymentDate: Date;
+  paymentMethod: 'UPI' | 'Bank Transfer' | 'Cheque' | 'Cash';
+  referenceNumber?: string;
+  amount: number;
+  notes?: string;
 }

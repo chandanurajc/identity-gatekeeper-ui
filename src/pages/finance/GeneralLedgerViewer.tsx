@@ -13,15 +13,19 @@ import { DataTable } from "@/components/ui/data-table";
 import { columns } from "./GeneralLedgerColumns";
 import { GeneralLedgerEntry } from "@/types/generalLedger";
 import { useToast } from "@/components/ui/use-toast";
+import { usePermissions } from "@/hooks/usePermissions";
+import { RecordPaymentDialog } from "./RecordPaymentDialog";
 
 const GeneralLedgerViewer = () => {
   const { user } = useAuth();
   const { getCurrentOrganizationId } = useMultiTenant();
   const organizationId = getCurrentOrganizationId();
   const { toast } = useToast();
+  const { canRecordPayment } = usePermissions();
 
   const [selectedRemitTo, setSelectedRemitTo] = useState<string | null>(null);
   const [loadTrigger, setLoadTrigger] = useState(0);
+  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
 
   const { data: billToOrg } = useQuery({
     queryKey: ['organization', organizationId],
@@ -33,6 +37,12 @@ const GeneralLedgerViewer = () => {
     queryKey: ['activePartners', organizationId],
     queryFn: () => partnerService.getActivePartners(organizationId!),
     enabled: !!organizationId,
+  });
+  
+  const { data: remitToOrg } = useQuery({
+    queryKey: ['organization', selectedRemitTo],
+    queryFn: () => organizationService.getOrganizationById(selectedRemitTo!),
+    enabled: !!selectedRemitTo,
   });
 
   const { data: ledgerEntries, isLoading: isLoadingLedger, error: ledgerError } = useQuery({
@@ -96,6 +106,15 @@ const GeneralLedgerViewer = () => {
             <Button onClick={() => setLoadTrigger(t => t + 1)} disabled={!selectedRemitTo || isLoadingLedger}>
               {isLoadingLedger ? 'Loading...' : 'Load Ledger'}
             </Button>
+            {canRecordPayment && (
+              <Button
+                onClick={() => setIsPaymentDialogOpen(true)}
+                disabled={!selectedRemitTo || !billToOrg || !remitToOrg}
+                variant="secondary"
+              >
+                Record Payment
+              </Button>
+            )}
           </div>
           
           {loadTrigger > 0 && (
@@ -112,6 +131,14 @@ const GeneralLedgerViewer = () => {
           )}
         </CardContent>
       </Card>
+      {billToOrg && remitToOrg && (
+        <RecordPaymentDialog
+          isOpen={isPaymentDialogOpen}
+          onOpenChange={setIsPaymentDialogOpen}
+          billToOrg={billToOrg}
+          remitToOrg={remitToOrg}
+        />
+      )}
     </div>
   );
 };

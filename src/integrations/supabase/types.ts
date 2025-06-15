@@ -164,6 +164,8 @@ export type Database = {
           created_by: string | null
           created_on: string
           id: string
+          notes: string | null
+          payment_method: string | null
           reference_number: string
           remit_to_address1: string | null
           remit_to_address2: string | null
@@ -193,6 +195,8 @@ export type Database = {
           created_by?: string | null
           created_on?: string
           id?: string
+          notes?: string | null
+          payment_method?: string | null
           reference_number: string
           remit_to_address1?: string | null
           remit_to_address2?: string | null
@@ -222,6 +226,8 @@ export type Database = {
           created_by?: string | null
           created_on?: string
           id?: string
+          notes?: string | null
+          payment_method?: string | null
           reference_number?: string
           remit_to_address1?: string | null
           remit_to_address2?: string | null
@@ -1542,6 +1548,10 @@ export type Database = {
       get_user_organization_id: {
         Args: { user_id: string }
         Returns: string
+      }
+      has_permission: {
+        Args: { p_user_id: string; p_permission_name: string }
+        Returns: boolean
       }
       user_has_role: {
         Args: { user_id: string; role_name: string }
