@@ -68,8 +68,10 @@ export function useDivisionForm({ initialData, onSubmit, isEditing = false }: Us
     }
   };
 
+  // Fix: Always clear the error and re-validate when contacts are changed and at least one exists.
   const handleContactsChange = (contacts: any[]) => {
     form.setValue("contacts", contacts, { shouldValidate: true });
+
     if (contacts.length > 0) {
       form.clearErrors("contacts");
     }
