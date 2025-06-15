@@ -4,7 +4,8 @@ import { useAuth } from "@/context/AuthContext";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { usePermissions } from "@/hooks/usePermissions"; 
-import { Users, Shield } from "lucide-react";
+import { Users } from "lucide-react";
+import { DashboardWidgets } from "@/components/dashboard/DashboardWidgets";
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
@@ -31,6 +32,8 @@ const Dashboard = () => {
         <Button onClick={handleLogout} variant="outline">Logout</Button>
       </div>
 
+      <DashboardWidgets />
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card>
           <CardHeader>
@@ -40,7 +43,7 @@ const Dashboard = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <p>This is your application dashboard.</p>
+            <p>This is your application dashboard. From here you can manage various aspects of the application.</p>
           </CardContent>
         </Card>
 

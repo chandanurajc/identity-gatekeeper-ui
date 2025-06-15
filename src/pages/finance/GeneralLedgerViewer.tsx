@@ -64,18 +64,45 @@ const GeneralLedgerViewer = () => {
     }
   }, [ledgerError, toast]);
 
+  const outstandingBalance = useMemo(() => {
+    if (!ledgerEntries || ledgerEntries.length === 0) return 0;
+
+    const balance = ledgerEntries.reduce((acc, entry) => {
+        if (['Payable Invoice', 'Debit Note'].includes(entry.transaction_type)) {
+            return acc + entry.amount;
+        } else { // 'Payment', 'Credit Note'
+            return acc - entry.amount;
+        }
+    }, 0);
+
+    return balance > 0 ? balance : 0;
+  }, [ledgerEntries]);
+
   const processedData = useMemo(() => {
     if (!ledgerEntries) return [];
     let runningBalance = 0;
-    return ledgerEntries.map((entry: GeneralLedgerEntry) => {
-      runningBalance -= entry.amount;
+
+    const reversedEntries = [...ledgerEntries].reverse();
+
+    const processed = reversedEntries.map((entry: GeneralLedgerEntry) => {
+      const credit_types = ['Payable Invoice', 'Debit Note'];
+      const debit_types = ['Payment', 'Credit Note'];
+
+      if (credit_types.includes(entry.transaction_type)) {
+        runningBalance += entry.amount;
+      } else if (debit_types.includes(entry.transaction_type)) {
+        runningBalance -= entry.amount;
+      }
+
       return {
         ...entry,
-        debit: entry.amount < 0 ? -entry.amount : 0,
-        credit: entry.amount > 0 ? entry.amount : 0,
+        debit: debit_types.includes(entry.transaction_type) ? entry.amount : 0,
+        credit: credit_types.includes(entry.transaction_type) ? entry.amount : 0,
         balance: runningBalance,
       };
     });
+    
+    return processed.reverse();
   }, [ledgerEntries]);
 
   return (
@@ -117,6 +144,12 @@ const GeneralLedgerViewer = () => {
             )}
           </div>
           
+          {loadTrigger > 0 && remitToOrg && outstandingBalance > 0 && (
+            <div className="p-3 text-base font-semibold border rounded-lg bg-slate-100 text-center">
+              Outstanding Payables to {remitToOrg.name}: ₹{outstandingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </div>
+          )}
+
           {loadTrigger > 0 && (
             isLoadingLedger ? (
               <div className="flex justify-center items-center h-24">

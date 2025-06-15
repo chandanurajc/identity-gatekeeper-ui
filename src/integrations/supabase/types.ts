@@ -1545,6 +1545,10 @@ export type Database = {
           sub_classification: string
         }[]
       }
+      get_total_payables: {
+        Args: { p_organization_id: string }
+        Returns: number
+      }
       get_user_organization_id: {
         Args: { user_id: string }
         Returns: string

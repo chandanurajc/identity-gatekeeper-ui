@@ -1,4 +1,3 @@
-
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -42,13 +41,12 @@ import { RecordPaymentFormData } from "@/types/generalLedger";
 
 const paymentSchema = z.object({
   paymentDate: z.date({ required_error: "Payment date is required." }),
-  paymentMethod: z.enum(["UPI", "Bank Transfer", "Cheque", "Cash"]).optional(),
+  paymentMethod: z.enum(["UPI", "Bank Transfer", "Cheque", "Cash"], {
+    required_error: "Payment method is required.",
+  }),
   referenceNumber: z.string().optional(),
   amount: z.coerce.number().positive({ message: "Amount must be greater than 0." }),
   notes: z.string().optional(),
-}).refine(data => !!data.paymentMethod, {
-  message: "Payment method is required.",
-  path: ["paymentMethod"],
 });
 
 type PaymentFormSchema = z.infer<typeof paymentSchema>;
@@ -77,7 +75,6 @@ export const RecordPaymentDialog = ({
       referenceNumber: "",
       notes: "",
       amount: 0,
-      paymentMethod: undefined,
     },
   });
 
@@ -90,13 +87,7 @@ export const RecordPaymentDialog = ({
       toast({ title: "Payment Recorded", description: "The payment has been successfully recorded." });
       queryClient.invalidateQueries({ queryKey: ['generalLedger', billToOrg.id, remitToOrg.id] });
       onOpenChange(false);
-      form.reset({
-        paymentDate: new Date(),
-        referenceNumber: "",
-        notes: "",
-        amount: 0,
-        paymentMethod: undefined,
-      });
+      form.reset();
     },
     onError: (error) => {
       toast({
@@ -108,15 +99,7 @@ export const RecordPaymentDialog = ({
   });
 
   const onSubmit = (data: PaymentFormSchema) => {
-    if (!data.paymentMethod) {
-      // This path should be unreachable due to the schema refinement
-      return;
-    }
-    const completeData: RecordPaymentFormData = {
-      ...data,
-      paymentMethod: data.paymentMethod,
-    };
-    recordPaymentMutation.mutate(completeData);
+    recordPaymentMutation.mutate(data);
   };
 
   return (

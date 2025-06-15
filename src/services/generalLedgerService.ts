@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { GeneralLedgerEntry, RecordPaymentFormData } from '@/types/generalLedger';
 import { Organization } from '@/types/organization';
@@ -10,8 +9,7 @@ export const generalLedgerService = {
       .select('*')
       .eq('bill_to_orgid', billToOrgId)
       .eq('remit_to_orgid', remitToOrgId)
-      .order('transaction_date', { ascending: true })
-      .order('created_on', { ascending: true });
+      .order('created_on', { ascending: false });
 
     if (error) {
       console.error('Error fetching general ledger entries:', error);
