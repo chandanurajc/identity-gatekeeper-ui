@@ -20,14 +20,14 @@ export const columns: ColumnDef<InventoryStockLedgerItem>[] = [
     cell: ({ row }) => format(new Date(row.getValue("createdOn")), "dd/MM/yyyy"),
   },
   {
-    accessorKey: "item.description",
+    id: "item",
     header: "Item",
-    cell: ({ row }) => row.original.item?.description || row.original.itemId,
+    accessorFn: (row) => row.item?.description || row.itemId,
   },
   {
-    accessorKey: "division.name",
+    id: "division",
     header: "Division",
-    cell: ({ row }) => row.original.division?.name || row.original.divisionId,
+    accessorFn: (row) => row.division?.name || row.divisionId,
   },
   {
     accessorKey: "transactionType",
