@@ -1,5 +1,4 @@
 
-```ts
 import {
   User,
   Shield,
@@ -208,4 +207,3 @@ export const createModuleGroups = (permissions: PermissionsMap): ModuleGroup[] =
 
   return moduleGroups;
 };
-```

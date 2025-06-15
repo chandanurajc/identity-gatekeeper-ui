@@ -7,7 +7,8 @@ import { columns } from "./InvoicesListColumns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const InvoicesList = () => {
-  const { organizationId } = useMultiTenant();
+  const { getCurrentOrganizationId } = useMultiTenant();
+  const organizationId = getCurrentOrganizationId();
   const { data: invoices, isLoading, error } = useQuery({
     queryKey: ["invoices", organizationId],
     queryFn: () => invoiceService.getInvoices(organizationId!),

@@ -12,7 +12,8 @@ import { usePermissions } from "@/hooks/usePermissions";
 const InvoiceDetail = () => {
   const { invoiceId } = useParams<{ invoiceId: string }>();
   const navigate = useNavigate();
-  const { organizationId } = useMultiTenant();
+  const { getCurrentOrganizationId } = useMultiTenant();
+  const organizationId = getCurrentOrganizationId();
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
