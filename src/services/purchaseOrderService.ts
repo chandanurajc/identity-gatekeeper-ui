@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { PurchaseOrder, PurchaseOrderFormData, PurchaseOrderLine } from "@/types/purchaseOrder";
 
@@ -9,7 +10,7 @@ export const purchaseOrderService = {
       .from('purchase_order')
       .select(`
         *,
-        division:organizations!purchase_order_division_id_fkey(name, code),
+        division:divisions!purchase_order_division_id_fkey(name, code),
         supplier:organizations!purchase_order_supplier_id_fkey(name, code)
       `)
       .eq('organization_id', organizationId)
@@ -56,7 +57,7 @@ export const purchaseOrderService = {
       .from('purchase_order')
       .select(`
         *,
-        division:organizations!purchase_order_division_id_fkey(name, code),
+        division:divisions!purchase_order_division_id_fkey(name, code),
         supplier:organizations!purchase_order_supplier_id_fkey(name, code),
         purchase_order_line (
           *,
