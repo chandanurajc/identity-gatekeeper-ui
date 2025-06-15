@@ -10,6 +10,7 @@ import { partnerService } from "@/services/partnerService";
 import PartnerList from "@/components/partner/PartnerList";
 import AddPartner from "@/components/partner/AddPartner";
 import { Plus } from "lucide-react";
+import { useMultiTenant } from "@/hooks/useMultiTenant";
 
 const PartnersList = () => {
   const [partners, setPartners] = useState<Partner[]>([]);
@@ -18,11 +19,18 @@ const PartnersList = () => {
   const { toast } = useToast();
   const { canManagePartner } = usePartnerPermissions();
   const navigate = useNavigate();
+  const { getCurrentOrganizationId } = useMultiTenant();
+  const currentOrganizationId = getCurrentOrganizationId();
 
   const fetchPartners = async () => {
+    if (!currentOrganizationId) {
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
-      const data = await partnerService.getPartners();
+      const data = await partnerService.getPartners(currentOrganizationId);
       setPartners(data);
     } catch (error) {
       console.error("Error fetching partners:", error);
@@ -38,7 +46,7 @@ const PartnersList = () => {
 
   useEffect(() => {
     fetchPartners();
-  }, []);
+  }, [currentOrganizationId]);
 
   const handlePartnerAdded = () => {
     fetchPartners();
