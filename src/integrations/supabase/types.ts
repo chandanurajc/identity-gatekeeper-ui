@@ -1128,6 +1128,9 @@ export type Database = {
           quantity_available: number
           uom: string
           last_updated_on: string
+          item_group_name: string
+          classification: string
+          sub_classification: string
         }[]
       }
       get_user_organization_id: {

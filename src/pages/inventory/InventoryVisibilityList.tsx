@@ -9,6 +9,57 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import type { Table } from "@tanstack/react-table";
+import { InventoryStockSummaryItem } from "@/types/inventory";
+
+function InventoryVisibilityToolbar({ table }: { table: Table<InventoryStockSummaryItem> }) {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 py-4">
+      <Input
+        placeholder="Filter by item description..."
+        value={
+          (table.getColumn("item_description")?.getFilterValue() as string) ?? ""
+        }
+        onChange={(event) =>
+          table.getColumn("item_description")?.setFilterValue(event.target.value)
+        }
+        className="max-w-sm"
+      />
+      <Input
+        placeholder="Filter by item group..."
+        value={
+          (table.getColumn("item_group_name")?.getFilterValue() as string) ?? ""
+        }
+        onChange={(event) =>
+          table.getColumn("item_group_name")?.setFilterValue(event.target.value)
+        }
+        className="max-w-sm"
+      />
+      <Input
+        placeholder="Filter by classification..."
+        value={
+          (table.getColumn("classification")?.getFilterValue() as string) ?? ""
+        }
+        onChange={(event) =>
+          table.getColumn("classification")?.setFilterValue(event.target.value)
+        }
+        className="max-w-sm"
+      />
+      <Input
+        placeholder="Filter by sub classification..."
+        value={
+          (table.getColumn("sub_classification")?.getFilterValue() as string) ?? ""
+        }
+        onChange={(event) =>
+          table.getColumn("sub_classification")?.setFilterValue(event.target.value)
+        }
+        className="max-w-sm"
+      />
+    </div>
+  );
+}
+
 
 export default function InventoryVisibilityList() {
   const { getCurrentOrganizationId } = useMultiTenant();
@@ -57,8 +108,7 @@ export default function InventoryVisibilityList() {
           <DataTable 
             columns={columns} 
             data={stock || []} 
-            filterColumn="item_description"
-            filterPlaceholder="Filter by item description..."
+            toolbar={(table) => <InventoryVisibilityToolbar table={table} />}
           />
         </CardContent>
       </Card>

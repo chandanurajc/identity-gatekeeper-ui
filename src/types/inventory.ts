@@ -31,4 +31,7 @@ export interface InventoryStockSummaryItem {
   quantity_available: number;
   uom: string;
   last_updated_on: string;
+  item_group_name: string | null;
+  classification: string;
+  sub_classification: string;
 }
