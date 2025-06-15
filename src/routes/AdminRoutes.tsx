@@ -21,7 +21,7 @@ import DivisionDetail from "@/pages/admin/DivisionDetail";
 import PermissionsList from "@/pages/admin/PermissionsList";
 
 export const AdminRoutes = () => (
-  <>
+  <React.Fragment>
     {/* User Management Routes - Use permission-based protection */}
     <Route 
       path="/admin/users" 
@@ -201,5 +201,5 @@ export const AdminRoutes = () => (
         </PermissionProtectedRoute>
       } 
     />
-  </>
+  </React.Fragment>
 );

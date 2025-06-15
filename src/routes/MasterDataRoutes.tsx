@@ -14,7 +14,7 @@ import ItemView from "@/pages/master-data/ItemView";
 import PartnersList from "@/pages/master-data/PartnersList";
 
 export const MasterDataRoutes = () => (
-    <>
+    <React.Fragment>
         {/* Item Group Management Routes */}
         <Route 
             path="/master-data/item-groups" 
@@ -112,5 +112,5 @@ export const MasterDataRoutes = () => (
             </PermissionProtectedRoute>
             } 
         />
-    </>
+    </React.Fragment>
 );

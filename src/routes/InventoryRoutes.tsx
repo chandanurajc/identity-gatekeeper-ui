@@ -6,7 +6,7 @@ import { MainLayout } from "@/layouts/MainLayout";
 import StockLedgerList from "@/pages/inventory/StockLedgerList";
 
 export const InventoryRoutes = () => (
-    <>
+    <React.Fragment>
         {/* Inventory Management Routes */}
         <Route 
             path="/inventory/stock-ledger" 
@@ -18,5 +18,5 @@ export const InventoryRoutes = () => (
             </PermissionProtectedRoute>
             } 
         />
-    </>
+    </React.Fragment>
 );

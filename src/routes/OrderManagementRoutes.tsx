@@ -11,7 +11,7 @@ import PurchaseOrderReceiveList from "@/pages/order-management/PurchaseOrderRece
 import PurchaseOrderReceiveEntry from "@/pages/order-management/PurchaseOrderReceiveEntry";
 
 export const OrderManagementRoutes = () => (
-    <>
+    <React.Fragment>
         {/* Purchase Order Management Routes */}
         <Route 
             path="/order-management/purchase-orders" 
@@ -75,5 +75,5 @@ export const OrderManagementRoutes = () => (
             </PermissionProtectedRoute>
             } 
         />
-    </>
+    </React.Fragment>
 );
