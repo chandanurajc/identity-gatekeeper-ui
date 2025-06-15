@@ -1,3 +1,4 @@
+
 import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
@@ -28,9 +29,9 @@ const GeneralLedgerViewer = () => {
     enabled: !!organizationId,
   });
 
-  const { data: suppliers } = useQuery({
-    queryKey: ['supplierPartners', organizationId],
-    queryFn: () => partnerService.getSupplierPartners(organizationId!),
+  const { data: partners } = useQuery({
+    queryKey: ['activePartners', organizationId],
+    queryFn: () => partnerService.getActivePartners(organizationId!),
     enabled: !!organizationId,
   });
 
@@ -83,11 +84,11 @@ const GeneralLedgerViewer = () => {
               <label htmlFor="remitTo" className="text-sm font-medium">Remit To Organization</label>
               <Select onValueChange={setSelectedRemitTo} value={selectedRemitTo || undefined}>
                 <SelectTrigger id="remitTo" className="mt-1">
-                  <SelectValue placeholder="Select a supplier" />
+                  <SelectValue placeholder="Select a partner" />
                 </SelectTrigger>
                 <SelectContent>
-                  {suppliers?.map(s => (
-                    <SelectItem key={s.id} value={s.organizationId}>{s.organizationName}</SelectItem>
+                  {partners?.map(p => (
+                    <SelectItem key={p.id} value={p.organizationId}>{p.organizationName}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>

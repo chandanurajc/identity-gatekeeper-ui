@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Partner, PartnerFormData, OrganizationSearchResult } from "@/types/partner";
 
@@ -54,8 +53,8 @@ export const partnerService = {
     }
   },
 
-  async getSupplierPartners(currentOrganizationId: string): Promise<Partner[]> {
-    console.log("Fetching supplier partners from Supabase for org:", currentOrganizationId);
+  async getActivePartners(currentOrganizationId: string): Promise<Partner[]> {
+    console.log("Fetching active partners from Supabase for org:", currentOrganizationId);
     
     try {
       const { data, error } = await supabase
@@ -66,48 +65,38 @@ export const partnerService = {
         `)
         .eq('current_organization_id', currentOrganizationId)
         .eq('status', 'active')
-        // .eq('organization.type', 'Supplier') // Temporarily commented out to show all active partners.
         .order('created_on', { ascending: false });
 
       if (error) {
-        console.error("Supabase error fetching supplier partners:", error);
-        throw new Error(`Failed to fetch supplier partners: ${error.message}`);
+        console.error("Supabase error fetching active partners:", error);
+        throw new Error(`Failed to fetch active partners: ${error.message}`);
       }
       
       if (!data) {
         return [];
       }
 
-      const transformedData: Partner[] = [];
-      for (const partner of data) {
-        if (partner.organization) {
-          const mappedPartner: Partner = {
-            id: partner.id,
-            organizationId: partner.organization_id,
-            organizationCode: partner.organization.code,
-            organizationName: partner.organization.name,
-            organizationType: partner.organization.type,
-            currentOrganizationId: partner.current_organization_id,
-            status: partner.status as 'active' | 'inactive',
-            partnershipDate: new Date(partner.partnership_date),
-            createdBy: partner.created_by,
-            createdOn: new Date(partner.created_on),
-          };
-
-          if (partner.updated_by) {
-            mappedPartner.updatedBy = partner.updated_by;
-          }
-          if (partner.updated_on) {
-            mappedPartner.updatedOn = new Date(partner.updated_on);
-          }
-          transformedData.push(mappedPartner);
-        }
-      }
+      const transformedData: Partner[] = data
+        .filter((partner): partner is typeof partner & { organization: { code: string; name: string; type: string } } => partner.organization !== null)
+        .map(partner => ({
+          id: partner.id,
+          organizationId: partner.organization_id,
+          organizationCode: partner.organization.code,
+          organizationName: partner.organization.name,
+          organizationType: partner.organization.type,
+          currentOrganizationId: partner.current_organization_id,
+          status: partner.status as 'active' | 'inactive',
+          partnershipDate: new Date(partner.partnership_date),
+          createdBy: partner.created_by,
+          createdOn: new Date(partner.created_on),
+          updatedBy: partner.updated_by || undefined,
+          updatedOn: partner.updated_on ? new Date(partner.updated_on) : undefined,
+        }));
 
       return transformedData;
       
     } catch (error) {
-      console.error("Service error fetching supplier partners:", error);
+      console.error("Service error fetching active partners:", error);
       throw error;
     }
   },
