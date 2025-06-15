@@ -13,17 +13,17 @@ const DivisionCreate = () => {
   const { toast } = useToast();
 
   const handleSubmit = async (data: DivisionFormData) => {
-    console.log("Creating division with data:", data);
-    
+    console.log("[DivisionCreate] handleSubmit called with:", data);
+
     try {
       const result = await divisionService.createDivision(data, user?.name || user?.email || "Unknown");
       console.log("Division created successfully:", result);
-      
+
       toast({
         title: "Success",
         description: "Division created successfully",
       });
-      
+
       navigate("/admin/divisions");
     } catch (error) {
       console.error("Error creating division:", error);
@@ -58,3 +58,4 @@ const DivisionCreate = () => {
 };
 
 export default DivisionCreate;
+

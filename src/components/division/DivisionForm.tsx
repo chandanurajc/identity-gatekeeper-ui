@@ -15,6 +15,7 @@ import { useQuery } from "@tanstack/react-query";
 import { organizationService } from "@/services/organizationService";
 import { Organization } from "@/types/organization";
 import { DivisionMainFields } from "./DivisionMainFields";
+import { useToast } from "@/hooks/use-toast";
 
 // Form schema with validation
 const divisionSchema = z.object({
@@ -58,6 +59,7 @@ interface DivisionFormProps {
 const DivisionForm = ({ initialData, onSubmit, isEditing = false }: DivisionFormProps) => {
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
   
   // Fetch organizations for dropdown
   const { data: organizationsData = [] } = useQuery({
@@ -100,6 +102,11 @@ const DivisionForm = ({ initialData, onSubmit, isEditing = false }: DivisionForm
         type: "manual", 
         message: "At least one contact is required" 
       });
+      toast({
+        title: "Validation Error",
+        description: "Please add at least one contact.",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -132,7 +139,24 @@ const DivisionForm = ({ initialData, onSubmit, isEditing = false }: DivisionForm
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
+      <form
+        onSubmit={async (e) => {
+          e.preventDefault();
+          // React Hook Form validation
+          const isValid = await form.trigger();
+          console.log("RHF validation passed?", isValid);
+          if (!isValid) {
+            toast({
+              title: "Validation Error",
+              description: "Please fix form errors before submitting.",
+              variant: "destructive",
+            });
+            return;
+          }
+          form.handleSubmit(handleSubmit)(e);
+        }}
+        className="space-y-8"
+      >
         <DivisionMainFields
           control={form.control}
           organizations={organizations}
