@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Partner, PartnerFormData, OrganizationSearchResult } from "@/types/partner";
 
@@ -65,7 +66,7 @@ export const partnerService = {
         `)
         .eq('current_organization_id', currentOrganizationId)
         .eq('status', 'active')
-        .eq('organization.type', 'Supplier')
+        // .eq('organization.type', 'Supplier') // Temporarily commented out to show all active partners.
         .order('created_on', { ascending: false });
 
       if (error) {
