@@ -1,3 +1,4 @@
+
 import {
   Home,
   LayoutDashboard,
@@ -17,6 +18,7 @@ import {
   Box,
   ShoppingCart,
   Truck,
+  Warehouse,
 } from "lucide-react";
 
 export interface NavItem {
@@ -233,6 +235,25 @@ export const createModuleGroups = (permissions: any): ModuleGroup[] => {
       items: orderManagementItems,
     });
   }
+
+  // Inventory module
+  const inventoryItems: MenuItem[] = [];
+  if (permissions.canViewInventory) {
+    inventoryItems.push({
+      label: "Stock Ledger",
+      path: "/inventory/stock-ledger",
+      icon: Warehouse,
+      permission: true,
+    });
+  }
+
+  if (inventoryItems.length > 0) {
+    moduleGroups.push({
+      name: "Inventory",
+      items: inventoryItems,
+    });
+  }
+
 
   // Admin module
   const adminItems: MenuItem[] = [];

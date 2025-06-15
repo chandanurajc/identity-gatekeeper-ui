@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { PurchaseOrder, PurchaseOrderFormData, POReceiveLineData } from "@/types/purchaseOrder";
+import { InventoryStock } from "@/types/inventory";
 import { getUserNameById } from "@/lib/userUtils";
 import { getPurchaseOrderById } from "./queries";
 
