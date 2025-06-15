@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2 } from "lucide-react";
-import { PurchaseOrderLine, Item } from "@/types/purchaseOrder";
+import { PurchaseOrderLine } from "@/types/purchaseOrder";
+import { Item } from "@/types/item";
 
 interface POLinesSectionProps {
   fields: any;
