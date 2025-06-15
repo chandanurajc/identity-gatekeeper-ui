@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Invoice } from '@/types/invoice';
 import { add } from 'date-fns';
@@ -8,7 +9,7 @@ export const createInvoiceFromReceivedPO = async (poId: string, organizationId: 
         .from('purchase_order')
         .select(`
             *,
-            lines:purchase_order_line(*, item:items(*, item_group_id(*))),
+            lines:purchase_order_line(*, item:items(*, itemGroup:item_group_id(*))),
             supplier:supplier_id(*, contacts:organization_contacts(*)),
             organization:organization_id(*, contacts:organization_contacts(*))
         `)
@@ -68,7 +69,7 @@ export const createInvoiceFromReceivedPO = async (poId: string, organizationId: 
             line_number: poLine.line_number,
             item_id: poLine.item_id,
             item_description: poLine.item?.description,
-            item_group_name: poLine.item?.item_group?.name,
+            item_group_name: poLine.item?.itemGroup?.name,
             classification: poLine.item?.classification,
             sub_classification: poLine.item?.sub_classification,
             quantity: poLine.quantity,
