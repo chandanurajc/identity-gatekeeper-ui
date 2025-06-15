@@ -20,6 +20,13 @@ import { Organization } from "@/types/organization";
 import { Item } from "@/types/item";
 import ShipToAddressSection from "./ShipToAddressSection";
 import PurchaseOrderLinesSection from "./PurchaseOrderLinesSection";
+import {
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 
 // --- UI Clean: helper styles for lean form ---
 const sectionTitleClass = "text-base font-semibold text-muted-foreground tracking-tight mb-1";
@@ -72,11 +79,6 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
   const { register, control, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm<PurchaseOrderFormData>({
     defaultValues: initialData || defaultFormData
   });
-
-  useEffect(() => {
-    register("divisionId", { required: "Division is required" });
-    register("supplierId", { required: "Supplier is required" });
-  }, [register]);
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -274,38 +276,56 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
               />
               {errors.poNumber && <p className="text-xs text-red-500">{errors.poNumber.message}</p>}
             </div>
-            <div>
-              <Label htmlFor="divisionId">Division *</Label>
-              <Select onValueChange={(value) => setValue("divisionId", value)} defaultValue={watch("divisionId")}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Division" />
-                </SelectTrigger>
-                <SelectContent>
-                  {divisions.map((division) => (
-                    <SelectItem key={division.id} value={division.id}>
-                      {division.name} ({division.code})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.divisionId && <p className="text-xs text-red-500">Division is required</p>}
-            </div>
-            <div>
-              <Label htmlFor="supplierId">Supplier *</Label>
-              <Select onValueChange={(value) => setValue("supplierId", value)} defaultValue={watch("supplierId")}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Supplier" />
-                </SelectTrigger>
-                <SelectContent>
-                  {suppliers.map((supplier) => (
-                    <SelectItem key={supplier.id} value={supplier.id}>
-                      {supplier.name} ({supplier.code})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.supplierId && <p className="text-xs text-red-500">Supplier is required</p>}
-            </div>
+            <FormField
+              control={control}
+              name="divisionId"
+              rules={{ required: "Division is required" }}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Division *</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value || ''}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Division" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {divisions.map((division) => (
+                        <SelectItem key={division.id} value={division.id}>
+                          {division.name} ({division.code})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={control}
+              name="supplierId"
+              rules={{ required: "Supplier is required" }}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Supplier *</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value || ''}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Supplier" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {suppliers.map((supplier) => (
+                        <SelectItem key={supplier.id} value={supplier.id}>
+                          {supplier.name} ({supplier.code})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <div>
               <Label htmlFor="poDate">PO Date *</Label>
               <Input
