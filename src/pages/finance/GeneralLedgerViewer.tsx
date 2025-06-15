@@ -14,6 +14,9 @@ import { GeneralLedgerEntry } from "@/types/generalLedger";
 import { useToast } from "@/components/ui/use-toast";
 import { usePermissions } from "@/hooks/usePermissions";
 import { RecordPaymentDialog } from "./RecordPaymentDialog";
+import { OutstandingPayables } from "./OutstandingPayables";
+import { LedgerFilterControls } from "./LedgerFilterControls";
+import { GeneralLedgerTable } from "./GeneralLedgerTable";
 
 const GeneralLedgerViewer = () => {
   const { user } = useAuth();
@@ -98,8 +101,6 @@ const GeneralLedgerViewer = () => {
         debit = amount;
         runningBalance -= amount;
       }
-      // Diagnostic log
-      console.log(`[GeneralLedger] After ${entry.transaction_type} (${amount}): Balance = ${runningBalance}`);
       return {
         ...entry,
         debit,
@@ -111,7 +112,7 @@ const GeneralLedgerViewer = () => {
     return processed.slice().reverse();
   }, [ledgerEntries]);
 
-  // Outstanding balance remains the same: sum all credits minus debits, can be negative if overpaid
+  // Outstanding balance: sum all credits minus debits (can be negative if overpaid)
   const outstandingBalance = useMemo(() => {
     if (!ledgerEntries || ledgerEntries.length === 0) return 0;
     const totalCredit = ledgerEntries
@@ -130,56 +131,27 @@ const GeneralLedgerViewer = () => {
           <CardTitle>General Ledger Viewer</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-end gap-4 p-4 border rounded-lg bg-slate-50">
-            <div className="flex-1">
-              <label className="text-sm font-medium">Bill To Organization</label>
-              <input value={billToOrg?.name || ''} readOnly className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 mt-1 bg-white"/>
-            </div>
-            <div className="flex-1">
-              <label htmlFor="remitTo" className="text-sm font-medium">Remit To Organization</label>
-              <Select onValueChange={setSelectedRemitTo} value={selectedRemitTo || undefined}>
-                <SelectTrigger id="remitTo" className="mt-1">
-                  <SelectValue placeholder="Select a partner" />
-                </SelectTrigger>
-                <SelectContent>
-                  {partners?.map(p => (
-                    <SelectItem key={p.id} value={p.organizationId}>{p.organizationName}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <Button onClick={() => setLoadTrigger(t => t + 1)} disabled={!selectedRemitTo || isLoadingLedger}>
-              {isLoadingLedger ? 'Loading...' : 'Load Ledger'}
-            </Button>
-            {canRecordPayment && (
-              <Button
-                onClick={() => setIsPaymentDialogOpen(true)}
-                disabled={!selectedRemitTo || !billToOrg || !remitToOrg}
-                variant="secondary"
-              >
-                Record Payment
-              </Button>
-            )}
-          </div>
-          
+          <LedgerFilterControls
+            billToOrgName={billToOrg?.name}
+            partners={partners}
+            selectedRemitTo={selectedRemitTo}
+            setSelectedRemitTo={setSelectedRemitTo}
+            onLoadLedger={() => setLoadTrigger(t => t + 1)}
+            isLoadingLedger={isLoadingLedger}
+            canRecordPayment={canRecordPayment}
+            onOpenPaymentDialog={() => setIsPaymentDialogOpen(true)}
+            disableRecordPayment={!selectedRemitTo || !billToOrg || !remitToOrg}
+          />
+
           {loadTrigger > 0 && remitToOrg && outstandingBalance > 0 && (
-            <div className="p-3 text-base font-semibold border rounded-lg bg-slate-100 text-center">
-              Outstanding Payables to {remitToOrg.name}: ₹{outstandingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </div>
+            <OutstandingPayables remitToName={remitToOrg.name} outstandingBalance={outstandingBalance} />
           )}
 
-          {loadTrigger > 0 && (
-            isLoadingLedger ? (
-              <div className="flex justify-center items-center h-24">
-                <p>Loading ledger...</p>
-              </div>
-            ) : (
-              <DataTable
-                columns={columns}
-                data={processedData}
-              />
-            )
-          )}
+          <GeneralLedgerTable
+            processedData={processedData}
+            isLoadingLedger={isLoadingLedger}
+            loadTrigger={loadTrigger}
+          />
         </CardContent>
       </Card>
       {billToOrg && remitToOrg && (
@@ -192,7 +164,7 @@ const GeneralLedgerViewer = () => {
           onPaymentSuccess={() => {
             setLoadTrigger(t => t + 1);
             if (refetchLedger) {
-              refetchLedger(); // Force refetch in case query client is slow
+              refetchLedger();
             }
             setIsPaymentDialogOpen(false);
           }}
