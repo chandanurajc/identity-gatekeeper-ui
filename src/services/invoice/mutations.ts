@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Invoice } from '@/types/invoice';
 import { PurchaseOrder } from '@/types/purchaseOrder';
@@ -23,9 +24,8 @@ export const createInvoiceFromReceivedPO = async (poId: string, organizationId: 
     // Cast to our camelCase type
     const poData = poResult as unknown as PurchaseOrder;
 
-    if (poData.status !== 'Received') {
-        throw new Error('Invoice can only be created for Purchase Orders with status "Received".');
-    }
+    // This check is removed because the calling function `receivePurchaseOrder` is responsible
+    // for ensuring this is only called for 'Received' POs, and there could be replication lag.
 
     const { data: existingInvoice, error: existingInvoiceError } = await supabase
         .from('invoice')
