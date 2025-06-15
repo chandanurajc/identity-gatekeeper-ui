@@ -70,11 +70,12 @@ const GeneralLedgerViewer = () => {
     }
   }, [ledgerEntries]);
 
-  // Running balance and debit/credit assignment logic
+  // Running balance and debit/credit assignment logic, but display with newest first
   const processedData = useMemo(() => {
     if (!ledgerEntries) return [];
     let runningBalance = 0;
 
+    // Always sort by transaction_date ASC, created_on ASC for balance
     const sortedEntries = [...ledgerEntries].sort((a, b) => {
       const aDate = new Date(a.transaction_date).getTime();
       const bDate = new Date(b.transaction_date).getTime();
@@ -90,7 +91,6 @@ const GeneralLedgerViewer = () => {
         console.warn(`[GeneralLedger] BAD ENTRY: amount is not a number for entry`, entry);
         amount = 0;
       }
-      // Correct accounting logic
       if (entry.transaction_type === "Payable Invoice" || entry.transaction_type === "Debit Note") {
         credit = amount;
         runningBalance += amount;
@@ -98,17 +98,17 @@ const GeneralLedgerViewer = () => {
         debit = amount;
         runningBalance -= amount;
       }
-      // Diagnostic for each row
+      // Diagnostic log
       console.log(`[GeneralLedger] After ${entry.transaction_type} (${amount}): Balance = ${runningBalance}`);
       return {
         ...entry,
         debit,
         credit,
-        balance: runningBalance,  // Always show actual running balance (can be negative)
+        balance: runningBalance,
       };
     });
-    console.log("[GeneralLedger] Processed data for table:", processed);
-    return processed;
+    // Reverse for display: newest created_on at top.
+    return processed.slice().reverse();
   }, [ledgerEntries]);
 
   // Outstanding balance remains the same: sum all credits minus debits, can be negative if overpaid
