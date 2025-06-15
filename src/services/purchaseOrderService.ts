@@ -7,7 +7,8 @@ import {
 } from './purchaseOrder/queries';
 import { 
   createPurchaseOrder, 
-  updatePurchaseOrder 
+  updatePurchaseOrder,
+  receivePurchaseOrder
 } from './purchaseOrder/mutations';
 
 export const purchaseOrderService = {
@@ -15,6 +16,7 @@ export const purchaseOrderService = {
   getPurchaseOrderById,
   createPurchaseOrder,
   updatePurchaseOrder,
+  receivePurchaseOrder,
   generatePONumber,
   getDivisionShippingAddress,
 };

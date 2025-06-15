@@ -1,4 +1,3 @@
-
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect, useCallback, useMemo } from "react";
@@ -178,6 +177,11 @@ export const usePermissions = () => {
         canViewPurchaseOrders: false,
         canCreatePurchaseOrder: false,
         canEditPurchaseOrder: false,
+        // PO Receive permissions
+        canViewPOReceive: false,
+        canCreatePOReceive: false,
+        // Inventory permissions
+        canViewInventory: false,
         // Module access
         canAccessAdminModule: false,
         canAccessSettingsModule: false,
@@ -224,6 +228,11 @@ export const usePermissions = () => {
         canViewPurchaseOrders: true,
         canCreatePurchaseOrder: true,
         canEditPurchaseOrder: true,
+        // PO Receive permissions
+        canViewPOReceive: true,
+        canCreatePOReceive: true,
+        // Inventory
+        canViewInventory: true,
         // Module access
         canAccessAdminModule: true,
         canAccessSettingsModule: true,
@@ -269,6 +278,11 @@ export const usePermissions = () => {
       canViewPurchaseOrders: permissions.includes("View PO"),
       canCreatePurchaseOrder: permissions.includes("Create PO"),
       canEditPurchaseOrder: permissions.includes("Edit PO"),
+      // PO Receive permissions
+      canViewPOReceive: permissions.includes("View PO Receive"),
+      canCreatePOReceive: permissions.includes("Create PO Receive"),
+      // Inventory permissions
+      canViewInventory: permissions.includes("View Inventory"),
       // Module access
       canAccessAdminModule: permissions.includes("access_admin") || permissions.length > 0,
       canAccessSettingsModule: permissions.includes("access_settings"),

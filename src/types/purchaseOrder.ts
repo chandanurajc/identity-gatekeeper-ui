@@ -1,4 +1,3 @@
-
 export interface PurchaseOrder {
   id: string;
   poNumber: string;
@@ -17,7 +16,7 @@ export interface PurchaseOrder {
   paymentTerms: string;
   notes?: string;
   trackingNumber?: string;
-  status: 'Created' | 'Approved' | 'Received';
+  status: 'Created' | 'Approved' | 'Received' | 'Partially Received';
   organizationId: string;
   createdBy: string;
   createdOn: Date;
@@ -42,6 +41,7 @@ export interface PurchaseOrderLine {
   lineNumber: number;
   itemId: string;
   quantity: number;
+  receivedQuantity?: number;
   uom: string;
   unitPrice: number;
   totalUnitPrice: number;
@@ -99,4 +99,52 @@ export interface ShippingAddress {
   country: string;
   phone: string;
   email: string;
+}
+
+export interface POReceiveTransaction {
+  id: string;
+  organizationId: string;
+  purchaseOrderId: string;
+  purchaseOrderLineId: string;
+  itemId: string;
+  quantityReceived: number;
+  uom: string;
+  receivedOn: Date;
+  receivedBy: string; // user id
+  createdOn: Date;
+}
+
+export interface InventoryStock {
+    id: string;
+    organizationId: string;
+    itemId: string;
+    divisionId: string;
+    quantity: number;
+    uom: string;
+    transactionType: 'PO_RECEIVE' | 'ADJUSTMENT_IN' | 'ADJUSTMENT_OUT' | 'SALES_ORDER';
+    referenceNumber?: string;
+    createdBy: string;
+    createdOn: Date;
+    updatedBy?: string;
+    updatedOn?: Date;
+}
+
+export interface POReceiveLineData {
+    lineNumber: number;
+    itemId: string;
+    itemDescription: string;
+    orderedQuantity: number;
+    totalReceivedQuantity: number;
+    quantityToReceive: number;
+    uom: string;
+    purchaseOrderLineId: string;
+}
+
+export interface POReceiveFormData {
+    poId: string;
+    poNumber: string;
+    supplierName: string;
+    poDate: string;
+    divisionName: string;
+    lines: POReceiveLineData[];
 }

@@ -148,6 +148,73 @@ export type Database = {
         }
         Relationships: []
       }
+      inventory_stock: {
+        Row: {
+          created_by: string
+          created_on: string
+          division_id: string
+          id: string
+          item_id: string
+          organization_id: string
+          quantity: number
+          reference_number: string | null
+          transaction_type: string
+          uom: string
+          updated_by: string | null
+          updated_on: string | null
+        }
+        Insert: {
+          created_by: string
+          created_on?: string
+          division_id: string
+          id?: string
+          item_id: string
+          organization_id: string
+          quantity: number
+          reference_number?: string | null
+          transaction_type: string
+          uom: string
+          updated_by?: string | null
+          updated_on?: string | null
+        }
+        Update: {
+          created_by?: string
+          created_on?: string
+          division_id?: string
+          id?: string
+          item_id?: string
+          organization_id?: string
+          quantity?: number
+          reference_number?: string | null
+          transaction_type?: string
+          uom?: string
+          updated_by?: string | null
+          updated_on?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_stock_division_id_fkey"
+            columns: ["division_id"]
+            isOneToOne: false
+            referencedRelation: "divisions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_stock_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_stock_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       item_costs: {
         Row: {
           created_by: string
@@ -583,6 +650,74 @@ export type Database = {
           },
         ]
       }
+      po_receive_transaction: {
+        Row: {
+          created_on: string
+          id: string
+          item_id: string
+          organization_id: string
+          purchase_order_id: string
+          purchase_order_line_id: string
+          quantity_received: number
+          received_by: string
+          received_on: string
+          uom: string
+        }
+        Insert: {
+          created_on?: string
+          id?: string
+          item_id: string
+          organization_id: string
+          purchase_order_id: string
+          purchase_order_line_id: string
+          quantity_received: number
+          received_by: string
+          received_on?: string
+          uom: string
+        }
+        Update: {
+          created_on?: string
+          id?: string
+          item_id?: string
+          organization_id?: string
+          purchase_order_id?: string
+          purchase_order_line_id?: string
+          quantity_received?: number
+          received_by?: string
+          received_on?: string
+          uom?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "po_receive_transaction_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "po_receive_transaction_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "po_receive_transaction_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_order"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "po_receive_transaction_purchase_order_line_id_fkey"
+            columns: ["purchase_order_line_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_order_line"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_by: string | null
@@ -755,6 +890,7 @@ export type Database = {
           organization_id: string | null
           purchase_order_id: string
           quantity: number
+          received_quantity: number
           total_unit_price: number
           unit_price: number
           uom: string
@@ -773,6 +909,7 @@ export type Database = {
           organization_id?: string | null
           purchase_order_id: string
           quantity: number
+          received_quantity?: number
           total_unit_price: number
           unit_price: number
           uom: string
@@ -791,6 +928,7 @@ export type Database = {
           organization_id?: string | null
           purchase_order_id?: string
           quantity?: number
+          received_quantity?: number
           total_unit_price?: number
           unit_price?: number
           uom?: string

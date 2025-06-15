@@ -163,6 +163,7 @@ export async function getPurchaseOrderById(id: string): Promise<PurchaseOrder | 
       gstPercent: line.gst_percent,
       gstValue: line.gst_value,
       lineTotal: line.line_total,
+      receivedQuantity: line.received_quantity,
       organizationId: line.organization_id,
       createdBy: line.created_by,
       createdOn: new Date(line.created_on),
