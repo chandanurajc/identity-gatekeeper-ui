@@ -68,8 +68,7 @@ const GeneralLedgerViewer = () => {
     if (!ledgerEntries) return [];
     let runningBalance = 0;
 
-    // In accounting, positive means you owe (Payables up), and is a debit; credits reduce your payable.
-    // Present so that balance always increases on debit (invoice), decreases on credit (payment).
+    // Standard accounting: Credits (e.g. invoices) increase liabilities, Debits (e.g. payments) reduce them.
     const sortedEntries = [...ledgerEntries].sort((a, b) =>
       new Date(a.transaction_date).getTime() - new Date(b.transaction_date).getTime()
     );
@@ -78,11 +77,14 @@ const GeneralLedgerViewer = () => {
       let debit = 0;
       let credit = 0;
 
+      // Swap logic per standard:
+      // - Invoices and Debit Notes (liability up): CREDIT
+      // - Payments and Credit Notes (liability down): DEBIT
       if (entry.transaction_type === "Payable Invoice" || entry.transaction_type === "Debit Note") {
-        debit = entry.amount;
+        credit = entry.amount;
         runningBalance += entry.amount;
       } else if (entry.transaction_type === "Payment" || entry.transaction_type === "Credit Note") {
-        credit = entry.amount;
+        debit = entry.amount;
         runningBalance -= entry.amount;
       }
 
@@ -97,16 +99,16 @@ const GeneralLedgerViewer = () => {
     return processed;
   }, [ledgerEntries]);
 
-  // Outstanding balance is the same concept: sum all debit minus all credit, never negative
+  // Outstanding balance remains the same: sum all credits minus debits, never negative
   const outstandingBalance = useMemo(() => {
     if (!ledgerEntries || ledgerEntries.length === 0) return 0;
-    const totalDebit = ledgerEntries
+    const totalCredit = ledgerEntries
       .filter(e => e.transaction_type === "Payable Invoice" || e.transaction_type === "Debit Note")
       .reduce((acc, entry) => acc + entry.amount, 0);
-    const totalCredit = ledgerEntries
+    const totalDebit = ledgerEntries
       .filter(e => e.transaction_type === "Payment" || e.transaction_type === "Credit Note")
       .reduce((acc, entry) => acc + entry.amount, 0);
-    return Math.max(totalDebit - totalCredit, 0);
+    return Math.max(totalCredit - totalDebit, 0);
   }, [ledgerEntries]);
 
   return (
