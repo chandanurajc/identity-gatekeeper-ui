@@ -44,7 +44,8 @@ export const partnerSupplierService = {
           name: partner.organization.name,
           type: partner.organization.type as 'Admin' | 'Customer' | 'Supplier',
           status: partner.organization.status as 'active' | 'inactive',
-          description: '',
+          references: [], // Add required empty arrays
+          contacts: [], // Add required empty arrays
           createdBy: '',
           createdOn: new Date(),
         }));
