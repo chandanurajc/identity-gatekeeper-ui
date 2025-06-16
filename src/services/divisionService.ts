@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Division, DivisionFormData } from "@/types/division";
 
@@ -54,8 +55,8 @@ export const divisionService = {
         code: division.code,
         name: division.name,
         organizationId: division.organization_id,
-        organizationCode: division.organizations?.code || '',
-        organizationName: division.organizations?.name || '',
+        organizationCode: Array.isArray(division.organizations) ? division.organizations[0]?.code || '' : division.organizations?.code || '',
+        organizationName: Array.isArray(division.organizations) ? division.organizations[0]?.name || '' : division.organizations?.name || '',
         type: division.type as 'Supplier' | 'Retailer' | 'Retail customer' | 'Wholesale customer',
         status: division.status as 'active' | 'inactive',
         references: division.division_references?.map(ref => ({
