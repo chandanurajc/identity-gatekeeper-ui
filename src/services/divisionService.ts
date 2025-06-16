@@ -6,54 +6,16 @@ export const divisionService = {
     const startAll = Date.now();
     console.log("Fetching divisions from Supabase...");
     try {
-      // 1. Get current user's organization
-      const startAuth = Date.now();
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      console.log(`[DivisionsService] Supabase getUser time: ${Date.now() - startAuth}ms`);
-      if (userError) {
-        console.error("[DivisionsService] Error fetching user:", userError);
-        return [];
-      }
-      if (!user) {
-        throw new Error("User not authenticated");
-      }
-
-      const startProfile = Date.now();
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('organization_id')
-        .eq('id', user.id)
-        .single();
-      console.log(`[DivisionsService] Supabase get profile time: ${Date.now() - startProfile}ms`);
-
-      if (profileError) {
-        console.error("[DivisionsService] Error fetching profile:", profileError);
-        return [];
-      }
-      if (!profile?.organization_id) {
-        console.log("[DivisionsService] No organization found for user");
-        return [];
-      }
-
-      // 2. Fetch organization data JUST ONCE, not per division
-      const startOrg = Date.now();
-      const { data: orgData, error: orgError } = await supabase
-        .from('organizations')
-        .select('code, name')
-        .eq('id', profile.organization_id)
-        .single();
-      console.log(`[DivisionsService] Supabase get org time: ${Date.now() - startOrg}ms`);
-      if (orgError || !orgData) {
-        console.error("[DivisionsService] Error fetching organization:", orgError);
-        throw new Error("Failed to fetch organization data");
-      }
-
-      // 3. Fetch divisions for this organization
+      // Fetch all divisions from all organizations, not restricted to current user's org
       const startDivs = Date.now();
       const { data: divisionsData, error: divisionsError } = await supabase
         .from('divisions')
         .select(`
           *,
+          organizations!divisions_organization_id_fkey(
+            code,
+            name
+          ),
           division_references (
             reference_type,
             reference_value
@@ -73,7 +35,6 @@ export const divisionService = {
             website
           )
         `)
-        .eq('organization_id', profile.organization_id)
         .order('name');
       console.log(`[DivisionsService] Supabase get divisions time: ${Date.now() - startDivs}ms`);
 
@@ -87,14 +48,14 @@ export const divisionService = {
         return [];
       }
 
-      // 4. Transform division data and log results
+      // Transform division data and log results
       const transformedData = divisionsData.map(division => ({
         id: division.id,
         code: division.code,
         name: division.name,
         organizationId: division.organization_id,
-        organizationCode: orgData.code,
-        organizationName: orgData.name,
+        organizationCode: division.organizations?.code || '',
+        organizationName: division.organizations?.name || '',
         type: division.type as 'Supplier' | 'Retailer' | 'Retail customer' | 'Wholesale customer',
         status: division.status as 'active' | 'inactive',
         references: division.division_references?.map(ref => ({
