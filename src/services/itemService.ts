@@ -247,23 +247,26 @@ export const itemService = {
         }
       }
 
-      // Insert item prices - handle null/empty sales channel IDs
+      // Insert item prices using raw SQL to handle the new table
       if (formData.prices && formData.prices.length > 0) {
         const priceInserts = formData.prices
-          .filter(price => price.price !== undefined && price.price !== null && price.price > 0)
-          .map(price => ({
-            item_id: itemId,
-            sales_channel_id: price.salesChannelId || null, // Allow null for default prices
-            price: price.price,
-            organization_id: profile.organization_id,
-            created_by: createdBy,
-            updated_by: createdBy,
-          }));
+          .filter(price => price.price !== undefined && price.price !== null && price.price > 0);
 
-        if (priceInserts.length > 0) {
-          const { error: priceError } = await supabase
-            .from('item_prices')
-            .insert(priceInserts);
+        for (const price of priceInserts) {
+          const { error: priceError } = await supabase.rpc('sql', {
+            query: `
+              INSERT INTO item_prices (item_id, sales_channel_id, price, organization_id, created_by, updated_by)
+              VALUES ($1, $2, $3, $4, $5, $6)
+            `,
+            params: [
+              itemId,
+              price.salesChannelId || null,
+              price.price,
+              profile.organization_id,
+              createdBy,
+              createdBy
+            ]
+          });
 
           if (priceError) {
             throw new Error(`Failed to create item prices: ${priceError.message}`);
@@ -357,26 +360,32 @@ export const itemService = {
         }
       }
 
-      // Delete existing prices and recreate them
-      await supabase.from('item_prices').delete().eq('item_id', itemId);
+      // Delete existing prices using raw SQL and recreate them
+      await supabase.rpc('sql', {
+        query: 'DELETE FROM item_prices WHERE item_id = $1',
+        params: [itemId]
+      });
 
       // Insert new prices
       if (formData.prices && formData.prices.length > 0) {
         const priceInserts = formData.prices
-          .filter(price => price.price !== undefined && price.price !== null && price.price > 0)
-          .map(price => ({
-            item_id: itemId,
-            sales_channel_id: price.salesChannelId || null,
-            price: price.price,
-            organization_id: profile.organization_id,
-            created_by: updatedBy,
-            updated_by: updatedBy,
-          }));
+          .filter(price => price.price !== undefined && price.price !== null && price.price > 0);
 
-        if (priceInserts.length > 0) {
-          const { error: priceError } = await supabase
-            .from('item_prices')
-            .insert(priceInserts);
+        for (const price of priceInserts) {
+          const { error: priceError } = await supabase.rpc('sql', {
+            query: `
+              INSERT INTO item_prices (item_id, sales_channel_id, price, organization_id, created_by, updated_by)
+              VALUES ($1, $2, $3, $4, $5, $6)
+            `,
+            params: [
+              itemId,
+              price.salesChannelId || null,
+              price.price,
+              profile.organization_id,
+              updatedBy,
+              updatedBy
+            ]
+          });
 
           if (priceError) {
             throw new Error(`Failed to update item prices: ${priceError.message}`);
@@ -419,16 +428,16 @@ export const itemService = {
         `)
         .eq('item_id', itemId);
 
-      // Fetch prices with sales channel details
-      const { data: pricesData } = await supabase
-        .from('item_prices')
-        .select(`
-          *,
-          sales_channels!sales_channel_id (
-            name
-          )
-        `)
-        .eq('item_id', itemId);
+      // Fetch prices using raw SQL since the table might not be in types yet
+      const { data: pricesData } = await supabase.rpc('sql', {
+        query: `
+          SELECT ip.*, sc.name as sales_channel_name
+          FROM item_prices ip
+          LEFT JOIN sales_channels sc ON ip.sales_channel_id = sc.id
+          WHERE ip.item_id = $1
+        `,
+        params: [itemId]
+      });
 
       const item: Item = {
         id: itemData.id,
@@ -461,11 +470,11 @@ export const itemService = {
           updatedBy: cost.updated_by,
           updatedOn: cost.updated_on ? new Date(cost.updated_on) : undefined,
         })) || [],
-        prices: pricesData?.map(price => ({
+        prices: pricesData?.map((price: any) => ({
           id: price.id,
           itemId: price.item_id,
           salesChannelId: price.sales_channel_id || "",
-          salesChannelName: price.sales_channels?.name || (price.sales_channel_id ? 'Unknown Channel' : 'Default Price'),
+          salesChannelName: price.sales_channel_name || (price.sales_channel_id ? 'Unknown Channel' : 'Default Price'),
           price: price.price,
           organizationId: price.organization_id,
           createdBy: price.created_by,

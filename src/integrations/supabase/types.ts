@@ -728,6 +728,57 @@ export type Database = {
           },
         ]
       }
+      item_prices: {
+        Row: {
+          created_by: string
+          created_on: string
+          id: string
+          item_id: string
+          organization_id: string | null
+          price: number | null
+          sales_channel_id: string | null
+          updated_by: string | null
+          updated_on: string | null
+        }
+        Insert: {
+          created_by: string
+          created_on?: string
+          id?: string
+          item_id: string
+          organization_id?: string | null
+          price?: number | null
+          sales_channel_id?: string | null
+          updated_by?: string | null
+          updated_on?: string | null
+        }
+        Update: {
+          created_by?: string
+          created_on?: string
+          id?: string
+          item_id?: string
+          organization_id?: string | null
+          price?: number | null
+          sales_channel_id?: string | null
+          updated_by?: string | null
+          updated_on?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "item_prices_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "item_prices_sales_channel_id_fkey"
+            columns: ["sales_channel_id"]
+            isOneToOne: false
+            referencedRelation: "sales_channels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       items: {
         Row: {
           barcode: string | null

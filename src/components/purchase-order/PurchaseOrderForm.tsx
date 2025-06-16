@@ -11,15 +11,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { PurchaseOrderFormData, PurchaseOrderLine, ShippingAddress } from "@/types/purchaseOrder";
 import { divisionService } from "@/services/divisionService";
-import { organizationService } from "@/services/organizationService";
 import { itemService } from "@/services/itemService";
 import { purchaseOrderService } from "@/services/purchaseOrderService";
 import { useMultiTenant } from "@/hooks/useMultiTenant";
 import { Division } from "@/types/division";
-import { Organization } from "@/types/organization";
 import { Item } from "@/types/item";
 import ShipToAddressSection from "./ShipToAddressSection";
 import PurchaseOrderLinesSection from "./PurchaseOrderLinesSection";
+import SupplierSelect from "./SupplierSelect";
 import {
   Form,
   FormControl,
@@ -32,7 +31,6 @@ import {
 // --- UI Clean: helper styles for lean form ---
 const sectionTitleClass = "text-base font-semibold text-muted-foreground tracking-tight mb-1";
 const formGridClass = "grid grid-cols-1 md:grid-cols-3 gap-4";
-// Removed card backgrounds, added 'w-full' max, padding reduced, removed cardBaseClass etc
 
 interface PurchaseOrderFormProps {
   initialData?: PurchaseOrderFormData;
@@ -51,7 +49,6 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
   const { currentOrganization } = useMultiTenant();
   
   const [divisions, setDivisions] = useState<Division[]>([]);
-  const [suppliers, setSuppliers] = useState<Organization[]>([]);
   const [items, setItems] = useState<Item[]>([]);
   const [filteredItems, setFilteredItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(false);
@@ -91,7 +88,6 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
   const watchedLines = watch("lines");
   const watchedDivisionId = watch("divisionId");
   const watchedSupplierId = watch("supplierId");
-  // watchedSameAsDivisionAddress is no longer needed here, it's handled in ShipToAddressSection
 
   useEffect(() => {
     if (currentOrganization?.id) {
@@ -116,26 +112,14 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
     setValue("shipToEmail", "");
   };
 
-  // This useEffect is redundant, as ShipToAddressSection has its own.
-  /* useEffect(() => {
-    if (watchedSameAsDivisionAddress && watchedDivisionId) {
-      loadDivisionShippingAddress();
-    } else if (!watchedSameAsDivisionAddress) {
-      resetShippingFields();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [watchedSameAsDivisionAddress, watchedDivisionId]); */
-
   const fetchDropdownData = async () => {
     if (!currentOrganization?.id) return;
     try {
-      const [divisionsData, suppliersData, itemsData] = await Promise.all([
+      const [divisionsData, itemsData] = await Promise.all([
         divisionService.getActiveDivisions(),
-        organizationService.getOrganizations(),
         itemService.getItems()
       ]);
       setDivisions(divisionsData);
-      setSuppliers(suppliersData.filter(org => org.type === 'Supplier' && org.status === 'active'));
       setItems(itemsData);
       setFilteredItems(itemsData.slice(0, 5));
     } catch (error) {
@@ -306,30 +290,12 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
                   </FormItem>
                 )}
               />
-              <FormField
-                control={control}
-                name="supplierId"
-                rules={{ required: "Supplier is required" }}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Supplier *</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value || ''}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select Supplier" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {suppliers.map((supplier) => (
-                          <SelectItem key={supplier.id} value={supplier.id}>
-                            {supplier.name} ({supplier.code})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
+              <SupplierSelect
+                value={watchedSupplierId}
+                onChange={(value) => setValue("supplierId", value)}
+                label="Supplier"
+                placeholder="Select Supplier"
+                required
               />
               <div>
                 <Label htmlFor="poDate">PO Date *</Label>
