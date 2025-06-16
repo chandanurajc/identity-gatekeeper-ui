@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Item, ItemFormData } from "@/types/item";
 
@@ -260,8 +261,13 @@ export const itemService = {
           }));
 
         if (priceInserts.length > 0) {
-          // Note: Need to create item_prices table for this functionality
-          console.log("Price inserts prepared but item_prices table may not exist:", priceInserts);
+          const { error: priceError } = await supabase
+            .from('item_prices')
+            .insert(priceInserts);
+
+          if (priceError) {
+            throw new Error(`Failed to create item prices: ${priceError.message}`);
+          }
         }
       }
 
@@ -351,6 +357,33 @@ export const itemService = {
         }
       }
 
+      // Delete existing prices and recreate them
+      await supabase.from('item_prices').delete().eq('item_id', itemId);
+
+      // Insert new prices
+      if (formData.prices && formData.prices.length > 0) {
+        const priceInserts = formData.prices
+          .filter(price => price.price !== undefined && price.price !== null && price.price > 0)
+          .map(price => ({
+            item_id: itemId,
+            sales_channel_id: price.salesChannelId || null,
+            price: price.price,
+            organization_id: profile.organization_id,
+            created_by: updatedBy,
+            updated_by: updatedBy,
+          }));
+
+        if (priceInserts.length > 0) {
+          const { error: priceError } = await supabase
+            .from('item_prices')
+            .insert(priceInserts);
+
+          if (priceError) {
+            throw new Error(`Failed to update item prices: ${priceError.message}`);
+          }
+        }
+      }
+
       console.log("Item updated successfully");
       
     } catch (error) {
@@ -386,6 +419,17 @@ export const itemService = {
         `)
         .eq('item_id', itemId);
 
+      // Fetch prices with sales channel details
+      const { data: pricesData } = await supabase
+        .from('item_prices')
+        .select(`
+          *,
+          sales_channels!sales_channel_id (
+            name
+          )
+        `)
+        .eq('item_id', itemId);
+
       const item: Item = {
         id: itemData.id,
         description: itemData.description,
@@ -416,6 +460,18 @@ export const itemService = {
           createdOn: new Date(cost.created_on),
           updatedBy: cost.updated_by,
           updatedOn: cost.updated_on ? new Date(cost.updated_on) : undefined,
+        })) || [],
+        prices: pricesData?.map(price => ({
+          id: price.id,
+          itemId: price.item_id,
+          salesChannelId: price.sales_channel_id || "",
+          salesChannelName: price.sales_channels?.name || (price.sales_channel_id ? 'Unknown Channel' : 'Default Price'),
+          price: price.price,
+          organizationId: price.organization_id,
+          createdBy: price.created_by,
+          createdOn: new Date(price.created_on),
+          updatedBy: price.updated_by,
+          updatedOn: price.updated_on ? new Date(price.updated_on) : undefined,
         })) || [],
       };
 

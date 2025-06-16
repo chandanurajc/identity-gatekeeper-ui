@@ -11,7 +11,8 @@ import { SalesChannel } from "@/types/salesChannel";
 import { Organization } from "@/types/organization";
 import { itemGroupService } from "@/services/itemGroupService";
 import { salesChannelService } from "@/services/salesChannelService";
-import { organizationService } from "@/services/organizationService";
+import { partnerSupplierService } from "@/services/partnerSupplierService";
+import { useMultiTenant } from "@/hooks/useMultiTenant";
 import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -58,6 +59,8 @@ const ItemForm = ({ initialData, onSubmit, onCancel, isEdit = false }: ItemFormP
   const [suppliers, setSuppliers] = useState<Organization[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
+  
+  const { getCurrentOrganizationId } = useMultiTenant();
 
   useEffect(() => {
     fetchSelectData();
@@ -65,15 +68,22 @@ const ItemForm = ({ initialData, onSubmit, onCancel, isEdit = false }: ItemFormP
 
   const fetchSelectData = async () => {
     try {
-      const [itemGroupsData, salesChannelsData, organizationsData] = await Promise.all([
+      const currentOrganizationId = getCurrentOrganizationId();
+      if (!currentOrganizationId) {
+        console.error("No current organization ID found");
+        setLoadingData(false);
+        return;
+      }
+
+      const [itemGroupsData, salesChannelsData, suppliersData] = await Promise.all([
         itemGroupService.getItemGroups(),
         salesChannelService.getActiveSalesChannels(),
-        organizationService.getOrganizations(),
+        partnerSupplierService.getPartnerSuppliers(currentOrganizationId),
       ]);
       
       setItemGroups(itemGroupsData.filter(ig => ig.status === 'active'));
       setSalesChannels(salesChannelsData);
-      setSuppliers(organizationsData.filter(org => org.type === 'Supplier' && org.status === 'active'));
+      setSuppliers(suppliersData);
     } catch (error) {
       console.error("ItemForm: Error fetching select data:", error);
       toast.error("Failed to load form data");
