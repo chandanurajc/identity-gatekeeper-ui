@@ -50,40 +50,44 @@ export const divisionService = {
       }
 
       // Transform division data and log results
-      const transformedData = divisionsData.map(division => ({
-        id: division.id,
-        code: division.code,
-        name: division.name,
-        organizationId: division.organization_id,
-        organizationCode: Array.isArray(division.organizations) ? division.organizations[0]?.code || '' : division.organizations?.code || '',
-        organizationName: Array.isArray(division.organizations) ? division.organizations[0]?.name || '' : division.organizations?.name || '',
-        type: division.type as 'Supplier' | 'Retailer' | 'Retail customer' | 'Wholesale customer',
-        status: division.status as 'active' | 'inactive',
-        references: division.division_references?.map(ref => ({
-          id: ref.reference_type,
-          type: ref.reference_type as 'GST' | 'CIN' | 'PAN',
-          value: ref.reference_value
-        })) || [],
-        contacts: division.division_contacts?.map(contact => ({
-          id: contact.contact_type,
-          type: contact.contact_type as 'Registered location' | 'Billing' | 'Shipping' | 'Owner',
-          firstName: contact.first_name,
-          lastName: contact.last_name || "",
-          address1: contact.address1 || '',
-          address2: contact.address2 || "",
-          postalCode: contact.postal_code || '',
-          city: contact.city || '',
-          state: contact.state || '',
-          country: contact.country || '',
-          phoneNumber: contact.phone_number || '',
-          email: contact.email || "",
-          website: contact.website || ""
-        })) || [],
-        createdBy: division.created_by,
-        createdOn: division.created_on ? new Date(division.created_on) : undefined,
-        updatedBy: division.updated_by,
-        updatedOn: division.updated_on ? new Date(division.updated_on) : undefined,
-      }));
+      const transformedData = divisionsData.map(division => {
+        const orgData = Array.isArray(division.organizations) ? division.organizations[0] : division.organizations;
+        
+        return {
+          id: division.id,
+          code: division.code,
+          name: division.name,
+          organizationId: division.organization_id,
+          organizationCode: orgData?.code || '',
+          organizationName: orgData?.name || '',
+          type: division.type as 'Supplier' | 'Retailer' | 'Retail customer' | 'Wholesale customer',
+          status: division.status as 'active' | 'inactive',
+          references: division.division_references?.map(ref => ({
+            id: ref.reference_type,
+            type: ref.reference_type as 'GST' | 'CIN' | 'PAN',
+            value: ref.reference_value
+          })) || [],
+          contacts: division.division_contacts?.map(contact => ({
+            id: contact.contact_type,
+            type: contact.contact_type as 'Registered location' | 'Billing' | 'Shipping' | 'Owner',
+            firstName: contact.first_name,
+            lastName: contact.last_name || "",
+            address1: contact.address1 || '',
+            address2: contact.address2 || "",
+            postalCode: contact.postal_code || '',
+            city: contact.city || '',
+            state: contact.state || '',
+            country: contact.country || '',
+            phoneNumber: contact.phone_number || '',
+            email: contact.email || "",
+            website: contact.website || ""
+          })) || [],
+          createdBy: division.created_by,
+          createdOn: division.created_on ? new Date(division.created_on) : undefined,
+          updatedBy: division.updated_by,
+          updatedOn: division.updated_on ? new Date(division.updated_on) : undefined,
+        };
+      });
 
       console.log(`[DivisionsService] Transformed divisions count: ${transformedData.length}`);
       console.log(`[DivisionsService] Total time: ${Date.now() - startAll}ms`);
