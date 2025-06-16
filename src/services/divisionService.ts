@@ -13,7 +13,7 @@ export const divisionService = {
         .from('divisions')
         .select(`
           *,
-          organizations!divisions_organization_id_fkey(
+          organizations(
             code,
             name
           ),
@@ -51,7 +51,7 @@ export const divisionService = {
 
       // Transform division data and log results
       const transformedData = divisionsData.map(division => {
-        const orgData = Array.isArray(division.organizations) ? division.organizations[0] : division.organizations;
+        const orgData = division.organizations;
         
         return {
           id: division.id,

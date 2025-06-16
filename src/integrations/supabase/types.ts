@@ -146,7 +146,15 @@ export type Database = {
           updated_by?: string | null
           updated_on?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "divisions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       general_ledger: {
         Row: {
