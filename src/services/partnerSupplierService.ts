@@ -42,7 +42,7 @@ export const partnerSupplierService = {
           id: partner.organization.id,
           code: partner.organization.code,
           name: partner.organization.name,
-          type: partner.organization.type as 'Admin' | 'Customer' | 'Supplier',
+          type: 'Supplier' as const, // Explicitly cast to the correct Organization type
           status: partner.organization.status as 'active' | 'inactive',
           references: [], // Add required empty arrays
           contacts: [], // Add required empty arrays
