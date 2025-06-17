@@ -52,22 +52,46 @@ export async function updatePurchaseOrder(id: string, formData: PurchaseOrderFor
     throw new Error(`Failed to delete purchase order lines: ${deleteError.message}`);
   }
 
-  // Create new purchase order lines
+  // Create new purchase order lines with weight calculations
   if (formData.lines.length > 0) {
-    const lineData = formData.lines.map(line => ({
-      purchase_order_id: id,
-      line_number: line.lineNumber,
-      item_id: line.itemId,
-      quantity: line.quantity,
-      uom: line.uom,
-      unit_price: line.unitPrice,
-      total_unit_price: line.totalUnitPrice,
-      gst_percent: line.gstPercent,
-      gst_value: line.gstValue,
-      line_total: line.lineTotal,
-      organization_id: organizationId,
-      created_by: updatedByUsername // Should this be the original creator or updater? Using updater for now.
-    }));
+    // Fetch item details for weight calculations
+    const itemIds = [...new Set(formData.lines.map(line => line.itemId))];
+    const { data: itemsData, error: itemsError } = await supabase
+      .from('items')
+      .select('id, weight, weight_uom')
+      .in('id', itemIds);
+
+    if (itemsError) {
+      console.error("[PO] Error fetching item weight data:", itemsError);
+      throw new Error(`Failed to fetch item weight data: ${itemsError.message}`);
+    }
+
+    const itemWeightMap = new Map(itemsData?.map(item => [item.id, { weight: item.weight, weightUom: item.weight_uom }]) || []);
+
+    const lineData = formData.lines.map(line => {
+      const itemWeight = itemWeightMap.get(line.itemId);
+      const itemWeightPerUnit = itemWeight?.weight || 0;
+      const itemWeightUom = itemWeight?.weightUom || 'kg';
+      const totalLineWeight = itemWeightPerUnit * line.quantity;
+
+      return {
+        purchase_order_id: id,
+        line_number: line.lineNumber,
+        item_id: line.itemId,
+        quantity: line.quantity,
+        uom: line.uom,
+        unit_price: line.unitPrice,
+        total_unit_price: line.totalUnitPrice,
+        gst_percent: line.gstPercent,
+        gst_value: line.gstValue,
+        line_total: line.lineTotal,
+        item_weight_per_unit: itemWeightPerUnit,
+        item_weight_uom: itemWeightUom,
+        total_line_weight: totalLineWeight,
+        organization_id: organizationId,
+        created_by: updatedByUsername // Should this be the original creator or updater? Using updater for now.
+      };
+    });
 
     const { error: lineError } = await supabase
       .from('purchase_order_line')
