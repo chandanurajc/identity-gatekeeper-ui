@@ -13,6 +13,7 @@ export interface Item {
   width?: number;
   height?: number;
   weight?: number;
+  weightUom?: 'g' | 'kg';
   image?: string;
   organizationId?: string;
   createdBy?: string;

@@ -342,6 +342,7 @@ export type Database = {
           bill_to_city: string | null
           bill_to_country: string | null
           bill_to_email: string | null
+          bill_to_gst: string | null
           bill_to_name: string | null
           bill_to_organization_id: string | null
           bill_to_pan: string | null
@@ -365,6 +366,7 @@ export type Database = {
           remit_to_city: string | null
           remit_to_country: string | null
           remit_to_email: string | null
+          remit_to_gst: string | null
           remit_to_name: string | null
           remit_to_organization_id: string | null
           remit_to_pan: string | null
@@ -385,6 +387,7 @@ export type Database = {
           bill_to_city?: string | null
           bill_to_country?: string | null
           bill_to_email?: string | null
+          bill_to_gst?: string | null
           bill_to_name?: string | null
           bill_to_organization_id?: string | null
           bill_to_pan?: string | null
@@ -408,6 +411,7 @@ export type Database = {
           remit_to_city?: string | null
           remit_to_country?: string | null
           remit_to_email?: string | null
+          remit_to_gst?: string | null
           remit_to_name?: string | null
           remit_to_organization_id?: string | null
           remit_to_pan?: string | null
@@ -428,6 +432,7 @@ export type Database = {
           bill_to_city?: string | null
           bill_to_country?: string | null
           bill_to_email?: string | null
+          bill_to_gst?: string | null
           bill_to_name?: string | null
           bill_to_organization_id?: string | null
           bill_to_pan?: string | null
@@ -451,6 +456,7 @@ export type Database = {
           remit_to_city?: string | null
           remit_to_country?: string | null
           remit_to_email?: string | null
+          remit_to_gst?: string | null
           remit_to_name?: string | null
           remit_to_organization_id?: string | null
           remit_to_pan?: string | null
@@ -552,12 +558,15 @@ export type Database = {
           item_description: string | null
           item_group_name: string | null
           item_id: string
+          item_weight_per_unit: number | null
+          item_weight_uom: string | null
           line_number: number
           line_total: number
           organization_id: string
           quantity: number
           sub_classification: string | null
           total_item_cost: number
+          total_line_weight: number | null
           unit_cost: number
           uom: string
           updated_by: string | null
@@ -574,12 +583,15 @@ export type Database = {
           item_description?: string | null
           item_group_name?: string | null
           item_id: string
+          item_weight_per_unit?: number | null
+          item_weight_uom?: string | null
           line_number: number
           line_total: number
           organization_id: string
           quantity: number
           sub_classification?: string | null
           total_item_cost: number
+          total_line_weight?: number | null
           unit_cost: number
           uom: string
           updated_by?: string | null
@@ -596,12 +608,15 @@ export type Database = {
           item_description?: string | null
           item_group_name?: string | null
           item_id?: string
+          item_weight_per_unit?: number | null
+          item_weight_uom?: string | null
           line_number?: number
           line_total?: number
           organization_id?: string
           quantity?: number
           sub_classification?: string | null
           total_item_cost?: number
+          total_line_weight?: number | null
           unit_cost?: number
           uom?: string
           updated_by?: string | null
@@ -806,6 +821,7 @@ export type Database = {
           updated_by: string | null
           updated_on: string | null
           weight: number | null
+          weight_uom: string | null
           width: number | null
         }
         Insert: {
@@ -826,6 +842,7 @@ export type Database = {
           updated_by?: string | null
           updated_on?: string | null
           weight?: number | null
+          weight_uom?: string | null
           width?: number | null
         }
         Update: {
@@ -846,6 +863,7 @@ export type Database = {
           updated_by?: string | null
           updated_on?: string | null
           weight?: number | null
+          weight_uom?: string | null
           width?: number | null
         }
         Relationships: [
@@ -1352,12 +1370,15 @@ export type Database = {
           gst_value: number
           id: string
           item_id: string
+          item_weight_per_unit: number | null
+          item_weight_uom: string | null
           line_number: number
           line_total: number
           organization_id: string | null
           purchase_order_id: string
           quantity: number
           received_quantity: number
+          total_line_weight: number | null
           total_unit_price: number
           unit_price: number
           uom: string
@@ -1371,12 +1392,15 @@ export type Database = {
           gst_value?: number
           id?: string
           item_id: string
+          item_weight_per_unit?: number | null
+          item_weight_uom?: string | null
           line_number: number
           line_total: number
           organization_id?: string | null
           purchase_order_id: string
           quantity: number
           received_quantity?: number
+          total_line_weight?: number | null
           total_unit_price: number
           unit_price: number
           uom: string
@@ -1390,12 +1414,15 @@ export type Database = {
           gst_value?: number
           id?: string
           item_id?: string
+          item_weight_per_unit?: number | null
+          item_weight_uom?: string | null
           line_number?: number
           line_total?: number
           organization_id?: string | null
           purchase_order_id?: string
           quantity?: number
           received_quantity?: number
+          total_line_weight?: number | null
           total_unit_price?: number
           unit_price?: number
           uom?: string

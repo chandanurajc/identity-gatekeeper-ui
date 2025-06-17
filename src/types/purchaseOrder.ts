@@ -49,6 +49,9 @@ export interface PurchaseOrderLine {
   gstPercent: number;
   gstValue: number;
   lineTotal: number;
+  itemWeightPerUnit?: number;
+  itemWeightUom?: string;
+  totalLineWeight?: number;
   organizationId?: string;
   createdBy?: string;
   createdOn?: Date;
@@ -61,6 +64,8 @@ export interface PurchaseOrderLine {
     description: string;
     classification: string;
     subClassification: string;
+    weight?: number;
+    weightUom?: string;
     itemGroupId?: string;
     itemGroup?: {
       name: string;

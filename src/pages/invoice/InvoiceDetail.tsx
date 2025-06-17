@@ -97,8 +97,11 @@ const InvoiceDetail = () => {
                     {invoice.bill_to_address2 && <p>{invoice.bill_to_address2}</p>}
                     <p>{invoice.bill_to_city}, {invoice.bill_to_state} {invoice.bill_to_postal_code}</p>
                     <p>{invoice.bill_to_country}</p>
-                    {invoice.bill_to_pan && <p className="text-sm text-muted-foreground">PAN: {invoice.bill_to_pan}</p>}
-                    {invoice.bill_to_cin && <p className="text-sm text-muted-foreground">CIN: {invoice.bill_to_cin}</p>}
+                    <div className="mt-2 text-sm text-muted-foreground space-y-1">
+                      {invoice.bill_to_gst && <p>GST: {invoice.bill_to_gst}</p>}
+                      {invoice.bill_to_pan && <p>PAN: {invoice.bill_to_pan}</p>}
+                      {invoice.bill_to_cin && <p>CIN: {invoice.bill_to_cin}</p>}
+                    </div>
                   </div>
                 </div>
                 <div>
@@ -110,8 +113,11 @@ const InvoiceDetail = () => {
                     {invoice.remit_to_address2 && <p>{invoice.remit_to_address2}</p>}
                     <p>{invoice.remit_to_city}, {invoice.remit_to_state} {invoice.remit_to_postal_code}</p>
                     <p>{invoice.remit_to_country}</p>
-                    {invoice.remit_to_pan && <p className="text-sm text-muted-foreground">PAN: {invoice.remit_to_pan}</p>}
-                    {invoice.remit_to_cin && <p className="text-sm text-muted-foreground">CIN: {invoice.remit_to_cin}</p>}
+                    <div className="mt-2 text-sm text-muted-foreground space-y-1">
+                      {invoice.remit_to_gst && <p>GST: {invoice.remit_to_gst}</p>}
+                      {invoice.remit_to_pan && <p>PAN: {invoice.remit_to_pan}</p>}
+                      {invoice.remit_to_cin && <p>CIN: {invoice.remit_to_cin}</p>}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -173,6 +179,8 @@ const InvoiceDetail = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Qty</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">UOM</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Weight/Unit</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total Weight</th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Unit Cost</th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total Item Cost</th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">GST %</th>
@@ -188,6 +196,12 @@ const InvoiceDetail = () => {
                     <td className="px-6 py-4 whitespace-nowrap">{line.item_description}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">{line.quantity}</td>
                     <td className="px-6 py-4 whitespace-nowrap">{line.uom}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                      {line.item_weight_per_unit ? `${line.item_weight_per_unit} ${line.item_weight_uom || 'kg'}` : '-'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                      {line.total_line_weight ? `${line.total_line_weight} ${line.item_weight_uom || 'kg'}` : '-'}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">{new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(line.unit_cost)}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">{new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(line.total_item_cost)}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">{line.gst_percent}%</td>

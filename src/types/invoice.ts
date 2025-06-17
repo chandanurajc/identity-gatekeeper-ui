@@ -23,6 +23,7 @@ export interface Invoice {
   bill_to_email?: string;
   bill_to_pan?: string;
   bill_to_cin?: string;
+  bill_to_gst?: string;
   remit_to_name?: string;
   remit_to_address1?: string;
   remit_to_address2?: string;
@@ -34,6 +35,7 @@ export interface Invoice {
   remit_to_email?: string;
   remit_to_pan?: string;
   remit_to_cin?: string;
+  remit_to_gst?: string;
   total_item_cost: number;
   total_gst: number;
   total_invoice_amount: number;
@@ -64,4 +66,7 @@ export interface InvoiceLine {
   gst_percent: number;
   gst_value: number;
   line_total: number;
+  item_weight_per_unit?: number;
+  item_weight_uom?: string;
+  total_line_weight?: number;
 }

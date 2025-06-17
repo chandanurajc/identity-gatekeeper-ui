@@ -315,6 +315,8 @@ const PurchaseOrderDetail = () => {
                   <TableHead>Quantity</TableHead>
                   <TableHead>Received Qty</TableHead>
                   <TableHead>UOM</TableHead>
+                  <TableHead>Weight/Unit</TableHead>
+                  <TableHead>Total Weight</TableHead>
                   <TableHead>Unit Price</TableHead>
                   <TableHead>Total Unit Price</TableHead>
                   <TableHead>GST %</TableHead>
@@ -342,6 +344,12 @@ const PurchaseOrderDetail = () => {
                       <TableCell>{line.quantity}</TableCell>
                       <TableCell>{line.receivedQuantity || 0}</TableCell>
                       <TableCell>{line.uom}</TableCell>
+                      <TableCell>
+                        {line.itemWeightPerUnit ? `${line.itemWeightPerUnit} ${line.itemWeightUom || 'kg'}` : '-'}
+                      </TableCell>
+                      <TableCell>
+                        {line.totalLineWeight ? `${line.totalLineWeight} ${line.itemWeightUom || 'kg'}` : '-'}
+                      </TableCell>
                       <TableCell>₹{line.unitPrice.toFixed(2)}</TableCell>
                       <TableCell>₹{line.totalUnitPrice.toFixed(2)}</TableCell>
                       <TableCell>{line.gstPercent}%</TableCell>
@@ -351,7 +359,7 @@ const PurchaseOrderDetail = () => {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={11} className="text-center text-muted-foreground">
+                    <TableCell colSpan={13} className="text-center text-muted-foreground">
                       No line items found
                     </TableCell>
                   </TableRow>
