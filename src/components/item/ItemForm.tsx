@@ -41,6 +41,11 @@ const UOM_OPTIONS = [
   { value: "Litres", label: "Litres" },
 ];
 
+const WEIGHT_UOM_OPTIONS = [
+  { value: "g", label: "Grams (g)" },
+  { value: "kg", label: "Kilograms (kg)" },
+];
+
 const ItemForm = ({ initialData, onSubmit, onCancel, isEdit = false }: ItemFormProps) => {
   const [formData, setFormData] = useState<ItemFormData>({
     description: "",
@@ -389,14 +394,33 @@ const ItemForm = ({ initialData, onSubmit, onCancel, isEdit = false }: ItemFormP
                   />
                 </div>
                 <div>
-                  <Label htmlFor="weight">Weight (kg)</Label>
-                  <Input
-                    id="weight"
-                    type="number"
-                    step="0.001"
-                    value={formData.weight || ""}
-                    onChange={(e) => handleInputChange("weight", parseFloat(e.target.value) || undefined)}
-                  />
+                  <Label htmlFor="weight">Weight</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="weight"
+                      type="number"
+                      step="0.001"
+                      value={formData.weight || ""}
+                      onChange={(e) => handleInputChange("weight", parseFloat(e.target.value) || undefined)}
+                      placeholder="Enter weight"
+                      className="flex-1"
+                    />
+                    <Select 
+                      value={formData.weightUom || "kg"} 
+                      onValueChange={(value: "g" | "kg") => handleInputChange("weightUom", value)}
+                    >
+                      <SelectTrigger className="w-32">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {WEIGHT_UOM_OPTIONS.map((uom) => (
+                          <SelectItem key={uom.value} value={uom.value}>
+                            {uom.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </div>
             </CardContent>

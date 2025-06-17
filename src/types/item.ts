@@ -64,6 +64,7 @@ export interface ItemFormData {
   width?: number;
   height?: number;
   weight?: number;
+  weightUom?: 'g' | 'kg';
   image?: string;
   costs: ItemCostFormData[];
   prices: ItemPriceFormData[];
