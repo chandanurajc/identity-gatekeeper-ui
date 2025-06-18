@@ -204,7 +204,7 @@ const InvoiceDetail = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {invoice.lines?.map((line) => (
+                {invoice?.lines?.map((line) => (
                   <tr key={line.id}>
                     <td className="px-6 py-4 whitespace-nowrap">{line.line_number}</td>
                     <td className="px-6 py-4 whitespace-nowrap">{line.item_id}</td>
@@ -212,7 +212,7 @@ const InvoiceDetail = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-right">{line.quantity}</td>
                     <td className="px-6 py-4 whitespace-nowrap">{line.uom}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
-                      {line.item_weight_per_unit ? `${line.item_weight_per_unit} ${line.item_weight_uom || 'kg'}` : '-'}
+                      {line.item_weight_per_unit ? `${line.item_weight_per_unit.toFixed(2)} ${line.item_weight_uom || 'kg'}` : '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
                       {line.total_line_weight ? `${line.total_line_weight.toFixed(2)} ${line.item_weight_uom || 'kg'}` : '-'}

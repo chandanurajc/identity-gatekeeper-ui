@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -327,7 +326,7 @@ const PurchaseOrderDetail = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {purchaseOrder.lines && purchaseOrder.lines.length > 0 ? (
+                {purchaseOrder?.lines && purchaseOrder.lines.length > 0 ? (
                   purchaseOrder.lines.map((line) => (
                     <TableRow key={line.id}>
                       <TableCell>{line.lineNumber}</TableCell>
@@ -347,7 +346,7 @@ const PurchaseOrderDetail = () => {
                       <TableCell>{line.receivedQuantity || 0}</TableCell>
                       <TableCell>{line.uom}</TableCell>
                       <TableCell>
-                        {line.itemWeightPerUnit ? `${line.itemWeightPerUnit} ${line.itemWeightUom || 'kg'}` : '-'}
+                        {line.itemWeightPerUnit ? `${line.itemWeightPerUnit.toFixed(2)} ${line.itemWeightUom || 'kg'}` : '-'}
                       </TableCell>
                       <TableCell>
                         {line.totalLineWeight ? `${line.totalLineWeight.toFixed(2)} ${line.itemWeightUom || 'kg'}` : '-'}
@@ -371,7 +370,7 @@ const PurchaseOrderDetail = () => {
           </div>
 
           {/* Summary */}
-          {purchaseOrder.lines && purchaseOrder.lines.length > 0 && (
+          {purchaseOrder?.lines && purchaseOrder.lines.length > 0 && (
             <div className="mt-6 flex justify-end">
               <Card className="w-80">
                 <CardHeader>
