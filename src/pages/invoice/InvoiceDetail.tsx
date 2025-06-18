@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { invoiceService } from "@/services/invoiceService";
@@ -61,9 +62,17 @@ const InvoiceDetail = () => {
     },
   });
 
+  // Calculate total weight
+  const calculateTotalWeight = () => {
+    if (!invoice?.lines) return 0;
+    return invoice.lines.reduce((sum, line) => sum + (line.total_line_weight || 0), 0);
+  };
+
   if (isLoading) return <div>Loading invoice details...</div>;
   if (error) return <div>Error fetching invoice: {error.message}</div>;
   if (!invoice) return <div>Invoice not found.</div>;
+
+  const totalWeight = calculateTotalWeight();
 
   return (
     <div className="space-y-6">
@@ -145,6 +154,12 @@ const InvoiceDetail = () => {
                     <span className="text-muted-foreground">Total GST</span>
                     <span className="font-semibold">{new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(invoice.total_gst)}</span>
                   </div>
+                  {totalWeight > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Total Weight</span>
+                      <span className="font-semibold">{totalWeight.toFixed(2)} kg</span>
+                    </div>
+                  )}
                   <Separator/>
                   <div className="flex justify-between items-baseline">
                     <span className="text-base font-bold">Total Amount</span>
@@ -200,7 +215,7 @@ const InvoiceDetail = () => {
                       {line.item_weight_per_unit ? `${line.item_weight_per_unit} ${line.item_weight_uom || 'kg'}` : '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
-                      {line.total_line_weight ? `${line.total_line_weight} ${line.item_weight_uom || 'kg'}` : '-'}
+                      {line.total_line_weight ? `${line.total_line_weight.toFixed(2)} ${line.item_weight_uom || 'kg'}` : '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">{new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(line.unit_cost)}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">{new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(line.total_item_cost)}</td>

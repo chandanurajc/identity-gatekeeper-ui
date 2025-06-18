@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -121,13 +122,14 @@ const PurchaseOrderDetail = () => {
   };
 
   const calculateSummary = () => {
-    if (!purchaseOrder?.lines) return { itemTotal: 0, totalGST: 0, grandTotal: 0 };
+    if (!purchaseOrder?.lines) return { itemTotal: 0, totalGST: 0, grandTotal: 0, totalWeight: 0 };
     
     const itemTotal = purchaseOrder.lines.reduce((sum, line) => sum + line.totalUnitPrice, 0);
     const totalGST = purchaseOrder.lines.reduce((sum, line) => sum + line.gstValue, 0);
     const grandTotal = itemTotal + totalGST;
+    const totalWeight = purchaseOrder.lines.reduce((sum, line) => sum + (line.totalLineWeight || 0), 0);
     
-    return { itemTotal, totalGST, grandTotal };
+    return { itemTotal, totalGST, grandTotal, totalWeight };
   };
 
   if (!canEditPurchaseOrder) {
@@ -170,7 +172,7 @@ const PurchaseOrderDetail = () => {
     );
   }
 
-  const { itemTotal, totalGST, grandTotal } = calculateSummary();
+  const { itemTotal, totalGST, grandTotal, totalWeight } = calculateSummary();
 
   return (
     <div className="container mx-auto py-8">
@@ -348,7 +350,7 @@ const PurchaseOrderDetail = () => {
                         {line.itemWeightPerUnit ? `${line.itemWeightPerUnit} ${line.itemWeightUom || 'kg'}` : '-'}
                       </TableCell>
                       <TableCell>
-                        {line.totalLineWeight ? `${line.totalLineWeight} ${line.itemWeightUom || 'kg'}` : '-'}
+                        {line.totalLineWeight ? `${line.totalLineWeight.toFixed(2)} ${line.itemWeightUom || 'kg'}` : '-'}
                       </TableCell>
                       <TableCell>₹{line.unitPrice.toFixed(2)}</TableCell>
                       <TableCell>₹{line.totalUnitPrice.toFixed(2)}</TableCell>
@@ -384,6 +386,10 @@ const PurchaseOrderDetail = () => {
                     <div className="flex justify-between">
                       <span>Total GST Value:</span>
                       <span>₹{totalGST.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Total Weight:</span>
+                      <span>{totalWeight.toFixed(2)} kg</span>
                     </div>
                     <div className="border-t pt-2">
                       <div className="flex justify-between font-semibold text-lg">
