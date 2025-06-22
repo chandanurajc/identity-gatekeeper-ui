@@ -81,7 +81,7 @@ export const MasterDataRoutes = () => (
             } 
         />
         <Route 
-            path="/master-data/items/edit/:id" 
+            path="/master-data/items/:itemId/edit" 
             element={
             <PermissionProtectedRoute requiredPermission="edit-item">
                 <MainLayout>
@@ -91,7 +91,7 @@ export const MasterDataRoutes = () => (
             } 
         />
         <Route 
-            path="/master-data/items/view/:id" 
+            path="/master-data/items/:itemId" 
             element={
             <PermissionProtectedRoute requiredPermission="view-item">
                 <MainLayout>
