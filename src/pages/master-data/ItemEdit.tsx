@@ -1,55 +1,34 @@
-
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Item, ItemFormData } from "@/types/item";
+import { useQuery } from "@tanstack/react-query";
+import { ItemFormData } from "@/types/item";
 import { itemService } from "@/services/itemService";
 import { useItemPermissions } from "@/hooks/useItemPermissions";
 import { useAuth } from "@/context/AuthContext";
-import ItemForm from "@/components/item/ItemForm";
-import { toast } from "sonner";
+import { useMultiTenant } from "@/hooks/useMultiTenant";
+import { ItemFormWithAttachments } from "@/components/item/ItemFormWithAttachments";
 
 const ItemEdit = () => {
-  const { id } = useParams<{ id: string }>();
+  const { itemId } = useParams<{ itemId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { canEditItem } = useItemPermissions();
-  const [item, setItem] = useState<Item | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { getCurrentOrganizationId } = useMultiTenant();
 
-  useEffect(() => {
-    if (canEditItem && id) {
-      fetchItem();
-    } else {
-      setLoading(false);
-    }
-  }, [canEditItem, id]);
+  const organizationId = getCurrentOrganizationId();
 
-  const fetchItem = async () => {
-    if (!id) return;
-    
-    try {
-      const itemData = await itemService.getItemById(id);
-      if (itemData) {
-        setItem(itemData);
-      } else {
-        toast.error("Item not found");
-        navigate("/master-data/items");
-      }
-    } catch (error) {
-      console.error("Error fetching item:", error);
-      toast.error("Failed to fetch item");
-      navigate("/master-data/items");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: item, isLoading, error } = useQuery({
+    queryKey: ["item", itemId, organizationId],
+    queryFn: () => itemService.getItemById(itemId!, organizationId!),
+    enabled: !!itemId && !!organizationId,
+  });
 
   const handleSubmit = async (formData: ItemFormData) => {
-    if (!user?.email || !id) {
-      throw new Error("User not authenticated or item ID missing");
+    if (!user?.email) {
+      throw new Error("User not authenticated");
     }
 
-    await itemService.updateItem(id, formData, user.email);
+    await itemService.updateItem(itemId!, formData, user.email);
     navigate("/master-data/items");
   };
 
@@ -68,24 +47,9 @@ const ItemEdit = () => {
     );
   }
 
-  if (loading) {
-    return (
-      <div className="container mx-auto py-8">
-        <div className="flex justify-center">Loading item...</div>
-      </div>
-    );
-  }
-
-  if (!item) {
-    return (
-      <div className="container mx-auto py-8">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold mb-4">Item Not Found</h2>
-          <p>The requested item could not be found.</p>
-        </div>
-      </div>
-    );
-  }
+  if (isLoading) return <div>Loading item...</div>;
+  if (error) return <div>Error loading item: {error.message}</div>;
+  if (!item) return <div>Item not found</div>;
 
   const initialData: ItemFormData = {
     id: item.id,
@@ -95,20 +59,22 @@ const ItemEdit = () => {
     subClassification: item.subClassification,
     status: item.status,
     barcode: item.barcode,
-    gstPercentage: item.gstPercentage || 0,
-    uom: item.uom || "Unit",
+    gstPercentage: item.gstPercentage,
+    uom: item.uom,
     length: item.length,
     width: item.width,
     height: item.height,
     weight: item.weight,
+    weightUom: item.weightUom,
+    image: item.image,
     costs: item.costs?.map(cost => ({
       supplierId: cost.supplierId,
-      cost: cost.cost,
+      cost: cost.cost
     })) || [],
     prices: item.prices?.map(price => ({
       salesChannelId: price.salesChannelId,
-      price: price.price,
-    })) || [],
+      price: price.price
+    })) || []
   };
 
   return (
@@ -118,11 +84,11 @@ const ItemEdit = () => {
         <p className="text-muted-foreground">Update item information</p>
       </div>
 
-      <ItemForm
+      <ItemFormWithAttachments
         initialData={initialData}
         onSubmit={handleSubmit}
         onCancel={handleCancel}
-        isEdit={true}
+        mode="edit"
       />
     </div>
   );

@@ -5,7 +5,7 @@ import { ItemFormData } from "@/types/item";
 import { itemService } from "@/services/itemService";
 import { useItemPermissions } from "@/hooks/useItemPermissions";
 import { useAuth } from "@/context/AuthContext";
-import ItemForm from "@/components/item/ItemForm";
+import { ItemFormWithAttachments } from "@/components/item/ItemFormWithAttachments";
 
 const ItemCreate = () => {
   const navigate = useNavigate();
@@ -17,8 +17,10 @@ const ItemCreate = () => {
       throw new Error("User not authenticated");
     }
 
-    await itemService.createItem(formData, user.email);
-    navigate("/master-data/items");
+    const result = await itemService.createItem(formData, user.email);
+    // Set the ID on the form data so the attachments tab can be enabled
+    formData.id = result.id;
+    return result;
   };
 
   const handleCancel = () => {
@@ -43,9 +45,10 @@ const ItemCreate = () => {
         <p className="text-muted-foreground">Add a new item to the system</p>
       </div>
 
-      <ItemForm
+      <ItemFormWithAttachments
         onSubmit={handleSubmit}
         onCancel={handleCancel}
+        mode="create"
       />
     </div>
   );

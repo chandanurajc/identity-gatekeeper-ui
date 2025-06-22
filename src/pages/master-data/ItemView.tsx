@@ -1,50 +1,28 @@
-
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Item } from "@/types/item";
+import { useQuery } from "@tanstack/react-query";
+import { ItemFormData } from "@/types/item";
 import { itemService } from "@/services/itemService";
 import { useItemPermissions } from "@/hooks/useItemPermissions";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { formatDate } from "@/lib/utils";
-import { ArrowLeft, Edit } from "lucide-react";
-import { toast } from "sonner";
-import PermissionButton from "@/components/PermissionButton";
+import { useMultiTenant } from "@/hooks/useMultiTenant";
+import { ItemFormWithAttachments } from "@/components/item/ItemFormWithAttachments";
 
 const ItemView = () => {
-  const { id } = useParams<{ id: string }>();
+  const { itemId } = useParams<{ itemId: string }>();
   const navigate = useNavigate();
-  const { canViewItem, canEditItem } = useItemPermissions();
-  const [item, setItem] = useState<Item | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { canViewItem } = useItemPermissions();
+  const { getCurrentOrganizationId } = useMultiTenant();
 
-  useEffect(() => {
-    if (canViewItem && id) {
-      fetchItem();
-    } else {
-      setLoading(false);
-    }
-  }, [canViewItem, id]);
+  const organizationId = getCurrentOrganizationId();
 
-  const fetchItem = async () => {
-    if (!id) return;
-    
-    try {
-      const itemData = await itemService.getItemById(id);
-      if (itemData) {
-        setItem(itemData);
-      } else {
-        toast.error("Item not found");
-        navigate("/master-data/items");
-      }
-    } catch (error) {
-      console.error("Error fetching item:", error);
-      toast.error("Failed to fetch item");
-      navigate("/master-data/items");
-    } finally {
-      setLoading(false);
-    }
+  const { data: item, isLoading, error } = useQuery({
+    queryKey: ["item", itemId, organizationId],
+    queryFn: () => itemService.getItemById(itemId!, organizationId!),
+    enabled: !!itemId && !!organizationId,
+  });
+
+  const handleCancel = () => {
+    navigate("/master-data/items");
   };
 
   if (!canViewItem) {
@@ -58,184 +36,50 @@ const ItemView = () => {
     );
   }
 
-  if (loading) {
-    return (
-      <div className="container mx-auto py-8">
-        <div className="flex justify-center">Loading item...</div>
-      </div>
-    );
-  }
+  if (isLoading) return <div>Loading item...</div>;
+  if (error) return <div>Error loading item: {error.message}</div>;
+  if (!item) return <div>Item not found</div>;
 
-  if (!item) {
-    return (
-      <div className="container mx-auto py-8">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold mb-4">Item Not Found</h2>
-          <p>The requested item could not be found.</p>
-        </div>
-      </div>
-    );
-  }
+  const initialData: ItemFormData = {
+    id: item.id,
+    description: item.description,
+    itemGroupId: item.itemGroupId,
+    classification: item.classification,
+    subClassification: item.subClassification,
+    status: item.status,
+    barcode: item.barcode,
+    gstPercentage: item.gstPercentage,
+    uom: item.uom,
+    length: item.length,
+    width: item.width,
+    height: item.height,
+    weight: item.weight,
+    weightUom: item.weightUom,
+    image: item.image,
+    costs: item.costs?.map(cost => ({
+      supplierId: cost.supplierId,
+      cost: cost.cost
+    })) || [],
+    prices: item.prices?.map(price => ({
+      salesChannelId: price.salesChannelId,
+      price: price.price
+    })) || []
+  };
 
   return (
     <div className="container mx-auto py-8">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-4">
-          <Button variant="outline" onClick={() => navigate("/master-data/items")}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Items
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold">{item.description}</h1>
-            <p className="text-muted-foreground">Item ID: {item.id}</p>
-          </div>
-        </div>
-        <PermissionButton
-          permission="edit-item"
-          onClick={() => navigate(`/master-data/items/edit/${item.id}`)}
-          className="flex items-center gap-2"
-        >
-          <Edit className="h-4 w-4" />
-          Edit Item
-        </PermissionButton>
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold">View Item</h1>
+        <p className="text-muted-foreground">Item details and attachments</p>
       </div>
 
-      <Tabs defaultValue="basic" className="w-full">
-        <TabsList>
-          <TabsTrigger value="basic">Basic Information</TabsTrigger>
-          <TabsTrigger value="physical">Physical Properties</TabsTrigger>
-          <TabsTrigger value="costs">Costs</TabsTrigger>
-          <TabsTrigger value="prices">Prices</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="basic">
-          <Card>
-            <CardHeader>
-              <CardTitle>Basic Information</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Description</label>
-                  <p className="text-sm">{item.description}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Classification</label>
-                  <p className="text-sm">{item.classification}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Sub-Classification</label>
-                  <p className="text-sm">{item.subClassification}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Status</label>
-                  <span className={`px-2 py-1 rounded-full text-xs ${
-                    item.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                  }`}>
-                    {item.status}
-                  </span>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">GST Percentage</label>
-                  <p className="text-sm">{item.gstPercentage}%</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Unit of Measure (UOM)</label>
-                  <p className="text-sm">{item.uom}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Barcode</label>
-                  <p className="text-sm">{item.barcode || '-'}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Created By</label>
-                  <p className="text-sm">{item.createdBy || '-'}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Created On</label>
-                  <p className="text-sm">{formatDate(item.createdOn)}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Updated By</label>
-                  <p className="text-sm">{item.updatedBy || '-'}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="physical">
-          <Card>
-            <CardHeader>
-              <CardTitle>Physical Properties</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Length (cm)</label>
-                  <p className="text-sm">{item.length || '-'}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Width (cm)</label>
-                  <p className="text-sm">{item.width || '-'}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Height (cm)</label>
-                  <p className="text-sm">{item.height || '-'}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Weight (kg)</label>
-                  <p className="text-sm">{item.weight || '-'}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="costs">
-          <Card>
-            <CardHeader>
-              <CardTitle>Supplier Costs</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {item.costs && item.costs.length > 0 ? (
-                <div className="space-y-2">
-                  {item.costs.map((cost, index) => (
-                    <div key={index} className="flex justify-between items-center p-2 border rounded">
-                      <span>Supplier: {cost.supplierName || cost.supplierId}</span>
-                      <span>Cost: ₹{cost.cost}</span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-muted-foreground">No supplier costs defined</p>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="prices">
-          <Card>
-            <CardHeader>
-              <CardTitle>Sales Channel Prices</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {item.prices && item.prices.length > 0 ? (
-                <div className="space-y-2">
-                  {item.prices.map((price, index) => (
-                    <div key={index} className="flex justify-between items-center p-2 border rounded">
-                      <span>Channel: {price.salesChannelName || price.salesChannelId}</span>
-                      <span>Price: ₹{price.price}</span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-muted-foreground">No sales channel prices defined</p>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      <ItemFormWithAttachments
+        initialData={initialData}
+        onSubmit={async () => {}} // No-op for view mode
+        onCancel={handleCancel}
+        readonly={true}
+        mode="view"
+      />
     </div>
   );
 };

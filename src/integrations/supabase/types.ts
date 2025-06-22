@@ -646,6 +646,56 @@ export type Database = {
           },
         ]
       }
+      item_attachments: {
+        Row: {
+          created_on: string
+          file_name: string
+          file_type: Database["public"]["Enums"]["attachment_file_type"]
+          id: string
+          is_default: boolean
+          item_id: string
+          organization_id: string
+          secure_url: string
+          updated_on: string | null
+          uploaded_by: string
+          uploaded_on: string
+        }
+        Insert: {
+          created_on?: string
+          file_name: string
+          file_type: Database["public"]["Enums"]["attachment_file_type"]
+          id?: string
+          is_default?: boolean
+          item_id: string
+          organization_id: string
+          secure_url: string
+          updated_on?: string | null
+          uploaded_by: string
+          uploaded_on?: string
+        }
+        Update: {
+          created_on?: string
+          file_name?: string
+          file_type?: Database["public"]["Enums"]["attachment_file_type"]
+          id?: string
+          is_default?: boolean
+          item_id?: string
+          organization_id?: string
+          secure_url?: string
+          updated_on?: string | null
+          uploaded_by?: string
+          uploaded_on?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "item_attachments_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       item_costs: {
         Row: {
           created_by: string
@@ -1650,6 +1700,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user" | "guest"
+      attachment_file_type: "display_picture" | "other_document"
       gl_transaction_type:
         | "Payable Invoice"
         | "Payment"
@@ -1772,6 +1823,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user", "guest"],
+      attachment_file_type: ["display_picture", "other_document"],
       gl_transaction_type: [
         "Payable Invoice",
         "Payment",
