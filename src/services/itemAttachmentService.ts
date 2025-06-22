@@ -5,8 +5,8 @@ export const itemAttachmentService = {
   async uploadToCloudinary(file: File): Promise<CloudinaryUploadResponse> {
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('upload_preset', 'upload_image');
-    formData.append('public_id', `item_${crypto.randomUUID()}`);
+    formData.append('upload_preset', 'Upload image');
+    formData.append('public_id', `af348383-fe94-4e0d-9de2-06482fc629cf`);
 
     const response = await fetch('https://api.cloudinary.com/v1_1/dwonqkxgc/upload', {
       method: 'POST',
