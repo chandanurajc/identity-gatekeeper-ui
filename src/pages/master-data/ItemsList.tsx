@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -5,18 +6,23 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
 import { ColumnDef } from "@tanstack/react-table";
+import { Checkbox } from "@/components/ui/checkbox";
 import { itemService } from "@/services/itemService";
 import { useMultiTenant } from "@/hooks/useMultiTenant";
 import { useItemPermissions } from "@/hooks/useItemPermissions";
 import { Item } from "@/types/item";
 import { ItemThumbnailViewer } from "@/components/item/ItemThumbnailViewer";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Edit } from "lucide-react";
 
 const ItemsList = () => {
   const navigate = useNavigate();
   const { getCurrentOrganizationId } = useMultiTenant();
-  const { canViewItem, canCreateItem } = useItemPermissions();
+  const { canViewItem, canCreateItem, canEditItem } = useItemPermissions();
   const organizationId = getCurrentOrganizationId();
+  const [selectedRows, setSelectedRows] = useState<string[]>([]);
+  const [globalFilter, setGlobalFilter] = useState("");
 
   const { data: items = [], isLoading, error } = useQuery({
     queryKey: ["items", organizationId],
@@ -24,7 +30,48 @@ const ItemsList = () => {
     enabled: !!organizationId,
   });
 
+  const filteredItems = items.filter(item =>
+    item.description.toLowerCase().includes(globalFilter.toLowerCase()) ||
+    item.classification.toLowerCase().includes(globalFilter.toLowerCase()) ||
+    item.id.toLowerCase().includes(globalFilter.toLowerCase())
+  );
+
+  const handleRowSelection = (itemId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedRows(prev => [...prev, itemId]);
+    } else {
+      setSelectedRows(prev => prev.filter(id => id !== itemId));
+    }
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedRows(filteredItems.map(item => item.id));
+    } else {
+      setSelectedRows([]);
+    }
+  };
+
   const columns: ColumnDef<Item>[] = [
+    {
+      id: "select",
+      header: ({ table }) => (
+        <Checkbox
+          checked={selectedRows.length === filteredItems.length && filteredItems.length > 0}
+          onCheckedChange={(value) => handleSelectAll(!!value)}
+          aria-label="Select all"
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={selectedRows.includes(row.original.id)}
+          onCheckedChange={(value) => handleRowSelection(row.original.id, !!value)}
+          aria-label="Select row"
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
     {
       accessorKey: "id",
       header: "Item ID",
@@ -89,6 +136,26 @@ const ItemsList = () => {
         );
       },
     },
+    {
+      id: "actions",
+      header: "Actions",
+      cell: ({ row }) => {
+        const item = row.original;
+        return (
+          <div className="flex items-center gap-2">
+            {canEditItem && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate(`/master-data/items/${item.id}/edit`)}
+              >
+                <Edit className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        );
+      },
+    },
   ];
 
   if (!canViewItem) {
@@ -116,18 +183,43 @@ const ItemsList = () => {
                 Manage your item master data
               </CardDescription>
             </div>
-            {canCreateItem && (
-              <Button onClick={() => navigate("/master-data/items/create")}>
-                Create Item
-              </Button>
-            )}
+            <div className="flex items-center gap-2">
+              {canEditItem && selectedRows.length === 1 && (
+                <Button
+                  onClick={() => navigate(`/master-data/items/${selectedRows[0]}/edit`)}
+                  variant="outline"
+                >
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit Selected
+                </Button>
+              )}
+              {canCreateItem && (
+                <Button onClick={() => navigate("/master-data/items/create")}>
+                  Create Item
+                </Button>
+              )}
+            </div>
           </div>
         </CardHeader>
         <CardContent>
+          <div className="flex items-center py-4">
+            <Input
+              placeholder="Filter items..."
+              value={globalFilter}
+              onChange={(event) => setGlobalFilter(event.target.value)}
+              className="max-w-sm"
+            />
+          </div>
           <DataTable
             columns={columns}
-            data={items}
+            data={filteredItems}
           />
+          {selectedRows.length > 0 && (
+            <div className="mt-4 text-sm text-muted-foreground">
+              {selectedRows.length} of {filteredItems.length} row(s) selected.
+              {selectedRows.length > 1 && " (Edit button disabled for multiple selections)"}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

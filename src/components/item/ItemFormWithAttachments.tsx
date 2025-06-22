@@ -37,8 +37,9 @@ export function ItemFormWithAttachments({
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-      <TabsList className="grid w-full grid-cols-2">
+      <TabsList className="grid w-full grid-cols-3">
         <TabsTrigger value="details">Item Details</TabsTrigger>
+        <TabsTrigger value="pricing">Pricing</TabsTrigger>
         <TabsTrigger value="attachments" disabled={!showAttachmentsTab}>
           Attachments
         </TabsTrigger>
@@ -50,6 +51,16 @@ export function ItemFormWithAttachments({
           onSubmit={handleSubmit}
           onCancel={onCancel}
         />
+      </TabsContent>
+
+      <TabsContent value="pricing" className="mt-6">
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium">Pricing Information</h3>
+          <p className="text-sm text-muted-foreground">
+            Configure pricing details for different sales channels and supplier costs.
+          </p>
+          {/* Pricing content will be implemented here */}
+        </div>
       </TabsContent>
 
       {showAttachmentsTab && (
