@@ -20,7 +20,7 @@ export function ItemFormWithAttachments({
   readonly = false,
   mode
 }: ItemFormWithAttachmentsProps) {
-  const [activeTab, setActiveTab] = useState("details");
+  const [activeTab, setActiveTab] = useState("basic");
   const [itemId, setItemId] = useState<string | undefined>(initialData?.id);
 
   const handleSubmit = async (data: ItemFormData) => {
@@ -37,30 +37,50 @@ export function ItemFormWithAttachments({
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-      <TabsList className="grid w-full grid-cols-3">
-        <TabsTrigger value="details">Item Details</TabsTrigger>
-        <TabsTrigger value="pricing">Pricing</TabsTrigger>
+      <TabsList className="grid w-full grid-cols-5">
+        <TabsTrigger value="basic">Basic Information</TabsTrigger>
+        <TabsTrigger value="physical">Physical Properties</TabsTrigger>
+        <TabsTrigger value="costs">Costs</TabsTrigger>
+        <TabsTrigger value="prices">Prices</TabsTrigger>
         <TabsTrigger value="attachments" disabled={!showAttachmentsTab}>
           Attachments
         </TabsTrigger>
       </TabsList>
 
-      <TabsContent value="details" className="mt-6">
+      <TabsContent value="basic" className="mt-6">
         <ItemForm
           initialData={initialData}
           onSubmit={handleSubmit}
           onCancel={onCancel}
+          activeSection="basic"
         />
       </TabsContent>
 
-      <TabsContent value="pricing" className="mt-6">
-        <div className="space-y-4">
-          <h3 className="text-lg font-medium">Pricing Information</h3>
-          <p className="text-sm text-muted-foreground">
-            Configure pricing details for different sales channels and supplier costs.
-          </p>
-          {/* Pricing content will be implemented here */}
-        </div>
+      <TabsContent value="physical" className="mt-6">
+        <ItemForm
+          initialData={initialData}
+          onSubmit={handleSubmit}
+          onCancel={onCancel}
+          activeSection="physical"
+        />
+      </TabsContent>
+
+      <TabsContent value="costs" className="mt-6">
+        <ItemForm
+          initialData={initialData}
+          onSubmit={handleSubmit}
+          onCancel={onCancel}
+          activeSection="costs"
+        />
+      </TabsContent>
+
+      <TabsContent value="prices" className="mt-6">
+        <ItemForm
+          initialData={initialData}
+          onSubmit={handleSubmit}
+          onCancel={onCancel}
+          activeSection="prices"
+        />
       </TabsContent>
 
       {showAttachmentsTab && (

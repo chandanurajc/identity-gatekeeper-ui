@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { ItemAttachment, CreateAttachmentRequest, UpdateAttachmentRequest, CloudinaryUploadResponse } from "@/types/itemAttachment";
 
@@ -6,20 +5,18 @@ export const itemAttachmentService = {
   async uploadToCloudinary(file: File): Promise<CloudinaryUploadResponse> {
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('upload_preset', 'Upload image');
-    formData.append('public_id', crypto.randomUUID());
-    formData.append('api_key', '145883612815845');
+    formData.append('upload_preset', 'upload_image');
+    formData.append('public_id', `item_${crypto.randomUUID()}`);
 
-    const response = await fetch('https://api.cloudinary.com/v1_1/dwonqkxgc/image/upload', {
+    const response = await fetch('https://api.cloudinary.com/v1_1/dwonqkxgc/upload', {
       method: 'POST',
-      headers: {
-        'Authorization': 'Basic MTQ1ODgzNjEyODE1ODQ1OjE0NTg4MzYxMjgxNTg0NQ=='
-      },
       body: formData
     });
 
     if (!response.ok) {
-      throw new Error('Failed to upload to Cloudinary');
+      const errorData = await response.text();
+      console.error('Cloudinary upload error:', errorData);
+      throw new Error(`Failed to upload to Cloudinary: ${response.status} ${response.statusText}`);
     }
 
     return response.json();
