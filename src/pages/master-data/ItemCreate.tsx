@@ -18,8 +18,6 @@ const ItemCreate = () => {
     }
 
     const result = await itemService.createItem(formData, user.email);
-    // Set the ID on the form data so the attachments tab can be enabled
-    formData.id = result.id;
     return result;
   };
 

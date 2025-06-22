@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -127,8 +128,6 @@ const ItemsList = () => {
           <DataTable
             columns={columns}
             data={items}
-            searchKey="description"
-            searchPlaceholder="Search items..."
           />
         </CardContent>
       </Card>

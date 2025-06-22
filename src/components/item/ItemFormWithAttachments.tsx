@@ -7,7 +7,7 @@ import { ItemFormData } from "@/types/item";
 
 interface ItemFormWithAttachmentsProps {
   initialData?: ItemFormData;
-  onSubmit: (data: ItemFormData) => Promise<void>;
+  onSubmit: (data: ItemFormData) => Promise<any>;
   onCancel: () => void;
   readonly?: boolean;
   mode: 'create' | 'edit' | 'view';
@@ -24,10 +24,11 @@ export function ItemFormWithAttachments({
   const [itemId, setItemId] = useState<string | undefined>(initialData?.id);
 
   const handleSubmit = async (data: ItemFormData) => {
-    await onSubmit(data);
+    const result = await onSubmit(data);
     // If this is a create operation and we get an ID back, set it for the attachments tab
-    if (mode === 'create' && data.id) {
-      setItemId(data.id);
+    if (mode === 'create' && result?.id) {
+      data.id = result.id;
+      setItemId(result.id);
       setActiveTab("attachments");
     }
   };
@@ -48,7 +49,6 @@ export function ItemFormWithAttachments({
           initialData={initialData}
           onSubmit={handleSubmit}
           onCancel={onCancel}
-          readonly={readonly}
         />
       </TabsContent>
 
