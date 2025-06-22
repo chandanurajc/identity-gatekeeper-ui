@@ -8,7 +8,7 @@ export const itemAttachmentService = {
     formData.append('upload_preset', 'Upload image');
     formData.append('public_id', `af348383-fe94-4e0d-9de2-06482fc629cf`);
 
-    const response = await fetch('https://api.cloudinary.com/v1_1/dwonqkxgc/upload', {
+    const response = await fetch('https://api.cloudinary.com/v1_1/dwonqkxgc/image/upload', {
       method: 'POST',
       body: formData
     });
