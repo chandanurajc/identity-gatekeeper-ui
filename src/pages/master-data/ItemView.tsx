@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -18,7 +17,7 @@ const ItemView = () => {
 
   const { data: item, isLoading, error } = useQuery({
     queryKey: ["item", itemId, organizationId],
-    queryFn: () => itemService.getItemById(itemId!, organizationId!),
+    queryFn: () => itemService.getItemById(itemId!),
     enabled: !!itemId && !!organizationId,
   });
 

@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -21,7 +20,7 @@ const ItemsList = () => {
 
   const { data: items = [], isLoading, error } = useQuery({
     queryKey: ["items", organizationId],
-    queryFn: () => itemService.getItems(organizationId!),
+    queryFn: () => itemService.getItems(),
     enabled: !!organizationId,
   });
 
