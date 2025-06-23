@@ -47,10 +47,9 @@ export function ItemThumbnailViewer({ itemId }: ItemThumbnailViewerProps) {
         variant="ghost"
         size="sm"
         onClick={handleViewThumbnail}
-        className="text-blue-600 hover:text-blue-800"
+        className="text-blue-600 hover:text-blue-800 p-1"
       >
-        <Eye className="h-4 w-4 mr-1" />
-        View Thumbnail
+        <Eye className="h-4 w-4" />
       </Button>
 
       <ImagePreviewModal

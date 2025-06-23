@@ -163,26 +163,6 @@ const ItemsList = () => {
         return date ? format(new Date(date), "dd/MM/yyyy HH:mm") : "-";
       },
     },
-    {
-      id: "actions",
-      header: "Actions",
-      cell: ({ row }) => {
-        const item = row.original;
-        return (
-          <div className="flex items-center gap-2">
-            {canEditItem && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate(`/master-data/items/${item.id}/edit`)}
-              >
-                <Edit className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-        );
-      },
-    },
   ];
 
   if (!canViewItem) {
