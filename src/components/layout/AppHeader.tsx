@@ -1,29 +1,34 @@
 
 import { useAuth } from "@/context/AuthContext";
 import { HeaderUserMenu } from "./HeaderUserMenu";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
 export function AppHeader() {
-  const { user } = useAuth();
+  const navigate = useNavigate();
 
   return (
     <header className="flex h-14 items-center gap-4 bg-white text-black px-4 lg:px-6 w-full border-b border-gray-200">
-      {/* Left spacer */}
-      <div className="flex-1"></div>
-
-      {/* Center spacer */}
-      <div className="flex-1 flex justify-center">
+      {/* Left side - Logo and Brand */}
+      <div className="flex items-center gap-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="flex items-center gap-2 p-2"
+          onClick={() => navigate("/dashboard")}
+        >
+          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+            <span className="text-white font-bold text-sm">N</span>
+          </div>
+          <span className="font-semibold text-lg">Nexuz</span>
+        </Button>
       </div>
 
-      {/* Right side - Organization and User Menu */}
-      <div className="flex-1 flex justify-end items-center gap-4">
-        {/* Organization context display */}
-        {user && (
-          <div className="text-sm text-gray-700 hidden lg:block">
-            {user.organizationName}
-          </div>
-        )}
+      {/* Center spacer */}
+      <div className="flex-1"></div>
 
-        {/* User Menu */}
+      {/* Right side - User Menu */}
+      <div className="flex items-center">
         <HeaderUserMenu />
       </div>
     </header>

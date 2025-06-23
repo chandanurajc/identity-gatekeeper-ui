@@ -9,7 +9,6 @@ export interface PhoneNumber {
 export interface User {
   id: string;
   username: string;
-  email: string;
   firstName: string;
   lastName: string;
   password?: string;
@@ -33,7 +32,6 @@ export interface UserFormData {
   firstName: string;
   lastName: string;
   username: string;
-  email: string;
   password?: string;
   confirmPassword?: string;
   phone: {

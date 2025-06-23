@@ -15,6 +15,7 @@ import { ItemThumbnailViewer } from "@/components/item/ItemThumbnailViewer";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Edit } from "lucide-react";
+import { format } from "date-fns";
 
 const ItemsList = () => {
   const navigate = useNavigate();
@@ -137,6 +138,32 @@ const ItemsList = () => {
       },
     },
     {
+      accessorKey: "createdBy",
+      header: "Created By",
+      cell: ({ row }) => row.original.createdBy || "-",
+    },
+    {
+      accessorKey: "createdOn",
+      header: "Created On",
+      cell: ({ row }) => {
+        const date = row.original.createdOn;
+        return date ? format(new Date(date), "dd/MM/yyyy HH:mm") : "-";
+      },
+    },
+    {
+      accessorKey: "updatedBy",
+      header: "Updated By",
+      cell: ({ row }) => row.original.updatedBy || "-",
+    },
+    {
+      accessorKey: "updatedOn",
+      header: "Updated On",
+      cell: ({ row }) => {
+        const date = row.original.updatedOn;
+        return date ? format(new Date(date), "dd/MM/yyyy HH:mm") : "-";
+      },
+    },
+    {
       id: "actions",
       header: "Actions",
       cell: ({ row }) => {
@@ -176,18 +203,19 @@ const ItemsList = () => {
     <div className="container mx-auto py-8">
       <Card>
         <CardHeader>
-          <div className="flex justify-between items-start">
+          <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
             <div>
               <CardTitle>Items</CardTitle>
               <CardDescription>
                 Manage your item master data
               </CardDescription>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row items-center gap-2">
               {canEditItem && selectedRows.length === 1 && (
                 <Button
                   onClick={() => navigate(`/master-data/items/${selectedRows[0]}/edit`)}
                   variant="outline"
+                  size="sm"
                 >
                   <Edit className="h-4 w-4 mr-2" />
                   Edit Selected
@@ -210,10 +238,12 @@ const ItemsList = () => {
               className="max-w-sm"
             />
           </div>
-          <DataTable
-            columns={columns}
-            data={filteredItems}
-          />
+          <div className="overflow-x-auto">
+            <DataTable
+              columns={columns}
+              data={filteredItems}
+            />
+          </div>
           {selectedRows.length > 0 && (
             <div className="mt-4 text-sm text-muted-foreground">
               {selectedRows.length} of {filteredItems.length} row(s) selected.

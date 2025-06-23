@@ -58,6 +58,7 @@ const CreateUser = () => {
           <CardTitle>Create New User</CardTitle>
           <CardDescription>
             Add a new user to the system. Fields marked with * are required.
+            The username will also serve as the login credential.
           </CardDescription>
         </CardHeader>
       </Card>
