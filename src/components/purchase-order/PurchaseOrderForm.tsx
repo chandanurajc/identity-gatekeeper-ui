@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +13,7 @@ import { divisionService } from "@/services/divisionService";
 import { itemService } from "@/services/itemService";
 import { purchaseOrderService } from "@/services/purchaseOrderService";
 import { useMultiTenant } from "@/hooks/useMultiTenant";
+import { useAuth } from "@/context/AuthContext";
 import { Division } from "@/types/division";
 import { Item } from "@/types/item";
 import ShipToAddressSection from "./ShipToAddressSection";
@@ -47,6 +47,7 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
 }) => {
   const { toast } = useToast();
   const { currentOrganization } = useMultiTenant();
+  const { user } = useAuth();
   
   const [divisions, setDivisions] = useState<Division[]>([]);
   const [items, setItems] = useState<Item[]>([]);
@@ -90,10 +91,10 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
   const watchedSupplierId = watch("supplierId");
 
   useEffect(() => {
-    if (currentOrganization?.id) {
+    if (currentOrganization?.id && user?.organizationId) {
       fetchDropdownData();
     }
-  }, [currentOrganization?.id]);
+  }, [currentOrganization?.id, user?.organizationId]);
 
   useEffect(() => {
     if (!isEdit) {
@@ -113,16 +114,31 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
   };
 
   const fetchDropdownData = async () => {
-    if (!currentOrganization?.id) return;
+    if (!currentOrganization?.id || !user?.organizationId) return;
+    
     try {
-      const [divisionsData, itemsData] = await Promise.all([
+      console.log("Fetching divisions for organization:", user.organizationId);
+      
+      // Filter divisions by user's organization - only show divisions from user's org
+      const [allDivisions, itemsData] = await Promise.all([
         divisionService.getActiveDivisions(),
         itemService.getItems()
       ]);
-      setDivisions(divisionsData);
+      
+      // Filter divisions to only include those from the user's organization
+      const userOrgDivisions = allDivisions.filter(division => 
+        division.organizationId === user.organizationId
+      );
+      
+      console.log("All divisions:", allDivisions);
+      console.log("User org divisions:", userOrgDivisions);
+      console.log("User organization ID:", user.organizationId);
+      
+      setDivisions(userOrgDivisions);
       setItems(itemsData);
       setFilteredItems(itemsData.slice(0, 5));
     } catch (error) {
+      console.error("Error fetching dropdown data:", error);
       toast({ title: "Error", description: "Failed to load form data", variant: "destructive" });
     }
   };
@@ -279,11 +295,17 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {divisions.map((division) => (
-                          <SelectItem key={division.id} value={division.id}>
-                            {division.name} ({division.code})
+                        {divisions.length === 0 ? (
+                          <SelectItem value="no-divisions" disabled>
+                            No divisions available for your organization
                           </SelectItem>
-                        ))}
+                        ) : (
+                          divisions.map((division) => (
+                            <SelectItem key={division.id} value={division.id}>
+                              {division.name} ({division.code})
+                            </SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
                     <FormMessage />
