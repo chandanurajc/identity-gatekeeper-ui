@@ -34,12 +34,11 @@ import {
 } from "@/components/ui/alert-dialog";
 import { MultiSelect } from "@/components/ui/multi-select";
 
-// Form schema including validation
+// Form schema including validation - removed email field
 const formSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
   username: z.string().email("Invalid email format"),
-  email: z.string().email("Invalid email format"),
   password: z.string().optional(),
   confirmPassword: z.string().optional(),
   phoneCountryCode: z.string().min(1, "Country code is required"),
@@ -122,20 +121,19 @@ const UserForm = ({ initialData, isEditing = false, onSubmit }: UserFormProps) =
     fetchData();
   }, [toast]);
 
-  // Initialize form with default values - CLEAR organizationId default
+  // Initialize form with default values - removed email field
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       firstName: initialData?.firstName || "",
       lastName: initialData?.lastName || "",
       username: initialData?.username || "",
-      email: initialData?.email || "",
       password: "",
       confirmPassword: "",
       phoneCountryCode: initialData?.phone?.countryCode || "+1",
       phoneNumber: initialData?.phone?.number || "",
       designation: initialData?.designation || "",
-      organizationId: initialData?.organizationId || "", // Empty string, not pre-filled
+      organizationId: initialData?.organizationId || "",
       roles: initialData?.roles || [],
       effectiveFrom: initialData?.effectiveFrom 
         ? new Date(initialData.effectiveFrom).toISOString().split('T')[0]
@@ -160,12 +158,11 @@ const UserForm = ({ initialData, isEditing = false, onSubmit }: UserFormProps) =
         return;
       }
       
-      // Transform form data to match UserFormData structure
+      // Transform form data to match UserFormData structure - removed email field
       const userData: UserFormData = {
         firstName: values.firstName,
         lastName: values.lastName,
         username: values.username,
-        email: values.email,
         password: values.password,
         confirmPassword: values.confirmPassword,
         phone: {
@@ -173,8 +170,8 @@ const UserForm = ({ initialData, isEditing = false, onSubmit }: UserFormProps) =
           number: values.phoneNumber,
         },
         designation: values.designation,
-        organizationId: values.organizationId, // This will be used for the new user
-        roles: values.roles, // Keep the exact role names from the form
+        organizationId: values.organizationId,
+        roles: values.roles,
         effectiveFrom: new Date(values.effectiveFrom),
         effectiveTo: values.effectiveTo ? new Date(values.effectiveTo) : undefined,
       };
@@ -246,24 +243,10 @@ const UserForm = ({ initialData, isEditing = false, onSubmit }: UserFormProps) =
                 control={form.control}
                 name="username"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="col-span-2">
                     <FormLabel>Email ID/Username*</FormLabel>
                     <FormControl>
                       <Input {...field} type="email" disabled={isEditing} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email*</FormLabel>
-                    <FormControl>
-                      <Input {...field} type="email" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -342,7 +325,6 @@ const UserForm = ({ initialData, isEditing = false, onSubmit }: UserFormProps) =
                 )}
               />
 
-              {/* Organization dropdown - MUST BE SELECTED BY USER */}
               <FormField
                 control={form.control}
                 name="organizationId"

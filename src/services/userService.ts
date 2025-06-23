@@ -65,7 +65,6 @@ export const userService = {
           firstName: profile.first_name,
           lastName: profile.last_name,
           username: profile.username,
-          email: profile.username,
           phone: phone,
           designation: profile.designation,
           organizationId: profile.organization_id,
@@ -149,7 +148,6 @@ export const userService = {
       firstName: profile.first_name,
       lastName: profile.last_name,
       username: profile.username,
-      email: profile.username,
       phone: phone,
       designation: profile.designation,
       organizationId: profile.organization_id,
@@ -173,10 +171,10 @@ export const userService = {
     let authUserId: string | null = null;
     
     try {
-      // Step 1: Create the auth user using regular signup (not admin)
+      // Step 1: Create the auth user using regular signup (not admin) - using username as email
       console.log("Step 1: Creating auth user using signup...");
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: userData.email,
+        email: userData.username, // Use username as email for authentication
         password: userData.password || 'TempPass123!',
         options: {
           emailRedirectTo: undefined,
@@ -210,7 +208,7 @@ export const userService = {
         last_name: userData.lastName,
         username: userData.username,
         designation: userData.designation,
-        organization_id: organizationId, // Use the SPECIFIED organization ID, not current user's
+        organization_id: organizationId,
         effective_from: userData.effectiveFrom?.toISOString(),
         effective_to: userData.effectiveTo?.toISOString(),
         created_by: createdByUserName,
@@ -276,7 +274,6 @@ export const userService = {
         firstName: profile.first_name,
         lastName: profile.last_name,
         username: profile.username,
-        email: profile.username,
         phone: userData.phone,
         designation: profile.designation,
         organizationId: profile.organization_id,

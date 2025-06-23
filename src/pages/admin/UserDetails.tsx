@@ -144,9 +144,6 @@ const UserDetails = () => {
                 <span className="font-medium">Full Name:</span> {user.firstName} {user.lastName}
               </div>
               <div>
-                <span className="font-medium">Email:</span> {user.email}
-              </div>
-              <div>
                 <span className="font-medium">Organization:</span> {user.organizationName || 'Not assigned'}
               </div>
               <div>

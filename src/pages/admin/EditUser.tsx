@@ -144,12 +144,11 @@ const EditUser = () => {
     );
   }
 
-  // Transform user data to form data format
+  // Transform user data to form data format - removed email field
   const userFormData: Partial<UserFormData> = {
     firstName: user.firstName,
     lastName: user.lastName,
     username: user.username,
-    email: user.email,
     phone: user.phone,
     designation: user.designation,
     organizationId: user.organizationId || '',
