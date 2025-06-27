@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import PermissionProtectedRoute from "@/components/PermissionProtectedRoute";
 import UsersList from "@/pages/admin/UsersList";
 import CreateUser from "@/pages/admin/CreateUser";
@@ -20,10 +20,10 @@ import DivisionDetail from "@/pages/admin/DivisionDetail";
 import PermissionsList from "@/pages/admin/PermissionsList";
 
 export const AdminRoutes = () => (
-  <React.Fragment>
-    {/* User Management Routes - Use permission-based protection */}
+  <Routes>
+    {/* User Management Routes */}
     <Route 
-      path="/admin/users" 
+      path="/users" 
       element={
         <PermissionProtectedRoute requiredPermission="view-user">
           <UsersList />
@@ -31,7 +31,7 @@ export const AdminRoutes = () => (
       } 
     />
     <Route 
-      path="/admin/users/create" 
+      path="/users/create" 
       element={
         <PermissionProtectedRoute requiredPermission="create-user">
           <CreateUser />
@@ -39,7 +39,7 @@ export const AdminRoutes = () => (
       } 
     />
     <Route 
-      path="/admin/users/edit/:userId" 
+      path="/users/edit/:userId" 
       element={
         <PermissionProtectedRoute requiredPermission="edit-user">
           <EditUser />
@@ -47,7 +47,7 @@ export const AdminRoutes = () => (
       } 
     />
     <Route 
-      path="/admin/users/:userId" 
+      path="/users/:userId" 
       element={
         <PermissionProtectedRoute requiredPermission="view-user">
           <UserDetails />
@@ -55,9 +55,9 @@ export const AdminRoutes = () => (
       } 
     />
     
-    {/* Role Management Routes - Use permission-based protection */}
+    {/* Role Management Routes */}
     <Route 
-      path="/admin/roles" 
+      path="/roles" 
       element={
         <PermissionProtectedRoute requiredPermission="view_roles">
           <RolesList />
@@ -65,7 +65,7 @@ export const AdminRoutes = () => (
       } 
     />
     <Route 
-      path="/admin/roles/create" 
+      path="/roles/create" 
       element={
         <PermissionProtectedRoute requiredPermission="create_role">
           <RoleForm />
@@ -73,7 +73,7 @@ export const AdminRoutes = () => (
       } 
     />
     <Route 
-      path="/admin/roles/edit/:roleId" 
+      path="/roles/edit/:roleId" 
       element={
         <PermissionProtectedRoute requiredPermission="edit_roles">
           <RoleForm />
@@ -81,7 +81,7 @@ export const AdminRoutes = () => (
       } 
     />
     <Route 
-      path="/admin/roles/:roleId" 
+      path="/roles/:roleId" 
       element={
         <PermissionProtectedRoute requiredPermission="view_roles">
           <RoleDetails />
@@ -91,7 +91,7 @@ export const AdminRoutes = () => (
     
     {/* Organization Management Routes */}
     <Route 
-      path="/admin/organizations" 
+      path="/organizations" 
       element={
         <PermissionProtectedRoute requiredPermission="view-organization">
           <OrganizationsList />
@@ -99,7 +99,7 @@ export const AdminRoutes = () => (
       } 
     />
     <Route 
-      path="/admin/organizations/create" 
+      path="/organizations/create" 
       element={
         <PermissionProtectedRoute requiredPermission="create-organization">
           <OrganizationCreate />
@@ -107,7 +107,7 @@ export const AdminRoutes = () => (
       } 
     />
     <Route 
-      path="/admin/organizations/edit/:organizationId" 
+      path="/organizations/edit/:organizationId" 
       element={
         <PermissionProtectedRoute requiredPermission="edit-organization">
           <OrganizationEdit />
@@ -115,7 +115,7 @@ export const AdminRoutes = () => (
       } 
     />
     <Route 
-      path="/admin/organizations/:organizationId" 
+      path="/organizations/:organizationId" 
       element={
         <PermissionProtectedRoute requiredPermission="view-organization">
           <OrganizationDetail />
@@ -125,7 +125,7 @@ export const AdminRoutes = () => (
     
     {/* Division Management Routes */}
     <Route 
-      path="/admin/divisions" 
+      path="/divisions" 
       element={
         <PermissionProtectedRoute requiredPermission="view-division">
           <DivisionsList />
@@ -133,7 +133,7 @@ export const AdminRoutes = () => (
       } 
     />
     <Route 
-      path="/admin/divisions/create" 
+      path="/divisions/create" 
       element={
         <PermissionProtectedRoute requiredPermission="create-division">
           <DivisionCreate />
@@ -141,7 +141,7 @@ export const AdminRoutes = () => (
       } 
     />
     <Route 
-      path="/admin/divisions/edit/:divisionId" 
+      path="/divisions/edit/:divisionId" 
       element={
         <PermissionProtectedRoute requiredPermission="edit-division">
           <DivisionEdit />
@@ -149,7 +149,7 @@ export const AdminRoutes = () => (
       } 
     />
     <Route 
-      path="/admin/divisions/:divisionId" 
+      path="/divisions/:divisionId" 
       element={
         <PermissionProtectedRoute requiredPermission="view-division">
           <DivisionDetail />
@@ -159,12 +159,12 @@ export const AdminRoutes = () => (
     
     {/* Permissions Management Route */}
     <Route 
-      path="/admin/permissions" 
+      path="/permissions" 
       element={
         <PermissionProtectedRoute requiredPermission="view_permissions">
           <PermissionsList />
         </PermissionProtectedRoute>
       } 
     />
-  </React.Fragment>
+  </Routes>
 );
