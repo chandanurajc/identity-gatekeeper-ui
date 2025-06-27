@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -183,6 +182,16 @@ export function ContactDialog({ open, onOpenChange, initialData, onSave, existin
               placeholder="Select state"
             />
             {formErrors.state && <p className="text-sm text-destructive mt-1">{formErrors.state}</p>}
+          </div>
+          <div>
+            <Label htmlFor="stateCode">State Code</Label>
+            <Input
+              id="stateCode"
+              value={formData.stateCode || ""}
+              readOnly
+              placeholder="Auto-filled from state selection"
+              className="bg-muted"
+            />
           </div>
           <div>
             <Label htmlFor="postalCode">Postal Code *</Label>

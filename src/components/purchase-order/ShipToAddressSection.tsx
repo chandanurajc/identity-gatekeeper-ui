@@ -30,6 +30,7 @@ const ShipToAddressSection: React.FC<ShipToAddressSectionProps> = ({
 }) => {
   const [sameAsDivision, setSameAsDivision] = React.useState(false);
   const [currentState, setCurrentState] = React.useState("");
+  const [currentStateCode, setCurrentStateCode] = React.useState<number | undefined>();
 
   const handleSameAsDivisionChange = (checked: boolean) => {
     setSameAsDivision(checked);
@@ -45,6 +46,7 @@ const ShipToAddressSection: React.FC<ShipToAddressSectionProps> = ({
   const handleStateChange = (stateName: string, stateCode: number) => {
     console.log('Shipping address state changed:', stateName, 'State code:', stateCode);
     setCurrentState(stateName);
+    setCurrentStateCode(stateCode);
     setValue("shipToState", stateName);
     setValue("shipToStateCode", stateCode);
   };
@@ -106,6 +108,16 @@ const ShipToAddressSection: React.FC<ShipToAddressSectionProps> = ({
             value={currentState}
             onValueChange={handleStateChange}
             placeholder="Select state"
+          />
+        </div>
+        <div>
+          <Label htmlFor="shipToStateCode">State Code</Label>
+          <Input
+            id="shipToStateCode"
+            value={currentStateCode || ""}
+            readOnly
+            placeholder="Auto-filled from state selection"
+            className="bg-muted"
           />
         </div>
         <div>

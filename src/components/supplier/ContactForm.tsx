@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Contact } from "@/types/supplier";
 import {
@@ -18,6 +17,7 @@ import { v4 as uuidv4 } from "uuid";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { X, Plus, Pencil } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { IndianStateSelect } from "@/components/ui/indian-state-select";
 
 interface ContactFormProps {
   contacts: Contact[];
@@ -42,7 +42,7 @@ const defaultContact: Omit<Contact, 'id'> = {
 
 export const ContactForm = ({ contacts, onChange, readOnly = false }: ContactFormProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [currentContact, setCurrentContact] = useState<Omit<Contact, 'id'>>(defaultContact);
+  const [currentContact, setCurrentContact] = useState<Omit<Contact, 'id'> & { stateCode?: number }>(defaultContact);
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const resetForm = () => {
@@ -95,6 +95,15 @@ export const ContactForm = ({ contacts, onChange, readOnly = false }: ContactFor
 
   const handleRemoveContact = (id: string) => {
     onChange(contacts.filter((contact) => contact.id !== id));
+  };
+
+  const handleStateChange = (stateName: string, stateCode: number) => {
+    console.log('Supplier contact state changed:', stateName, 'State code:', stateCode);
+    setCurrentContact({ 
+      ...currentContact, 
+      state: stateName,
+      stateCode: stateCode 
+    });
   };
 
   const contactTypes = ['Registered location', 'Billing', 'Shipping', 'Owner'];
@@ -214,13 +223,21 @@ export const ContactForm = ({ contacts, onChange, readOnly = false }: ContactFor
 
               <div className="flex flex-col space-y-2">
                 <Label htmlFor="state">State</Label>
-                <Input
-                  id="state"
+                <IndianStateSelect
                   value={currentContact.state}
-                  onChange={(e) =>
-                    setCurrentContact({ ...currentContact, state: e.target.value })
-                  }
-                  placeholder="State"
+                  onValueChange={handleStateChange}
+                  placeholder="Select state"
+                />
+              </div>
+
+              <div className="flex flex-col space-y-2">
+                <Label htmlFor="stateCode">State Code</Label>
+                <Input
+                  id="stateCode"
+                  value={currentContact.stateCode || ""}
+                  readOnly
+                  placeholder="Auto-filled from state selection"
+                  className="bg-muted"
                 />
               </div>
 
