@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Organization, OrganizationFormData, Reference, Contact } from "@/types/organization";
 
@@ -26,6 +27,7 @@ const transformSupabaseOrg = (org: any): Organization => {
       postalCode: contact.postal_code,
       city: contact.city,
       state: contact.state,
+      stateCode: contact.state_code,
       country: contact.country,
       phoneNumber: contact.phone_number,
       email: contact.email,
@@ -161,6 +163,7 @@ export const organizationService = {
           postal_code: contact.postalCode?.trim() || null,
           city: contact.city?.trim() || null,
           state: contact.state?.trim() || null,
+          state_code: contact.stateCode || null,
           country: contact.country?.trim() || null,
           phone_number: contact.phoneNumber?.trim() || null,
           email: contact.email?.trim() || null,
@@ -321,7 +324,7 @@ export const organizationService = {
         }
       }
 
-      // Create new contacts with validation
+      // Create new contacts with validation and state_code
       if (organizationData.contacts && organizationData.contacts.length > 0) {
         console.log("OrganizationService: Creating new contacts:", organizationData.contacts);
         
@@ -347,6 +350,7 @@ export const organizationService = {
             postal_code: contact.postalCode?.trim() || null,
             city: contact.city?.trim() || null,
             state: contact.state?.trim() || null,
+            state_code: contact.stateCode || null,
             country: contact.country?.trim() || null,
             phone_number: contact.phoneNumber?.trim() || null,
             email: contact.email?.trim() || null,
