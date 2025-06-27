@@ -17,7 +17,6 @@ import { AdminRoutes } from './routes/AdminRoutes';
 import { MasterDataRoutes } from './routes/MasterDataRoutes';
 import { OrderManagementRoutes } from './routes/OrderManagementRoutes';
 import { InventoryRoutes } from './routes/InventoryRoutes';
-import { InvoiceRoutes } from './routes/InvoiceRoutes';
 
 const queryClient = new QueryClient();
 
@@ -45,7 +44,6 @@ const App = () => (
             {MasterDataRoutes()}
             {OrderManagementRoutes()}
             {InventoryRoutes()}
-            {InvoiceRoutes()}
             
             {/* Settings Route */}
             <Route 

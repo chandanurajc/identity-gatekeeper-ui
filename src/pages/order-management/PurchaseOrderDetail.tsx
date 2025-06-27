@@ -43,7 +43,7 @@ const PurchaseOrderDetail = () => {
   });
 
   const cancelMutation = useMutation({
-    mutationFn: () => purchaseOrderService.cancelPurchaseOrder(poId!, organizationId!, user!.id, user!.email!),
+    mutationFn: () => purchaseOrderService.cancelPurchaseOrder(poId!, organizationId!),
     onSuccess: () => {
       toast({ title: "Success", description: "Purchase Order cancelled successfully." });
       queryClient.invalidateQueries({ queryKey: ["purchaseOrder", poId] });
@@ -62,7 +62,7 @@ const PurchaseOrderDetail = () => {
   if (error) return <div>Error fetching purchase order: {error.message}</div>;
   if (!purchaseOrder) return <div>Purchase order not found.</div>;
 
-  const totalAmount = purchaseOrder.lines?.reduce((sum, line) => sum + line.line_total, 0) || 0;
+  const totalAmount = purchaseOrder.lines?.reduce((sum, line) => sum + line.lineTotal, 0) || 0;
 
   return (
     <div className="space-y-6">
@@ -70,7 +70,7 @@ const PurchaseOrderDetail = () => {
         <CardHeader>
           <div className="flex justify-between items-start">
             <div>
-              <CardTitle>Purchase Order {purchaseOrder.po_number}</CardTitle>
+              <CardTitle>Purchase Order {purchaseOrder.poNumber}</CardTitle>
               <CardDescription>
                 {purchaseOrder.supplier?.name && `Supplier: ${purchaseOrder.supplier.name}`}
               </CardDescription>
@@ -78,7 +78,7 @@ const PurchaseOrderDetail = () => {
             <div className="text-right">
               <div className="text-lg font-semibold">{purchaseOrder.status}</div>
               <div className="text-sm text-muted-foreground">
-                Created: {format(new Date(purchaseOrder.created_on), 'PPP')}
+                Created: {format(new Date(purchaseOrder.createdOn), 'PPP')}
               </div>
             </div>
           </div>
@@ -90,17 +90,17 @@ const PurchaseOrderDetail = () => {
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Order Date:</span>
-                  <span>{format(new Date(purchaseOrder.po_date), 'PPP')}</span>
+                  <span>{format(new Date(purchaseOrder.poDate), 'PPP')}</span>
                 </div>
-                {purchaseOrder.requested_delivery_date && (
+                {purchaseOrder.requestedDeliveryDate && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Requested Delivery:</span>
-                    <span>{format(new Date(purchaseOrder.requested_delivery_date), 'PPP')}</span>
+                    <span>{format(new Date(purchaseOrder.requestedDeliveryDate), 'PPP')}</span>
                   </div>
                 )}
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Payment Terms:</span>
-                  <span>{purchaseOrder.payment_terms}</span>
+                  <span>{purchaseOrder.paymentTerms}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Total Amount:</span>
@@ -111,20 +111,20 @@ const PurchaseOrderDetail = () => {
               </div>
             </div>
             
-            {(purchaseOrder.ship_to_address_1 || purchaseOrder.ship_to_city) && (
+            {(purchaseOrder.shipToAddress1 || purchaseOrder.shipToCity) && (
               <div>
                 <h3 className="font-semibold mb-2">Ship To Address</h3>
                 <div className="text-sm space-y-1">
-                  {purchaseOrder.ship_to_address_1 && <p>{purchaseOrder.ship_to_address_1}</p>}
-                  {purchaseOrder.ship_to_address_2 && <p>{purchaseOrder.ship_to_address_2}</p>}
-                  {purchaseOrder.ship_to_city && (
+                  {purchaseOrder.shipToAddress1 && <p>{purchaseOrder.shipToAddress1}</p>}
+                  {purchaseOrder.shipToAddress2 && <p>{purchaseOrder.shipToAddress2}</p>}
+                  {purchaseOrder.shipToCity && (
                     <p>
-                      {purchaseOrder.ship_to_city}
-                      {purchaseOrder.ship_to_state && `, ${purchaseOrder.ship_to_state}`}
-                      {purchaseOrder.ship_to_postal_code && ` ${purchaseOrder.ship_to_postal_code}`}
+                      {purchaseOrder.shipToCity}
+                      {purchaseOrder.shipToState && `, ${purchaseOrder.shipToState}`}
+                      {purchaseOrder.shipToPostalCode && ` ${purchaseOrder.shipToPostalCode}`}
                     </p>
                   )}
-                  {purchaseOrder.ship_to_country && <p>{purchaseOrder.ship_to_country}</p>}
+                  {purchaseOrder.shipToCountry && <p>{purchaseOrder.shipToCountry}</p>}
                 </div>
               </div>
             )}
@@ -178,15 +178,15 @@ const PurchaseOrderDetail = () => {
               <tbody className="bg-white divide-y divide-gray-200">
                 {purchaseOrder?.lines?.map((line) => (
                   <tr key={line.id}>
-                    <td className="px-6 py-4 whitespace-nowrap">{line.line_number}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">{line.item_id}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">{line.lineNumber}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">{line.itemId}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">{line.quantity}</td>
                     <td className="px-6 py-4 whitespace-nowrap">{line.uom}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">{new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(line.unit_price)}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">{new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(line.total_unit_price)}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">{line.gst_percent}%</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">{new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(line.line_total)}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">{line.received_quantity || 0}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">{new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(line.unitPrice)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">{new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(line.totalUnitPrice)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">{line.gstPercent}%</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">{new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(line.lineTotal)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">{line.receivedQuantity || 0}</td>
                   </tr>
                 ))}
               </tbody>

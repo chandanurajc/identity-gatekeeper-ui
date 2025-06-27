@@ -9,6 +9,8 @@ export const usePurchaseOrderPermissions = () => {
     canCreatePurchaseOrder: hasPermission("Create PO"),
     canEditPurchaseOrder: hasPermission("Edit PO"),
     canCancelPurchaseOrder: hasPermission("Cancel PO"),
+    canApprovePO: hasPermission("Approve PO"),
+    canCancelPO: hasPermission("Cancel PO"),
     canViewPOReceive: hasPermission("View PO Receive"),
     canCreatePOReceive: hasPermission("Create PO Receive"),
     isLoading,
