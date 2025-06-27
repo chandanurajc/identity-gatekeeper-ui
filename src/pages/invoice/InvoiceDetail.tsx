@@ -47,7 +47,7 @@ const InvoiceDetail = () => {
   });
 
   const approveMutation = useMutation({
-    mutationFn: () => invoiceService.updateInvoiceStatus(invoiceId!, 'Approved', organizationId!, user!.id, 'Invoice approved'),
+    mutationFn: () => invoiceService.approveInvoice(invoiceId!, organizationId!, user!.id, user!.email!),
     onSuccess: () => {
       toast({ title: "Success", description: "Invoice approved successfully." });
       queryClient.invalidateQueries({ queryKey: ["invoice", invoiceId] });
@@ -65,7 +65,7 @@ const InvoiceDetail = () => {
   // Calculate total weight
   const calculateTotalWeight = () => {
     if (!invoice?.lines) return 0;
-    return invoice.lines.reduce((sum, line) => sum + (line.total_weight || 0), 0);
+    return invoice.lines.reduce((sum, line) => sum + (line.total_line_weight || 0), 0);
   };
 
   if (isLoading) return <div>Loading invoice details...</div>;
@@ -82,7 +82,7 @@ const InvoiceDetail = () => {
             <div>
               <CardTitle>Invoice {invoice.invoice_number}</CardTitle>
               <CardDescription>
-                Reference: {invoice.reference_transaction_number || 'N/A'}
+                From PO: {invoice.po_number}
               </CardDescription>
             </div>
             <div className="text-right">
@@ -172,7 +172,7 @@ const InvoiceDetail = () => {
         </CardContent>
         <CardFooter className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => navigate('/invoices')}>Back to List</Button>
-            {invoice.status === 'Draft' && canApproveInvoice && (
+            {invoice.status === 'Created' && canApproveInvoice && (
               <Button onClick={() => approveMutation.mutate()} disabled={approveMutation.isPending}>
                 {approveMutation.isPending ? 'Approving...' : 'Approve Invoice'}
               </Button>
@@ -212,10 +212,10 @@ const InvoiceDetail = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-right">{line.quantity}</td>
                     <td className="px-6 py-4 whitespace-nowrap">{line.uom}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
-                      {line.weight_per_unit ? `${line.weight_per_unit.toFixed(2)} ${line.weight_uom || 'kg'}` : '-'}
+                      {line.item_weight_per_unit ? `${line.item_weight_per_unit.toFixed(2)} ${line.item_weight_uom || 'kg'}` : '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
-                      {line.total_weight ? `${line.total_weight.toFixed(2)} ${line.weight_uom || 'kg'}` : '-'}
+                      {line.total_line_weight ? `${line.total_line_weight.toFixed(2)} ${line.item_weight_uom || 'kg'}` : '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">{new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(line.unit_cost)}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">{new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(line.total_item_cost)}</td>

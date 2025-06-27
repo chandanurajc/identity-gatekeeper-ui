@@ -24,9 +24,9 @@ export const columns: ColumnDef<Invoice>[] = [
     }
   },
   {
-    accessorKey: "reference_transaction_number",
+    accessorKey: "po_number",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Reference #" />
+      <DataTableColumnHeader column={column} title="PO #" />
     ),
   },
   {
@@ -89,7 +89,8 @@ export const columns: ColumnDef<Invoice>[] = [
       const status = row.original.status;
       let variant: "default" | "secondary" | "destructive" | "outline" = "secondary";
       if (status === 'Approved') variant = 'default';
-      if (status === 'Draft') variant = 'outline';
+      if (status === 'Paid') variant = 'default';
+      if (status === 'Created') variant = 'outline';
       
       return <Badge variant={variant}>{status}</Badge>;
     },
