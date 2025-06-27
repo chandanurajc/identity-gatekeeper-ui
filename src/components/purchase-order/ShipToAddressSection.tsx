@@ -65,16 +65,6 @@ const ShipToAddressSection: React.FC<ShipToAddressSectionProps> = ({
         <Label htmlFor="sameAsDivision" className="text-sm">
           Same as Division Registered Address
         </Label>
-        {watchedDivisionId && (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={loadDivisionShippingAddress}
-          >
-            Load Division Address
-          </Button>
-        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">

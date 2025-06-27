@@ -154,7 +154,7 @@ export const divisionService = {
         }
       }
 
-      // Create contacts in the dedicated table
+      // Create contacts in the dedicated table with state_code
       if (divisionData.contacts && divisionData.contacts.length > 0) {
         const contacts = divisionData.contacts.map(contact => ({
           division_id: divData.id,
@@ -172,6 +172,8 @@ export const divisionService = {
           email: contact.email?.trim() || null,
           website: contact.website?.trim() || null,
         }));
+
+        console.log("Creating contacts with state codes:", contacts);
 
         const { error: contactError } = await supabase
           .from('division_contacts')
@@ -362,6 +364,8 @@ export const divisionService = {
             email: contact.email?.trim() || null,
             website: contact.website?.trim() || null,
           }));
+
+          console.log("DivisionService: Contact data to insert with state codes:", contacts);
 
           const { error: contactError } = await supabase
             .from('division_contacts')

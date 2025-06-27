@@ -1,20 +1,19 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { Organization, OrganizationFormData, Reference, Contact } from "@/types/organization";
+import { Organization, OrganizationFormData, Contact, Reference } from "@/types/organization";
 
-// Helper function to transform Supabase data to the application's Organization type
 const transformSupabaseOrg = (org: any): Organization => {
   if (!org) return org;
   return {
     id: org.id,
-    name: org.name,
     code: org.code,
-    alias: org.description,
+    name: org.name,
+    description: org.description,
     type: org.type as Organization['type'],
     status: org.status as 'active' | 'inactive',
     references: (org.organization_references || []).map((ref: any) => ({
       id: ref.id,
-      type: ref.reference_type as 'GST' | 'CIN' | 'PAN' | 'GS1Code',
+      type: ref.reference_type as 'GST' | 'CIN' | 'PAN',
       value: ref.reference_value,
     })),
     contacts: (org.organization_contacts || []).map((contact: any) => ({
@@ -42,7 +41,7 @@ const transformSupabaseOrg = (org: any): Organization => {
 
 export const organizationService = {
   async getOrganizations(): Promise<Organization[]> {
-    console.log("Fetching organizations from Supabase...");
+    console.log("Fetching organizations from Supabase");
     
     try {
       const { data, error } = await supabase
@@ -110,9 +109,9 @@ export const organizationService = {
     try {
       // First create the organization
       const newOrganization = {
-        name: organizationData.name,
         code: organizationData.code,
-        description: organizationData.alias || null,
+        name: organizationData.name,
+        description: organizationData.description,
         type: organizationData.type,
         status: organizationData.status,
         created_by: createdBy,
@@ -139,8 +138,6 @@ export const organizationService = {
           reference_value: ref.value,
         }));
 
-        console.log("Reference inserts:", references);
-
         const { error: refError } = await supabase
           .from('organization_references')
           .insert(references);
@@ -151,7 +148,7 @@ export const organizationService = {
         }
       }
 
-      // Create contacts in the dedicated table
+      // Create contacts in the dedicated table with state_code
       if (organizationData.contacts && organizationData.contacts.length > 0) {
         const contacts = organizationData.contacts.map(contact => ({
           organization_id: orgData.id,
@@ -170,6 +167,8 @@ export const organizationService = {
           website: contact.website?.trim() || null,
         }));
 
+        console.log("Creating contacts with state codes:", contacts);
+
         const { error: contactError } = await supabase
           .from('organization_contacts')
           .insert(contacts);
@@ -184,9 +183,9 @@ export const organizationService = {
       
       return {
         id: orgData.id,
-        name: orgData.name,
         code: orgData.code,
-        alias: orgData.description,
+        name: orgData.name,
+        description: orgData.description,
         type: orgData.type as Organization['type'],
         status: orgData.status as 'active' | 'inactive',
         references: organizationData.references,
@@ -225,7 +224,7 @@ export const organizationService = {
       const updateData = {
         name: organizationData.name.trim(),
         code: organizationData.code.trim().toUpperCase(),
-        description: organizationData.alias?.trim() || null,
+        description: organizationData.description?.trim() || null,
         type: organizationData.type,
         status: organizationData.status,
         updated_by: updatedBy,
@@ -276,13 +275,11 @@ export const organizationService = {
         throw new Error(`Failed to delete existing contacts: ${deleteContactsError.message}`);
       }
 
-      // Create new references with exact constraint validation
+      // Create new references with validation
       if (organizationData.references && organizationData.references.length > 0) {
         console.log("OrganizationService: Creating new references:", organizationData.references);
         
-        // Validate reference types against database constraint - updated to use GS1Code
-        const allowedReferenceTypes = ['GST', 'CIN', 'PAN', 'GS1Code'];
-        
+        const allowedReferenceTypes = ['GST', 'CIN', 'PAN'];
         const validReferences = organizationData.references.filter(ref => {
           const hasValue = ref.value && ref.value.trim();
           const validType = allowedReferenceTypes.includes(ref.type);
@@ -300,7 +297,7 @@ export const organizationService = {
         if (validReferences.length > 0) {
           const references = validReferences.map(ref => ({
             organization_id: id,
-            reference_type: ref.type, // Must match database constraint exactly
+            reference_type: ref.type,
             reference_value: ref.value.trim(),
           }));
 
@@ -312,12 +309,6 @@ export const organizationService = {
 
           if (refError) {
             console.error("OrganizationService: Error creating references:", refError);
-            console.error("OrganizationService: Reference error details:", {
-              message: refError.message,
-              details: refError.details,
-              hint: refError.hint,
-              code: refError.code
-            });
             throw new Error(`Failed to create references: ${refError.message}`);
           }
           console.log("OrganizationService: References created successfully");
@@ -357,6 +348,8 @@ export const organizationService = {
             website: contact.website?.trim() || null,
           }));
 
+          console.log("OrganizationService: Contact data to insert with state codes:", contacts);
+
           const { error: contactError } = await supabase
             .from('organization_contacts')
             .insert(contacts);
@@ -374,9 +367,9 @@ export const organizationService = {
       // Return the updated organization with the new data
       const result: Organization = {
         id: orgData.id,
-        name: orgData.name,
         code: orgData.code,
-        alias: orgData.description,
+        name: orgData.name,
+        description: orgData.description,
         type: orgData.type as Organization['type'],
         status: orgData.status as 'active' | 'inactive',
         references: organizationData.references || [],
