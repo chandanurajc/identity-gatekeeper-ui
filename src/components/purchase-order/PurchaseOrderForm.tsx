@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -266,16 +267,24 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
           <section className="bg-transparent">
             <h2 className={sectionTitleClass}>Purchase Order Details</h2>
             <div className={formGridClass + " mt-2"}>
-              <div>
-                <Label htmlFor="poNumber">PO Number *</Label>
-                <Input
-                  id="poNumber"
-                  {...register("poNumber", { required: "PO Number is required" })}
-                  readOnly={isEdit}
-                  className={isEdit ? "bg-muted" : ""}
-                />
-                {errors.poNumber && <p className="text-xs text-red-500">{errors.poNumber.message}</p>}
-              </div>
+              <FormField
+                control={control}
+                name="poNumber"
+                rules={{ required: "PO Number is required" }}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>PO Number *</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        readOnly={isEdit}
+                        className={isEdit ? "bg-muted" : ""}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <FormField
                 control={control}
                 name="divisionId"
@@ -314,36 +323,55 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
                 placeholder="Select Supplier"
                 required
               />
-              <div>
-                <Label htmlFor="poDate">PO Date *</Label>
-                <Input
-                  id="poDate"
-                  type="date"
-                  {...register("poDate", { required: "PO Date is required" })}
-                />
-                {errors.poDate && <p className="text-xs text-red-500">{errors.poDate.message}</p>}
-              </div>
-              <div>
-                <Label htmlFor="requestedDeliveryDate">Requested Delivery Date</Label>
-                <Input
-                  id="requestedDeliveryDate"
-                  type="date"
-                  {...register("requestedDeliveryDate")}
-                />
-              </div>
-              <div>
-                <Label htmlFor="paymentTerms">Payment Terms</Label>
-                <Select onValueChange={(value) => setValue("paymentTerms", value)} defaultValue={watch("paymentTerms")}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Payment Terms" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Net 30">Net 30</SelectItem>
-                    <SelectItem value="Net 60">Net 60</SelectItem>
-                    <SelectItem value="Due on receipt">Due on receipt</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <FormField
+                control={control}
+                name="poDate"
+                rules={{ required: "PO Date is required" }}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>PO Date *</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={control}
+                name="requestedDeliveryDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Requested Delivery Date</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} value={field.value || ""} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={control}
+                name="paymentTerms"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Payment Terms</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select Payment Terms" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Net 30">Net 30</SelectItem>
+                        <SelectItem value="Net 60">Net 60</SelectItem>
+                        <SelectItem value="Due on receipt">Due on receipt</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
           </section>
           {/* Ship to Address section */}
@@ -375,23 +403,39 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
           <section className="bg-transparent">
             <h2 className={sectionTitleClass}>Additional Information</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-              <div>
-                <Label htmlFor="notes">Notes</Label>
-                <Textarea
-                  id="notes"
-                  {...register("notes")}
-                  placeholder="Enter any additional notes..."
-                  className="min-h-[50px]"
-                />
-              </div>
-              <div>
-                <Label htmlFor="trackingNumber">Tracking Number</Label>
-                <Input
-                  id="trackingNumber"
-                  {...register("trackingNumber")}
-                  placeholder="Enter tracking number if available"
-                />
-              </div>
+              <FormField
+                control={control}
+                name="notes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Notes</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        {...field}
+                        placeholder="Enter any additional notes..."
+                        className="min-h-[50px]"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={control}
+                name="trackingNumber"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tracking Number</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="Enter tracking number if available"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
           </section>
           {/* Form Actions */}
