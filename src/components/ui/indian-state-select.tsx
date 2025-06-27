@@ -42,10 +42,10 @@ export const IndianStateSelect = ({
         .filter(state => 
           state.state_name?.toLowerCase().includes(searchValue.toLowerCase())
         )
-        .slice(0, 5);
+        .slice(0, 10);
       setFilteredStates(filtered);
     } else {
-      setFilteredStates(states.slice(0, 5));
+      setFilteredStates(states.slice(0, 10));
     }
   }, [searchValue, states]);
 
@@ -62,13 +62,14 @@ export const IndianStateSelect = ({
       }
 
       setStates(data || []);
-      setFilteredStates((data || []).slice(0, 5));
+      setFilteredStates((data || []).slice(0, 10));
     } catch (error) {
       console.error('Error fetching states:', error);
     }
   };
 
   const handleSelect = (stateName: string, stateCode: number) => {
+    console.log('Selected state:', stateName, 'State code:', stateCode);
     onValueChange(stateName, stateCode);
     setOpen(false);
   };
@@ -87,7 +88,7 @@ export const IndianStateSelect = ({
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-full p-0">
+      <PopoverContent className="w-full p-0" style={{ zIndex: 9999 }}>
         <Command>
           <CommandInput
             placeholder="Search state..."

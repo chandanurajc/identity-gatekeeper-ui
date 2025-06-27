@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -55,6 +56,9 @@ export function ContactDialog({ open, onOpenChange, initialData, onSave, existin
       });
       return;
     }
+    
+    console.log('Saving contact with state code:', formData.stateCode);
+    
     onSave({
       id: initialData?.id || uuidv4(),
       type: formData.type!,
@@ -72,6 +76,15 @@ export function ContactDialog({ open, onOpenChange, initialData, onSave, existin
       stateCode: formData.stateCode
     });
     onOpenChange(false);
+  };
+
+  const handleStateChange = (stateName: string, stateCode: number) => {
+    console.log('State changed:', stateName, 'State code:', stateCode);
+    setFormData({ 
+      ...formData, 
+      state: stateName,
+      stateCode: stateCode 
+    });
   };
 
   return (
@@ -166,9 +179,7 @@ export function ContactDialog({ open, onOpenChange, initialData, onSave, existin
             <Label htmlFor="state">State *</Label>
             <IndianStateSelect
               value={formData.state || ''}
-              onValueChange={(stateName, stateCode) =>
-                setFormData({ ...formData, state: stateName, stateCode: stateCode })
-              }
+              onValueChange={handleStateChange}
               placeholder="Select state"
             />
             {formErrors.state && <p className="text-sm text-destructive mt-1">{formErrors.state}</p>}

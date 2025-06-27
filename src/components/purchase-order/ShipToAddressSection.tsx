@@ -1,14 +1,25 @@
-import React, { useEffect } from "react";
-import { Controller, useWatch } from "react-hook-form";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+
+import React from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { IndianStateSelect } from "@/components/ui/indian-state-select";
+import { Control, UseFormRegister, FieldErrors, UseFormSetValue } from "react-hook-form";
+import { PurchaseOrderFormData } from "@/types/purchaseOrder";
 
-const sectionTitleClass = "text-base font-semibold text-muted-foreground tracking-tight mb-1";
+interface ShipToAddressSectionProps {
+  control: Control<PurchaseOrderFormData>;
+  register: UseFormRegister<PurchaseOrderFormData>;
+  errors: FieldErrors<PurchaseOrderFormData>;
+  watchedDivisionId: string;
+  loadDivisionShippingAddress: () => void;
+  resetShippingFields: () => void;
+  setValue: UseFormSetValue<PurchaseOrderFormData>;
+}
 
-const ShipToAddressSection = ({
+const ShipToAddressSection: React.FC<ShipToAddressSectionProps> = ({
   control,
   register,
   errors,
@@ -17,111 +28,118 @@ const ShipToAddressSection = ({
   resetShippingFields,
   setValue
 }) => {
-  const sameAsDivisionAddress = useWatch({ control, name: "sameAsDivisionAddress" });
-  const shipToState = useWatch({ control, name: "shipToState" });
+  const [sameAsDivision, setSameAsDivision] = React.useState(false);
+  const [currentState, setCurrentState] = React.useState("");
 
-  useEffect(() => {
-    if (sameAsDivisionAddress && watchedDivisionId) {
+  const handleSameAsDivisionChange = (checked: boolean) => {
+    setSameAsDivision(checked);
+    setValue("sameAsDivisionAddress", checked);
+    
+    if (checked && watchedDivisionId) {
       loadDivisionShippingAddress();
-    } else if (!sameAsDivisionAddress) {
+    } else {
       resetShippingFields();
     }
-    // eslint-disable-next-line
-  }, [sameAsDivisionAddress, watchedDivisionId]);
+  };
+
+  const handleStateChange = (stateName: string, stateCode: number) => {
+    console.log('Shipping address state changed:', stateName, 'State code:', stateCode);
+    setCurrentState(stateName);
+    setValue("shipToState", stateName);
+    setValue("shipToStateCode", stateCode);
+  };
 
   return (
-    <section className="bg-transparent pt-2">
-      <h2 className={sectionTitleClass}>Ship to Address</h2>
-      <div className="flex items-center space-x-2 mb-2 mt-1">
-        <Controller
-          name="sameAsDivisionAddress"
-          control={control}
-          render={({ field }) => (
-            <Checkbox
-              id="sameAsDivisionAddress"
-              checked={field.value}
-              onCheckedChange={field.onChange}
-            />
-          )}
+    <section className="bg-transparent">
+      <h2 className="text-base font-semibold text-muted-foreground tracking-tight mb-1">Ship To Address</h2>
+      
+      <div className="flex items-center space-x-2 mb-4">
+        <Checkbox
+          id="sameAsDivision"
+          checked={sameAsDivision}
+          onCheckedChange={handleSameAsDivisionChange}
+          disabled={!watchedDivisionId}
         />
-        <Label htmlFor="sameAsDivisionAddress">Same as Division's Registered location?</Label>
+        <Label htmlFor="sameAsDivision" className="text-sm">
+          Same as Division Registered Address
+        </Label>
+        {watchedDivisionId && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={loadDivisionShippingAddress}
+          >
+            Load Division Address
+          </Button>
+        )}
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="md:col-span-2">
-          <Label htmlFor="shipToAddress1">Address 1 *</Label>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
+        <div>
+          <Label htmlFor="shipToAddress1">Address 1</Label>
           <Input
             id="shipToAddress1"
-            {...register("shipToAddress1", { required: "Address 1 is required" })}
-            disabled={sameAsDivisionAddress}
+            {...register("shipToAddress1")}
+            placeholder="Enter address line 1"
           />
-          {errors.shipToAddress1 && <p className="text-xs text-red-500">{errors.shipToAddress1.message}</p>}
         </div>
         <div>
           <Label htmlFor="shipToAddress2">Address 2</Label>
           <Input
             id="shipToAddress2"
             {...register("shipToAddress2")}
-            disabled={sameAsDivisionAddress}
+            placeholder="Enter address line 2"
           />
         </div>
         <div>
-          <Label htmlFor="shipToCity">City *</Label>
+          <Label htmlFor="shipToCity">City</Label>
           <Input
             id="shipToCity"
-            {...register("shipToCity", { required: "City is required" })}
-            disabled={sameAsDivisionAddress}
+            {...register("shipToCity")}
+            placeholder="Enter city"
           />
-          {errors.shipToCity && <p className="text-xs text-red-500">{errors.shipToCity.message}</p>}
         </div>
         <div>
-          <Label htmlFor="shipToState">State *</Label>
+          <Label htmlFor="shipToState">State</Label>
           <IndianStateSelect
-            value={shipToState}
-            onValueChange={(stateName, stateCode) => {
-              setValue("shipToState", stateName);
-              setValue("shipToStateCode", stateCode);
-            }}
+            value={currentState}
+            onValueChange={handleStateChange}
             placeholder="Select state"
-            disabled={sameAsDivisionAddress}
           />
-          {errors.shipToState && <p className="text-xs text-red-500">{errors.shipToState.message}</p>}
         </div>
         <div>
-          <Label htmlFor="shipToPostalCode">Postal Code *</Label>
+          <Label htmlFor="shipToPostalCode">Postal Code</Label>
           <Input
             id="shipToPostalCode"
-            {...register("shipToPostalCode", { required: "Postal Code is required" })}
-            disabled={sameAsDivisionAddress}
+            {...register("shipToPostalCode")}
+            placeholder="Enter postal code"
           />
-          {errors.shipToPostalCode && <p className="text-xs text-red-500">{errors.shipToPostalCode.message}</p>}
         </div>
         <div>
-          <Label htmlFor="shipToCountry">Country *</Label>
+          <Label htmlFor="shipToCountry">Country</Label>
           <Input
             id="shipToCountry"
-            {...register("shipToCountry", { required: "Country is required" })}
-            disabled={sameAsDivisionAddress}
+            {...register("shipToCountry")}
+            placeholder="Enter country"
           />
-          {errors.shipToCountry && <p className="text-xs text-red-500">{errors.shipToCountry.message}</p>}
         </div>
         <div>
-          <Label htmlFor="shipToPhone">Phone *</Label>
+          <Label htmlFor="shipToPhone">Phone</Label>
           <Input
             id="shipToPhone"
-            {...register("shipToPhone", { required: "Phone is required" })}
-            disabled={sameAsDivisionAddress}
+            {...register("shipToPhone")}
+            placeholder="Enter phone number"
           />
-          {errors.shipToPhone && <p className="text-xs text-red-500">{errors.shipToPhone.message}</p>}
         </div>
         <div>
-          <Label htmlFor="shipToEmail">Email *</Label>
+          <Label htmlFor="shipToEmail">Email</Label>
           <Input
             id="shipToEmail"
             type="email"
-            {...register("shipToEmail", { required: "Email is required" })}
-            disabled={sameAsDivisionAddress}
+            {...register("shipToEmail")}
+            placeholder="Enter email address"
           />
-          {errors.shipToEmail && <p className="text-xs text-red-500">{errors.shipToEmail.message}</p>}
         </div>
       </div>
     </section>
