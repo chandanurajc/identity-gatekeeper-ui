@@ -99,7 +99,21 @@ const InvoiceCreate: React.FC = () => {
       ]);
       
       setDivisions(divisionsData);
-      setPartners(partnersData);
+      // Convert partners to organizations format
+      const partnerOrgs: Organization[] = partnersData.map(partner => ({
+        id: partner.organization_id,
+        code: `PARTNER-${partner.id}`,
+        name: `Partner ${partner.organization_id}`,
+        type: 'Partner',
+        status: partner.status,
+        created_on: partner.created_on,
+        updated_on: partner.updated_on,
+        created_by: partner.created_by,
+        updated_by: partner.updated_by,
+        references: [],
+        contacts: []
+      }));
+      setPartners(partnerOrgs);
       setItems(itemsData);
       setTaxMaster(taxData);
     } catch (error) {
