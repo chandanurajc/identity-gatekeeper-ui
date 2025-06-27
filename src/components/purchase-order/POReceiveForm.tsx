@@ -1,3 +1,4 @@
+
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -23,10 +24,7 @@ interface ReceivePOVariables {
     linesToReceive: POReceiveLineData[];
     organizationId: string;
     userId: string;
-}
-
-interface ReceivePOResponse {
-  warning?: string;
+    userEmail: string;
 }
 
 const receiveSchema = z.object({
@@ -46,7 +44,7 @@ const receiveSchema = z.object({
     { message: "You must receive at least one item." }
   ).refine(
     (lines) => lines.every(line => line.quantityToReceive <= (line.orderedQuantity - line.totalReceivedQuantity)),
-    { message: "Cannot receive more than remaining quantity." } // This is a line-level check, but a global refine is a fallback
+    { message: "Cannot receive more than remaining quantity." }
   ),
 });
 
@@ -77,24 +75,25 @@ export function POReceiveForm({ purchaseOrder }: POReceiveFormProps) {
     },
   });
 
-  const { mutate: receivePO, isPending } = useMutation<ReceivePOResponse, Error, ReceivePOVariables>({
-    mutationFn: ({ poId, linesToReceive, organizationId, userId }) => 
-      purchaseOrderService.receivePurchaseOrder( poId, linesToReceive, organizationId, userId ),
-    onSuccess: (data) => {
+  const { mutate: receivePO, isPending } = useMutation<PurchaseOrder, Error, ReceivePOVariables>({
+    mutationFn: ({ poId, linesToReceive, organizationId, userId, userEmail }) => 
+      purchaseOrderService.receivePurchaseOrder(
+        poId, 
+        linesToReceive.map(line => ({
+          lineId: line.purchaseOrderLineId,
+          receivedQuantity: line.quantityToReceive
+        })), 
+        organizationId, 
+        userId,
+        userEmail
+      ),
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["purchaseOrders"] });
       queryClient.invalidateQueries({ queryKey: ["purchaseOrder", purchaseOrder.id] });
-      queryClient.invalidateQueries({ queryKey: ["invoices"] });
 
-      if (data?.warning) {
-        toast.warning("PO Received with a Warning", {
-          description: data.warning,
-          duration: 10000,
-        });
-      } else {
-        toast.success("Purchase Order received successfully.");
-      }
+      toast.success("Purchase Order received successfully.");
       
-      navigate("/order-management/po-receive"); // Redirect to PO receive list after receive
+      navigate("/order-management/po-receive");
     },
     onError: (error) => {
       toast.error("Failed to receive Purchase Order", {
@@ -110,7 +109,13 @@ export function POReceiveForm({ purchaseOrder }: POReceiveFormProps) {
         return;
     }
     const linesToReceive = data.lines.filter(l => l.quantityToReceive > 0);
-    receivePO({ poId: data.poId, linesToReceive, organizationId, userId: user.id });
+    receivePO({ 
+      poId: data.poId, 
+      linesToReceive, 
+      organizationId, 
+      userId: user.id,
+      userEmail: user.email || ''
+    });
   };
 
   return (

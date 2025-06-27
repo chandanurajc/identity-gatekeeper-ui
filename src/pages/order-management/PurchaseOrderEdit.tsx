@@ -14,7 +14,7 @@ const PurchaseOrderEdit = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { currentOrganization } = useMultiTenant();
+  const { getCurrentOrganizationId } = useMultiTenant();
   const { user } = useAuth();
   const { canEditPurchaseOrder } = usePurchaseOrderPermissions();
   
@@ -30,9 +30,12 @@ const PurchaseOrderEdit = () => {
   const fetchPurchaseOrder = async () => {
     if (!id) return;
     
+    const organizationId = getCurrentOrganizationId();
+    if (!organizationId) return;
+    
     try {
       setLoading(true);
-      const data = await purchaseOrderService.getPurchaseOrderById(id);
+      const data = await purchaseOrderService.getPurchaseOrderById(id, organizationId);
       if (data) {
         setPurchaseOrder(data);
       } else {
@@ -56,7 +59,8 @@ const PurchaseOrderEdit = () => {
   };
 
   const handleSubmit = async (data: PurchaseOrderFormData) => {
-    if (!currentOrganization?.id || !user?.id || !id) {
+    const organizationId = getCurrentOrganizationId();
+    if (!organizationId || !user?.id || !id) {
       toast({
         title: "Error",
         description: "Missing required information",
@@ -69,7 +73,7 @@ const PurchaseOrderEdit = () => {
       const updatedPO = await purchaseOrderService.updatePurchaseOrder(
         id, 
         data, 
-        currentOrganization.id, 
+        organizationId, 
         user.id
       );
       

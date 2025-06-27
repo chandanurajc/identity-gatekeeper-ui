@@ -6,13 +6,19 @@ import { POReceiveForm } from "@/components/purchase-order/POReceiveForm";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
+import { useMultiTenant } from "@/hooks/useMultiTenant";
 
 export default function PurchaseOrderReceiveEntry() {
   const { id } = useParams<{ id: string }>();
+  const { getCurrentOrganizationId } = useMultiTenant();
 
   const { data: purchaseOrder, isLoading, error, isError } = useQuery({
     queryKey: ["purchaseOrder", id],
-    queryFn: () => purchaseOrderService.getPurchaseOrderById(id!),
+    queryFn: () => {
+      const organizationId = getCurrentOrganizationId();
+      if (!organizationId) throw new Error("Organization not found");
+      return purchaseOrderService.getPurchaseOrderById(id!, organizationId);
+    },
     enabled: !!id,
   });
 

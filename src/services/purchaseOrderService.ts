@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { PurchaseOrder, PurchaseOrderFormData, ShippingAddress } from '@/types/purchaseOrder';
 import { receivePurchaseOrder } from './purchaseOrder/receivePurchaseOrder';
@@ -14,10 +15,12 @@ export const generatePONumber = async (): Promise<string> => {
 };
 
 export const getDivisionShippingAddress = async (divisionId: string): Promise<ShippingAddress> => {
+  // Get the primary address from division_contacts table
   const { data, error } = await supabase
-    .from('divisions')
+    .from('division_contacts')
     .select('address1, address2, postal_code, city, state, state_code, country, phone_number, email')
-    .eq('id', divisionId)
+    .eq('division_id', divisionId)
+    .eq('contact_type', 'Primary')
     .single();
 
   if (error) {
@@ -26,15 +29,15 @@ export const getDivisionShippingAddress = async (divisionId: string): Promise<Sh
   }
 
   return {
-    address1: data.address1,
+    address1: data.address1 || '',
     address2: data.address2,
-    postalCode: data.postal_code,
-    city: data.city,
-    state: data.state,
+    postalCode: data.postal_code || '',
+    city: data.city || '',
+    state: data.state || '',
     stateCode: data.state_code,
-    country: data.country,
-    phoneNumber: data.phone_number,
-    email: data.email,
+    country: data.country || '',
+    phoneNumber: data.phone_number || '',
+    email: data.email || '',
   };
 };
 
@@ -93,6 +96,7 @@ export const createPurchaseOrder = async (
           gst_percent: line.gstPercent,
           gst_value: line.gstValue,
           line_total: line.lineTotal,
+          created_by: createdBy,
         },
       ]);
 
@@ -118,7 +122,7 @@ export const getAllPurchaseOrders = async (organizationId: string): Promise<Purc
       division:divisions(*)
     `)
     .eq('organization_id', organizationId)
-    .order('created_at', { ascending: false });
+    .order('created_on', { ascending: false });
 
   if (error) {
     console.error("Error fetching purchase orders:", error);
@@ -222,6 +226,7 @@ export const updatePurchaseOrder = async (
           gst_percent: line.gstPercent,
           gst_value: line.gstValue,
           line_total: line.lineTotal,
+          created_by: updatedBy,
         },
       ]);
 
@@ -238,7 +243,6 @@ export const updatePurchaseOrder = async (
   } as unknown as PurchaseOrder;
 };
 
-// Add missing approve and cancel methods
 export const approvePurchaseOrder = async (
   poId: string,
   organizationId: string,
@@ -314,7 +318,6 @@ export const cancelPurchaseOrder = async (
   } as unknown as PurchaseOrder;
 };
 
-// Update the purchaseOrderService object to include the new methods
 export const purchaseOrderService = {
   generatePONumber,
   getDivisionShippingAddress,
