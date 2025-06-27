@@ -152,12 +152,12 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
       if (address) {
         setValue("shipToAddress1", address.address1 || "");
         setValue("shipToAddress2", address.address2 || "");
-        setValue("shipToPostalCode", address.postal_code || "");
+        setValue("shipToPostalCode", address.postalCode || "");
         setValue("shipToCity", address.city || "");
         setValue("shipToState", address.state || "");
-        setValue("shipToStateCode", address.state_code || null);
+        setValue("shipToStateCode", address.stateCode || null);
         setValue("shipToCountry", address.country || "");
-        setValue("shipToPhone", address.phone_number || "");
+        setValue("shipToPhone", address.phoneNumber || "");
         setValue("shipToEmail", address.email || "");
       } else {
         resetShippingFields();

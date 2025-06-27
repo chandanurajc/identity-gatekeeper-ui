@@ -104,8 +104,9 @@ export interface ShippingAddress {
   postalCode: string;
   city: string;
   state: string;
+  stateCode?: number;
   country: string;
-  phone: string;
+  phoneNumber: string;
   email: string;
 }
 
