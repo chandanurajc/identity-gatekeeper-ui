@@ -9,7 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Search, Edit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { purchaseOrderService } from "@/services/purchaseOrderService";
+import { getAllPurchaseOrders } from "@/services/purchaseOrder/queries";
 import { usePurchaseOrderPermissions } from "@/hooks/usePurchaseOrderPermissions";
 import { useMultiTenant } from "@/hooks/useMultiTenant";
 import { PurchaseOrder } from "@/types/purchaseOrder";
@@ -39,9 +39,10 @@ const PurchaseOrdersList = () => {
     
     try {
       setLoading(true);
-      const data = await purchaseOrderService.getAllPurchaseOrders(currentOrganization.id);
-      console.log("Fetched purchase orders:", data);
-      setPurchaseOrders(data || []);
+      console.log("Fetching purchase orders for organization:", currentOrganization.id);
+      const data = await getAllPurchaseOrders(currentOrganization.id);
+      console.log("Fetched purchase orders data:", data);
+      setPurchaseOrders(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Error fetching purchase orders:", error);
       toast({
@@ -74,10 +75,10 @@ const PurchaseOrdersList = () => {
       let filtered = purchaseOrders.filter(order => {
         if (!order) return false;
         
-        const poNumber = (order.poNumber || "").toString().toLowerCase();
-        const supplierName = (order.supplier?.name || "").toString().toLowerCase();
-        const status = (order.status || "").toString().toLowerCase();
-        const createdBy = (order.createdBy || "").toString().toLowerCase();
+        const poNumber = String(order.poNumber || "").toLowerCase();
+        const supplierName = String(order.supplier?.name || "").toLowerCase();
+        const status = String(order.status || "").toLowerCase();
+        const createdBy = String(order.createdBy || "").toLowerCase();
         const searchLower = searchTerm.toLowerCase();
 
         return poNumber.includes(searchLower) ||
@@ -138,10 +139,11 @@ const PurchaseOrdersList = () => {
     try {
       if (!date) return "-";
       const dateObj = typeof date === 'string' ? new Date(date) : date;
+      if (isNaN(dateObj.getTime())) return "-";
       return format(dateObj, "dd/MM/yyyy");
     } catch (error) {
       console.error("Error formatting date:", error);
-      return "Invalid Date";
+      return "-";
     }
   };
 
@@ -149,10 +151,11 @@ const PurchaseOrdersList = () => {
     try {
       if (!date) return "-";
       const dateObj = typeof date === 'string' ? new Date(date) : date;
+      if (isNaN(dateObj.getTime())) return "-";
       return format(dateObj, "dd/MM/yyyy HH:mm");
     } catch (error) {
       console.error("Error formatting datetime:", error);
-      return "Invalid Date";
+      return "-";
     }
   };
 

@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { PurchaseOrderFormData, PurchaseOrderLine, ShippingAddress } from "@/types/purchaseOrder";
 import { divisionService } from "@/services/divisionService";
 import { itemService } from "@/services/itemService";
-import { purchaseOrderService } from "@/services/purchaseOrderService";
+import { generatePONumber, getDivisionShippingAddress } from "@/services/purchaseOrder/queries";
 import { useMultiTenant } from "@/hooks/useMultiTenant";
 import { useAuth } from "@/context/AuthContext";
 import { Division } from "@/types/division";
@@ -99,7 +99,7 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
 
   useEffect(() => {
     if (!isEdit) {
-      generatePONumber();
+      generatePONumberAsync();
     }
   }, [isEdit]);
 
@@ -138,27 +138,34 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
     }
   };
 
-  const generatePONumber = async () => {
+  const generatePONumberAsync = async () => {
     try {
-      const poNumber = await purchaseOrderService.generatePONumber();
+      console.log("Generating PO number...");
+      const poNumber = await generatePONumber();
+      console.log("Generated PO number:", poNumber);
       setValue("poNumber", poNumber);
-    } catch {
-      toast({ title: "Error", description: "Failed to generate PO number", variant: "destructive" });
+    } catch (error) {
+      console.error("Error generating PO number:", error);
+      toast({ 
+        title: "Error", 
+        description: "Failed to generate PO number. Please refresh the page.", 
+        variant: "destructive" 
+      });
     }
   };
 
   const loadDivisionShippingAddress = async () => {
     try {
-      const address = await purchaseOrderService.getDivisionShippingAddress(watchedDivisionId);
+      const address = await getDivisionShippingAddress(watchedDivisionId);
       if (address) {
         setValue("shipToAddress1", address.address1 || "");
         setValue("shipToAddress2", address.address2 || "");
-        setValue("shipToPostalCode", address.postalCode || "");
+        setValue("shipToPostalCode", address.postal_code || "");
         setValue("shipToCity", address.city || "");
         setValue("shipToState", address.state || "");
-        setValue("shipToStateCode", address.stateCode || null);
+        setValue("shipToStateCode", address.state_code || null);
         setValue("shipToCountry", address.country || "");
-        setValue("shipToPhone", address.phoneNumber || "");
+        setValue("shipToPhone", address.phone_number || "");
         setValue("shipToEmail", address.email || "");
       } else {
         resetShippingFields();

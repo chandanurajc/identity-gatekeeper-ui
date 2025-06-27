@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { PurchaseOrder } from "@/types/purchaseOrder";
 import { isUUID } from "@/lib/userUtils";
@@ -182,39 +181,51 @@ export async function getPurchaseOrderById(id: string): Promise<PurchaseOrder | 
 }
 
 export async function generatePONumber(): Promise<string> {
-  const { data, error } = await supabase
-    .from('purchase_order')
-    .select('po_number')
-    .order('created_on', { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  try {
+    console.log("Generating new PO number...");
+    
+    // Get the latest PO number to determine the next one
+    const { data, error } = await supabase
+      .from('purchase_order')
+      .select('po_number')
+      .order('created_on', { ascending: false })
+      .limit(1);
 
-  if (error) {
-    console.error("Error getting latest PO number:", error);
-    throw new Error(`Failed to generate PO number: ${error.message}`);
-  }
+    if (error) {
+      console.error("Error fetching latest PO number:", error);
+      throw new Error(`Failed to generate PO number: ${error.message}`);
+    }
 
-  if (!data?.po_number) {
-    return 'PO000001';
-  }
-  
-  const latestPoNumberStr = data.po_number.replace('PO', '');
-  const latestPoNumber = parseInt(latestPoNumberStr, 10);
+    let nextNumber = 1;
+    
+    if (data && data.length > 0 && data[0].po_number) {
+      // Extract the number part from the latest PO number (format: PO000001)
+      const latestPoNumber = data[0].po_number;
+      const numberPart = latestPoNumber.replace('PO', '');
+      const currentNumber = parseInt(numberPart, 10);
+      
+      if (!isNaN(currentNumber)) {
+        nextNumber = currentNumber + 1;
+      }
+    }
 
-  if (isNaN(latestPoNumber)) {
-    console.error("Failed to parse PO number, falling back to count", data.po_number);
+    const poNumber = `PO${String(nextNumber).padStart(6, '0')}`;
+    console.log("Generated PO number:", poNumber);
+    
+    return poNumber;
+  } catch (error) {
+    console.error("Error in generatePONumber:", error);
+    // Fallback to count-based generation
     const { count, error: countError } = await supabase
-        .from('purchase_order')
-        .select('*', { count: 'exact', head: true });
+      .from('purchase_order')
+      .select('*', { count: 'exact', head: true });
 
     if (countError) {
-        throw new Error(`Failed to generate PO number on fallback: ${countError.message}`);
+      throw new Error(`Failed to generate PO number: ${countError.message}`);
     }
+    
     return `PO${String((count || 0) + 1).padStart(6, '0')}`;
   }
-
-  const nextNumber = latestPoNumber + 1;
-  return `PO${String(nextNumber).padStart(6, '0')}`;
 }
 
 export async function getDivisionShippingAddress(divisionId: string): Promise<any> {
