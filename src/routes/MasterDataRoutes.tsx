@@ -1,8 +1,7 @@
 
 import React from 'react';
-import { Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import PermissionProtectedRoute from "@/components/PermissionProtectedRoute";
-import { MainLayout } from "@/layouts/MainLayout";
 import ItemGroupsList from "@/pages/master-data/ItemGroupsList";
 import SalesChannelsList from "@/pages/master-data/SalesChannelsList";
 import SalesChannelCreate from "@/pages/master-data/SalesChannelCreate";
@@ -14,103 +13,85 @@ import ItemView from "@/pages/master-data/ItemView";
 import PartnersList from "@/pages/master-data/PartnersList";
 
 export const MasterDataRoutes = () => (
-    <React.Fragment>
+    <Routes>
         {/* Item Group Management Routes */}
         <Route 
-            path="/master-data/item-groups" 
+            path="/item-groups" 
             element={
             <PermissionProtectedRoute requiredPermission="view-item-group">
-                <MainLayout>
                 <ItemGroupsList />
-                </MainLayout>
             </PermissionProtectedRoute>
             } 
         />
         
         {/* Sales Channel Management Routes */}
         <Route 
-            path="/master-data/sales-channels" 
+            path="/sales-channels" 
             element={
             <PermissionProtectedRoute requiredPermission="view-sales-channel">
-                <MainLayout>
                 <SalesChannelsList />
-                </MainLayout>
             </PermissionProtectedRoute>
             } 
         />
         <Route 
-            path="/master-data/sales-channels/create" 
+            path="/sales-channels/create" 
             element={
             <PermissionProtectedRoute requiredPermission="create-sales-channel">
-                <MainLayout>
                 <SalesChannelCreate />
-                </MainLayout>
             </PermissionProtectedRoute>
             } 
         />
         <Route 
-            path="/master-data/sales-channels/edit/:id" 
+            path="/sales-channels/edit/:id" 
             element={
             <PermissionProtectedRoute requiredPermission="edit-sales-channel">
-                <MainLayout>
                 <SalesChannelEdit />
-                </MainLayout>
             </PermissionProtectedRoute>
             } 
         />
         
         {/* Item Master Management Routes */}
         <Route 
-            path="/master-data/items" 
+            path="/items" 
             element={
             <PermissionProtectedRoute requiredPermission="view-item">
-                <MainLayout>
                 <ItemsList />
-                </MainLayout>
             </PermissionProtectedRoute>
             } 
         />
         <Route 
-            path="/master-data/items/create" 
+            path="/items/create" 
             element={
             <PermissionProtectedRoute requiredPermission="create-item">
-                <MainLayout>
                 <ItemCreate />
-                </MainLayout>
             </PermissionProtectedRoute>
             } 
         />
         <Route 
-            path="/master-data/items/:itemId/edit" 
+            path="/items/:itemId/edit" 
             element={
             <PermissionProtectedRoute requiredPermission="edit-item">
-                <MainLayout>
                 <ItemEdit />
-                </MainLayout>
             </PermissionProtectedRoute>
             } 
         />
         <Route 
-            path="/master-data/items/:itemId" 
+            path="/items/:itemId" 
             element={
             <PermissionProtectedRoute requiredPermission="view-item">
-                <MainLayout>
                 <ItemView />
-                </MainLayout>
             </PermissionProtectedRoute>
             } 
         />
         
         {/* Partner Management Routes */}
         <Route 
-            path="/master-data/partners" 
+            path="/partners" 
             element={
             <PermissionProtectedRoute requiredPermission="manage_partner">
-                <MainLayout>
                 <PartnersList />
-                </MainLayout>
             </PermissionProtectedRoute>
             } 
         />
-    </React.Fragment>
+    </Routes>
 );
