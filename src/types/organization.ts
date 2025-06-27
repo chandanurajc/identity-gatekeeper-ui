@@ -4,6 +4,7 @@ export interface Organization {
   code: string;
   name: string;
   description?: string;
+  alias?: string;
   type: 'Admin' | 'Customer' | 'Supplier' | 'Partner';
   status: 'active' | 'inactive';
   references: Reference[];
@@ -18,6 +19,7 @@ export interface OrganizationFormData {
   code: string;
   name: string;
   description?: string;
+  alias?: string;
   type: 'Admin' | 'Customer' | 'Supplier' | 'Partner';
   status: 'active' | 'inactive';
   references: Reference[];

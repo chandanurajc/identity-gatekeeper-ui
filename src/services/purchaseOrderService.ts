@@ -164,7 +164,7 @@ export const purchaseOrderService = {
         .select(`
           *,
           divisions:division_id(id, name, code),
-          organizations:supplier_id(id, name, code)
+          supplier_org:organizations!purchase_order_supplier_id_fkey(id, name, code)
         `)
         .eq('organization_id', organizationId)
         .order('created_on', { ascending: false });
@@ -200,7 +200,7 @@ export const purchaseOrderService = {
         updatedBy: po.updated_by,
         updatedOn: po.updated_on ? new Date(po.updated_on) : undefined,
         division: po.divisions ? { name: po.divisions.name, code: po.divisions.code } : undefined,
-        supplier: po.organizations ? { name: po.organizations.name, code: po.organizations.code } : undefined
+        supplier: po.supplier_org ? { name: po.supplier_org.name, code: po.supplier_org.code } : undefined
       }));
     } catch (error) {
       console.error("Service error fetching purchase orders:", error);
@@ -217,10 +217,10 @@ export const purchaseOrderService = {
         .select(`
           *,
           divisions:division_id(id, name, code),
-          organizations:supplier_id(id, name, code),
+          supplier_org:organizations!purchase_order_supplier_id_fkey(id, name, code),
           purchase_order_line(
             *,
-            items:item_id(id, description, classification, sub_classification, weight, weight_uom, item_groups:item_group_id(name, classification, sub_classification))
+            items:item_id(id, description, classification, sub_classification, weight, weight_uom, item_group_id, item_groups:item_group_id(name, classification, sub_classification))
           )
         `)
         .eq('id', id)
@@ -261,7 +261,7 @@ export const purchaseOrderService = {
         updatedBy: data.updated_by,
         updatedOn: data.updated_on ? new Date(data.updated_on) : undefined,
         division: data.divisions ? { name: data.divisions.name, code: data.divisions.code } : undefined,
-        supplier: data.organizations ? { name: data.organizations.name } : undefined,
+        supplier: data.supplier_org ? { name: data.supplier_org.name } : undefined,
         lines: (data.purchase_order_line || []).map(line => ({
           id: line.id,
           purchaseOrderId: line.purchase_order_id,
