@@ -42,7 +42,7 @@ const defaultContact: Omit<Contact, 'id'> = {
 
 export const ContactForm = ({ contacts, onChange, readOnly = false }: ContactFormProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [currentContact, setCurrentContact] = useState<Omit<Contact, 'id'>>(defaultContact);
+  const [currentContact, setCurrentContact] = useState<Omit<Contact, 'id'> & { stateCode?: number }>(defaultContact);
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const resetForm = () => {
@@ -68,7 +68,8 @@ export const ContactForm = ({ contacts, onChange, readOnly = false }: ContactFor
       country: contact.country,
       phoneNumber: contact.phoneNumber,
       email: contact.email,
-      website: contact.website
+      website: contact.website,
+      stateCode: contact.stateCode
     });
     setEditingId(contact.id);
     setIsOpen(true);
@@ -95,6 +96,15 @@ export const ContactForm = ({ contacts, onChange, readOnly = false }: ContactFor
 
   const handleRemoveContact = (id: string) => {
     onChange(contacts.filter((contact) => contact.id !== id));
+  };
+
+  const handleStateChange = (stateName: string, stateCode: number) => {
+    console.log('Organization contact state changed:', stateName, 'State code:', stateCode);
+    setCurrentContact({ 
+      ...currentContact, 
+      state: stateName,
+      stateCode: stateCode 
+    });
   };
 
   const contactTypes = ['Registered location', 'Billing', 'Shipping', 'Owner', 'Bill To', 'Remit To'];
@@ -216,14 +226,19 @@ export const ContactForm = ({ contacts, onChange, readOnly = false }: ContactFor
                 <Label htmlFor="state">State*</Label>
                 <IndianStateSelect
                   value={currentContact.state}
-                  onValueChange={(stateName, stateCode) =>
-                    setCurrentContact({ 
-                      ...currentContact, 
-                      state: stateName,
-                      stateCode: stateCode 
-                    })
-                  }
+                  onValueChange={handleStateChange}
                   placeholder="Select state"
+                />
+              </div>
+
+              <div className="flex flex-col space-y-2">
+                <Label htmlFor="stateCode">State Code</Label>
+                <Input
+                  id="stateCode"
+                  value={currentContact.stateCode || ""}
+                  readOnly
+                  placeholder="Auto-filled from state selection"
+                  className="bg-muted"
                 />
               </div>
 
