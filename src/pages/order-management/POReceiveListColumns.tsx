@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import PermissionButton from "@/components/PermissionButton";
+import { format } from "date-fns";
 
 export const columns: ColumnDef<PurchaseOrder>[] = [
   {
@@ -25,7 +26,7 @@ export const columns: ColumnDef<PurchaseOrder>[] = [
     },
     cell: ({ row }) => (
       <Link to={`/order-management/purchase-orders/${row.original.id}`} className="font-medium text-blue-600 hover:underline">
-        {row.getValue("poNumber")}
+        {row.original.poNumber}
       </Link>
     ),
   },
@@ -36,8 +37,29 @@ export const columns: ColumnDef<PurchaseOrder>[] = [
   },
   {
     accessorKey: "poDate",
-    header: "PO Date",
-    cell: ({ row }) => new Date(row.getValue("poDate")).toLocaleDateString(),
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          PO Date
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
+    cell: ({ row }) => {
+      const poDate = row.original.poDate;
+      if (!poDate) return "N/A";
+      
+      try {
+        const date = typeof poDate === 'string' ? new Date(poDate) : poDate;
+        return format(date, "dd/MM/yyyy");
+      } catch (error) {
+        console.error("Error formatting PO date:", error);
+        return "Invalid Date";
+      }
+    },
   },
   {
     accessorKey: "status",
@@ -54,11 +76,23 @@ export const columns: ColumnDef<PurchaseOrder>[] = [
   {
     accessorKey: "createdBy",
     header: "Created By",
+    cell: ({ row }) => row.original.createdBy || "N/A",
   },
   {
     accessorKey: "createdOn",
     header: "Created On",
-    cell: ({ row }) => new Date(row.getValue("createdOn")).toLocaleString(),
+    cell: ({ row }) => {
+      const createdOn = row.original.createdOn;
+      if (!createdOn) return "N/A";
+      
+      try {
+        const date = typeof createdOn === 'string' ? new Date(createdOn) : createdOn;
+        return format(date, "dd/MM/yyyy HH:mm");
+      } catch (error) {
+        console.error("Error formatting created date:", error);
+        return "Invalid Date";
+      }
+    },
   },
   {
     id: "actions",

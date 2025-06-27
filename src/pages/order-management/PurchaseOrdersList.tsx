@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -65,9 +64,9 @@ const PurchaseOrdersList = () => {
   const filteredAndSortedOrders = React.useMemo(() => {
     let filtered = purchaseOrders.filter(order => 
       order.poNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.supplier?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (order.supplier?.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.status.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.createdBy.toLowerCase().includes(searchTerm.toLowerCase())
+      (order.createdBy || "").toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     return filtered.sort((a, b) => {
@@ -250,18 +249,18 @@ const PurchaseOrdersList = () => {
                           {order.poNumber}
                         </Button>
                       </TableCell>
-                      <TableCell>{order.supplier?.name}</TableCell>
+                      <TableCell>{order.supplier?.name || "-"}</TableCell>
                       <TableCell>
                         <Badge variant={getStatusBadgeVariant(order.status)}>
                           {order.status}
                         </Badge>
                       </TableCell>
-                      <TableCell>{format(order.poDate, "dd/MM/yyyy")}</TableCell>
-                      <TableCell>{order.createdBy}</TableCell>
-                      <TableCell>{format(order.createdOn, "dd/MM/yyyy HH:mm")}</TableCell>
+                      <TableCell>{format(new Date(order.poDate), "dd/MM/yyyy")}</TableCell>
+                      <TableCell>{order.createdBy || "-"}</TableCell>
+                      <TableCell>{format(new Date(order.createdOn), "dd/MM/yyyy HH:mm")}</TableCell>
                       <TableCell>{order.updatedBy || "-"}</TableCell>
                       <TableCell>
-                        {order.updatedOn ? format(order.updatedOn, "dd/MM/yyyy HH:mm") : "-"}
+                        {order.updatedOn ? format(new Date(order.updatedOn), "dd/MM/yyyy HH:mm") : "-"}
                       </TableCell>
                     </TableRow>
                   ))
