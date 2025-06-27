@@ -1,173 +1,164 @@
 
-import { supabase } from "@/integrations/supabase/client";
-import { PurchaseOrder, POReceiveLineData } from "@/types/purchaseOrder";
-import { getUserNameById } from "@/lib/userUtils";
-import { getPurchaseOrderById } from "./queries";
-import { invoiceService } from "../invoiceService";
+import { supabase } from '@/integrations/supabase/client';
+import { PurchaseOrder } from '@/types/purchaseOrder';
 
-export async function receivePurchaseOrder(
+export const receivePurchaseOrder = async (
   poId: string,
-  linesToReceive: POReceiveLineData[],
+  receivedLines: Array<{
+    lineId: string;
+    receivedQuantity: number;
+  }>,
   organizationId: string,
-  userId: string
-): Promise<{ warning?: string }> {
-  console.log("Starting PO Receive process for PO:", poId);
+  receivedBy: string,
+  receivedByName: string
+): Promise<PurchaseOrder> => {
+  console.log(`[PO Receive] Starting receipt process for PO ${poId}`);
 
-  const po = await getPurchaseOrderById(poId);
-  if (!po) {
-    throw new Error("Purchase Order not found.");
+  // Fetch the current PO to validate
+  const { data: currentPO, error: fetchError } = await supabase
+    .from('purchase_order')
+    .select(`
+      *,
+      lines:purchase_order_line(*)
+    `)
+    .eq('id', poId)
+    .eq('organization_id', organizationId)
+    .single();
+
+  if (fetchError || !currentPO) {
+    console.error(`[PO Receive] Error fetching PO ${poId}:`, fetchError);
+    throw new Error(`Purchase Order not found: ${fetchError?.message}`);
   }
 
-  // 1. Validation
-  for (const line of linesToReceive) {
-    if (line.quantityToReceive > 0) {
-      const poLine = po.lines?.find(l => l.id === line.purchaseOrderLineId);
-      if (!poLine) {
-        throw new Error(`Line item ${line.itemId} not found on PO.`);
-      }
-      const remainingQty = poLine.quantity - (poLine.receivedQuantity || 0);
-      if (line.quantityToReceive > remainingQty) {
-        throw new Error(`Quantity to receive for item ${line.itemId} exceeds remaining quantity.`);
-      }
+  if (currentPO.status !== 'Approved') {
+    throw new Error(`Cannot receive Purchase Order with status: ${currentPO.status}. Only 'Approved' POs can be received.`);
+  }
+
+  // Validate received lines
+  for (const receivedLine of receivedLines) {
+    const poLine = currentPO.lines?.find(line => line.id === receivedLine.lineId);
+    if (!poLine) {
+      throw new Error(`Purchase Order line not found: ${receivedLine.lineId}`);
+    }
+
+    const totalReceived = (poLine.received_quantity || 0) + receivedLine.receivedQuantity;
+    if (totalReceived > poLine.quantity) {
+      throw new Error(`Cannot receive more than ordered quantity for line ${poLine.line_number}`);
+    }
+
+    if (receivedLine.receivedQuantity <= 0) {
+      throw new Error(`Received quantity must be greater than 0 for line ${poLine.line_number}`);
     }
   }
 
-  const receiveTransactions = [];
-  const inventoryStockEntries = [];
-  const lineUpdates = [];
+  // Update received quantities and create receive transactions
+  for (const receivedLine of receivedLines) {
+    const poLine = currentPO.lines?.find(line => line.id === receivedLine.lineId);
+    if (!poLine) continue;
 
-  const createdByUsername = await getUserNameById(userId);
+    const newReceivedQuantity = (poLine.received_quantity || 0) + receivedLine.receivedQuantity;
 
-  // 2. Prepare DB operations
-  for (const line of linesToReceive) {
-    if (line.quantityToReceive > 0) {
-      // a. PO Receive Transaction
-      receiveTransactions.push({
+    // Update the PO line with new received quantity
+    const { error: updateLineError } = await supabase
+      .from('purchase_order_line')
+      .update({
+        received_quantity: newReceivedQuantity,
+        updated_by: receivedByName,
+        updated_on: new Date().toISOString(),
+      })
+      .eq('id', receivedLine.lineId);
+
+    if (updateLineError) {
+      console.error(`[PO Receive] Error updating PO line ${receivedLine.lineId}:`, updateLineError);
+      throw new Error(`Failed to update purchase order line: ${updateLineError.message}`);
+    }
+
+    // Create receive transaction record
+    const { error: receiveTransactionError } = await supabase
+      .from('po_receive_transaction')
+      .insert({
         organization_id: organizationId,
         purchase_order_id: poId,
-        purchase_order_line_id: line.purchaseOrderLineId,
-        item_id: line.itemId,
-        quantity_received: line.quantityToReceive,
-        uom: line.uom,
-        received_by: userId,
+        purchase_order_line_id: receivedLine.lineId,
+        item_id: poLine.item_id,
+        uom: poLine.uom,
+        quantity_received: receivedLine.receivedQuantity,
+        received_by: receivedBy,
       });
 
-      // b. Inventory Stock Transaction
-      inventoryStockEntries.push({
+    if (receiveTransactionError) {
+      console.error(`[PO Receive] Error creating receive transaction for line ${receivedLine.lineId}:`, receiveTransactionError);
+      throw new Error(`Failed to create receive transaction: ${receiveTransactionError.message}`);
+    }
+
+    // Update inventory stock
+    const { error: inventoryError } = await supabase
+      .from('inventory_stock')
+      .insert({
         organization_id: organizationId,
-        item_id: line.itemId,
-        division_id: po.divisionId,
-        quantity: line.quantityToReceive,
-        uom: line.uom,
+        division_id: currentPO.division_id,
+        item_id: poLine.item_id,
+        uom: poLine.uom,
+        quantity: receivedLine.receivedQuantity,
         transaction_type: 'PO_RECEIVE',
-        reference_number: po.poNumber,
-        created_by: createdByUsername,
+        reference_number: currentPO.po_number,
+        created_by: receivedByName,
       });
 
-      // c. PO Line Update
-      const poLine = po.lines?.find(l => l.id === line.purchaseOrderLineId);
-      const newReceivedQty = (poLine?.receivedQuantity || 0) + line.quantityToReceive;
-      lineUpdates.push(
-        supabase
-          .from('purchase_order_line')
-          .update({ received_quantity: newReceivedQty, updated_by: createdByUsername, updated_on: new Date().toISOString() })
-          .eq('id', line.purchaseOrderLineId)
-      );
+    if (inventoryError) {
+      console.error(`[PO Receive] Error updating inventory for item ${poLine.item_id}:`, inventoryError);
+      throw new Error(`Failed to update inventory: ${inventoryError.message}`);
     }
   }
 
-  // 3. Execute DB operations
-  if (receiveTransactions.length > 0) {
-    const { error: receiveError } = await supabase.from('po_receive_transaction').insert(receiveTransactions);
-    if (receiveError) {
-      console.error("Error creating PO receive transactions:", receiveError);
-      throw new Error(`Failed to create PO receive transactions: ${receiveError.message}`);
-    }
+  // Check if PO is fully received
+  const { data: updatedPO, error: updatedPOError } = await supabase
+    .from('purchase_order')
+    .select(`
+      *,
+      lines:purchase_order_line(*)
+    `)
+    .eq('id', poId)
+    .single();
+
+  if (updatedPOError || !updatedPO) {
+    throw new Error(`Failed to fetch updated PO: ${updatedPOError?.message}`);
   }
 
-  if (inventoryStockEntries.length > 0) {
-    const { error: stockError } = await supabase.from('inventory_stock').insert(inventoryStockEntries);
-    if (stockError) {
-      console.error("Error creating inventory stock entries:", stockError);
-      // Here we should ideally roll back the receive transactions
-      throw new Error(`Failed to create inventory stock entries: ${stockError.message}`);
-    }
+  // Determine if all lines are fully received
+  const allLinesReceived = updatedPO.lines?.every(line => 
+    (line.received_quantity || 0) >= line.quantity
+  ) || false;
+
+  const newStatus = allLinesReceived ? 'Received' : 'Partially Received';
+
+  // Update PO status
+  const { data: finalPO, error: statusUpdateError } = await supabase
+    .from('purchase_order')
+    .update({
+      status: newStatus,
+      updated_by: receivedByName,
+      updated_on: new Date().toISOString(),
+    })
+    .eq('id', poId)
+    .select(`
+      *,
+      lines:purchase_order_line(*),
+      supplier:organizations!supplier_id(*),
+      division:divisions(*)
+    `)
+    .single();
+
+  if (statusUpdateError || !finalPO) {
+    console.error(`[PO Receive] Error updating PO status:`, statusUpdateError);
+    throw new Error(`Failed to update purchase order status: ${statusUpdateError?.message}`);
   }
 
-  if (lineUpdates.length > 0) {
-    const results = await Promise.all(lineUpdates);
-    const updateError = results.find(res => res.error);
-    if (updateError) {
-      console.error("Error updating PO lines:", updateError.error);
-      throw new Error(`Failed to update PO lines: ${updateError.error.message}`);
-    }
-  }
+  console.log(`[PO Receive] Successfully processed PO ${poId} with status: ${newStatus}`);
 
-  // 4. Update PO Status
-  // To avoid issues with DB replication lag, we'll calculate the new status based on our in-memory data
-  // instead of re-fetching the entire PO.
-  const inMemoryUpdatedPO = { ...po };
-  inMemoryUpdatedPO.lines = po.lines?.map(poLine => {
-    const receivedLine = linesToReceive.find(rtl => rtl.purchaseOrderLineId === poLine.id);
-    if (receivedLine) {
-      return {
-        ...poLine,
-        receivedQuantity: (poLine.receivedQuantity || 0) + receivedLine.quantityToReceive,
-      };
-    }
-    return poLine;
-  });
-
-  if (!inMemoryUpdatedPO?.lines) {
-    // This case should not be reached if the initial 'po' object was valid.
-    throw new Error("Could not determine PO lines to update status.");
-  }
-  
-  console.log("Checking PO lines for status update:", inMemoryUpdatedPO.lines.map(l => ({ 
-    id: l.id, 
-    qty: l.quantity, 
-    received: l.receivedQuantity 
-  })));
-  
-  const allLinesFullyReceived = inMemoryUpdatedPO.lines.every(line => (line.receivedQuantity || 0) >= line.quantity);
-  const anyLinePartiallyReceived = inMemoryUpdatedPO.lines.some(line => (line.receivedQuantity || 0) > 0);
-
-  console.log({ allLinesFullyReceived, anyLinePartiallyReceived });
-
-  let newStatus: PurchaseOrder['status'] = po.status;
-  if (allLinesFullyReceived) {
-    newStatus = 'Received';
-  } else if (anyLinePartiallyReceived) {
-    newStatus = 'Partially Received';
-  }
-
-  console.log(`PO status determined as: ${newStatus}. Original status: ${po.status}`);
-
-  if (newStatus !== po.status) {
-    const updatedByUsername = await getUserNameById(userId);
-    const { error: poStatusError } = await supabase
-      .from('purchase_order')
-      .update({ status: newStatus, updated_by: updatedByUsername, updated_on: new Date().toISOString() })
-      .eq('id', poId);
-
-    if (poStatusError) {
-      console.error("Error updating PO status:", poStatusError);
-      throw new Error(`Failed to update PO status: ${poStatusError.message}`);
-    }
-
-    if (newStatus === 'Received') {
-      try {
-        console.log(`[PO Receive] PO ${poId} is fully received. Triggering invoice creation...`);
-        await invoiceService.createInvoiceFromReceivedPO(poId, organizationId, userId, updatedByUsername);
-        console.log(`[PO Receive] Successfully triggered invoice creation for PO ${poId}`);
-      } catch (invoiceError: any) {
-        // Log the full error for debugging but don't fail the entire receive process.
-        console.error(`[PO Receive] Failed to create invoice for PO ${poId}. This may need to be done manually. Full error:`, invoiceError);
-        return { warning: `PO received successfully, but automated invoice creation failed. Please create the invoice manually.` };
-      }
-    }
-  }
-
-  console.log("PO Receive process completed for PO:", poId);
-  return {};
-}
+  return {
+    ...finalPO,
+    created_on: new Date(finalPO.created_on),
+    updated_on: finalPO.updated_on ? new Date(finalPO.updated_on) : undefined,
+  } as unknown as PurchaseOrder;
+};
