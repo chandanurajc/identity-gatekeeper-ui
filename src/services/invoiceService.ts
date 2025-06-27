@@ -1,5 +1,6 @@
+
 import { supabase } from "@/integrations/supabase/client";
-import type { Invoice, InvoiceFormData, ReferenceTransactionSearchParams, ReferenceTransactionResult } from "@/types/invoice";
+import type { Invoice, InvoiceFormData, ReferenceTransactionSearchParams, ReferenceTransactionResult, InvoiceStatus } from "@/types/invoice";
 
 class InvoiceService {
   async getInvoices(organizationId: string): Promise<Invoice[]> {
@@ -216,7 +217,7 @@ class InvoiceService {
     return this.getInvoiceById(id, organizationId) as Promise<Invoice>;
   }
 
-  async updateInvoiceStatus(id: string, newStatus: string, organizationId: string, changedBy: string, comments?: string): Promise<void> {
+  async updateInvoiceStatus(id: string, newStatus: InvoiceStatus, organizationId: string, changedBy: string, comments?: string): Promise<void> {
     // Get current invoice to track old status
     const currentInvoice = await this.getInvoiceById(id, organizationId);
     if (!currentInvoice) {

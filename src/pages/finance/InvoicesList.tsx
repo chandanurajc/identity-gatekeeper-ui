@@ -31,7 +31,6 @@ export default function InvoicesList() {
   const navigate = useNavigate();
   const { getCurrentOrganizationId } = useMultiTenant();
   const { hasPermission } = usePermissions();
-  const [selectedInvoices, setSelectedInvoices] = useState<Invoice[]>([]);
 
   const organizationId = getCurrentOrganizationId();
 
@@ -262,7 +261,8 @@ export default function InvoicesList() {
           <DataTable
             columns={columns}
             data={invoices || []}
-            onSelectionChange={setSelectedInvoices}
+            filterColumn="invoiceNumber"
+            filterPlaceholder="Filter by invoice number..."
           />
         </CardContent>
       </Card>
