@@ -56,33 +56,26 @@ export function DivisionMainFields({
       <FormField
         control={control}
         name="userDefinedCode"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Division Code *</FormLabel>
-            <FormControl>
-              <div className="flex items-center space-x-2">
+        render={({ field }) => {
+          // Compute the full code for display
+          const orgCode = selectedOrg?.code || "----";
+          const userCode = field.value || "";
+          const fullCode = `${orgCode}-${userCode}`;
+          return (
+            <FormItem>
+              <FormLabel>Division Code *</FormLabel>
+              <FormControl>
                 <Input
-                  value={selectedOrg?.code || "----"}
-                  disabled
-                  className="w-20 text-center bg-gray-100"
+                  value={fullCode}
+                  placeholder="ORGCODE-XXX"
+                  readOnly
+                  className="w-44 bg-gray-100"
                 />
-                <span>+</span>
-                <Input
-                  placeholder="Enter 3-character code"
-                  {...field}
-                  maxLength={3}
-                  style={{ textTransform: 'uppercase' }}
-                  onChange={(e) => field.onChange(e.target.value.toUpperCase())}
-                  className="w-24"
-                  disabled={isSubmitting || isEditing}
-                  value={field.value}
-                  readOnly={isEditing}
-                />
-              </div>
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          );
+        }}
       />
 
       <FormField
