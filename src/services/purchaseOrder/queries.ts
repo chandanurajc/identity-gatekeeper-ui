@@ -218,30 +218,82 @@ export async function generatePONumber(): Promise<string> {
 }
 
 export async function getDivisionShippingAddress(divisionId: string): Promise<any> {
-  console.log("Fetching division shipping address (from division_contacts):", divisionId);
+  try {
+    // Fetch 'Registered location' contact instead of 'Shipping'
+    const { data: contact, error } = await supabase
+      .from('division_contacts')
+      .select('*')
+      .eq('division_id', divisionId)
+      .eq('contact_type', 'Registered location')
+      .single();
 
-  // Fetch ALL shipping contacts, not just one
-  const { data, error } = await supabase
-    .from('division_contacts')
-    .select('*')
-    .eq('division_id', divisionId)
-    .eq('contact_type', 'Shipping');
+    if (error) {
+      console.error('Error fetching division registered location contact:', error);
+      return null;
+    }
 
-  if (error && error.code !== 'PGRST116') {
-    console.error("Error fetching division shipping address (division_contacts):", error);
-    throw new Error(`Failed to fetch division shipping address: ${error.message}`);
+    // If no registered location contact found, try to get the first available contact
+    if (!contact) {
+      const { data: firstContact, error: firstError } = await supabase
+        .from('division_contacts')
+        .select('*')
+        .eq('division_id', divisionId)
+        .limit(1)
+        .single();
+
+      if (firstError || !firstContact) {
+        console.error('Error fetching division contact:', firstError);
+        return null;
+      }
+
+      return {
+        address1: firstContact.address1,
+        address2: firstContact.address2,
+        postal_code: firstContact.postal_code,
+        city: firstContact.city,
+        state: firstContact.state,
+        country: firstContact.country,
+        phone_number: firstContact.phone_number,
+        email: firstContact.email,
+        state_code: firstContact.state_code
+      };
+    }
+
+    return {
+      address1: contact.address1,
+      address2: contact.address2,
+      postal_code: contact.postal_code,
+      city: contact.city,
+      state: contact.state,
+      country: contact.country,
+      phone_number: contact.phone_number,
+      email: contact.email,
+      state_code: contact.state_code
+    };
+  } catch (error) {
+    console.error('Error in getDivisionShippingAddress:', error);
+    return null;
   }
-  // If multiple shipping contacts, pick the first (if any)
-  if (data && data.length > 0) {
-    // Prefer contacts with valid address1 field
-    const sorted = [...data].sort((a, b) => {
-      // entries with non-empty address1 should come first
-      if (a.address1 && !b.address1) return -1;
-      if (!a.address1 && b.address1) return 1;
-      return 0;
-    });
-    return sorted[0];
+}
+
+// Add function to get supplier state code
+export async function getSupplierStateCode(supplierId: string): Promise<number | null> {
+  try {
+    const { data: contact, error } = await supabase
+      .from('organization_contacts')  
+      .select('state_code')
+      .eq('organization_id', supplierId)
+      .eq('contact_type', 'Registered location')
+      .single();
+
+    if (error) {
+      console.error('Error fetching supplier registered location contact:', error);
+      return null;
+    }
+
+    return contact?.state_code || null;
+  } catch (error) {
+    console.error('Error in getSupplierStateCode:', error);
+    return null;
   }
-  // Return null if none found
-  return null;
 }

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Contact } from "@/types/organization";
 import {
@@ -18,6 +17,7 @@ import { v4 as uuidv4 } from "uuid";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { X, Plus, Pencil } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { IndianStateSelect } from "@/components/ui/indian-state-select";
 
 interface ContactFormProps {
   contacts: Contact[];
@@ -75,8 +75,8 @@ export const ContactForm = ({ contacts, onChange, readOnly = false }: ContactFor
   };
 
   const handleSaveContact = () => {
-    // Modified validation to only require type and firstName fields
-    if (currentContact.firstName && currentContact.type) {
+    // Modified validation to require type, firstName, and state fields
+    if (currentContact.firstName && currentContact.type && currentContact.state) {
       if (editingId) {
         // Edit existing contact
         onChange(
@@ -213,14 +213,17 @@ export const ContactForm = ({ contacts, onChange, readOnly = false }: ContactFor
               </div>
 
               <div className="flex flex-col space-y-2">
-                <Label htmlFor="state">State</Label>
-                <Input
-                  id="state"
+                <Label htmlFor="state">State*</Label>
+                <IndianStateSelect
                   value={currentContact.state}
-                  onChange={(e) =>
-                    setCurrentContact({ ...currentContact, state: e.target.value })
+                  onValueChange={(stateName, stateCode) =>
+                    setCurrentContact({ 
+                      ...currentContact, 
+                      state: stateName,
+                      stateCode: stateCode 
+                    })
                   }
-                  placeholder="State"
+                  placeholder="Select state"
                 />
               </div>
 

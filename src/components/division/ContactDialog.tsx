@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -9,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Contact } from "@/types/division";
 import { v4 as uuidv4 } from "uuid";
 import { useToast } from "@/hooks/use-toast";
+import { IndianStateSelect } from "@/components/ui/indian-state-select";
 
 interface ContactDialogProps {
   open: boolean;
@@ -19,7 +19,7 @@ interface ContactDialogProps {
 }
 
 export function ContactDialog({ open, onOpenChange, initialData, onSave, existingTypes }: ContactDialogProps) {
-  const [formData, setFormData] = useState<Partial<Contact>>(initialData || {});
+  const [formData, setFormData] = useState<Partial<Contact & { stateCode?: number }>>(initialData || {});
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const { toast } = useToast();
 
@@ -69,6 +69,7 @@ export function ContactDialog({ open, onOpenChange, initialData, onSave, existin
       phoneNumber: formData.phoneNumber!.trim(),
       email: formData.email?.trim() || "",
       website: formData.website?.trim() || "",
+      stateCode: formData.stateCode
     });
     onOpenChange(false);
   };
@@ -163,11 +164,12 @@ export function ContactDialog({ open, onOpenChange, initialData, onSave, existin
           </div>
           <div>
             <Label htmlFor="state">State *</Label>
-            <Input
-              id="state"
-              value={formData.state || ""}
-              onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-              placeholder="Enter state"
+            <IndianStateSelect
+              value={formData.state || ''}
+              onValueChange={(stateName, stateCode) =>
+                setFormData({ ...formData, state: stateName, stateCode: stateCode })
+              }
+              placeholder="Select state"
             />
             {formErrors.state && <p className="text-sm text-destructive mt-1">{formErrors.state}</p>}
           </div>

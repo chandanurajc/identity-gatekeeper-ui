@@ -25,6 +25,7 @@ export type Database = {
           phone_number: string | null
           postal_code: string | null
           state: string | null
+          state_code: number | null
           updated_on: string | null
           website: string | null
         }
@@ -43,6 +44,7 @@ export type Database = {
           phone_number?: string | null
           postal_code?: string | null
           state?: string | null
+          state_code?: number | null
           updated_on?: string | null
           website?: string | null
         }
@@ -61,6 +63,7 @@ export type Database = {
           phone_number?: string | null
           postal_code?: string | null
           state?: string | null
+          state_code?: number | null
           updated_on?: string | null
           website?: string | null
         }
@@ -71,6 +74,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "divisions"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "division_contacts_state_code_fkey"
+            columns: ["state_code"]
+            isOneToOne: false
+            referencedRelation: "india_state_code"
+            referencedColumns: ["state_code"]
           },
         ]
       }
@@ -964,6 +974,7 @@ export type Database = {
           phone_number: string | null
           postal_code: string | null
           state: string | null
+          state_code: number | null
           updated_on: string | null
           website: string | null
         }
@@ -982,6 +993,7 @@ export type Database = {
           phone_number?: string | null
           postal_code?: string | null
           state?: string | null
+          state_code?: number | null
           updated_on?: string | null
           website?: string | null
         }
@@ -1000,6 +1012,7 @@ export type Database = {
           phone_number?: string | null
           postal_code?: string | null
           state?: string | null
+          state_code?: number | null
           updated_on?: string | null
           website?: string | null
         }
@@ -1010,6 +1023,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organization_contacts_state_code_fkey"
+            columns: ["state_code"]
+            isOneToOne: false
+            referencedRelation: "india_state_code"
+            referencedColumns: ["state_code"]
           },
         ]
       }
@@ -1347,8 +1367,10 @@ export type Database = {
           ship_to_phone: string | null
           ship_to_postal_code: string | null
           ship_to_state: string | null
+          ship_to_state_code: number | null
           status: string
           supplier_id: string | null
+          supplier_state_code: number | null
           tracking_number: string | null
           updated_by: string | null
           updated_on: string | null
@@ -1372,8 +1394,10 @@ export type Database = {
           ship_to_phone?: string | null
           ship_to_postal_code?: string | null
           ship_to_state?: string | null
+          ship_to_state_code?: number | null
           status?: string
           supplier_id?: string | null
+          supplier_state_code?: number | null
           tracking_number?: string | null
           updated_by?: string | null
           updated_on?: string | null
@@ -1397,8 +1421,10 @@ export type Database = {
           ship_to_phone?: string | null
           ship_to_postal_code?: string | null
           ship_to_state?: string | null
+          ship_to_state_code?: number | null
           status?: string
           supplier_id?: string | null
+          supplier_state_code?: number | null
           tracking_number?: string | null
           updated_by?: string | null
           updated_on?: string | null
@@ -1419,11 +1445,25 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "purchase_order_ship_to_state_code_fkey"
+            columns: ["ship_to_state_code"]
+            isOneToOne: false
+            referencedRelation: "india_state_code"
+            referencedColumns: ["state_code"]
+          },
+          {
             foreignKeyName: "purchase_order_supplier_id_fkey"
             columns: ["supplier_id"]
             isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_supplier_state_code_fkey"
+            columns: ["supplier_state_code"]
+            isOneToOne: false
+            referencedRelation: "india_state_code"
+            referencedColumns: ["state_code"]
           },
         ]
       }

@@ -1,8 +1,8 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { PurchaseOrder, PurchaseOrderFormData } from "@/types/purchaseOrder";
 import { getUserNameById } from "@/lib/userUtils";
 import { getPurchaseOrderById } from "./queries";
+import { getSupplierStateCode } from './queries';
 
 export async function updatePurchaseOrder(id: string, formData: PurchaseOrderFormData, organizationId: string, userId: string): Promise<PurchaseOrder> {
   const poDate = formData.poDate;
@@ -11,6 +11,12 @@ export async function updatePurchaseOrder(id: string, formData: PurchaseOrderFor
   }
 
   const updatedByUsername = await getUserNameById(userId);
+
+  // Get supplier state code
+  let supplierStateCode = null;
+  if (formData.supplierId) {
+    supplierStateCode = await getSupplierStateCode(formData.supplierId);
+  }
 
   const { error: poError } = await supabase
     .from('purchase_order')
@@ -24,12 +30,14 @@ export async function updatePurchaseOrder(id: string, formData: PurchaseOrderFor
       ship_to_postal_code: formData.shipToPostalCode,
       ship_to_city: formData.shipToCity,
       ship_to_state: formData.shipToState,
+      ship_to_state_code: formData.shipToStateCode || null,
       ship_to_country: formData.shipToCountry,
       ship_to_phone: formData.shipToPhone,
       ship_to_email: formData.shipToEmail,
       payment_terms: formData.paymentTerms,
       notes: formData.notes,
       tracking_number: formData.trackingNumber,
+      supplier_state_code: supplierStateCode,
       updated_by: updatedByUsername,
       updated_on: new Date().toISOString()
     })

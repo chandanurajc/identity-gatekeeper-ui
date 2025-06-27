@@ -4,6 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { IndianStateSelect } from "@/components/ui/indian-state-select";
 
 const sectionTitleClass = "text-base font-semibold text-muted-foreground tracking-tight mb-1";
 
@@ -13,9 +14,11 @@ const ShipToAddressSection = ({
   errors,
   watchedDivisionId,
   loadDivisionShippingAddress,
-  resetShippingFields
+  resetShippingFields,
+  setValue
 }) => {
   const sameAsDivisionAddress = useWatch({ control, name: "sameAsDivisionAddress" });
+  const shipToState = useWatch({ control, name: "shipToState" });
 
   useEffect(() => {
     if (sameAsDivisionAddress && watchedDivisionId) {
@@ -72,9 +75,13 @@ const ShipToAddressSection = ({
         </div>
         <div>
           <Label htmlFor="shipToState">State *</Label>
-          <Input
-            id="shipToState"
-            {...register("shipToState", { required: "State is required" })}
+          <IndianStateSelect
+            value={shipToState}
+            onValueChange={(stateName, stateCode) => {
+              setValue("shipToState", stateName);
+              setValue("shipToStateCode", stateCode);
+            }}
+            placeholder="Select state"
             disabled={sameAsDivisionAddress}
           />
           {errors.shipToState && <p className="text-xs text-red-500">{errors.shipToState.message}</p>}

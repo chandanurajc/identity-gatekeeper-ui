@@ -87,6 +87,7 @@ export interface PurchaseOrderFormData {
   shipToPostalCode: string;
   shipToCity: string;
   shipToState: string;
+  shipToStateCode?: number;
   shipToCountry: string;
   shipToPhone: string;
   shipToEmail: string;

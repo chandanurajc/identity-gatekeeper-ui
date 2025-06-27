@@ -14,6 +14,7 @@ export interface Contact {
   postalCode: string;
   city: string;
   state: string;
+  stateCode?: number;
   country: string;
   phoneNumber: string;
   email?: string;

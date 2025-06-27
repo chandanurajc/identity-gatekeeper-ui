@@ -161,6 +161,7 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
         setValue("shipToPostalCode", address.postal_code || "");
         setValue("shipToCity", address.city || "");
         setValue("shipToState", address.state || "");
+        setValue("shipToStateCode", address.state_code || null);
         setValue("shipToCountry", address.country || "");
         setValue("shipToPhone", address.phone_number || "");
         setValue("shipToEmail", address.email || "");
@@ -168,7 +169,7 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
         resetShippingFields();
       }
     } catch {
-      toast({title: "Warning", description: "Could not load division shipping address", variant: "default"});
+      toast({title: "Warning", description: "Could not load division registered location address", variant: "default"});
       resetShippingFields();
     }
   };
@@ -359,6 +360,7 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
             watchedDivisionId={watchedDivisionId}
             loadDivisionShippingAddress={loadDivisionShippingAddress}
             resetShippingFields={resetShippingFields}
+            setValue={setValue}
           />
           {/* PO Lines Section */}
           <PurchaseOrderLinesSection

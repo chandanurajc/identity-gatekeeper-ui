@@ -1,7 +1,7 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { PurchaseOrder, PurchaseOrderFormData } from "@/types/purchaseOrder";
 import { getUserNameById } from "@/lib/userUtils";
+import { getSupplierStateCode } from './queries';
 
 export async function createPurchaseOrder(formData: PurchaseOrderFormData, organizationId: string, userId: string): Promise<PurchaseOrder> {
   const poDate = formData.poDate;
@@ -10,6 +10,12 @@ export async function createPurchaseOrder(formData: PurchaseOrderFormData, organ
   }
   
   const createdByUsername = await getUserNameById(userId);
+
+  // Get supplier state code
+  let supplierStateCode = null;
+  if (formData.supplierId) {
+    supplierStateCode = await getSupplierStateCode(formData.supplierId);
+  }
 
   const poHeader = {
     po_number: formData.poNumber,
@@ -22,12 +28,14 @@ export async function createPurchaseOrder(formData: PurchaseOrderFormData, organ
     ship_to_postal_code: formData.shipToPostalCode,
     ship_to_city: formData.shipToCity,
     ship_to_state: formData.shipToState,
+    ship_to_state_code: formData.shipToStateCode || null,
     ship_to_country: formData.shipToCountry,
     ship_to_phone: formData.shipToPhone,
     ship_to_email: formData.shipToEmail,
     payment_terms: formData.paymentTerms,
     notes: formData.notes,
     tracking_number: formData.trackingNumber,
+    supplier_state_code: supplierStateCode,
     organization_id: organizationId,
     created_by: createdByUsername
   };
@@ -124,6 +132,7 @@ export async function createPurchaseOrder(formData: PurchaseOrderFormData, organ
     shipToPostalCode: poData.ship_to_postal_code,
     shipToCity: poData.ship_to_city,
     shipToState: poData.ship_to_state,
+    shipToStateCode: poData.ship_to_state_code,
     shipToCountry: poData.ship_to_country,
     shipToPhone: poData.ship_to_phone,
     shipToEmail: poData.ship_to_email,
