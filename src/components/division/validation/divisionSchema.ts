@@ -27,6 +27,7 @@ export const divisionSchema = z.object({
         phoneNumber: z.string().min(1, "Phone number is required"),
         email: z.string().email("Invalid email address").optional(),
         website: z.string().optional(),
+        stateCode: z.number().optional()
       })
     )
     // NO min(1)!
