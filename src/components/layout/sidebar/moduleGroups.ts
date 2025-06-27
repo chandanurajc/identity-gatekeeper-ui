@@ -14,6 +14,7 @@ import {
   Warehouse,
   List,
   BookCopy,
+  FileText,
 } from "lucide-react";
 import { MenuItem, ModuleGroup } from "./types";
 
@@ -138,6 +139,15 @@ export const createModuleGroups = (permissions: PermissionsMap): ModuleGroup[] =
       label: "General Ledger",
       path: "/finance/general-ledger",
       icon: BookCopy,
+      permission: true,
+    });
+  }
+
+  if (permissions.canViewInvoices) {
+    financeItems.push({
+      label: "Invoices",
+      path: "/finance/invoices",
+      icon: FileText,
       permission: true,
     });
   }

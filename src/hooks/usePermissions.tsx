@@ -1,3 +1,4 @@
+
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect, useCallback, useMemo } from "react";
@@ -42,7 +43,9 @@ export const usePermissions = () => {
               "view-division", "create-division", "edit-division",
               "view-category", "create-category", "edit-category",
               "View PO", "Create PO", "Edit PO", "Cancel PO",
-              "View Invoices", "Approve Invoice",
+              "View Invoices", "Create Invoice", "Edit Invoice", "Delete Invoice", 
+              "Send Invoice for Approval", "Approve Invoice", "Reject Invoice",
+              "View General Ledger", "Record Payment",
               "access_admin", "access_settings"
             ];
             setPermissions(allPermissions);
@@ -184,7 +187,12 @@ export const usePermissions = () => {
         canCreatePOReceive: false,
         // Invoice permissions
         canViewInvoices: false,
+        canCreateInvoice: false,
+        canEditInvoice: false,
+        canDeleteInvoice: false,
+        canSendInvoiceForApproval: false,
         canApproveInvoice: false,
+        canRejectInvoice: false,
         canViewGeneralLedger: false,
         canRecordPayment: false,
         // Inventory permissions
@@ -241,7 +249,12 @@ export const usePermissions = () => {
         canCreatePOReceive: true,
         // Invoice permissions
         canViewInvoices: true,
+        canCreateInvoice: true,
+        canEditInvoice: true,
+        canDeleteInvoice: true,
+        canSendInvoiceForApproval: true,
         canApproveInvoice: true,
+        canRejectInvoice: true,
         canViewGeneralLedger: true,
         canRecordPayment: true,
         // Inventory
@@ -297,7 +310,12 @@ export const usePermissions = () => {
       canCreatePOReceive: permissions.includes("Create PO Receive"),
       // Invoice permissions
       canViewInvoices: permissions.includes("View Invoices"),
+      canCreateInvoice: permissions.includes("Create Invoice"),
+      canEditInvoice: permissions.includes("Edit Invoice"),
+      canDeleteInvoice: permissions.includes("Delete Invoice"),
+      canSendInvoiceForApproval: permissions.includes("Send Invoice for Approval"),
       canApproveInvoice: permissions.includes("Approve Invoice"),
+      canRejectInvoice: permissions.includes("Reject Invoice"),
       canViewGeneralLedger: permissions.includes("View General Ledger"),
       canRecordPayment: permissions.includes("Record Payment"),
       // Inventory permissions

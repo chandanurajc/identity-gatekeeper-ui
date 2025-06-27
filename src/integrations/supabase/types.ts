@@ -359,6 +359,342 @@ export type Database = {
           },
         ]
       }
+      invoice: {
+        Row: {
+          bill_to_address1: string | null
+          bill_to_address2: string | null
+          bill_to_cin: string | null
+          bill_to_city: string | null
+          bill_to_country: string | null
+          bill_to_email: string | null
+          bill_to_gstin: string | null
+          bill_to_name: string | null
+          bill_to_org_id: string
+          bill_to_phone: string | null
+          bill_to_postal_code: string | null
+          bill_to_state: string | null
+          bill_to_state_code: number | null
+          created_by: string
+          created_on: string
+          division_id: string
+          due_date: string | null
+          id: string
+          invoice_date: string
+          invoice_number: string
+          invoice_type: Database["public"]["Enums"]["invoice_type"]
+          organization_id: string
+          payment_terms: Database["public"]["Enums"]["payment_terms"] | null
+          reference_transaction_date: string | null
+          reference_transaction_number: string | null
+          reference_transaction_type:
+            | Database["public"]["Enums"]["transaction_type"]
+            | null
+          remit_to_address1: string | null
+          remit_to_address2: string | null
+          remit_to_cin: string | null
+          remit_to_city: string | null
+          remit_to_country: string | null
+          remit_to_email: string | null
+          remit_to_gstin: string | null
+          remit_to_name: string | null
+          remit_to_org_id: string
+          remit_to_phone: string | null
+          remit_to_postal_code: string | null
+          remit_to_state: string | null
+          remit_to_state_code: number | null
+          same_as_division_address: boolean | null
+          ship_to_address1: string | null
+          ship_to_address2: string | null
+          ship_to_city: string | null
+          ship_to_country: string | null
+          ship_to_name: string | null
+          ship_to_phone: string | null
+          ship_to_postal_code: string | null
+          ship_to_state: string | null
+          ship_to_state_code: number | null
+          status: Database["public"]["Enums"]["invoice_status"]
+          total_gst_value: number | null
+          total_invoice_value: number | null
+          total_item_value: number | null
+          updated_by: string | null
+          updated_on: string | null
+        }
+        Insert: {
+          bill_to_address1?: string | null
+          bill_to_address2?: string | null
+          bill_to_cin?: string | null
+          bill_to_city?: string | null
+          bill_to_country?: string | null
+          bill_to_email?: string | null
+          bill_to_gstin?: string | null
+          bill_to_name?: string | null
+          bill_to_org_id: string
+          bill_to_phone?: string | null
+          bill_to_postal_code?: string | null
+          bill_to_state?: string | null
+          bill_to_state_code?: number | null
+          created_by: string
+          created_on?: string
+          division_id: string
+          due_date?: string | null
+          id?: string
+          invoice_date?: string
+          invoice_number: string
+          invoice_type: Database["public"]["Enums"]["invoice_type"]
+          organization_id: string
+          payment_terms?: Database["public"]["Enums"]["payment_terms"] | null
+          reference_transaction_date?: string | null
+          reference_transaction_number?: string | null
+          reference_transaction_type?:
+            | Database["public"]["Enums"]["transaction_type"]
+            | null
+          remit_to_address1?: string | null
+          remit_to_address2?: string | null
+          remit_to_cin?: string | null
+          remit_to_city?: string | null
+          remit_to_country?: string | null
+          remit_to_email?: string | null
+          remit_to_gstin?: string | null
+          remit_to_name?: string | null
+          remit_to_org_id: string
+          remit_to_phone?: string | null
+          remit_to_postal_code?: string | null
+          remit_to_state?: string | null
+          remit_to_state_code?: number | null
+          same_as_division_address?: boolean | null
+          ship_to_address1?: string | null
+          ship_to_address2?: string | null
+          ship_to_city?: string | null
+          ship_to_country?: string | null
+          ship_to_name?: string | null
+          ship_to_phone?: string | null
+          ship_to_postal_code?: string | null
+          ship_to_state?: string | null
+          ship_to_state_code?: number | null
+          status?: Database["public"]["Enums"]["invoice_status"]
+          total_gst_value?: number | null
+          total_invoice_value?: number | null
+          total_item_value?: number | null
+          updated_by?: string | null
+          updated_on?: string | null
+        }
+        Update: {
+          bill_to_address1?: string | null
+          bill_to_address2?: string | null
+          bill_to_cin?: string | null
+          bill_to_city?: string | null
+          bill_to_country?: string | null
+          bill_to_email?: string | null
+          bill_to_gstin?: string | null
+          bill_to_name?: string | null
+          bill_to_org_id?: string
+          bill_to_phone?: string | null
+          bill_to_postal_code?: string | null
+          bill_to_state?: string | null
+          bill_to_state_code?: number | null
+          created_by?: string
+          created_on?: string
+          division_id?: string
+          due_date?: string | null
+          id?: string
+          invoice_date?: string
+          invoice_number?: string
+          invoice_type?: Database["public"]["Enums"]["invoice_type"]
+          organization_id?: string
+          payment_terms?: Database["public"]["Enums"]["payment_terms"] | null
+          reference_transaction_date?: string | null
+          reference_transaction_number?: string | null
+          reference_transaction_type?:
+            | Database["public"]["Enums"]["transaction_type"]
+            | null
+          remit_to_address1?: string | null
+          remit_to_address2?: string | null
+          remit_to_cin?: string | null
+          remit_to_city?: string | null
+          remit_to_country?: string | null
+          remit_to_email?: string | null
+          remit_to_gstin?: string | null
+          remit_to_name?: string | null
+          remit_to_org_id?: string
+          remit_to_phone?: string | null
+          remit_to_postal_code?: string | null
+          remit_to_state?: string | null
+          remit_to_state_code?: number | null
+          same_as_division_address?: boolean | null
+          ship_to_address1?: string | null
+          ship_to_address2?: string | null
+          ship_to_city?: string | null
+          ship_to_country?: string | null
+          ship_to_name?: string | null
+          ship_to_phone?: string | null
+          ship_to_postal_code?: string | null
+          ship_to_state?: string | null
+          ship_to_state_code?: number | null
+          status?: Database["public"]["Enums"]["invoice_status"]
+          total_gst_value?: number | null
+          total_invoice_value?: number | null
+          total_item_value?: number | null
+          updated_by?: string | null
+          updated_on?: string | null
+        }
+        Relationships: []
+      }
+      invoice_audit_log: {
+        Row: {
+          changed_by: string
+          changed_on: string
+          comments: string | null
+          id: string
+          invoice_id: string
+          new_status: Database["public"]["Enums"]["invoice_status"]
+          old_status: Database["public"]["Enums"]["invoice_status"] | null
+        }
+        Insert: {
+          changed_by: string
+          changed_on?: string
+          comments?: string | null
+          id?: string
+          invoice_id: string
+          new_status: Database["public"]["Enums"]["invoice_status"]
+          old_status?: Database["public"]["Enums"]["invoice_status"] | null
+        }
+        Update: {
+          changed_by?: string
+          changed_on?: string
+          comments?: string | null
+          id?: string
+          invoice_id?: string
+          new_status?: Database["public"]["Enums"]["invoice_status"]
+          old_status?: Database["public"]["Enums"]["invoice_status"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_audit_log_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoice"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoice_gst_breakdown: {
+        Row: {
+          cgst_amount: number | null
+          cgst_percentage: number | null
+          gst_percentage: number
+          id: string
+          igst_amount: number | null
+          igst_percentage: number | null
+          invoice_id: string
+          sgst_amount: number | null
+          sgst_percentage: number | null
+          taxable_amount: number
+          total_gst_amount: number
+        }
+        Insert: {
+          cgst_amount?: number | null
+          cgst_percentage?: number | null
+          gst_percentage: number
+          id?: string
+          igst_amount?: number | null
+          igst_percentage?: number | null
+          invoice_id: string
+          sgst_amount?: number | null
+          sgst_percentage?: number | null
+          taxable_amount: number
+          total_gst_amount: number
+        }
+        Update: {
+          cgst_amount?: number | null
+          cgst_percentage?: number | null
+          gst_percentage?: number
+          id?: string
+          igst_amount?: number | null
+          igst_percentage?: number | null
+          invoice_id?: string
+          sgst_amount?: number | null
+          sgst_percentage?: number | null
+          taxable_amount?: number
+          total_gst_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_gst_breakdown_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoice"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoice_line: {
+        Row: {
+          created_on: string
+          gst_percentage: number
+          gst_value: number
+          id: string
+          invoice_id: string
+          item_description: string
+          item_id: string
+          line_number: number
+          line_total: number
+          quantity: number
+          total_price: number
+          total_weight: number | null
+          unit_price: number
+          uom: string
+          updated_on: string | null
+          weight_per_unit: number | null
+          weight_uom: string | null
+        }
+        Insert: {
+          created_on?: string
+          gst_percentage?: number
+          gst_value?: number
+          id?: string
+          invoice_id: string
+          item_description: string
+          item_id: string
+          line_number: number
+          line_total: number
+          quantity: number
+          total_price: number
+          total_weight?: number | null
+          unit_price: number
+          uom: string
+          updated_on?: string | null
+          weight_per_unit?: number | null
+          weight_uom?: string | null
+        }
+        Update: {
+          created_on?: string
+          gst_percentage?: number
+          gst_value?: number
+          id?: string
+          invoice_id?: string
+          item_description?: string
+          item_id?: string
+          line_number?: number
+          line_total?: number
+          quantity?: number
+          total_price?: number
+          total_weight?: number | null
+          unit_price?: number
+          uom?: string
+          updated_on?: string | null
+          weight_per_unit?: number | null
+          weight_uom?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_line_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoice"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       item_attachments: {
         Row: {
           created_on: string
@@ -1405,6 +1741,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_invoice_number: {
+        Args: { org_id: string }
+        Returns: string
+      }
       get_inventory_stock_summary: {
         Args: { p_organization_id: string; p_include_zero_stock?: boolean }
         Returns: {
@@ -1445,6 +1785,10 @@ export type Database = {
         | "Payment"
         | "Credit Note"
         | "Debit Note"
+      invoice_status: "Draft" | "Awaiting Approval" | "Approved" | "Rejected"
+      invoice_type: "Payable" | "Receivable"
+      payment_terms: "Net 30" | "Net 60" | "Net 90" | "Due on Receipt"
+      transaction_type: "Purchase Order" | "Sales Order"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1568,6 +1912,10 @@ export const Constants = {
         "Credit Note",
         "Debit Note",
       ],
+      invoice_status: ["Draft", "Awaiting Approval", "Approved", "Rejected"],
+      invoice_type: ["Payable", "Receivable"],
+      payment_terms: ["Net 30", "Net 60", "Net 90", "Due on Receipt"],
+      transaction_type: ["Purchase Order", "Sales Order"],
     },
   },
 } as const

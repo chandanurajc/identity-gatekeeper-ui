@@ -46,6 +46,7 @@ export function AppSidebar() {
     canViewPOReceive,
     canViewInventory,
     canViewGeneralLedger: hasPermission("View General Ledger"),
+    canViewInvoices: hasPermission("View Invoices"),
   };
 
   const moduleGroups = createModuleGroups(permissions);
