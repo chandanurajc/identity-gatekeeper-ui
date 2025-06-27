@@ -2,7 +2,6 @@
 import React from 'react';
 import { Route } from "react-router-dom";
 import PermissionProtectedRoute from "@/components/PermissionProtectedRoute";
-import { MainLayout } from "@/layouts/MainLayout";
 import UsersList from "@/pages/admin/UsersList";
 import CreateUser from "@/pages/admin/CreateUser";
 import EditUser from "@/pages/admin/EditUser";
@@ -27,9 +26,7 @@ export const AdminRoutes = () => (
       path="/admin/users" 
       element={
         <PermissionProtectedRoute requiredPermission="view-user">
-          <MainLayout>
-            <UsersList />
-          </MainLayout>
+          <UsersList />
         </PermissionProtectedRoute>
       } 
     />
@@ -37,9 +34,7 @@ export const AdminRoutes = () => (
       path="/admin/users/create" 
       element={
         <PermissionProtectedRoute requiredPermission="create-user">
-          <MainLayout>
-            <CreateUser />
-          </MainLayout>
+          <CreateUser />
         </PermissionProtectedRoute>
       } 
     />
@@ -47,9 +42,7 @@ export const AdminRoutes = () => (
       path="/admin/users/edit/:userId" 
       element={
         <PermissionProtectedRoute requiredPermission="edit-user">
-          <MainLayout>
-            <EditUser />
-          </MainLayout>
+          <EditUser />
         </PermissionProtectedRoute>
       } 
     />
@@ -57,9 +50,7 @@ export const AdminRoutes = () => (
       path="/admin/users/:userId" 
       element={
         <PermissionProtectedRoute requiredPermission="view-user">
-          <MainLayout>
-            <UserDetails />
-          </MainLayout>
+          <UserDetails />
         </PermissionProtectedRoute>
       } 
     />
@@ -69,9 +60,7 @@ export const AdminRoutes = () => (
       path="/admin/roles" 
       element={
         <PermissionProtectedRoute requiredPermission="view_roles">
-          <MainLayout>
-            <RolesList />
-          </MainLayout>
+          <RolesList />
         </PermissionProtectedRoute>
       } 
     />
@@ -79,9 +68,7 @@ export const AdminRoutes = () => (
       path="/admin/roles/create" 
       element={
         <PermissionProtectedRoute requiredPermission="create_role">
-          <MainLayout>
-            <RoleForm />
-          </MainLayout>
+          <RoleForm />
         </PermissionProtectedRoute>
       } 
     />
@@ -89,9 +76,7 @@ export const AdminRoutes = () => (
       path="/admin/roles/edit/:roleId" 
       element={
         <PermissionProtectedRoute requiredPermission="edit_roles">
-          <MainLayout>
-            <RoleForm />
-          </MainLayout>
+          <RoleForm />
         </PermissionProtectedRoute>
       } 
     />
@@ -99,9 +84,7 @@ export const AdminRoutes = () => (
       path="/admin/roles/:roleId" 
       element={
         <PermissionProtectedRoute requiredPermission="view_roles">
-          <MainLayout>
-            <RoleDetails />
-          </MainLayout>
+          <RoleDetails />
         </PermissionProtectedRoute>
       } 
     />
@@ -111,9 +94,7 @@ export const AdminRoutes = () => (
       path="/admin/organizations" 
       element={
         <PermissionProtectedRoute requiredPermission="view-organization">
-          <MainLayout>
-            <OrganizationsList />
-          </MainLayout>
+          <OrganizationsList />
         </PermissionProtectedRoute>
       } 
     />
@@ -121,9 +102,7 @@ export const AdminRoutes = () => (
       path="/admin/organizations/create" 
       element={
         <PermissionProtectedRoute requiredPermission="create-organization">
-          <MainLayout>
-            <OrganizationCreate />
-          </MainLayout>
+          <OrganizationCreate />
         </PermissionProtectedRoute>
       } 
     />
@@ -131,9 +110,7 @@ export const AdminRoutes = () => (
       path="/admin/organizations/edit/:organizationId" 
       element={
         <PermissionProtectedRoute requiredPermission="edit-organization">
-          <MainLayout>
-            <OrganizationEdit />
-          </MainLayout>
+          <OrganizationEdit />
         </PermissionProtectedRoute>
       } 
     />
@@ -141,9 +118,7 @@ export const AdminRoutes = () => (
       path="/admin/organizations/:organizationId" 
       element={
         <PermissionProtectedRoute requiredPermission="view-organization">
-          <MainLayout>
-            <OrganizationDetail />
-          </MainLayout>
+          <OrganizationDetail />
         </PermissionProtectedRoute>
       } 
     />
@@ -153,9 +128,7 @@ export const AdminRoutes = () => (
       path="/admin/divisions" 
       element={
         <PermissionProtectedRoute requiredPermission="view-division">
-          <MainLayout>
-            <DivisionsList />
-          </MainLayout>
+          <DivisionsList />
         </PermissionProtectedRoute>
       } 
     />
@@ -163,9 +136,7 @@ export const AdminRoutes = () => (
       path="/admin/divisions/create" 
       element={
         <PermissionProtectedRoute requiredPermission="create-division">
-          <MainLayout>
-            <DivisionCreate />
-          </MainLayout>
+          <DivisionCreate />
         </PermissionProtectedRoute>
       } 
     />
@@ -173,9 +144,7 @@ export const AdminRoutes = () => (
       path="/admin/divisions/edit/:divisionId" 
       element={
         <PermissionProtectedRoute requiredPermission="edit-division">
-          <MainLayout>
-            <DivisionEdit />
-          </MainLayout>
+          <DivisionEdit />
         </PermissionProtectedRoute>
       } 
     />
@@ -183,9 +152,7 @@ export const AdminRoutes = () => (
       path="/admin/divisions/:divisionId" 
       element={
         <PermissionProtectedRoute requiredPermission="view-division">
-          <MainLayout>
-            <DivisionDetail />
-          </MainLayout>
+          <DivisionDetail />
         </PermissionProtectedRoute>
       } 
     />
@@ -195,9 +162,7 @@ export const AdminRoutes = () => (
       path="/admin/permissions" 
       element={
         <PermissionProtectedRoute requiredPermission="view_permissions">
-          <MainLayout>
-            <PermissionsList />
-          </MainLayout>
+          <PermissionsList />
         </PermissionProtectedRoute>
       } 
     />
