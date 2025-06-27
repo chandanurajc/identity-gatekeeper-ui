@@ -58,14 +58,29 @@ const DivisionForm = ({ initialData, onSubmit, isEditing = false }: DivisionForm
           // React Hook Form validation
           const isValid = await form.trigger();
           if (!isValid) {
-            // Debug: Show all field errors in console for troubleshooting
-            const errorsCopy = JSON.parse(JSON.stringify(form.formState.errors || {}));
-            console.error("[DivisionForm] Validation failed. Errors:", errorsCopy);
-
+            // Collect all error messages, including nested ones
+            const collectErrors = (errorsObj, path = []) => {
+              let messages = [];
+              for (const key in errorsObj) {
+                if (errorsObj[key]?.message) {
+                  messages.push(`${[...path, key].join('.').replace(/\.(\d+)/g, '[$1]')}: ${errorsObj[key].message}`);
+                } else if (typeof errorsObj[key] === 'object' && errorsObj[key] !== null) {
+                  messages = messages.concat(collectErrors(errorsObj[key], [...path, key]));
+                }
+              }
+              return messages;
+            };
+            const allErrors = collectErrors(form.formState.errors || {});
+            const errorMsg = allErrors.length > 0
+              ? allErrors.map((msg, i) => `<div>${msg}</div>`).join('')
+              : 'Please fix form errors before submitting.';
             toast({
-              title: "Validation Error",
-              description: "Please fix form errors before submitting.",
-              variant: "destructive",
+              title: 'Validation Error',
+              description: errorMsg,
+              variant: 'destructive',
+              duration: 8000,
+              // Render as HTML for better formatting
+              render: () => <div dangerouslySetInnerHTML={{ __html: errorMsg }} />,
             });
             return;
           }

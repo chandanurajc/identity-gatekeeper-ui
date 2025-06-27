@@ -1,4 +1,3 @@
-
 import { ControllerRenderProps } from "react-hook-form";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -75,7 +74,9 @@ export function DivisionMainFields({
                   style={{ textTransform: 'uppercase' }}
                   onChange={(e) => field.onChange(e.target.value.toUpperCase())}
                   className="w-24"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || isEditing}
+                  value={field.value}
+                  readOnly={isEditing}
                 />
               </div>
             </FormControl>

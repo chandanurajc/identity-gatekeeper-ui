@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Division, DivisionFormData, Reference, Contact } from "@/types/division";
 
@@ -113,10 +112,20 @@ export const divisionService = {
     console.log("Creating division with data:", divisionData);
     
     try {
+      // Fetch organization code
+      const { data: orgInfo, error: orgError } = await supabase
+        .from('organizations')
+        .select('code, name')
+        .eq('id', organizationId)
+        .single();
+      if (orgError || !orgInfo) {
+        throw new Error('Failed to fetch organization code for division creation');
+      }
+      const fullCode = `${orgInfo.code}-${divisionData.userDefinedCode.trim().toUpperCase()}`;
       // First create the division
       const newDivision = {
         organization_id: organizationId,
-        code: divisionData.userDefinedCode,
+        code: fullCode,
         name: divisionData.name,
         type: divisionData.type,
         status: divisionData.status,
@@ -232,13 +241,24 @@ export const divisionService = {
         throw new Error("Required fields (name, code, type) are missing");
       }
 
+      // Fetch organization code for update
+      const { data: orgData, error: orgError } = await supabase
+        .from('organizations')
+        .select('code')
+        .eq('id', divisionData.organizationId)
+        .single();
+      if (orgError || !orgData) {
+        throw new Error('Failed to fetch organization code for division update');
+      }
+      const fullCode = `${orgData.code}-${divisionData.userDefinedCode.trim().toUpperCase()}`;
+
       // Start transaction-like operation
       console.log("DivisionService: Starting update transaction");
 
       // Update the division first
       const updateData = {
         name: divisionData.name.trim(),
-        code: divisionData.userDefinedCode.trim().toUpperCase(),
+        code: fullCode,
         type: divisionData.type,
         status: divisionData.status,
         updated_by: updatedBy,
