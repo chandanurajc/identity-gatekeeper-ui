@@ -148,6 +148,7 @@ export interface InvoiceFormData {
   referenceTransactionNumber?: string;
   referenceTransactionDate?: string;
   paymentTerms: PaymentTerms;
+  dueDate?: string;
   invoiceLines: InvoiceLineFormData[];
 }
 
