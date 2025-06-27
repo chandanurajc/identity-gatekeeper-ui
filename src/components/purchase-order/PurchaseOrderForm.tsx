@@ -121,20 +121,14 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
       
       // Filter divisions by user's organization - only show divisions from user's org
       const [allDivisions, itemsData] = await Promise.all([
-        divisionService.getActiveDivisions(),
+        divisionService.getDivisions(user.organizationId),
         itemService.getItems()
       ]);
       
-      // Filter divisions to only include those from the user's organization
-      const userOrgDivisions = allDivisions.filter(division => 
-        division.organizationId === user.organizationId
-      );
-      
       console.log("All divisions:", allDivisions);
-      console.log("User org divisions:", userOrgDivisions);
       console.log("User organization ID:", user.organizationId);
       
-      setDivisions(userOrgDivisions);
+      setDivisions(allDivisions);
       setItems(itemsData);
       setFilteredItems(itemsData.slice(0, 5));
     } catch (error) {

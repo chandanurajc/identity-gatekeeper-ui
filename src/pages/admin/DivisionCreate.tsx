@@ -16,7 +16,15 @@ const DivisionCreate = () => {
     console.log("[DivisionCreate] handleSubmit called with:", data);
 
     try {
-      const result = await divisionService.createDivision(data, user?.name || user?.email || "Unknown");
+      if (!user?.organizationId) {
+        throw new Error("User organization not found");
+      }
+
+      const result = await divisionService.createDivision(
+        data, 
+        user.organizationId, 
+        user?.name || user?.email || "Unknown"
+      );
       console.log("Division created successfully:", result);
 
       toast({
@@ -58,4 +66,3 @@ const DivisionCreate = () => {
 };
 
 export default DivisionCreate;
-

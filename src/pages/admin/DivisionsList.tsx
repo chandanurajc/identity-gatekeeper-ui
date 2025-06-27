@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { divisionService } from "@/services/divisionService";
 import { useDivisionPermissions } from "@/hooks/useDivisionPermissions";
+import { useAuth } from "@/context/AuthContext";
 import { Division } from "@/types/division";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -29,6 +30,7 @@ const DivisionsList = () => {
 
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
   const { canViewDivision, canCreateDivision, canEditDivision } = useDivisionPermissions();
 
   // Fetch divisions using react-query and the centralized service.
@@ -39,9 +41,14 @@ const DivisionsList = () => {
     error,
     refetch,
   } = useQuery({
-    queryKey: ["divisions"],
-    queryFn: divisionService.getDivisions,
-    enabled: canViewDivision, // Only if user can view
+    queryKey: ["divisions", user?.organizationId],
+    queryFn: () => {
+      if (!user?.organizationId) {
+        throw new Error("User organization not found");
+      }
+      return divisionService.getDivisions(user.organizationId);
+    },
+    enabled: canViewDivision && !!user?.organizationId, // Only if user can view and has org
     meta: {
       onError: (error: any) => {
         toast({
