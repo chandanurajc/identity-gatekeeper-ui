@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,7 +40,8 @@ const PurchaseOrdersList = () => {
     try {
       setLoading(true);
       const data = await purchaseOrderService.getAllPurchaseOrders(currentOrganization.id);
-      setPurchaseOrders(data);
+      console.log("Fetched purchase orders:", data);
+      setPurchaseOrders(data || []);
     } catch (error) {
       console.error("Error fetching purchase orders:", error);
       toast({
@@ -47,6 +49,7 @@ const PurchaseOrdersList = () => {
         description: "Failed to fetch purchase orders",
         variant: "destructive",
       });
+      setPurchaseOrders([]);
     } finally {
       setLoading(false);
     }
@@ -62,26 +65,46 @@ const PurchaseOrdersList = () => {
   };
 
   const filteredAndSortedOrders = React.useMemo(() => {
-    let filtered = purchaseOrders.filter(order => 
-      order.poNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (order.supplier?.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.status.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (order.createdBy || "").toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    if (!Array.isArray(purchaseOrders)) {
+      console.warn("Purchase orders is not an array:", purchaseOrders);
+      return [];
+    }
 
-    return filtered.sort((a, b) => {
-      const aValue = a[sortField];
-      const bValue = b[sortField];
-      
-      if (aValue === null || aValue === undefined) return 1;
-      if (bValue === null || bValue === undefined) return -1;
-      
-      let comparison = 0;
-      if (aValue > bValue) comparison = 1;
-      if (aValue < bValue) comparison = -1;
-      
-      return sortDirection === "desc" ? -comparison : comparison;
-    });
+    try {
+      let filtered = purchaseOrders.filter(order => {
+        if (!order) return false;
+        
+        const poNumber = (order.poNumber || "").toString().toLowerCase();
+        const supplierName = (order.supplier?.name || "").toString().toLowerCase();
+        const status = (order.status || "").toString().toLowerCase();
+        const createdBy = (order.createdBy || "").toString().toLowerCase();
+        const searchLower = searchTerm.toLowerCase();
+
+        return poNumber.includes(searchLower) ||
+               supplierName.includes(searchLower) ||
+               status.includes(searchLower) ||
+               createdBy.includes(searchLower);
+      });
+
+      return filtered.sort((a, b) => {
+        if (!a || !b) return 0;
+        
+        const aValue = a[sortField];
+        const bValue = b[sortField];
+        
+        if (aValue === null || aValue === undefined) return 1;
+        if (bValue === null || bValue === undefined) return -1;
+        
+        let comparison = 0;
+        if (aValue > bValue) comparison = 1;
+        if (aValue < bValue) comparison = -1;
+        
+        return sortDirection === "desc" ? -comparison : comparison;
+      });
+    } catch (error) {
+      console.error("Error in filtering/sorting:", error);
+      return [];
+    }
   }, [purchaseOrders, searchTerm, sortField, sortDirection]);
 
   const handleSelectOrder = (orderId: string, checked: boolean) => {
@@ -108,6 +131,28 @@ const PurchaseOrdersList = () => {
       case "Partially Received": return "outline";
       case "Cancelled": return "destructive";
       default: return "secondary";
+    }
+  };
+
+  const formatDate = (date: any) => {
+    try {
+      if (!date) return "-";
+      const dateObj = typeof date === 'string' ? new Date(date) : date;
+      return format(dateObj, "dd/MM/yyyy");
+    } catch (error) {
+      console.error("Error formatting date:", error);
+      return "Invalid Date";
+    }
+  };
+
+  const formatDateTime = (date: any) => {
+    try {
+      if (!date) return "-";
+      const dateObj = typeof date === 'string' ? new Date(date) : date;
+      return format(dateObj, "dd/MM/yyyy HH:mm");
+    } catch (error) {
+      console.error("Error formatting datetime:", error);
+      return "Invalid Date";
     }
   };
 
@@ -246,22 +291,20 @@ const PurchaseOrdersList = () => {
                           className="p-0 h-auto"
                           onClick={() => navigate(`/order-management/purchase-orders/${order.id}`)}
                         >
-                          {order.poNumber}
+                          {order.poNumber || "-"}
                         </Button>
                       </TableCell>
                       <TableCell>{order.supplier?.name || "-"}</TableCell>
                       <TableCell>
-                        <Badge variant={getStatusBadgeVariant(order.status)}>
-                          {order.status}
+                        <Badge variant={getStatusBadgeVariant(order.status || "")}>
+                          {order.status || "Unknown"}
                         </Badge>
                       </TableCell>
-                      <TableCell>{format(new Date(order.poDate), "dd/MM/yyyy")}</TableCell>
+                      <TableCell>{formatDate(order.poDate)}</TableCell>
                       <TableCell>{order.createdBy || "-"}</TableCell>
-                      <TableCell>{format(new Date(order.createdOn), "dd/MM/yyyy HH:mm")}</TableCell>
+                      <TableCell>{formatDateTime(order.createdOn)}</TableCell>
                       <TableCell>{order.updatedBy || "-"}</TableCell>
-                      <TableCell>
-                        {order.updatedOn ? format(new Date(order.updatedOn), "dd/MM/yyyy HH:mm") : "-"}
-                      </TableCell>
+                      <TableCell>{formatDateTime(order.updatedOn)}</TableCell>
                     </TableRow>
                   ))
                 )}
