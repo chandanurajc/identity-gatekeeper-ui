@@ -1,3 +1,4 @@
+
 import { Separator } from "@/components/ui/separator";
 import { ContactForm } from "./ContactForm";
 import { ReferenceForm } from "./ReferenceForm";
@@ -72,15 +73,13 @@ const DivisionForm = ({ initialData, onSubmit, isEditing = false }: DivisionForm
             };
             const allErrors = collectErrors(form.formState.errors || {});
             const errorMsg = allErrors.length > 0
-              ? allErrors.map((msg, i) => `<div>${msg}</div>`).join('')
+              ? allErrors.join('\n')
               : 'Please fix form errors before submitting.';
             toast({
               title: 'Validation Error',
               description: errorMsg,
               variant: 'destructive',
               duration: 8000,
-              // Render as HTML for better formatting
-              render: () => <div dangerouslySetInnerHTML={{ __html: errorMsg }} />,
             });
             return;
           }
