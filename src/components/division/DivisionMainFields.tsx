@@ -57,21 +57,46 @@ export function DivisionMainFields({
         control={control}
         name="userDefinedCode"
         render={({ field }) => {
-          // Compute the full code for display
-          const orgCode = selectedOrg?.code || "----";
+          const orgCode = selectedOrg?.code || "";
           const userCode = field.value || "";
-          const fullCode = `${orgCode}-${userCode}`;
+          const fullCode = orgCode && userCode ? `${orgCode}-${userCode}` : "";
           return (
             <FormItem>
               <FormLabel>Division Code *</FormLabel>
-              <FormControl>
-                <Input
-                  value={fullCode}
-                  placeholder="ORGCODE-XXX"
-                  readOnly
-                  className="w-44 bg-gray-100"
-                />
-              </FormControl>
+              {!isEditing && (
+                <div className="flex items-center space-x-2">
+                  {orgCode && (
+                    <>
+                      <Input
+                        value={orgCode}
+                        readOnly
+                        className="w-20 text-center bg-gray-100"
+                      />
+                      <span>-</span>
+                    </>
+                  )}
+                  <FormControl>
+                    <Input
+                      placeholder="Enter 3-character code"
+                      maxLength={3}
+                      style={{ textTransform: 'uppercase' }}
+                      onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                      className="w-24"
+                      value={field.value}
+                    />
+                  </FormControl>
+                </div>
+              )}
+              {isEditing && (
+                <FormControl>
+                  <Input
+                    value={fullCode}
+                    placeholder="ORGCODE-XXX"
+                    readOnly
+                    className="w-44 bg-gray-100"
+                  />
+                </FormControl>
+              )}
               <FormMessage />
             </FormItem>
           );

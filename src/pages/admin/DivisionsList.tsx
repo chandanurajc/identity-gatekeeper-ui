@@ -1,4 +1,3 @@
-
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { divisionService } from "@/services/divisionService";
@@ -41,14 +40,9 @@ const DivisionsList = () => {
     error,
     refetch,
   } = useQuery({
-    queryKey: ["divisions", user?.organizationId],
-    queryFn: () => {
-      if (!user?.organizationId) {
-        throw new Error("User organization not found");
-      }
-      return divisionService.getDivisions(user.organizationId);
-    },
-    enabled: canViewDivision && !!user?.organizationId, // Only if user can view and has org
+    queryKey: ["divisions", "all"],
+    queryFn: () => divisionService.getAllDivisions(),
+    enabled: canViewDivision,
     meta: {
       onError: (error: any) => {
         toast({

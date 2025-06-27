@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
@@ -51,7 +50,7 @@ const DivisionEdit = () => {
   const initialData: Partial<DivisionFormData> = {
     name: division.name,
     organizationId: division.organizationId,
-    userDefinedCode: division.code.slice(4), // Remove the 4-character org code
+    userDefinedCode: division.code.includes('-') ? division.code.split('-')[1] : division.code,
     type: division.type,
     status: division.status,
     contacts: division.contacts,

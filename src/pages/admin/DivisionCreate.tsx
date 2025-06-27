@@ -1,4 +1,3 @@
-
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { divisionService } from "@/services/divisionService";
@@ -16,13 +15,12 @@ const DivisionCreate = () => {
     console.log("[DivisionCreate] handleSubmit called with:", data);
 
     try {
-      if (!user?.organizationId) {
-        throw new Error("User organization not found");
+      if (!data.organizationId) {
+        throw new Error("Please select an organization for this division");
       }
-
       const result = await divisionService.createDivision(
-        data, 
-        user.organizationId, 
+        data,
+        data.organizationId,
         user?.name || user?.email || "Unknown"
       );
       console.log("Division created successfully:", result);

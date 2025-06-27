@@ -451,5 +451,34 @@ export const divisionService = {
       console.error("Service error deleting division:", error);
       throw error;
     }
+  },
+
+  async getAllDivisions(): Promise<Division[]> {
+    console.log("Fetching all divisions from Supabase");
+    try {
+      const { data, error } = await supabase
+        .from('divisions')
+        .select(`
+          *,
+          organizations(code, name),
+          division_references(*),
+          division_contacts(*)
+        `)
+        .order('created_on', { ascending: false });
+      if (error) {
+        console.error("Supabase error fetching all divisions:", error);
+        throw new Error(`Failed to fetch all divisions: ${error.message}`);
+      }
+      if (!data) {
+        console.log("No divisions data returned");
+        return [];
+      }
+      const transformedData = data.map(transformSupabaseDiv);
+      console.log("Transformed all divisions data:", transformedData);
+      return transformedData;
+    } catch (error) {
+      console.error("Service error fetching all divisions:", error);
+      throw error;
+    }
   }
 };
