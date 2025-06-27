@@ -1,4 +1,3 @@
-
 import { z } from "zod";
 
 export const organizationSchema = z.object({
@@ -33,6 +32,7 @@ export const organizationSchema = z.object({
       phoneNumber: z.string().optional(),
       email: z.string().email("Invalid email address").optional().or(z.literal("")),
       website: z.string().optional(),
+      stateCode: z.number().optional(),
     })
   ),
   references: z.array(
