@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { IndianStateSelect } from "@/components/ui/indian-state-select";
-import { Control, UseFormRegister, FieldErrors, UseFormSetValue } from "react-hook-form";
+import { Control, UseFormRegister, FieldErrors, UseFormSetValue, useWatch } from "react-hook-form";
 import { PurchaseOrderFormData } from "@/types/purchaseOrder";
 
 interface ShipToAddressSectionProps {
@@ -31,6 +30,14 @@ const ShipToAddressSection: React.FC<ShipToAddressSectionProps> = ({
   const [sameAsDivision, setSameAsDivision] = React.useState(false);
   const [currentState, setCurrentState] = React.useState("");
   const [currentStateCode, setCurrentStateCode] = React.useState<number | undefined>();
+
+  // Sync local state with form values
+  const watchedShipToState = useWatch({ control, name: "shipToState" });
+  const watchedShipToStateCode = useWatch({ control, name: "shipToStateCode" });
+  React.useEffect(() => {
+    setCurrentState(watchedShipToState || "");
+    setCurrentStateCode(watchedShipToStateCode || undefined);
+  }, [watchedShipToState, watchedShipToStateCode]);
 
   const handleSameAsDivisionChange = (checked: boolean) => {
     setSameAsDivision(checked);
