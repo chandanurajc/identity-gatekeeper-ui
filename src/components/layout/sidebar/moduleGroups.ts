@@ -13,7 +13,6 @@ import {
   Truck,
   Warehouse,
   List,
-  FileText,
   BookCopy,
 } from "lucide-react";
 import { MenuItem, ModuleGroup } from "./types";
@@ -134,14 +133,6 @@ export const createModuleGroups = (permissions: PermissionsMap): ModuleGroup[] =
 
   // Finance module
   const financeItems: MenuItem[] = [];
-  if (permissions.canViewInvoices) {
-    financeItems.push({
-      label: "Invoice Management",
-      path: "/invoices",
-      icon: FileText,
-      permission: true,
-    });
-  }
   if (permissions.canViewGeneralLedger) {
     financeItems.push({
       label: "General Ledger",
