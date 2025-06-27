@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import { Controller, useWatch } from "react-hook-form";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -42,7 +41,7 @@ const ShipToAddressSection = ({
             />
           )}
         />
-        <Label htmlFor="sameAsDivisionAddress">Same as Division's Shipping address?</Label>
+        <Label htmlFor="sameAsDivisionAddress">Same as Division's Registered location?</Label>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="md:col-span-2">

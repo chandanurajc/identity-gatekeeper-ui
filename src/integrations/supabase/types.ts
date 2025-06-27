@@ -267,6 +267,21 @@ export type Database = {
           },
         ]
       }
+      india_state_code: {
+        Row: {
+          state_code: number
+          state_name: string | null
+        }
+        Insert: {
+          state_code: number
+          state_name?: string | null
+        }
+        Update: {
+          state_code?: number
+          state_name?: string | null
+        }
+        Relationships: []
+      }
       inventory_stock: {
         Row: {
           created_by: string
