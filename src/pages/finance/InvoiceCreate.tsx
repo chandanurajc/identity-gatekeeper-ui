@@ -19,6 +19,7 @@ import { partnerSupplierService } from "@/services/partnerSupplierService";
 import { itemService } from "@/services/itemService";
 import { invoiceService } from "@/services/invoiceService";
 import { organizationService } from "@/services/organizationService";
+import { supabase } from "@/integrations/supabase/client";
 import PermissionButton from "@/components/PermissionButton";
 import type { InvoiceFormData, InvoiceType, InvoiceLineFormData, PaymentTerms } from "@/types/invoice";
 import { Organization } from "@/types/organization";
@@ -108,7 +109,8 @@ export default function InvoiceCreate() {
     state: '',
     stateCode: null,
     country: '',
-    phone: ''
+    phone: '',
+    email: ''
   });
 
   // Fetch divisions for the dropdown
@@ -117,6 +119,31 @@ export default function InvoiceCreate() {
     queryFn: () => divisionService.getDivisions(organizationId!),
     enabled: !!organizationId,
   });
+
+  // Fetch Indian states
+  const { data: indianStates, isLoading: statesLoading } = useQuery({
+    queryKey: ["indianStates"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('india_state_code')
+        .select('state_code, state_name')
+        .order('state_name');
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const handleStateChange = (selectedStateName: string) => {
+    const selectedState = indianStates?.find(state => state.state_name === selectedStateName);
+    if (selectedState) {
+      setTempShipTo(prev => ({
+        ...prev,
+        state: selectedState.state_name || '',
+        stateCode: selectedState.state_code
+      }));
+    }
+  };
 
   // Fetch suppliers and items
   useEffect(() => {
@@ -778,11 +805,25 @@ export default function InvoiceCreate() {
                         </div>
                         <div>
                           <Label htmlFor="shipToState">State</Label>
-                          <Input
-                            id="shipToState"
-                            value={tempShipTo.state}
-                            onChange={(e) => setTempShipTo(prev => ({ ...prev, state: e.target.value }))}
-                          />
+                          <Select
+                            value={tempShipTo.state || ''}
+                            onValueChange={handleStateChange}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select state" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {statesLoading ? (
+                                <SelectItem value="">Loading...</SelectItem>
+                              ) : (
+                                indianStates?.map((state) => (
+                                  <SelectItem key={state.state_code} value={state.state_name || ''}>
+                                    {state.state_name} ({state.state_code})
+                                  </SelectItem>
+                                ))
+                              )}
+                            </SelectContent>
+                          </Select>
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-4">
