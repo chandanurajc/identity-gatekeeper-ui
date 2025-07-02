@@ -1787,7 +1787,12 @@ export type Database = {
         | "Debit Note"
       invoice_status: "Draft" | "Awaiting Approval" | "Approved" | "Rejected"
       invoice_type: "Payable" | "Receivable"
-      payment_terms: "Net 30" | "Net 60" | "Net 90" | "Due on Receipt"
+      payment_terms:
+        | "Net 30"
+        | "Net 60"
+        | "Net 90"
+        | "Due on Receipt"
+        | "Net 15"
       transaction_type: "Purchase Order" | "Sales Order"
     }
     CompositeTypes: {
@@ -1914,7 +1919,7 @@ export const Constants = {
       ],
       invoice_status: ["Draft", "Awaiting Approval", "Approved", "Rejected"],
       invoice_type: ["Payable", "Receivable"],
-      payment_terms: ["Net 30", "Net 60", "Net 90", "Due on Receipt"],
+      payment_terms: ["Net 30", "Net 60", "Net 90", "Due on Receipt", "Net 15"],
       transaction_type: ["Purchase Order", "Sales Order"],
     },
   },
