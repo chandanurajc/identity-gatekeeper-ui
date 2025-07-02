@@ -35,6 +35,7 @@ interface ShipToAddress {
   stateCode: number | null;
   country: string;
   phone: string;
+  email?: string;
 }
 
 interface BillToInfo {
@@ -599,7 +600,7 @@ export default function InvoiceCreate() {
         </Card>
 
         {/* Address Information Cards - in same row */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Bill To Card */}
         {billToInfo && (
           <Card>
@@ -608,22 +609,10 @@ export default function InvoiceCreate() {
               <CardDescription>Billing information from selected division</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 <div>
                   <p className="font-medium text-muted-foreground">Name:</p>
                   <p>{billToInfo.name}</p>
-                </div>
-                <div>
-                  <p className="font-medium text-muted-foreground">GSTIN:</p>
-                  <p>{billToInfo.gstin}</p>
-                </div>
-                <div>
-                  <p className="font-medium text-muted-foreground">CIN:</p>
-                  <p>{billToInfo.cin}</p>
-                </div>
-                <div>
-                  <p className="font-medium text-muted-foreground">State Code:</p>
-                  <p>{billToInfo.stateCode}</p>
                 </div>
                 <div>
                   <p className="font-medium text-muted-foreground">Address:</p>
@@ -638,8 +627,28 @@ export default function InvoiceCreate() {
                   <p>{billToInfo.state}</p>
                 </div>
                 <div>
+                  <p className="font-medium text-muted-foreground">State Code:</p>
+                  <p>{billToInfo.stateCode}</p>
+                </div>
+                <div>
                   <p className="font-medium text-muted-foreground">Country:</p>
                   <p>{billToInfo.country}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground">Phone:</p>
+                  <p>{billToInfo.phone}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground">Email:</p>
+                  <p>{billToInfo.email}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground">GSTIN:</p>
+                  <p>{billToInfo.gstin}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground">CIN:</p>
+                  <p>{billToInfo.cin}</p>
                 </div>
               </div>
             </CardContent>
@@ -654,22 +663,10 @@ export default function InvoiceCreate() {
               <CardDescription>Payment information from selected supplier</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 <div>
                   <p className="font-medium text-muted-foreground">Name:</p>
                   <p>{remitToInfo.name}</p>
-                </div>
-                <div>
-                  <p className="font-medium text-muted-foreground">GSTIN:</p>
-                  <p>{remitToInfo.gstin}</p>
-                </div>
-                <div>
-                  <p className="font-medium text-muted-foreground">CIN:</p>
-                  <p>{remitToInfo.cin}</p>
-                </div>
-                <div>
-                  <p className="font-medium text-muted-foreground">State Code:</p>
-                  <p>{remitToInfo.stateCode}</p>
                 </div>
                 <div>
                   <p className="font-medium text-muted-foreground">Address:</p>
@@ -684,13 +681,34 @@ export default function InvoiceCreate() {
                   <p>{remitToInfo.state}</p>
                 </div>
                 <div>
+                  <p className="font-medium text-muted-foreground">State Code:</p>
+                  <p>{remitToInfo.stateCode}</p>
+                </div>
+                <div>
                   <p className="font-medium text-muted-foreground">Country:</p>
                   <p>{remitToInfo.country}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground">Phone:</p>
+                  <p>{remitToInfo.phone}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground">Email:</p>
+                  <p>{remitToInfo.email}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground">GSTIN:</p>
+                  <p>{remitToInfo.gstin}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground">CIN:</p>
+                  <p>{remitToInfo.cin}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
         )}
+        </div>
 
         {/* Ship To Section */}
         <Card>
@@ -717,7 +735,7 @@ export default function InvoiceCreate() {
                       Add Ship To Address
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="sm:max-w-md">
+                  <DialogContent className="sm:max-w-lg">
                     <DialogHeader>
                       <DialogTitle>Ship To Address</DialogTitle>
                       <DialogDescription>
@@ -767,6 +785,25 @@ export default function InvoiceCreate() {
                           />
                         </div>
                       </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="shipToStateCode">State Code</Label>
+                          <Input
+                            id="shipToStateCode"
+                            type="number"
+                            value={tempShipTo.stateCode || ''}
+                            onChange={(e) => setTempShipTo(prev => ({ ...prev, stateCode: e.target.value ? parseInt(e.target.value) : null }))}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="shipToPostalCode">Postal Code</Label>
+                          <Input
+                            id="shipToPostalCode"
+                            value={tempShipTo.postalCode}
+                            onChange={(e) => setTempShipTo(prev => ({ ...prev, postalCode: e.target.value }))}
+                          />
+                        </div>
+                      </div>
                       <div>
                         <Label htmlFor="shipToCountry">Country</Label>
                         <Input
@@ -774,6 +811,25 @@ export default function InvoiceCreate() {
                           value={tempShipTo.country}
                           onChange={(e) => setTempShipTo(prev => ({ ...prev, country: e.target.value }))}
                         />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="shipToPhone">Phone</Label>
+                          <Input
+                            id="shipToPhone"
+                            value={tempShipTo.phone}
+                            onChange={(e) => setTempShipTo(prev => ({ ...prev, phone: e.target.value }))}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="shipToEmail">Email</Label>
+                          <Input
+                            id="shipToEmail"
+                            type="email"
+                            value={tempShipTo.email || ''}
+                            onChange={(e) => setTempShipTo(prev => ({ ...prev, email: e.target.value }))}
+                          />
+                        </div>
                       </div>
                     </div>
                     <DialogFooter>
@@ -790,7 +846,7 @@ export default function InvoiceCreate() {
             </div>
 
             {shipToAddress && (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 <div>
                   <p className="font-medium text-muted-foreground">Name:</p>
                   <p>{shipToAddress.name}</p>
@@ -819,11 +875,14 @@ export default function InvoiceCreate() {
                   <p className="font-medium text-muted-foreground">Phone:</p>
                   <p>{shipToAddress.phone}</p>
                 </div>
+                <div>
+                  <p className="font-medium text-muted-foreground">Email:</p>
+                  <p>{shipToAddress.email || 'N/A'}</p>
+                </div>
               </div>
             )}
           </CardContent>
         </Card>
-        </div>
 
         {/* Invoice Line Items */}
         <Card>
