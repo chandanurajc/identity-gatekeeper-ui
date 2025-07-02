@@ -833,7 +833,9 @@ export default function InvoiceCreate() {
                             id="shipToStateCode"
                             type="number"
                             value={tempShipTo.stateCode || ''}
-                            onChange={(e) => setTempShipTo(prev => ({ ...prev, stateCode: e.target.value ? parseInt(e.target.value) : null }))}
+                            readOnly
+                            className="bg-muted/40"
+                            placeholder="Auto-filled"
                           />
                         </div>
                         <div>
