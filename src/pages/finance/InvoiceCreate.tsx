@@ -18,6 +18,7 @@ import { divisionService } from "@/services/divisionService";
 import { partnerSupplierService } from "@/services/partnerSupplierService";
 import { itemService } from "@/services/itemService";
 import { invoiceService } from "@/services/invoiceService";
+import { organizationService } from "@/services/organizationService";
 import PermissionButton from "@/components/PermissionButton";
 import type { InvoiceFormData, InvoiceType, InvoiceLineFormData, PaymentTerms } from "@/types/invoice";
 import { Organization } from "@/types/organization";
@@ -246,11 +247,12 @@ export default function InvoiceCreate() {
 
   const loadSupplierRemitToInfo = async (supplierId: string) => {
     try {
-      const supplier = suppliers.find(s => s.id === supplierId);
-      if (supplier) {
-        const remitToContact = supplier.contacts?.find(c => c.type === 'Remit To' || c.type === 'Registered location');
-        const gstinRef = supplier.references?.find(r => r.type === 'GST');
-        const cinRef = supplier.references?.find(r => r.type === 'CIN');
+      // Fetch organization details from organizationService
+      const organization = await organizationService.getOrganizationById(supplierId);
+      if (organization) {
+        const remitToContact = organization.contacts?.find(c => c.type === 'Remit To' || c.type === 'Registered location');
+        const gstinRef = organization.references?.find(r => r.type === 'GST');
+        const cinRef = organization.references?.find(r => r.type === 'CIN');
         
         if (remitToContact) {
           setRemitToInfo({
