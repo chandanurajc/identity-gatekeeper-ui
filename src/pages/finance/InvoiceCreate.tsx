@@ -598,6 +598,8 @@ export default function InvoiceCreate() {
           </CardContent>
         </Card>
 
+        {/* Address Information Cards - in same row */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Bill To Card */}
         {billToInfo && (
           <Card>
@@ -821,6 +823,7 @@ export default function InvoiceCreate() {
             )}
           </CardContent>
         </Card>
+        </div>
 
         {/* Invoice Line Items */}
         <Card>
