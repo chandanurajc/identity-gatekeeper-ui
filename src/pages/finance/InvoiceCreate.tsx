@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -10,18 +9,77 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { ArrowLeft, Plus, Trash2, Edit } from "lucide-react";
 import { useMultiTenant } from "@/hooks/useMultiTenant";
+import { useAuth } from "@/context/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 import { divisionService } from "@/services/divisionService";
 import { partnerSupplierService } from "@/services/partnerSupplierService";
 import { itemService } from "@/services/itemService";
+import { invoiceService } from "@/services/invoiceService";
+import PermissionButton from "@/components/PermissionButton";
 import type { InvoiceFormData, InvoiceType, InvoiceLineFormData, PaymentTerms } from "@/types/invoice";
 import { Organization } from "@/types/organization";
 import { Item } from "@/types/item";
+import { Division } from "@/types/division";
+
+interface ShipToAddress {
+  name: string;
+  address1: string;
+  address2: string;
+  postalCode: string;
+  city: string;
+  state: string;
+  stateCode: number | null;
+  country: string;
+  phone: string;
+}
+
+interface BillToInfo {
+  name: string;
+  address1: string;
+  address2: string;
+  city: string;
+  state: string;
+  stateCode: number | null;
+  country: string;
+  postalCode: string;
+  email: string;
+  phone: string;
+  gstin: string;
+  cin: string;
+}
+
+interface RemitToInfo {
+  name: string;
+  address1: string;
+  address2: string;
+  city: string;
+  state: string;
+  stateCode: number | null;
+  country: string;
+  postalCode: string;
+  email: string;
+  phone: string;
+  gstin: string;
+  cin: string;
+}
+
+interface GSTBreakdown {
+  gstPercentage: number;
+  taxableAmount: number;
+  cgstAmount: number;
+  sgstAmount: number;
+  igstAmount: number;
+  totalGstAmount: number;
+}
 
 export default function InvoiceCreate() {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const { getCurrentOrganizationId } = useMultiTenant();
+  const { user } = useAuth();
   const organizationId = getCurrentOrganizationId();
 
   const [formData, setFormData] = useState<Partial<InvoiceFormData>>({
@@ -35,6 +93,21 @@ export default function InvoiceCreate() {
 
   const [suppliers, setSuppliers] = useState<Organization[]>([]);
   const [items, setItems] = useState<Item[]>([]);
+  const [billToInfo, setBillToInfo] = useState<BillToInfo | null>(null);
+  const [remitToInfo, setRemitToInfo] = useState<RemitToInfo | null>(null);
+  const [shipToAddress, setShipToAddress] = useState<ShipToAddress | null>(null);
+  const [showShipToDialog, setShowShipToDialog] = useState(false);
+  const [tempShipTo, setTempShipTo] = useState<ShipToAddress>({
+    name: '',
+    address1: '',
+    address2: '',
+    postalCode: '',
+    city: '',
+    state: '',
+    stateCode: null,
+    country: '',
+    phone: ''
+  });
 
   // Fetch divisions for the dropdown
   const { data: divisions, isLoading: divisionsLoading } = useQuery({
@@ -57,10 +130,30 @@ export default function InvoiceCreate() {
         setItems(itemsData);
       } catch (error) {
         console.error("Error fetching data:", error);
+        toast({ title: "Error", description: "Failed to load data", variant: "destructive" });
       }
     };
 
     fetchData();
+  }, [organizationId, toast]);
+
+  // Generate invoice number on load
+  useEffect(() => {
+    const generateInvoiceNumber = async () => {
+      if (!organizationId) return;
+      
+      try {
+        const invoiceNumber = await invoiceService.generateInvoiceNumber(organizationId);
+        setFormData(prev => ({
+          ...prev,
+          invoiceNumber
+        }));
+      } catch (error) {
+        console.error("Error generating invoice number:", error);
+      }
+    };
+
+    generateInvoiceNumber();
   }, [organizationId]);
 
   // Calculate due date based on payment terms
@@ -97,6 +190,113 @@ export default function InvoiceCreate() {
       }));
     }
   }, [formData.invoiceDate, formData.paymentTerms]);
+
+  // Load division Bill To info when division changes
+  useEffect(() => {
+    if (formData.divisionId) {
+      loadDivisionBillToInfo(formData.divisionId);
+    }
+  }, [formData.divisionId]);
+
+  // Load supplier Remit To info when supplier changes
+  useEffect(() => {
+    if (formData.remitToOrgId) {
+      loadSupplierRemitToInfo(formData.remitToOrgId);
+    }
+  }, [formData.remitToOrgId]);
+
+  // Load ship to address when same as division is checked
+  useEffect(() => {
+    if (formData.sameAsDivisionAddress && formData.divisionId) {
+      loadDivisionRegisteredLocation(formData.divisionId);
+    } else if (!formData.sameAsDivisionAddress) {
+      setShipToAddress(null);
+    }
+  }, [formData.sameAsDivisionAddress, formData.divisionId]);
+
+  const loadDivisionBillToInfo = async (divisionId: string) => {
+    try {
+      const division = await divisionService.getDivisionById(divisionId);
+      if (division) {
+        const billToContact = division.contacts?.find(c => c.type === 'Bill To' || c.type === 'Registered location');
+        const gstinRef = division.references?.find(r => r.type === 'GST');
+        const cinRef = division.references?.find(r => r.type === 'CIN');
+        
+        if (billToContact) {
+          setBillToInfo({
+            name: `${billToContact.firstName} ${billToContact.lastName || ''}`.trim(),
+            address1: billToContact.address1 || '',
+            address2: billToContact.address2 || '',
+            city: billToContact.city || '',
+            state: billToContact.state || '',
+            stateCode: billToContact.stateCode || null,
+            country: billToContact.country || '',
+            postalCode: billToContact.postalCode || '',
+            email: billToContact.email || '',
+            phone: billToContact.phoneNumber || '',
+            gstin: gstinRef?.value || '',
+            cin: cinRef?.value || ''
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error loading division Bill To info:", error);
+    }
+  };
+
+  const loadSupplierRemitToInfo = async (supplierId: string) => {
+    try {
+      const supplier = suppliers.find(s => s.id === supplierId);
+      if (supplier) {
+        const remitToContact = supplier.contacts?.find(c => c.type === 'Remit To' || c.type === 'Registered location');
+        const gstinRef = supplier.references?.find(r => r.type === 'GST');
+        const cinRef = supplier.references?.find(r => r.type === 'CIN');
+        
+        if (remitToContact) {
+          setRemitToInfo({
+            name: `${remitToContact.firstName} ${remitToContact.lastName || ''}`.trim(),
+            address1: remitToContact.address1 || '',
+            address2: remitToContact.address2 || '',
+            city: remitToContact.city || '',
+            state: remitToContact.state || '',
+            stateCode: remitToContact.stateCode || null,
+            country: remitToContact.country || '',
+            postalCode: remitToContact.postalCode || '',
+            email: remitToContact.email || '',
+            phone: remitToContact.phoneNumber || '',
+            gstin: gstinRef?.value || '',
+            cin: cinRef?.value || ''
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error loading supplier Remit To info:", error);
+    }
+  };
+
+  const loadDivisionRegisteredLocation = async (divisionId: string) => {
+    try {
+      const division = await divisionService.getDivisionById(divisionId);
+      if (division) {
+        const registeredContact = division.contacts?.find(c => c.type === 'Registered location');
+        if (registeredContact) {
+          setShipToAddress({
+            name: `${registeredContact.firstName} ${registeredContact.lastName || ''}`.trim(),
+            address1: registeredContact.address1 || '',
+            address2: registeredContact.address2 || '',
+            city: registeredContact.city || '',
+            state: registeredContact.state || '',
+            stateCode: registeredContact.stateCode || null,
+            country: registeredContact.country || '',
+            postalCode: registeredContact.postalCode || '',
+            phone: registeredContact.phoneNumber || ''
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error loading division registered location:", error);
+    }
+  };
 
   const handleInputChange = (field: keyof InvoiceFormData, value: any) => {
     setFormData(prev => ({
@@ -168,6 +368,36 @@ export default function InvoiceCreate() {
     });
   };
 
+  const handleItemChange = async (lineIndex: number, itemId: string) => {
+    const selectedItem = items.find(item => item.id === itemId);
+    if (selectedItem) {
+      updateLineItem(lineIndex, 'itemId', itemId);
+      updateLineItem(lineIndex, 'itemDescription', selectedItem.description);
+      updateLineItem(lineIndex, 'uom', selectedItem.uom || 'Unit');
+      updateLineItem(lineIndex, 'gstPercentage', selectedItem.gstPercentage || 18);
+      
+      // Auto-fetch item price based on supplier
+      if (formData.remitToOrgId) {
+        try {
+          const itemWithCosts = await itemService.getItemById(itemId);
+          if (itemWithCosts?.costs) {
+            const supplierCost = itemWithCosts.costs.find(cost => cost.supplierId === formData.remitToOrgId);
+            if (supplierCost) {
+              updateLineItem(lineIndex, 'unitPrice', supplierCost.cost);
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching item cost:", error);
+        }
+      }
+    }
+  };
+
+  const handleShipToSave = () => {
+    setShipToAddress(tempShipTo);
+    setShowShipToDialog(false);
+  };
+
   const calculateTotals = () => {
     const lines = formData.invoiceLines || [];
     const subtotal = lines.reduce((sum, line) => sum + line.totalPrice, 0);
@@ -177,22 +407,67 @@ export default function InvoiceCreate() {
     return { subtotal, totalGst, total };
   };
 
+  const calculateGSTBreakdown = (): GSTBreakdown[] => {
+    const lines = formData.invoiceLines || [];
+    const gstGroups = new Map<number, { taxableAmount: number; gstValue: number }>();
+    
+    lines.forEach(line => {
+      const existing = gstGroups.get(line.gstPercentage) || { taxableAmount: 0, gstValue: 0 };
+      gstGroups.set(line.gstPercentage, {
+        taxableAmount: existing.taxableAmount + line.totalPrice,
+        gstValue: existing.gstValue + line.gstValue
+      });
+    });
+
+    const breakdown: GSTBreakdown[] = [];
+    gstGroups.forEach((value, gstPercentage) => {
+      const isSameState = billToInfo?.stateCode === shipToAddress?.stateCode;
+      
+      breakdown.push({
+        gstPercentage,
+        taxableAmount: value.taxableAmount,
+        cgstAmount: isSameState ? value.gstValue / 2 : 0,
+        sgstAmount: isSameState ? value.gstValue / 2 : 0,
+        igstAmount: isSameState ? 0 : value.gstValue,
+        totalGstAmount: value.gstValue
+      });
+    });
+
+    return breakdown;
+  };
+
   const { subtotal, totalGst, total } = calculateTotals();
+  const gstBreakdown = calculateGSTBreakdown();
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log("Invoice form data:", formData);
-    // TODO: Implement invoice creation
+  const handleSaveDraft = async () => {
+    if (!formData.divisionId || !formData.remitToOrgId) {
+      toast({ title: "Error", description: "Division and Supplier are required", variant: "destructive" });
+      return;
+    }
+
+    try {
+      await invoiceService.createInvoice(formData as InvoiceFormData, organizationId!, user?.email || '');
+      toast({ title: "Success", description: "Invoice saved as draft" });
+      navigate("/finance/invoices");
+    } catch (error) {
+      console.error("Error saving draft:", error);
+      toast({ title: "Error", description: "Failed to save draft", variant: "destructive" });
+    }
   };
 
-  const handleSaveDraft = () => {
-    console.log("Saving as draft:", formData);
-    // TODO: Implement save as draft
+  const handleSendForApproval = async () => {
+    // TODO: Implement send for approval with status update
+    toast({ title: "Info", description: "Send for approval functionality coming soon" });
   };
 
-  const handleSubmitInvoice = () => {
-    console.log("Submitting invoice:", formData);
-    // TODO: Implement submit invoice
+  const handleApprove = async () => {
+    // TODO: Implement approve functionality
+    toast({ title: "Info", description: "Approve functionality coming soon" });
+  };
+
+  const handleReject = async () => {
+    // TODO: Implement reject functionality
+    toast({ title: "Info", description: "Reject functionality coming soon" });
   };
 
   if (!organizationId) {
@@ -218,8 +493,8 @@ export default function InvoiceCreate() {
         <p className="text-muted-foreground">Create a new payable or receivable invoice</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Top Section - Invoice Header */}
+      <div className="space-y-6">
+        {/* Invoice Header */}
         <Card>
           <CardHeader>
             <CardTitle>Invoice Header</CardTitle>
@@ -232,8 +507,8 @@ export default function InvoiceCreate() {
                 <Input
                   id="invoiceNumber"
                   value={formData.invoiceNumber || 'Auto-generated'}
-                  onChange={(e) => handleInputChange('invoiceNumber', e.target.value)}
-                  placeholder="Auto-generated"
+                  disabled
+                  className="bg-muted"
                 />
               </div>
 
@@ -261,16 +536,6 @@ export default function InvoiceCreate() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="billTo">Bill To</Label>
-                <Input
-                  id="billTo"
-                  value="Current Organization"
-                  disabled
-                  className="bg-muted"
-                />
-              </div>
-
-              <div className="space-y-2">
                 <Label htmlFor="supplier">Supplier *</Label>
                 <Select
                   value={formData.remitToOrgId || ''}
@@ -283,36 +548,6 @@ export default function InvoiceCreate() {
                     {suppliers.map((supplier) => (
                       <SelectItem key={supplier.id} value={supplier.id}>
                         {supplier.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="remitTo">Remit To</Label>
-                <Input
-                  id="remitTo"
-                  value={suppliers.find(s => s.id === formData.remitToOrgId)?.name || ''}
-                  disabled
-                  className="bg-muted"
-                  placeholder="Auto-filled from supplier"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="shipTo">Ship To</Label>
-                <Select
-                  value={formData.divisionId || ''}
-                  onValueChange={(value) => handleInputChange('divisionId', value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select location" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {divisions?.map((division) => (
-                      <SelectItem key={division.id} value={division.id}>
-                        {division.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -361,217 +596,446 @@ export default function InvoiceCreate() {
           </CardContent>
         </Card>
 
-        {/* Invoice Line Items Table */}
+        {/* Bill To Card */}
+        {billToInfo && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Bill To</CardTitle>
+              <CardDescription>Billing information from selected division</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label>Name</Label>
+                  <Input value={billToInfo.name} disabled className="bg-muted" />
+                </div>
+                <div>
+                  <Label>GSTIN</Label>
+                  <Input value={billToInfo.gstin} disabled className="bg-muted" />
+                </div>
+                <div>
+                  <Label>CIN</Label>
+                  <Input value={billToInfo.cin} disabled className="bg-muted" />
+                </div>
+                <div>
+                  <Label>Address 1</Label>
+                  <Input value={billToInfo.address1} disabled className="bg-muted" />
+                </div>
+                <div>
+                  <Label>City</Label>
+                  <Input value={billToInfo.city} disabled className="bg-muted" />
+                </div>
+                <div>
+                  <Label>State</Label>
+                  <Input value={billToInfo.state} disabled className="bg-muted" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Remit To Card */}
+        {remitToInfo && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Remit To</CardTitle>
+              <CardDescription>Payment information from selected supplier</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label>Name</Label>
+                  <Input value={remitToInfo.name} disabled className="bg-muted" />
+                </div>
+                <div>
+                  <Label>GSTIN</Label>
+                  <Input value={remitToInfo.gstin} disabled className="bg-muted" />
+                </div>
+                <div>
+                  <Label>CIN</Label>
+                  <Input value={remitToInfo.cin} disabled className="bg-muted" />
+                </div>
+                <div>
+                  <Label>Address 1</Label>
+                  <Input value={remitToInfo.address1} disabled className="bg-muted" />
+                </div>
+                <div>
+                  <Label>City</Label>
+                  <Input value={remitToInfo.city} disabled className="bg-muted" />
+                </div>
+                <div>
+                  <Label>State</Label>
+                  <Input value={remitToInfo.state} disabled className="bg-muted" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Ship To Section */}
         <Card>
           <CardHeader>
-            <CardTitle>Invoice Line Items</CardTitle>
-            <CardDescription>Add items to this invoice</CardDescription>
+            <CardTitle>Ship To</CardTitle>
+            <CardDescription>Shipping address for this invoice</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="sameAsDivision"
+                  checked={formData.sameAsDivisionAddress}
+                  onCheckedChange={(checked) => handleInputChange('sameAsDivisionAddress', checked)}
+                />
+                <Label htmlFor="sameAsDivision">Same as division registered location?</Label>
+              </div>
+              
+              {!formData.sameAsDivisionAddress && (
+                <Dialog open={showShipToDialog} onOpenChange={setShowShipToDialog}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Ship To Address
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Ship To Address</DialogTitle>
+                      <DialogDescription>
+                        Enter the shipping address details
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="shipToName">Name</Label>
+                        <Input
+                          id="shipToName"
+                          value={tempShipTo.name}
+                          onChange={(e) => setTempShipTo(prev => ({ ...prev, name: e.target.value }))}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="shipToAddress1">Address 1</Label>
+                        <Input
+                          id="shipToAddress1"
+                          value={tempShipTo.address1}
+                          onChange={(e) => setTempShipTo(prev => ({ ...prev, address1: e.target.value }))}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="shipToAddress2">Address 2</Label>
+                        <Input
+                          id="shipToAddress2"
+                          value={tempShipTo.address2}
+                          onChange={(e) => setTempShipTo(prev => ({ ...prev, address2: e.target.value }))}
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="shipToCity">City</Label>
+                          <Input
+                            id="shipToCity"
+                            value={tempShipTo.city}
+                            onChange={(e) => setTempShipTo(prev => ({ ...prev, city: e.target.value }))}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="shipToState">State</Label>
+                          <Input
+                            id="shipToState"
+                            value={tempShipTo.state}
+                            onChange={(e) => setTempShipTo(prev => ({ ...prev, state: e.target.value }))}
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <Label htmlFor="shipToCountry">Country</Label>
+                        <Input
+                          id="shipToCountry"
+                          value={tempShipTo.country}
+                          onChange={(e) => setTempShipTo(prev => ({ ...prev, country: e.target.value }))}
+                        />
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button variant="outline" onClick={() => setShowShipToDialog(false)}>
+                        Cancel
+                      </Button>
+                      <Button onClick={handleShipToSave}>
+                        Save
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              )}
+            </div>
+
+            {shipToAddress && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label>Name</Label>
+                  <Input value={shipToAddress.name} disabled className="bg-muted" />
+                </div>
+                <div>
+                  <Label>Address 1</Label>
+                  <Input value={shipToAddress.address1} disabled className="bg-muted" />
+                </div>
+                <div>
+                  <Label>City</Label>
+                  <Input value={shipToAddress.city} disabled className="bg-muted" />
+                </div>
+                <div>
+                  <Label>State</Label>
+                  <Input value={shipToAddress.state} disabled className="bg-muted" />
+                </div>
+                <div>
+                  <Label>Country</Label>
+                  <Input value={shipToAddress.country} disabled className="bg-muted" />
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Invoice Line Items */}
+        <Card>
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <div>
+                <CardTitle>Invoice Line Items</CardTitle>
+                <CardDescription>Add items to this invoice</CardDescription>
+              </div>
+              <Button onClick={addLineItem} size="sm">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Line
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-12">#</TableHead>
+                    <TableHead className="min-w-32">Item #</TableHead>
+                    <TableHead className="min-w-48">Description</TableHead>
+                    <TableHead className="w-20">Quantity</TableHead>
+                    <TableHead className="w-20">UOM</TableHead>
+                    <TableHead className="w-24">Rate/Unit</TableHead>
+                    <TableHead className="w-24">Total Price</TableHead>
+                    <TableHead className="w-20">GST %</TableHead>
+                    <TableHead className="w-24">GST Value</TableHead>
+                    <TableHead className="w-24">Line Total</TableHead>
+                    <TableHead className="w-12">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {formData.invoiceLines?.map((line, index) => (
+                    <TableRow key={index}>
+                      <TableCell>{line.lineNumber}</TableCell>
+                      <TableCell>
+                        <Select
+                          value={line.itemId}
+                          onValueChange={(value) => handleItemChange(index, value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select item" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {items.map((item) => (
+                              <SelectItem key={item.id} value={item.id}>
+                                {item.id}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          value={line.itemDescription}
+                          onChange={(e) => updateLineItem(index, 'itemDescription', e.target.value)}
+                          placeholder="Item description"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={line.quantity}
+                          onChange={(e) => updateLineItem(index, 'quantity', parseFloat(e.target.value) || 0)}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          value={line.uom}
+                          onChange={(e) => updateLineItem(index, 'uom', e.target.value)}
+                          placeholder="Unit"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={line.unitPrice}
+                          onChange={(e) => updateLineItem(index, 'unitPrice', parseFloat(e.target.value) || 0)}
+                          placeholder="0.00"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          value={line.totalPrice.toFixed(2)}
+                          disabled
+                          className="bg-muted"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          min="0"
+                          max="100"
+                          step="0.01"
+                          value={line.gstPercentage}
+                          onChange={(e) => updateLineItem(index, 'gstPercentage', parseFloat(e.target.value) || 0)}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          value={line.gstValue.toFixed(2)}
+                          disabled
+                          className="bg-muted"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          value={line.lineTotal.toFixed(2)}
+                          disabled
+                          className="bg-muted"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeLineItem(index)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* GST Summary */}
+        {gstBreakdown.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>GST Summary</CardTitle>
+              <CardDescription>Breakdown of GST calculations</CardDescription>
+            </CardHeader>
+            <CardContent>
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-12">#</TableHead>
-                      <TableHead className="min-w-32">Item #</TableHead>
-                      <TableHead className="min-w-48">Description</TableHead>
-                      <TableHead className="w-20">Quantity</TableHead>
-                      <TableHead className="w-20">UOM</TableHead>
-                      <TableHead className="w-24">Rate/Unit</TableHead>
-                      <TableHead className="w-24">Weight</TableHead>
-                      <TableHead className="w-20">Taxable?</TableHead>
-                      <TableHead className="w-20">GST %</TableHead>
-                      <TableHead className="w-24">GST Value</TableHead>
-                      <TableHead className="w-24">Line Total</TableHead>
-                      <TableHead className="w-12">Actions</TableHead>
+                      <TableHead>GST %</TableHead>
+                      <TableHead>Taxable Amount</TableHead>
+                      <TableHead>CGST</TableHead>
+                      <TableHead>SGST</TableHead>
+                      <TableHead>IGST</TableHead>
+                      <TableHead>Total GST</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {formData.invoiceLines?.map((line, index) => (
+                    {gstBreakdown.map((item, index) => (
                       <TableRow key={index}>
-                        <TableCell>{line.lineNumber}</TableCell>
-                        <TableCell>
-                          <Select
-                            value={line.itemId}
-                            onValueChange={(value) => {
-                              updateLineItem(index, 'itemId', value);
-                              const item = items.find(i => i.id === value);
-                              if (item) {
-                                updateLineItem(index, 'itemDescription', item.description);
-                                updateLineItem(index, 'uom', item.uom || 'Unit');
-                                updateLineItem(index, 'gstPercentage', item.gstPercentage || 18);
-                              }
-                            }}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select item" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {items.map((item) => (
-                                <SelectItem key={item.id} value={item.id}>
-                                  {item.id}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            value={line.itemDescription}
-                            onChange={(e) => updateLineItem(index, 'itemDescription', e.target.value)}
-                            placeholder="Item description"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            value={line.quantity}
-                            onChange={(e) => updateLineItem(index, 'quantity', parseFloat(e.target.value) || 0)}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            value={line.uom}
-                            onChange={(e) => updateLineItem(index, 'uom', e.target.value)}
-                            placeholder="Unit"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            value={line.unitPrice}
-                            onChange={(e) => updateLineItem(index, 'unitPrice', parseFloat(e.target.value) || 0)}
-                            placeholder="0.00"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            value={line.totalWeight || 0}
-                            disabled
-                            className="bg-muted"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Checkbox
-                            checked={line.gstPercentage > 0}
-                            onCheckedChange={(checked) => 
-                              updateLineItem(index, 'gstPercentage', checked ? 18 : 0)
-                            }
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            min="0"
-                            max="100"
-                            step="0.01"
-                            value={line.gstPercentage}
-                            onChange={(e) => updateLineItem(index, 'gstPercentage', parseFloat(e.target.value) || 0)}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            value={line.gstValue.toFixed(2)}
-                            disabled
-                            className="bg-muted"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            value={line.lineTotal.toFixed(2)}
-                            disabled
-                            className="bg-muted"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeLineItem(index)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
+                        <TableCell>{item.gstPercentage}%</TableCell>
+                        <TableCell>₹{item.taxableAmount.toFixed(2)}</TableCell>
+                        <TableCell>₹{item.cgstAmount.toFixed(2)}</TableCell>
+                        <TableCell>₹{item.sgstAmount.toFixed(2)}</TableCell>
+                        <TableCell>₹{item.igstAmount.toFixed(2)}</TableCell>
+                        <TableCell>₹{item.totalGstAmount.toFixed(2)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
               </div>
-              
-              <Button
-                type="button"
-                variant="outline"
-                onClick={addLineItem}
-                className="flex items-center space-x-2"
-              >
-                <Plus className="h-4 w-4" />
-                <span>Add Line Item</span>
-              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Invoice Summary */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Invoice Summary</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label>Subtotal (Before Tax)</Label>
+                <Input value={`₹${subtotal.toFixed(2)}`} disabled className="bg-muted font-semibold" />
+              </div>
+              <div className="space-y-2">
+                <Label>Total GST</Label>
+                <Input value={`₹${totalGst.toFixed(2)}`} disabled className="bg-muted font-semibold" />
+              </div>
+              <div className="space-y-2">
+                <Label>Total Amount</Label>
+                <Input value={`₹${total.toFixed(2)}`} disabled className="bg-muted font-bold text-lg" />
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Bottom Section - Totals and Actions */}
+        {/* Actions */}
         <Card>
           <CardContent className="pt-6">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
-              {/* Totals */}
-              <div className="w-full md:w-auto">
-                <div className="space-y-2 text-right min-w-64">
-                  <div className="flex justify-between">
-                    <span>Subtotal:</span>
-                    <span className="font-medium">₹ {subtotal.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Total GST:</span>
-                    <span className="font-medium">₹ {totalGst.toFixed(2)}</span>
-                  </div>
-                  <Separator />
-                  <div className="flex justify-between text-lg font-bold">
-                    <span>Invoice Total:</span>
-                    <span>₹ {total.toFixed(2)}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => navigate("/finance/invoices")}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleSaveDraft}
-                >
-                  Save as Draft
-                </Button>
-                <Button
-                  type="button"
-                  onClick={handleSubmitInvoice}
-                >
-                  Submit Invoice
-                </Button>
-              </div>
+            <div className="flex justify-end space-x-4">
+              <Button variant="outline" onClick={() => navigate("/finance/invoices")}>
+                Cancel
+              </Button>
+              
+              <PermissionButton
+                permission="Create Invoice"
+                onClick={handleSaveDraft}
+                variant="secondary"
+              >
+                Save as Draft
+              </PermissionButton>
+              
+              <PermissionButton
+                permission="Send Invoice for Approval"
+                onClick={handleSendForApproval}
+              >
+                Send for Approval
+              </PermissionButton>
+              
+              <PermissionButton
+                permission="Approve Invoice"
+                onClick={handleApprove}
+                variant="default"
+              >
+                Approve
+              </PermissionButton>
+              
+              <PermissionButton
+                permission="Reject Invoice"
+                onClick={handleReject}
+                variant="destructive"
+              >
+                Reject
+              </PermissionButton>
             </div>
           </CardContent>
         </Card>
-      </form>
+      </div>
     </div>
   );
 }

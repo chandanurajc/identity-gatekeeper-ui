@@ -255,6 +255,17 @@ class InvoiceService {
     }
   }
 
+  async generateInvoiceNumber(organizationId: string): Promise<string> {
+    const { data, error } = await supabase
+      .rpc('generate_invoice_number', { org_id: organizationId });
+
+    if (error) {
+      throw new Error(`Failed to generate invoice number: ${error.message}`);
+    }
+
+    return data;
+  }
+
   async searchReferenceTransactions(params: ReferenceTransactionSearchParams, organizationId: string): Promise<ReferenceTransactionResult[]> {
     // This would typically search purchase orders or sales orders
     // For now, returning empty array as these tables may not exist yet
