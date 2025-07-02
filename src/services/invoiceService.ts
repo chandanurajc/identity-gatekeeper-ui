@@ -58,10 +58,13 @@ class InvoiceService {
     const invoiceDate = new Date(invoiceData.invoiceDate);
     const dueDate = this.calculateDueDate(invoiceDate, invoiceData.paymentTerms);
 
-    // Calculate totals
-    const { totalItemValue, totalGstValue, totalInvoiceValue } = this.calculateTotals(invoiceData.invoiceLines);
+  // Calculate totals
+  const { totalItemValue, totalGstValue, totalInvoiceValue } = this.calculateTotals(invoiceData.invoiceLines);
 
-    const invoiceToCreate = {
+  // Calculate GST breakdown based on state codes
+  const gstBreakdown = this.calculateGstBreakdown(invoiceData.invoiceLines, invoiceData.remitToStateCode, invoiceData.shipToStateCode);
+
+  const invoiceToCreate = {
       organization_id: organizationId,
       division_id: invoiceData.divisionId,
       invoice_number: invoiceNumber,
@@ -123,12 +126,26 @@ class InvoiceService {
         .from('invoice_line')
         .insert(linesToCreate);
 
-      if (linesError) {
-        throw new Error(`Failed to create invoice lines: ${linesError.message}`);
-      }
+    if (linesError) {
+      throw new Error(`Failed to create invoice lines: ${linesError.message}`);
     }
+  }
 
-    return this.getInvoiceById(invoice.id, organizationId) as Promise<Invoice>;
+  // Create GST breakdown entries
+  if (gstBreakdown.length > 0) {
+    const { error: gstError } = await supabase
+      .from('invoice_gst_breakdown')
+      .insert(gstBreakdown.map(breakdown => ({
+        invoice_id: invoice.id,
+        ...breakdown
+      })));
+
+    if (gstError) {
+      throw new Error(`Failed to create GST breakdown: ${gstError.message}`);
+    }
+  }
+
+  return this.getInvoiceById(invoice.id, organizationId) as Promise<Invoice>;
   }
 
   async updateInvoice(id: string, invoiceData: InvoiceFormData, organizationId: string, updatedBy: string): Promise<Invoice> {
@@ -138,6 +155,9 @@ class InvoiceService {
 
     // Calculate totals
     const { totalItemValue, totalGstValue, totalInvoiceValue } = this.calculateTotals(invoiceData.invoiceLines);
+
+    // Calculate GST breakdown based on state codes
+    const gstBreakdown = this.calculateGstBreakdown(invoiceData.invoiceLines, invoiceData.remitToStateCode, invoiceData.shipToStateCode);
 
     const invoiceToUpdate = {
       invoice_date: invoiceData.invoiceDate,
@@ -209,12 +229,36 @@ class InvoiceService {
         .from('invoice_line')
         .insert(linesToCreate);
 
-      if (linesError) {
-        throw new Error(`Failed to create invoice lines: ${linesError.message}`);
-      }
+    if (linesError) {
+      throw new Error(`Failed to create invoice lines: ${linesError.message}`);
     }
+  }
 
-    return this.getInvoiceById(id, organizationId) as Promise<Invoice>;
+  // Delete existing GST breakdown and recreate
+  const { error: deleteGstError } = await supabase
+    .from('invoice_gst_breakdown')
+    .delete()
+    .eq('invoice_id', id);
+
+  if (deleteGstError) {
+    throw new Error(`Failed to delete existing GST breakdown: ${deleteGstError.message}`);
+  }
+
+  // Create new GST breakdown entries
+  if (gstBreakdown.length > 0) {
+    const { error: gstError } = await supabase
+      .from('invoice_gst_breakdown')
+      .insert(gstBreakdown.map(breakdown => ({
+        invoice_id: id,
+        ...breakdown
+      })));
+
+    if (gstError) {
+      throw new Error(`Failed to create GST breakdown: ${gstError.message}`);
+    }
+  }
+
+  return this.getInvoiceById(id, organizationId) as Promise<Invoice>;
   }
 
   async updateInvoiceStatus(id: string, newStatus: InvoiceStatus, organizationId: string, changedBy: string, comments?: string): Promise<void> {
@@ -406,6 +450,61 @@ class InvoiceService {
       totalGstValue,
       totalInvoiceValue,
     };
+  }
+
+  private calculateGstBreakdown(invoiceLines: any[], remitToStateCode?: number, shipToStateCode?: number) {
+    // Group lines by GST percentage
+    const gstGroups = invoiceLines.reduce((groups: Record<number, { taxableAmount: number; gstValue: number }>, line: any) => {
+      const gstPercentage = line.gstPercentage || 0;
+      if (!groups[gstPercentage]) {
+        groups[gstPercentage] = {
+          taxableAmount: 0,
+          gstValue: 0
+        };
+      }
+      groups[gstPercentage].taxableAmount += line.totalPrice || 0;
+      groups[gstPercentage].gstValue += line.gstValue || 0;
+      return groups;
+    }, {});
+
+    // Calculate breakdown for each GST group
+    return Object.entries(gstGroups).map(([gstPercentageStr, group]) => {
+      const gstPercentage = parseFloat(gstPercentageStr);
+      const isIntraState = remitToStateCode && shipToStateCode && remitToStateCode === shipToStateCode;
+      
+      if (isIntraState) {
+        // Intra-state: Split GST into CGST and SGST (equal halves)
+        const cgstPercentage = gstPercentage / 2;
+        const sgstPercentage = gstPercentage / 2;
+        const cgstAmount = group.gstValue / 2;
+        const sgstAmount = group.gstValue / 2;
+        
+        return {
+          gst_percentage: gstPercentage,
+          taxable_amount: group.taxableAmount,
+          cgst_percentage: cgstPercentage,
+          cgst_amount: cgstAmount,
+          sgst_percentage: sgstPercentage,
+          sgst_amount: sgstAmount,
+          igst_percentage: 0,
+          igst_amount: 0,
+          total_gst_amount: group.gstValue
+        };
+      } else {
+        // Inter-state: All GST as IGST
+        return {
+          gst_percentage: gstPercentage,
+          taxable_amount: group.taxableAmount,
+          cgst_percentage: 0,
+          cgst_amount: 0,
+          sgst_percentage: 0,
+          sgst_amount: 0,
+          igst_percentage: gstPercentage,
+          igst_amount: group.gstValue,
+          total_gst_amount: group.gstValue
+        };
+      }
+    }).filter(breakdown => breakdown.gst_percentage > 0); // Only include non-zero GST
   }
 }
 

@@ -132,8 +132,10 @@ export interface InvoiceFormData {
   invoiceType: InvoiceType;
   billToOrgId: string;
   billToContactId?: string;
+  billToStateCode?: number;
   remitToOrgId: string;
   remitToContactId?: string;
+  remitToStateCode?: number;
   sameAsDivisionAddress: boolean;
   shipToName?: string;
   shipToAddress1?: string;
