@@ -603,31 +603,39 @@ export default function InvoiceCreate() {
               <CardTitle>Bill To</CardTitle>
               <CardDescription>Billing information from selected division</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-2">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                 <div>
-                  <Label>Name</Label>
-                  <Input value={billToInfo.name} disabled className="bg-muted" />
+                  <p className="font-medium text-muted-foreground">Name:</p>
+                  <p>{billToInfo.name}</p>
                 </div>
                 <div>
-                  <Label>GSTIN</Label>
-                  <Input value={billToInfo.gstin} disabled className="bg-muted" />
+                  <p className="font-medium text-muted-foreground">GSTIN:</p>
+                  <p>{billToInfo.gstin}</p>
                 </div>
                 <div>
-                  <Label>CIN</Label>
-                  <Input value={billToInfo.cin} disabled className="bg-muted" />
+                  <p className="font-medium text-muted-foreground">CIN:</p>
+                  <p>{billToInfo.cin}</p>
                 </div>
                 <div>
-                  <Label>Address 1</Label>
-                  <Input value={billToInfo.address1} disabled className="bg-muted" />
+                  <p className="font-medium text-muted-foreground">State Code:</p>
+                  <p>{billToInfo.stateCode}</p>
                 </div>
                 <div>
-                  <Label>City</Label>
-                  <Input value={billToInfo.city} disabled className="bg-muted" />
+                  <p className="font-medium text-muted-foreground">Address:</p>
+                  <p>{billToInfo.address1}</p>
                 </div>
                 <div>
-                  <Label>State</Label>
-                  <Input value={billToInfo.state} disabled className="bg-muted" />
+                  <p className="font-medium text-muted-foreground">City:</p>
+                  <p>{billToInfo.city}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground">State:</p>
+                  <p>{billToInfo.state}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground">Country:</p>
+                  <p>{billToInfo.country}</p>
                 </div>
               </div>
             </CardContent>
@@ -641,31 +649,39 @@ export default function InvoiceCreate() {
               <CardTitle>Remit To</CardTitle>
               <CardDescription>Payment information from selected supplier</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-2">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                 <div>
-                  <Label>Name</Label>
-                  <Input value={remitToInfo.name} disabled className="bg-muted" />
+                  <p className="font-medium text-muted-foreground">Name:</p>
+                  <p>{remitToInfo.name}</p>
                 </div>
                 <div>
-                  <Label>GSTIN</Label>
-                  <Input value={remitToInfo.gstin} disabled className="bg-muted" />
+                  <p className="font-medium text-muted-foreground">GSTIN:</p>
+                  <p>{remitToInfo.gstin}</p>
                 </div>
                 <div>
-                  <Label>CIN</Label>
-                  <Input value={remitToInfo.cin} disabled className="bg-muted" />
+                  <p className="font-medium text-muted-foreground">CIN:</p>
+                  <p>{remitToInfo.cin}</p>
                 </div>
                 <div>
-                  <Label>Address 1</Label>
-                  <Input value={remitToInfo.address1} disabled className="bg-muted" />
+                  <p className="font-medium text-muted-foreground">State Code:</p>
+                  <p>{remitToInfo.stateCode}</p>
                 </div>
                 <div>
-                  <Label>City</Label>
-                  <Input value={remitToInfo.city} disabled className="bg-muted" />
+                  <p className="font-medium text-muted-foreground">Address:</p>
+                  <p>{remitToInfo.address1}</p>
                 </div>
                 <div>
-                  <Label>State</Label>
-                  <Input value={remitToInfo.state} disabled className="bg-muted" />
+                  <p className="font-medium text-muted-foreground">City:</p>
+                  <p>{remitToInfo.city}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground">State:</p>
+                  <p>{remitToInfo.state}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground">Country:</p>
+                  <p>{remitToInfo.country}</p>
                 </div>
               </div>
             </CardContent>
@@ -770,26 +786,34 @@ export default function InvoiceCreate() {
             </div>
 
             {shipToAddress && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                 <div>
-                  <Label>Name</Label>
-                  <Input value={shipToAddress.name} disabled className="bg-muted" />
+                  <p className="font-medium text-muted-foreground">Name:</p>
+                  <p>{shipToAddress.name}</p>
                 </div>
                 <div>
-                  <Label>Address 1</Label>
-                  <Input value={shipToAddress.address1} disabled className="bg-muted" />
+                  <p className="font-medium text-muted-foreground">Address:</p>
+                  <p>{shipToAddress.address1}</p>
                 </div>
                 <div>
-                  <Label>City</Label>
-                  <Input value={shipToAddress.city} disabled className="bg-muted" />
+                  <p className="font-medium text-muted-foreground">City:</p>
+                  <p>{shipToAddress.city}</p>
                 </div>
                 <div>
-                  <Label>State</Label>
-                  <Input value={shipToAddress.state} disabled className="bg-muted" />
+                  <p className="font-medium text-muted-foreground">State:</p>
+                  <p>{shipToAddress.state}</p>
                 </div>
                 <div>
-                  <Label>Country</Label>
-                  <Input value={shipToAddress.country} disabled className="bg-muted" />
+                  <p className="font-medium text-muted-foreground">State Code:</p>
+                  <p>{shipToAddress.stateCode}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground">Country:</p>
+                  <p>{shipToAddress.country}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground">Phone:</p>
+                  <p>{shipToAddress.phone}</p>
                 </div>
               </div>
             )}
