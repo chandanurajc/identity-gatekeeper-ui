@@ -507,8 +507,8 @@ export default function InvoiceCreate() {
                 <Input
                   id="invoiceNumber"
                   value={formData.invoiceNumber || 'Auto-generated'}
-                  disabled
-                  className="bg-muted"
+                  onChange={(e) => handleInputChange('invoiceNumber', e.target.value)}
+                  placeholder="Auto-generated"
                 />
               </div>
 
@@ -812,123 +812,163 @@ export default function InvoiceCreate() {
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-12">#</TableHead>
-                    <TableHead className="min-w-32">Item #</TableHead>
-                    <TableHead className="min-w-48">Description</TableHead>
-                    <TableHead className="w-20">Quantity</TableHead>
-                    <TableHead className="w-20">UOM</TableHead>
-                    <TableHead className="w-24">Rate/Unit</TableHead>
-                    <TableHead className="w-24">Total Price</TableHead>
-                    <TableHead className="w-20">GST %</TableHead>
-                    <TableHead className="w-24">GST Value</TableHead>
-                    <TableHead className="w-24">Line Total</TableHead>
-                    <TableHead className="w-12">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {formData.invoiceLines?.map((line, index) => (
-                    <TableRow key={index}>
-                      <TableCell>{line.lineNumber}</TableCell>
-                      <TableCell>
-                        <Select
-                          value={line.itemId}
-                          onValueChange={(value) => handleItemChange(index, value)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select item" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {items.map((item) => (
-                              <SelectItem key={item.id} value={item.id}>
-                                {item.id}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          value={line.itemDescription}
-                          onChange={(e) => updateLineItem(index, 'itemDescription', e.target.value)}
-                          placeholder="Item description"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          value={line.quantity}
-                          onChange={(e) => updateLineItem(index, 'quantity', parseFloat(e.target.value) || 0)}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          value={line.uom}
-                          onChange={(e) => updateLineItem(index, 'uom', e.target.value)}
-                          placeholder="Unit"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          value={line.unitPrice}
-                          onChange={(e) => updateLineItem(index, 'unitPrice', parseFloat(e.target.value) || 0)}
-                          placeholder="0.00"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          type="number"
-                          value={line.totalPrice.toFixed(2)}
-                          disabled
-                          className="bg-muted"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          type="number"
-                          min="0"
-                          max="100"
-                          step="0.01"
-                          value={line.gstPercentage}
-                          onChange={(e) => updateLineItem(index, 'gstPercentage', parseFloat(e.target.value) || 0)}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          type="number"
-                          value={line.gstValue.toFixed(2)}
-                          disabled
-                          className="bg-muted"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          type="number"
-                          value={line.lineTotal.toFixed(2)}
-                          disabled
-                          className="bg-muted"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeLineItem(index)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
+              <div className="min-w-full rounded border border-muted/30">
+                <Table>
+                  <TableHeader className="bg-muted/40">
+                    <TableRow>
+                      <TableHead className="py-1 px-2 w-[36px]">#</TableHead>
+                      <TableHead className="py-1 px-2 min-w-[200px]">Item *</TableHead>
+                      <TableHead className="py-1 px-2 min-w-[200px]">Desc.</TableHead>
+                      <TableHead className="py-1 px-2 min-w-[80px] text-center">Qty *</TableHead>
+                      <TableHead className="py-1 px-2 min-w-[80px]">UOM *</TableHead>
+                      <TableHead className="py-1 px-2 min-w-[100px] text-right">Rate *</TableHead>
+                      <TableHead className="py-1 px-2 min-w-[100px] text-right">Total</TableHead>
+                      <TableHead className="py-1 px-2 min-w-[80px] text-center">GST %</TableHead>
+                      <TableHead className="py-1 px-2 min-w-[100px] text-right">GST Val</TableHead>
+                      <TableHead className="py-1 px-2 min-w-[100px] text-right">Weight/Unit</TableHead>
+                      <TableHead className="py-1 px-2 min-w-[100px] text-right">Total Weight</TableHead>
+                      <TableHead className="py-1 px-2 min-w-[120px] text-right">Line Total</TableHead>
+                      <TableHead className="py-1 px-2 w-[40px]"></TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {formData.invoiceLines?.map((line, index) => {
+                      const selectedItem = items.find(item => item.id === line.itemId);
+                      return (
+                        <TableRow key={index}>
+                          <TableCell className="p-1 text-center">{line.lineNumber}</TableCell>
+                          <TableCell className="p-1">
+                            <div className="space-y-1">
+                              <Input
+                                placeholder="Search by ID"
+                                className="mb-1 h-8"
+                              />
+                              <Select
+                                value={line.itemId}
+                                onValueChange={(value) => handleItemChange(index, value)}
+                              >
+                                <SelectTrigger className="h-8">
+                                  <SelectValue placeholder="Select Item" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {items.map((item) => (
+                                    <SelectItem key={item.id} value={item.id}>
+                                      {item.id} - {item.description}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </TableCell>
+                          <TableCell className="p-1">
+                            <Input
+                              value={selectedItem?.description || line.itemDescription || ""}
+                              readOnly
+                              className="bg-muted/40 h-8"
+                              placeholder="Item description"
+                            />
+                          </TableCell>
+                          <TableCell className="p-1">
+                            <Input
+                              type="number"
+                              step="0.01"
+                              value={line.quantity || ""}
+                              onChange={(e) => updateLineItem(index, 'quantity', parseFloat(e.target.value) || 0)}
+                              className="h-8 text-center"
+                            />
+                          </TableCell>
+                          <TableCell className="p-1">
+                            <Input
+                              value={line.uom || ""}
+                              readOnly
+                              className="bg-muted/40 h-8"
+                            />
+                          </TableCell>
+                          <TableCell className="p-1">
+                            <Input
+                              type="number"
+                              step="0.01"
+                              value={line.unitPrice || ""}
+                              onChange={(e) => updateLineItem(index, 'unitPrice', parseFloat(e.target.value) || 0)}
+                              className="h-8 text-right"
+                            />
+                          </TableCell>
+                          <TableCell className="p-1">
+                            <Input
+                              type="number"
+                              step="0.01"
+                              value={line.totalPrice?.toFixed(2) || "0.00"}
+                              readOnly
+                              className="bg-muted/40 h-8 text-right"
+                            />
+                          </TableCell>
+                          <TableCell className="p-1">
+                            <Input
+                              type="number"
+                              step="0.01"
+                              value={line.gstPercentage || ""}
+                              onChange={(e) => updateLineItem(index, 'gstPercentage', parseFloat(e.target.value) || 0)}
+                              className="h-8 text-center"
+                            />
+                          </TableCell>
+                          <TableCell className="p-1">
+                            <Input
+                              type="number"
+                              step="0.01"
+                              value={line.gstValue?.toFixed(2) || "0.00"}
+                              readOnly
+                              className="bg-muted/40 h-8 text-right"
+                            />
+                          </TableCell>
+                          <TableCell className="p-1">
+                            <Input
+                              value={selectedItem?.weight ? `${selectedItem.weight} ${selectedItem.weightUom || 'kg'}` : ""}
+                              readOnly
+                              className="bg-muted/40 h-8 text-right text-xs"
+                            />
+                          </TableCell>
+                          <TableCell className="p-1">
+                            <Input
+                              value={line.totalWeight ? `${line.totalWeight.toFixed(2)} ${line.weightUom || 'kg'}` : ""}
+                              readOnly
+                              className="bg-muted/40 h-8 text-right text-xs"
+                            />
+                          </TableCell>
+                          <TableCell className="p-1">
+                            <Input
+                              type="number"
+                              step="0.01"
+                              value={line.lineTotal?.toFixed(2) || "0.00"}
+                              readOnly
+                              className="bg-muted/40 h-8 text-right font-semibold"
+                            />
+                          </TableCell>
+                          <TableCell className="p-1">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 p-0"
+                              onClick={() => removeLineItem(index)}
+                              aria-label="Remove line"
+                            >
+                              <span className="sr-only">Remove</span>
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                    {(!formData.invoiceLines || formData.invoiceLines.length === 0) && (
+                      <TableRow>
+                        <TableCell colSpan={13} className="text-center text-muted-foreground py-3">
+                          No line items added yet. Click "Add Line" to get started.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
           </CardContent>
         </Card>
