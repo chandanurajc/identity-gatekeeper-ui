@@ -468,7 +468,7 @@ class InvoiceService {
     }, {});
 
     // Calculate breakdown for each GST group
-    return Object.entries(gstGroups).map(([gstPercentageStr, group]) => {
+    return Object.entries(gstGroups).map(([gstPercentageStr, group]: [string, { taxableAmount: number; gstValue: number }]) => {
       const gstPercentage = parseFloat(gstPercentageStr);
       const isIntraState = remitToStateCode && shipToStateCode && remitToStateCode === shipToStateCode;
       
