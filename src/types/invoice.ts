@@ -2,7 +2,7 @@
 export type InvoiceStatus = 'Draft' | 'Awaiting Approval' | 'Approved' | 'Rejected';
 export type InvoiceType = 'Payable' | 'Receivable';
 export type TransactionType = 'Purchase Order' | 'Sales Order';
-export type PaymentTerms = 'Net 30' | 'Net 60' | 'Net 90' | 'Due on Receipt';
+export type PaymentTerms = 'Net 15' | 'Net 30' | 'Net 60' | 'Net 90' | 'Due on Receipt';
 
 export interface Invoice {
   id: string;
