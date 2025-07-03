@@ -416,6 +416,8 @@ export default function InvoiceCreate() {
       updateLineItem(lineIndex, 'itemDescription', selectedItem.description);
       updateLineItem(lineIndex, 'uom', selectedItem.uom || 'Unit');
       updateLineItem(lineIndex, 'gstPercentage', selectedItem.gstPercentage || 18);
+      updateLineItem(lineIndex, 'weightPerUnit', selectedItem.weight || 0);
+      updateLineItem(lineIndex, 'weightUom', selectedItem.weightUom || 'kg');
       
       // Auto-fetch item price based on supplier
       if (formData.remitToOrgId) {
@@ -1134,9 +1136,12 @@ export default function InvoiceCreate() {
                           </TableCell>
                           <TableCell className="p-1">
                             <Input
-                              value={selectedItem?.weight ? `${selectedItem.weight} ${selectedItem.weightUom || 'kg'}` : ""}
-                              readOnly
-                              className="bg-muted/40 h-8 text-right text-xs"
+                              type="number"
+                              step="0.01"
+                              value={line.weightPerUnit || ""}
+                              onChange={(e) => updateLineItem(index, 'weightPerUnit', parseFloat(e.target.value) || 0)}
+                              className="h-8 text-right"
+                              placeholder="0.00"
                             />
                           </TableCell>
                           <TableCell className="p-1">

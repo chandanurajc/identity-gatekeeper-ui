@@ -303,36 +303,55 @@ export default function InvoiceDetail() {
           <CardDescription>Detailed breakdown of items and quantities</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {invoice.invoiceLines?.map((line, index) => (
-              <div key={line.id} className="border rounded-lg p-4">
-                <div className="flex justify-between items-start mb-3">
-                  <div>
-                    <h4 className="font-medium">{line.itemDescription}</h4>
-                    <p className="text-sm text-muted-foreground">Item ID: {line.itemId}</p>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-bold text-lg">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-border">
+              <thead className="bg-muted/50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Line</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Item ID</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Description</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Qty</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">UOM</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Weight/Unit</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Total Weight</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Unit Price</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Total Price</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">GST %</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">GST Value</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Line Total</th>
+                </tr>
+              </thead>
+              <tbody className="bg-background divide-y divide-border">
+                {invoice.invoiceLines?.map((line) => (
+                  <tr key={line.id} className="hover:bg-muted/50">
+                    <td className="px-4 py-4 whitespace-nowrap font-medium">{line.lineNumber}</td>
+                    <td className="px-4 py-4 whitespace-nowrap">{line.itemId}</td>
+                    <td className="px-4 py-4">{line.itemDescription}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-right">{line.quantity}</td>
+                    <td className="px-4 py-4 whitespace-nowrap">{line.uom}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-right">
+                      {line.weightPerUnit ? `${line.weightPerUnit} ${line.weightUom || 'kg'}` : '-'}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-right">
+                      {line.totalWeight ? `${line.totalWeight} ${line.weightUom || 'kg'}` : '-'}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-right">
+                      ₹{line.unitPrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-right">
+                      ₹{line.totalPrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-right">{line.gstPercentage}%</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-right">
+                      ₹{line.gstValue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-right font-medium">
                       ₹{line.lineTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                    </div>
-                    <p className="text-xs text-muted-foreground">Line {line.lineNumber}</p>
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                  <InfoRow label="Quantity" value={`${line.quantity} ${line.uom}`} />
-                  <InfoRow label="Unit Price" value={`₹${line.unitPrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`} />
-                  <InfoRow label="Total Price" value={`₹${line.totalPrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`} />
-                  <InfoRow label="GST %" value={`${line.gstPercentage}%`} />
-                  <InfoRow label="GST Value" value={`₹${line.gstValue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`} />
-                  <InfoRow label="Weight/Unit" value={line.weightPerUnit ? `${line.weightPerUnit} ${line.weightUom}` : null} icon={Weight} />
-                  <InfoRow label="Total Weight" value={line.totalWeight ? `${line.totalWeight} ${line.weightUom}` : null} icon={Weight} />
-                  <InfoRow label="Created" value={line.createdOn.toLocaleDateString()} icon={Calendar} />
-                </div>
-                
-                {index < (invoice.invoiceLines?.length || 0) - 1 && <Separator className="mt-4" />}
-              </div>
-            ))}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
 
           {/* Totals Summary */}
