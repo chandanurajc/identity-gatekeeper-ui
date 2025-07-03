@@ -536,9 +536,10 @@ export default function InvoiceCreate() {
                 <Label htmlFor="invoiceNumber">Invoice Number</Label>
                 <Input
                   id="invoiceNumber"
-                  value={formData.invoiceNumber || 'Auto-generated'}
+                  value={formData.invoiceNumber || ''}
                   onChange={(e) => handleInputChange('invoiceNumber', e.target.value)}
                   placeholder="Auto-generated"
+                  readOnly
                 />
               </div>
 
