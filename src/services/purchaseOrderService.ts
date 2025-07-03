@@ -17,7 +17,6 @@ export const getPurchaseOrderById = async (poId: string, organizationId: string)
       division:divisions(*)
     `)
     .eq('id', poId)
-    .eq('organization_id', organizationId)
     .single();
 
   if (error || !data) {
