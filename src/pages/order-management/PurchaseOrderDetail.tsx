@@ -11,7 +11,7 @@ import { format } from "date-fns";
 import { usePurchaseOrderPermissions } from "@/hooks/usePurchaseOrderPermissions";
 
 const PurchaseOrderDetail = () => {
-  const { poId } = useParams<{ poId: string }>();
+  const { id: poId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { getCurrentOrganizationId } = useMultiTenant();
   const organizationId = getCurrentOrganizationId();
