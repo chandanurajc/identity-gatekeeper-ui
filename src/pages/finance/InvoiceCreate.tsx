@@ -765,11 +765,11 @@ export default function InvoiceCreate() {
 
         {/* Remit To Card */}
         {remitToInfo && (
-          <Card>
-            <CardHeader>
+        <Card>
+          <CardHeader>
               <CardTitle>Remit To</CardTitle>
               <CardDescription>Payment information from selected supplier</CardDescription>
-            </CardHeader>
+          </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 <div>
@@ -815,9 +815,9 @@ export default function InvoiceCreate() {
               </div>
             </CardContent>
           </Card>
-        )}
-        </div>
-
+              )}
+            </div>
+            
         {/* Ship To Section */}
         <Card>
           <CardHeader>
@@ -834,7 +834,7 @@ export default function InvoiceCreate() {
                 />
                 <Label htmlFor="sameAsDivision">Same as division registered location?</Label>
               </div>
-              
+
               {!formData.sameAsDivisionAddress && (
                 <Dialog open={showShipToDialog} onOpenChange={setShowShipToDialog}>
                   <DialogTrigger asChild>
@@ -890,10 +890,10 @@ export default function InvoiceCreate() {
                             value={tempShipTo.state || ''}
                             onValueChange={handleStateChange}
                           >
-                            <SelectTrigger>
+                  <SelectTrigger>
                               <SelectValue placeholder="Select state" />
-                            </SelectTrigger>
-                            <SelectContent>
+                  </SelectTrigger>
+                  <SelectContent>
                               {statesLoading ? (
                                 <SelectItem value="">Loading...</SelectItem>
                               ) : (
@@ -903,10 +903,10 @@ export default function InvoiceCreate() {
                                   </SelectItem>
                                 ))
                               )}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <Label htmlFor="shipToStateCode">State Code</Label>
@@ -1055,22 +1055,22 @@ export default function InvoiceCreate() {
                                 placeholder="Search by ID"
                                 className="mb-1 h-8"
                               />
-                              <Select
+                <Select
                                 value={line.itemId}
                                 onValueChange={(value) => handleItemChange(index, value)}
-                              >
+                >
                                 <SelectTrigger className="h-8">
                                   <SelectValue placeholder="Select Item" />
-                                </SelectTrigger>
-                                <SelectContent>
+                  </SelectTrigger>
+                  <SelectContent>
                                   {items.map((item) => (
                                     <SelectItem key={item.id} value={item.id}>
                                       {item.id} - {item.description}
                                     </SelectItem>
                                   ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
+                  </SelectContent>
+                </Select>
+              </div>
                           </TableCell>
                           <TableCell className="p-1">
                             <Input
@@ -1147,7 +1147,7 @@ export default function InvoiceCreate() {
                             />
                           </TableCell>
                           <TableCell className="p-1">
-                            <Input
+                <Input
                               type="number"
                               step="0.01"
                               value={line.lineTotal?.toFixed(2) || "0.00"}
@@ -1251,22 +1251,22 @@ export default function InvoiceCreate() {
           <CardContent className="pt-6">
             <div className="flex justify-end space-x-4">
               <Button variant="outline" onClick={() => navigate("/finance/invoices")}>
-                Cancel
-              </Button>
-              
+            Cancel
+          </Button>
+          
               <PermissionButton
                 permission="Create Invoice"
                 onClick={handleSaveDraft}
                 variant="secondary"
               >
-                Save as Draft
+              Save as Draft
               </PermissionButton>
               
               <PermissionButton
                 permission="Send Invoice for Approval"
                 onClick={handleSendForApproval}
               >
-                Send for Approval
+              Send for Approval
               </PermissionButton>
               
               <PermissionButton
@@ -1284,10 +1284,10 @@ export default function InvoiceCreate() {
               >
                 Reject
               </PermissionButton>
-            </div>
+          </div>
           </CardContent>
         </Card>
-      </div>
+        </div>
 
       {/* Reference Transaction Dialog */}
       <ReferenceTransactionDialog

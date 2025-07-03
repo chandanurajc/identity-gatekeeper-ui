@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Edit, FileText, Calendar, DollarSign, Building2, MapPin, Phone, Mail, Globe, Hash, Weight, Package, Send } from "lucide-react";
@@ -14,6 +14,7 @@ import { invoiceService } from "@/services/invoiceService";
 import { useMultiTenant } from "@/hooks/useMultiTenant";
 import { usePermissions } from "@/hooks/usePermissions";
 import type { Invoice, InvoiceStatus, InvoiceType } from "@/types/invoice";
+import { organizationService } from "@/services/organizationService";
 
 const statusColors: Record<InvoiceStatus, string> = {
   Draft: "bg-gray-100 text-gray-800",
@@ -41,6 +42,22 @@ export default function InvoiceDetail() {
     queryFn: () => invoiceService.getInvoiceById(id!, organizationId!),
     enabled: !!id && !!organizationId,
   });
+
+  const [billToOrgName, setBillToOrgName] = useState<string>("");
+  const [remitToOrgName, setRemitToOrgName] = useState<string>("");
+
+  useEffect(() => {
+    if (invoice?.billToOrgId) {
+      organizationService.getOrganizationById(invoice.billToOrgId).then(org => {
+        setBillToOrgName(org?.name || "");
+      });
+    }
+    if (invoice?.remitToOrgId) {
+      organizationService.getOrganizationById(invoice.remitToOrgId).then(org => {
+        setRemitToOrgName(org?.name || "");
+      });
+    }
+  }, [invoice?.billToOrgId, invoice?.remitToOrgId]);
 
   if (isLoading) {
     return (
@@ -187,9 +204,14 @@ export default function InvoiceDetail() {
               <Building2 className="h-5 w-5" />
               <span>Bill To</span>
             </CardTitle>
-            <CardDescription>{invoice.billToName}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-1">
+            {billToOrgName && (
+              <InfoRow label="Organization" value={billToOrgName} icon={Building2} />
+            )}
+            {invoice.billToName && (
+              <InfoRow label="Name" value={invoice.billToName} icon={Mail} />
+            )}
             <InfoRow label="Address Line 1" value={invoice.billToAddress1} icon={MapPin} />
             <InfoRow label="Address Line 2" value={invoice.billToAddress2} icon={MapPin} />
             <InfoRow label="City" value={invoice.billToCity} icon={MapPin} />
@@ -211,9 +233,14 @@ export default function InvoiceDetail() {
               <Building2 className="h-5 w-5" />
               <span>Remit To</span>
             </CardTitle>
-            <CardDescription>{invoice.remitToName}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-1">
+            {remitToOrgName && (
+              <InfoRow label="Organization" value={remitToOrgName} icon={Building2} />
+            )}
+            {invoice.remitToName && (
+              <InfoRow label="Name" value={invoice.remitToName} icon={Mail} />
+            )}
             <InfoRow label="Address Line 1" value={invoice.remitToAddress1} icon={MapPin} />
             <InfoRow label="Address Line 2" value={invoice.remitToAddress2} icon={MapPin} />
             <InfoRow label="City" value={invoice.remitToCity} icon={MapPin} />
