@@ -90,7 +90,7 @@ const PurchaseOrderDetail = () => {
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Order Date:</span>
-                  <span>{format(new Date(purchaseOrder.poDate), 'PPP')}</span>
+                  <span>{purchaseOrder.poDate ? format(new Date(purchaseOrder.poDate), 'PPP') : 'N/A'}</span>
                 </div>
                 {purchaseOrder.requestedDeliveryDate && (
                   <div className="flex justify-between">
