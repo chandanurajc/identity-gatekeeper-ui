@@ -21,7 +21,8 @@ import { invoiceService } from "@/services/invoiceService";
 import { organizationService } from "@/services/organizationService";
 import { supabase } from "@/integrations/supabase/client";
 import PermissionButton from "@/components/PermissionButton";
-import type { InvoiceFormData, InvoiceType, InvoiceLineFormData, PaymentTerms } from "@/types/invoice";
+import { ReferenceTransactionDialog } from "@/components/finance/ReferenceTransactionDialog";
+import type { InvoiceFormData, InvoiceType, InvoiceLineFormData, PaymentTerms, ReferenceTransactionResult } from "@/types/invoice";
 import { Organization } from "@/types/organization";
 import { Item } from "@/types/item";
 import { Division } from "@/types/division";
@@ -100,6 +101,7 @@ export default function InvoiceCreate() {
   const [remitToInfo, setRemitToInfo] = useState<RemitToInfo | null>(null);
   const [shipToAddress, setShipToAddress] = useState<ShipToAddress | null>(null);
   const [showShipToDialog, setShowShipToDialog] = useState(false);
+  const [showReferenceDialog, setShowReferenceDialog] = useState(false);
   const [tempShipTo, setTempShipTo] = useState<ShipToAddress>({
     name: '',
     address1: '',
@@ -437,6 +439,15 @@ export default function InvoiceCreate() {
     setShowShipToDialog(false);
   };
 
+  const handleReferenceTransactionSelect = (transaction: ReferenceTransactionResult) => {
+    setFormData(prev => ({
+      ...prev,
+      referenceTransactionType: transaction.transactionType,
+      referenceTransactionNumber: transaction.transactionNumber,
+      referenceTransactionDate: transaction.transactionDate
+    }));
+  };
+
   const calculateTotals = () => {
     const lines = formData.invoiceLines || [];
     const subtotal = lines.reduce((sum, line) => sum + line.totalPrice, 0);
@@ -672,6 +683,25 @@ export default function InvoiceCreate() {
                     <SelectItem value="Due on Receipt">Due on Receipt</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="referenceTransaction">Reference Transaction</Label>
+                <div className="flex space-x-2">
+                  <Input
+                    id="referenceTransaction"
+                    value={formData.referenceTransactionNumber || ''}
+                    placeholder="Search transaction..."
+                    readOnly
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowReferenceDialog(true)}
+                  >
+                    Search
+                  </Button>
+                </div>
               </div>
             </div>
           </CardContent>
@@ -1258,6 +1288,14 @@ export default function InvoiceCreate() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Reference Transaction Dialog */}
+      <ReferenceTransactionDialog
+        open={showReferenceDialog}
+        onOpenChange={setShowReferenceDialog}
+        onSelect={handleReferenceTransactionSelect}
+        suppliers={suppliers}
+      />
     </div>
   );
 }

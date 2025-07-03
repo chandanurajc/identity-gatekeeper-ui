@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Edit, FileText, Calendar, DollarSign, Building2, MapPin, Phone, Mail, Globe, Hash, Weight, Package } from "lucide-react";
+import { ArrowLeft, Edit, FileText, Calendar, DollarSign, Building2, MapPin, Phone, Mail, Globe, Hash, Weight, Package, Send } from "lucide-react";
+import PermissionButton from "@/components/PermissionButton";
+import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -30,6 +32,7 @@ export default function InvoiceDetail() {
   const navigate = useNavigate();
   const { getCurrentOrganizationId } = useMultiTenant();
   const { hasPermission } = usePermissions();
+  const { user } = useAuth();
 
   const organizationId = getCurrentOrganizationId();
 
@@ -109,6 +112,23 @@ export default function InvoiceDetail() {
               Edit
             </Button>
           )}
+          {invoice.status === 'Draft' && hasPermission("Send Invoice for Approval") && (
+            <PermissionButton 
+              permission="Send Invoice for Approval"
+              onClick={async () => {
+                try {
+                  await invoiceService.updateInvoiceStatus(invoice.id, 'Awaiting Approval', organizationId!, user?.email || '', 'Sent for approval');
+                  window.location.reload(); // Refresh to show updated status
+                } catch (error) {
+                  console.error("Error sending for approval:", error);
+                }
+              }}
+              className="flex items-center space-x-2"
+            >
+              <Send className="h-4 w-4" />
+              <span>Send for Approval</span>
+            </PermissionButton>
+          )}
         </div>
       </div>
 
@@ -167,9 +187,9 @@ export default function InvoiceDetail() {
               <Building2 className="h-5 w-5" />
               <span>Bill To</span>
             </CardTitle>
+            <CardDescription>{invoice.billToName}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-1">
-            <InfoRow label="Organization" value={invoice.billToName} icon={Building2} />
             <InfoRow label="Address Line 1" value={invoice.billToAddress1} icon={MapPin} />
             <InfoRow label="Address Line 2" value={invoice.billToAddress2} icon={MapPin} />
             <InfoRow label="City" value={invoice.billToCity} icon={MapPin} />
@@ -191,9 +211,9 @@ export default function InvoiceDetail() {
               <Building2 className="h-5 w-5" />
               <span>Remit To</span>
             </CardTitle>
+            <CardDescription>{invoice.remitToName}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-1">
-            <InfoRow label="Organization" value={invoice.remitToName} icon={Building2} />
             <InfoRow label="Address Line 1" value={invoice.remitToAddress1} icon={MapPin} />
             <InfoRow label="Address Line 2" value={invoice.remitToAddress2} icon={MapPin} />
             <InfoRow label="City" value={invoice.remitToCity} icon={MapPin} />
@@ -357,14 +377,20 @@ export default function InvoiceDetail() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1">
               <InfoRow label="Created By" value={invoice.createdBy} />
               <InfoRow label="Created On" value={invoice.createdOn.toLocaleString()} icon={Calendar} />
+              {invoice.approvalRequestedBy && (
+                <InfoRow label="Approval Requested By" value={invoice.approvalRequestedBy} />
+              )}
             </div>
             <div className="space-y-1">
               <InfoRow label="Updated By" value={invoice.updatedBy} />
               <InfoRow label="Updated On" value={invoice.updatedOn?.toLocaleString()} icon={Calendar} />
+              {invoice.approvalRequestedOn && (
+                <InfoRow label="Approval Requested On" value={invoice.approvalRequestedOn.toLocaleString()} icon={Calendar} />
+              )}
             </div>
           </div>
         </CardContent>

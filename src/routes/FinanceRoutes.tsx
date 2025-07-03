@@ -6,6 +6,7 @@ import GeneralLedgerViewer from "@/pages/finance/GeneralLedgerViewer";
 import InvoicesList from "@/pages/finance/InvoicesList";
 import InvoiceCreate from "@/pages/finance/InvoiceCreate";
 import InvoiceDetail from "@/pages/finance/InvoiceDetail";
+import InvoiceEdit from "@/pages/finance/InvoiceEdit";
 
 export function FinanceRoutes() {
   return (
@@ -39,6 +40,14 @@ export function FinanceRoutes() {
         element={
           <PermissionProtectedRoute requiredPermission="View Invoices">
             <InvoiceDetail />
+          </PermissionProtectedRoute>
+        }
+      />
+      <Route
+        path="/invoices/:id/edit"
+        element={
+          <PermissionProtectedRoute requiredPermission="Edit Invoice">
+            <InvoiceEdit />
           </PermissionProtectedRoute>
         }
       />

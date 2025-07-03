@@ -74,6 +74,8 @@ export interface Invoice {
   updatedOn?: Date;
   createdBy: string;
   updatedBy?: string;
+  approvalRequestedOn?: Date;
+  approvalRequestedBy?: string;
   
   // Related data
   invoiceLines?: InvoiceLine[];
