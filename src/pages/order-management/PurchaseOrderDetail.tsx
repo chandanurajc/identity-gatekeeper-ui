@@ -26,17 +26,17 @@ const PurchaseOrderDetail = () => {
   const [isCreatingInvoice, setIsCreatingInvoice] = useState(false);
 
   useEffect(() => {
-    if (id && canEditPurchaseOrder) {
+    if (id && canEditPurchaseOrder && user?.organizationId) {
       fetchPurchaseOrder();
     }
-  }, [id, canEditPurchaseOrder]);
+  }, [id, canEditPurchaseOrder, user?.organizationId]);
 
   const fetchPurchaseOrder = async () => {
-    if (!id) return;
+    if (!id || !user?.organizationId) return;
     
     try {
       setLoading(true);
-      const data = await purchaseOrderService.getPurchaseOrderById(id);
+      const data = await purchaseOrderService.getPurchaseOrderById(id, user.organizationId);
       if (data) {
         setPurchaseOrder(data);
       } else {
@@ -92,16 +92,12 @@ const PurchaseOrderDetail = () => {
 
     setIsCreatingInvoice(true);
     try {
-      const newInvoice = await invoiceService.createInvoiceFromReceivedPO(id, purchaseOrder.organizationId, user.id, user.email);
-      toast({
-        title: "Success",
-        description: `Invoice ${newInvoice.invoice_number} has been created.`,
-      });
-      fetchPurchaseOrder(); // Refresh data
+      // Navigate to invoice creation page with PO data
+      navigate(`/finance/invoices/create?source=po&poId=${id}`);
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message || "Failed to create invoice.",
+        description: error.message || "Failed to navigate to invoice creation.",
         variant: "destructive",
       });
     } finally {
@@ -244,13 +240,15 @@ const PurchaseOrderDetail = () => {
             </div>
             <div>
               <p className="text-sm font-medium">PO Date</p>
-              <p className="text-sm text-muted-foreground">{format(purchaseOrder.poDate, "dd/MM/yyyy")}</p>
+              <p className="text-sm text-muted-foreground">
+                {purchaseOrder.poDate ? format(new Date(purchaseOrder.poDate), "dd/MM/yyyy") : "Not specified"}
+              </p>
             </div>
             <div>
               <p className="text-sm font-medium">Requested Delivery Date</p>
               <p className="text-sm text-muted-foreground">
                 {purchaseOrder.requestedDeliveryDate 
-                  ? format(purchaseOrder.requestedDeliveryDate, "dd/MM/yyyy") 
+                  ? format(new Date(purchaseOrder.requestedDeliveryDate), "dd/MM/yyyy") 
                   : "Not specified"}
               </p>
             </div>
@@ -430,7 +428,7 @@ const PurchaseOrderDetail = () => {
             <div>
               <p className="text-sm font-medium">Created On</p>
               <p className="text-sm text-muted-foreground">
-                {format(purchaseOrder.createdOn, "dd/MM/yyyy HH:mm")}
+                {purchaseOrder.createdOn ? format(new Date(purchaseOrder.createdOn), "dd/MM/yyyy HH:mm") : "Not specified"}
               </p>
             </div>
             {purchaseOrder.updatedBy && (
@@ -443,7 +441,7 @@ const PurchaseOrderDetail = () => {
               <div>
                 <p className="text-sm font-medium">Updated On</p>
                 <p className="text-sm text-muted-foreground">
-                  {format(purchaseOrder.updatedOn, "dd/MM/yyyy HH:mm")}
+                  {purchaseOrder.updatedOn ? format(new Date(purchaseOrder.updatedOn), "dd/MM/yyyy HH:mm") : "Not specified"}
                 </p>
               </div>
             )}
