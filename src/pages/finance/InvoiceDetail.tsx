@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Edit, FileText, Calendar, DollarSign, Building2 } from "lucide-react";
+import { ArrowLeft, Edit, FileText, Calendar, DollarSign, Building2, MapPin, Phone, Mail, Globe, Hash, Weight, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Separator } from "@/components/ui/separator";
 import { invoiceService } from "@/services/invoiceService";
 import { useMultiTenant } from "@/hooks/useMultiTenant";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -66,6 +67,19 @@ export default function InvoiceDetail() {
     );
   }
 
+  const InfoRow = ({ label, value, icon: Icon }: { label: string; value: string | number | null | undefined; icon?: any }) => {
+    if (!value && value !== 0) return null;
+    return (
+      <div className="flex items-center justify-between py-1">
+        <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+          {Icon && <Icon className="h-3 w-3" />}
+          <span>{label}:</span>
+        </div>
+        <span className="text-sm font-medium">{value}</span>
+      </div>
+    );
+  };
+
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -98,15 +112,15 @@ export default function InvoiceDetail() {
         </div>
       </div>
 
-      {/* Invoice Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* Overview Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Invoice Date</CardTitle>
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-xl font-bold">
               {new Date(invoice.invoiceDate).toLocaleDateString()}
             </div>
           </CardContent>
@@ -117,9 +131,18 @@ export default function InvoiceDetail() {
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-xl font-bold">
               {invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : "N/A"}
             </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Payment Terms</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-xl font-bold">{invoice.paymentTerms}</div>
           </CardContent>
         </Card>
         <Card>
@@ -128,7 +151,7 @@ export default function InvoiceDetail() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-xl font-bold">
               ₹{invoice.totalInvoiceValue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
             </div>
           </CardContent>
@@ -137,160 +160,257 @@ export default function InvoiceDetail() {
 
       {/* Main Content */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Bill To & Remit To */}
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Bill To</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <div className="font-medium">{invoice.billToName || "N/A"}</div>
-              {invoice.billToAddress1 && <div>{invoice.billToAddress1}</div>}
-              {invoice.billToAddress2 && <div>{invoice.billToAddress2}</div>}
-              {(invoice.billToCity || invoice.billToState) && (
-                <div>
-                  {invoice.billToCity && invoice.billToState
-                    ? `${invoice.billToCity}, ${invoice.billToState}`
-                    : invoice.billToCity || invoice.billToState}
-                  {invoice.billToPostalCode && ` - ${invoice.billToPostalCode}`}
-                </div>
-              )}
-              {invoice.billToCountry && <div>{invoice.billToCountry}</div>}
-              {invoice.billToEmail && <div>Email: {invoice.billToEmail}</div>}
-              {invoice.billToPhone && <div>Phone: {invoice.billToPhone}</div>}
-              {invoice.billToGstin && <div>GSTIN: {invoice.billToGstin}</div>}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Remit To</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <div className="font-medium">{invoice.remitToName || "N/A"}</div>
-              {invoice.remitToAddress1 && <div>{invoice.remitToAddress1}</div>}
-              {invoice.remitToAddress2 && <div>{invoice.remitToAddress2}</div>}
-              {(invoice.remitToCity || invoice.remitToState) && (
-                <div>
-                  {invoice.remitToCity && invoice.remitToState
-                    ? `${invoice.remitToCity}, ${invoice.remitToState}`
-                    : invoice.remitToCity || invoice.remitToState}
-                  {invoice.remitToPostalCode && ` - ${invoice.remitToPostalCode}`}
-                </div>
-              )}
-              {invoice.remitToCountry && <div>{invoice.remitToCountry}</div>}
-              {invoice.remitToEmail && <div>Email: {invoice.remitToEmail}</div>}
-              {invoice.remitToPhone && <div>Phone: {invoice.remitToPhone}</div>}
-              {invoice.remitToGstin && <div>GSTIN: {invoice.remitToGstin}</div>}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Invoice Lines */}
+        {/* Bill To Information */}
         <Card>
           <CardHeader>
-            <CardTitle>Invoice Lines</CardTitle>
-            <CardDescription>Items and quantities on this invoice</CardDescription>
+            <CardTitle className="flex items-center space-x-2">
+              <Building2 className="h-5 w-5" />
+              <span>Bill To</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-1">
+            <InfoRow label="Organization" value={invoice.billToName} icon={Building2} />
+            <InfoRow label="Address Line 1" value={invoice.billToAddress1} icon={MapPin} />
+            <InfoRow label="Address Line 2" value={invoice.billToAddress2} icon={MapPin} />
+            <InfoRow label="City" value={invoice.billToCity} icon={MapPin} />
+            <InfoRow label="State" value={invoice.billToState} icon={MapPin} />
+            <InfoRow label="State Code" value={invoice.billToStateCode} icon={Hash} />
+            <InfoRow label="Postal Code" value={invoice.billToPostalCode} icon={MapPin} />
+            <InfoRow label="Country" value={invoice.billToCountry} icon={Globe} />
+            <InfoRow label="Email" value={invoice.billToEmail} icon={Mail} />
+            <InfoRow label="Phone" value={invoice.billToPhone} icon={Phone} />
+            <InfoRow label="GSTIN" value={invoice.billToGstin} icon={Hash} />
+            <InfoRow label="CIN" value={invoice.billToCin} icon={Hash} />
+          </CardContent>
+        </Card>
+
+        {/* Remit To Information */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Building2 className="h-5 w-5" />
+              <span>Remit To</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-1">
+            <InfoRow label="Organization" value={invoice.remitToName} icon={Building2} />
+            <InfoRow label="Address Line 1" value={invoice.remitToAddress1} icon={MapPin} />
+            <InfoRow label="Address Line 2" value={invoice.remitToAddress2} icon={MapPin} />
+            <InfoRow label="City" value={invoice.remitToCity} icon={MapPin} />
+            <InfoRow label="State" value={invoice.remitToState} icon={MapPin} />
+            <InfoRow label="State Code" value={invoice.remitToStateCode} icon={Hash} />
+            <InfoRow label="Postal Code" value={invoice.remitToPostalCode} icon={MapPin} />
+            <InfoRow label="Country" value={invoice.remitToCountry} icon={Globe} />
+            <InfoRow label="Email" value={invoice.remitToEmail} icon={Mail} />
+            <InfoRow label="Phone" value={invoice.remitToPhone} icon={Phone} />
+            <InfoRow label="GSTIN" value={invoice.remitToGstin} icon={Hash} />
+            <InfoRow label="CIN" value={invoice.remitToCin} icon={Hash} />
+          </CardContent>
+        </Card>
+
+        {/* Ship To Information */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Package className="h-5 w-5" />
+              <span>Ship To</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-1">
+            <InfoRow label="Same as Division Address" value={invoice.sameAsDivisionAddress ? "Yes" : "No"} />
+            <InfoRow label="Name" value={invoice.shipToName} icon={Building2} />
+            <InfoRow label="Address Line 1" value={invoice.shipToAddress1} icon={MapPin} />
+            <InfoRow label="Address Line 2" value={invoice.shipToAddress2} icon={MapPin} />
+            <InfoRow label="City" value={invoice.shipToCity} icon={MapPin} />
+            <InfoRow label="State" value={invoice.shipToState} icon={MapPin} />
+            <InfoRow label="State Code" value={invoice.shipToStateCode} icon={Hash} />
+            <InfoRow label="Postal Code" value={invoice.shipToPostalCode} icon={MapPin} />
+            <InfoRow label="Country" value={invoice.shipToCountry} icon={Globe} />
+            <InfoRow label="Phone" value={invoice.shipToPhone} icon={Phone} />
+          </CardContent>
+        </Card>
+
+        {/* Reference Transaction */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <FileText className="h-5 w-5" />
+              <span>Reference Transaction</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-1">
+            <InfoRow label="Type" value={invoice.referenceTransactionType} icon={FileText} />
+            <InfoRow label="Number" value={invoice.referenceTransactionNumber} icon={Hash} />
+            <InfoRow label="Date" value={invoice.referenceTransactionDate ? new Date(invoice.referenceTransactionDate).toLocaleDateString() : null} icon={Calendar} />
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Invoice Lines */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Package className="h-5 w-5" />
+            <span>Invoice Lines</span>
+          </CardTitle>
+          <CardDescription>Detailed breakdown of items and quantities</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {invoice.invoiceLines?.map((line, index) => (
+              <div key={line.id} className="border rounded-lg p-4">
+                <div className="flex justify-between items-start mb-3">
+                  <div>
+                    <h4 className="font-medium">{line.itemDescription}</h4>
+                    <p className="text-sm text-muted-foreground">Item ID: {line.itemId}</p>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-bold text-lg">
+                      ₹{line.lineTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                    </div>
+                    <p className="text-xs text-muted-foreground">Line {line.lineNumber}</p>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                  <InfoRow label="Quantity" value={`${line.quantity} ${line.uom}`} />
+                  <InfoRow label="Unit Price" value={`₹${line.unitPrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`} />
+                  <InfoRow label="Total Price" value={`₹${line.totalPrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`} />
+                  <InfoRow label="GST %" value={`${line.gstPercentage}%`} />
+                  <InfoRow label="GST Value" value={`₹${line.gstValue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`} />
+                  <InfoRow label="Weight/Unit" value={line.weightPerUnit ? `${line.weightPerUnit} ${line.weightUom}` : null} icon={Weight} />
+                  <InfoRow label="Total Weight" value={line.totalWeight ? `${line.totalWeight} ${line.weightUom}` : null} icon={Weight} />
+                  <InfoRow label="Created" value={line.createdOn.toLocaleDateString()} icon={Calendar} />
+                </div>
+                
+                {index < (invoice.invoiceLines?.length || 0) - 1 && <Separator className="mt-4" />}
+              </div>
+            ))}
+          </div>
+
+          {/* Totals Summary */}
+          <div className="mt-6 pt-4 border-t">
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>Total Item Value:</span>
+                <span className="font-medium">₹{invoice.totalItemValue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span>Total GST Value:</span>
+                <span className="font-medium">₹{invoice.totalGstValue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+              </div>
+              <Separator />
+              <div className="flex justify-between font-bold text-lg">
+                <span>Total Invoice Value:</span>
+                <span>₹{invoice.totalInvoiceValue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* GST Breakdown */}
+      {invoice.gstBreakdown && invoice.gstBreakdown.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Hash className="h-5 w-5" />
+              <span>GST Breakdown</span>
+            </CardTitle>
+            <CardDescription>Detailed GST calculation breakdown</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {invoice.invoiceLines?.map((line) => (
-                <div key={line.id} className="border rounded-lg p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <div className="font-medium">{line.itemDescription}</div>
-                    <div className="text-right">
-                      <div className="font-bold">
-                        ₹{line.lineTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                      </div>
+              {invoice.gstBreakdown.map((breakdown, index) => (
+                <div key={breakdown.id} className="border rounded-lg p-4">
+                  <div className="flex justify-between items-center mb-3">
+                    <h4 className="font-medium">GST Rate: {breakdown.gstPercentage}%</h4>
+                    <div className="font-bold">
+                      ₹{breakdown.totalGstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-4 text-sm text-muted-foreground">
-                    <div>Quantity: {line.quantity} {line.uom}</div>
-                    <div>Unit Price: ₹{line.unitPrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
-                    <div>GST: {line.gstPercentage}%</div>
-                    <div>GST Amount: ₹{line.gstValue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                    <InfoRow label="Taxable Amount" value={`₹${breakdown.taxableAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`} />
+                    <InfoRow label="CGST %" value={breakdown.cgstPercentage > 0 ? `${breakdown.cgstPercentage}%` : null} />
+                    <InfoRow label="CGST Amount" value={breakdown.cgstAmount > 0 ? `₹${breakdown.cgstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : null} />
+                    <InfoRow label="SGST %" value={breakdown.sgstPercentage > 0 ? `${breakdown.sgstPercentage}%` : null} />
+                    <InfoRow label="SGST Amount" value={breakdown.sgstAmount > 0 ? `₹${breakdown.sgstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : null} />
+                    <InfoRow label="IGST %" value={breakdown.igstPercentage > 0 ? `${breakdown.igstPercentage}%` : null} />
+                    <InfoRow label="IGST Amount" value={breakdown.igstAmount > 0 ? `₹${breakdown.igstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : null} />
+                  </div>
+                  
+                  {index < invoice.gstBreakdown!.length - 1 && <Separator className="mt-4" />}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Audit Information */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Calendar className="h-5 w-5" />
+            <span>Audit Information</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <InfoRow label="Created By" value={invoice.createdBy} />
+              <InfoRow label="Created On" value={invoice.createdOn.toLocaleString()} icon={Calendar} />
+            </div>
+            <div className="space-y-1">
+              <InfoRow label="Updated By" value={invoice.updatedBy} />
+              <InfoRow label="Updated On" value={invoice.updatedOn?.toLocaleString()} icon={Calendar} />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Audit Log */}
+      {invoice.auditLog && invoice.auditLog.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <FileText className="h-5 w-5" />
+              <span>Status Change History</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {invoice.auditLog.map((log) => (
+                <div key={log.id} className="border rounded-lg p-3">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <div className="flex items-center space-x-2">
+                        {log.oldStatus && (
+                          <Badge variant="outline" className="text-xs">
+                            {log.oldStatus}
+                          </Badge>
+                        )}
+                        <span className="text-xs text-muted-foreground">→</span>
+                        <Badge variant="outline" className="text-xs">
+                          {log.newStatus}
+                        </Badge>
+                      </div>
+                      {log.comments && (
+                        <p className="text-sm text-muted-foreground mt-1">{log.comments}</p>
+                      )}
+                    </div>
+                    <div className="text-right text-xs text-muted-foreground">
+                      <div>{log.changedBy}</div>
+                      <div>{log.changedOn.toLocaleString()}</div>
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
-
-            {/* Totals */}
-            <div className="mt-6 pt-4 border-t space-y-2">
-              <div className="flex justify-between">
-                <span>Item Value:</span>
-                <span>₹{invoice.totalItemValue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>GST Amount:</span>
-                <span>₹{invoice.totalGstValue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-              </div>
-              <div className="flex justify-between font-bold text-lg pt-2 border-t">
-                <span>Total:</span>
-                <span>₹{invoice.totalInvoiceValue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-              </div>
-            </div>
           </CardContent>
         </Card>
-      </div>
-
-      {/* Additional Details */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Payment Terms */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Payment Information</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <div className="flex justify-between">
-              <span>Payment Terms:</span>
-              <span className="font-medium">{invoice.paymentTerms}</span>
-            </div>
-            {invoice.referenceTransactionType && (
-              <>
-                <div className="flex justify-between">
-                  <span>Reference Type:</span>
-                  <span className="font-medium">{invoice.referenceTransactionType}</span>
-                </div>
-                {invoice.referenceTransactionNumber && (
-                  <div className="flex justify-between">
-                    <span>Reference Number:</span>
-                    <span className="font-medium">{invoice.referenceTransactionNumber}</span>
-                  </div>
-                )}
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Audit Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Audit Information</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <div className="flex justify-between">
-              <span>Created By:</span>
-              <span className="font-medium">{invoice.createdBy}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Created On:</span>
-              <span className="font-medium">{invoice.createdOn.toLocaleDateString()}</span>
-            </div>
-            {invoice.updatedBy && (
-              <div className="flex justify-between">
-                <span>Updated By:</span>
-                <span className="font-medium">{invoice.updatedBy}</span>
-              </div>
-            )}
-            {invoice.updatedOn && (
-              <div className="flex justify-between">
-                <span>Updated On:</span>
-                <span className="font-medium">{invoice.updatedOn.toLocaleDateString()}</span>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+      )}
     </div>
   );
 }
