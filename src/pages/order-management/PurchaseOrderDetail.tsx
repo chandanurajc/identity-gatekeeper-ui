@@ -309,8 +309,8 @@ const PurchaseOrderDetail = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Line #</TableHead>
+                  <TableHead>Item ID</TableHead>
                   <TableHead>Item Description</TableHead>
-                  <TableHead>Classification</TableHead>
                   <TableHead>Quantity</TableHead>
                   <TableHead>Received Qty</TableHead>
                   <TableHead>UOM</TableHead>
@@ -328,17 +328,9 @@ const PurchaseOrderDetail = () => {
                   purchaseOrder.lines.map((line) => (
                     <TableRow key={line.id}>
                       <TableCell>{line.lineNumber}</TableCell>
+                      <TableCell className="font-mono text-sm">{line.itemId}</TableCell>
                       <TableCell>
-                        <div>
-                          <p className="font-medium">{line.item?.description}</p>
-                          <p className="text-xs text-muted-foreground">ID: {line.itemId}</p>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">
-                          <p>{line.item?.classification}</p>
-                          <p className="text-muted-foreground">{line.item?.subClassification}</p>
-                        </div>
+                        <p className="font-medium">{line.item?.description || 'No description available'}</p>
                       </TableCell>
                       <TableCell>{line.quantity}</TableCell>
                       <TableCell>{line.receivedQuantity || 0}</TableCell>

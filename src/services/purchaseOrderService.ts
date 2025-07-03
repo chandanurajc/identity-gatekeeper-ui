@@ -12,7 +12,10 @@ export const getPurchaseOrderById = async (poId: string, organizationId: string)
     .from('purchase_order')
     .select(`
       *,
-      lines:purchase_order_line(*),
+      lines:purchase_order_line(
+        *,
+        item:items(id, description)
+      ),
       supplier:organizations!supplier_id(*),
       division:divisions(*)
     `)
