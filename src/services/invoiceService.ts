@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import type { Invoice, InvoiceFormData, ReferenceTransactionSearchParams, ReferenceTransactionResult, InvoiceStatus } from "@/types/invoice";
 
@@ -58,13 +57,13 @@ class InvoiceService {
     const invoiceDate = new Date(invoiceData.invoiceDate);
     const dueDate = this.calculateDueDate(invoiceDate, invoiceData.paymentTerms);
 
-  // Calculate totals
-  const { totalItemValue, totalGstValue, totalInvoiceValue } = this.calculateTotals(invoiceData.invoiceLines);
+    // Calculate totals
+    const { totalItemValue, totalGstValue, totalInvoiceValue } = this.calculateTotals(invoiceData.invoiceLines);
 
-  // Calculate GST breakdown based on state codes
-  const gstBreakdown = this.calculateGstBreakdown(invoiceData.invoiceLines, invoiceData.remitToStateCode, invoiceData.shipToStateCode);
+    // Calculate GST breakdown based on state codes
+    const gstBreakdown = this.calculateGstBreakdown(invoiceData.invoiceLines, invoiceData.remitToStateCode, invoiceData.shipToStateCode);
 
-  const invoiceToCreate = {
+    const invoiceToCreate = {
       organization_id: organizationId,
       division_id: invoiceData.divisionId,
       invoice_number: invoiceNumber,
@@ -91,6 +90,32 @@ class InvoiceService {
       total_gst_value: totalGstValue,
       total_invoice_value: totalInvoiceValue,
       created_by: createdBy,
+      // Bill To
+      bill_to_name: invoiceData.billToName,
+      bill_to_address1: invoiceData.billToAddress1,
+      bill_to_address2: invoiceData.billToAddress2,
+      bill_to_city: invoiceData.billToCity,
+      bill_to_state: invoiceData.billToState,
+      bill_to_state_code: invoiceData.billToStateCode,
+      bill_to_country: invoiceData.billToCountry,
+      bill_to_postal_code: invoiceData.billToPostalCode,
+      bill_to_email: invoiceData.billToEmail,
+      bill_to_phone: invoiceData.billToPhone,
+      bill_to_gstin: invoiceData.billToGstin,
+      bill_to_cin: invoiceData.billToCin,
+      // Remit To
+      remit_to_name: invoiceData.remitToName,
+      remit_to_address1: invoiceData.remitToAddress1,
+      remit_to_address2: invoiceData.remitToAddress2,
+      remit_to_city: invoiceData.remitToCity,
+      remit_to_state: invoiceData.remitToState,
+      remit_to_state_code: invoiceData.remitToStateCode,
+      remit_to_country: invoiceData.remitToCountry,
+      remit_to_postal_code: invoiceData.remitToPostalCode,
+      remit_to_email: invoiceData.remitToEmail,
+      remit_to_phone: invoiceData.remitToPhone,
+      remit_to_gstin: invoiceData.remitToGstin,
+      remit_to_cin: invoiceData.remitToCin,
     };
 
     const { data: invoice, error } = await supabase

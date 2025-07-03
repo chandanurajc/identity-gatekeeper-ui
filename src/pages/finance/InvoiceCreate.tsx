@@ -243,6 +243,15 @@ export default function InvoiceCreate() {
     }
   }, [formData.sameAsDivisionAddress, formData.divisionId]);
 
+  useEffect(() => {
+    if (formData.invoiceType === 'Payable' && organizationId) {
+      setFormData(prev => ({
+        ...prev,
+        billToOrgId: organizationId
+      }));
+    }
+  }, [formData.invoiceType, organizationId]);
+
   const loadDivisionBillToInfo = async (divisionId: string) => {
     try {
       const division = await divisionService.getDivisionById(divisionId);
@@ -475,8 +484,49 @@ export default function InvoiceCreate() {
       return;
     }
 
+    // Merge Bill To, Remit To, and Ship To details into formData before sending
+    const mergedFormData = {
+      ...formData,
+      // Bill To
+      billToName: billToInfo?.name || '',
+      billToAddress1: billToInfo?.address1 || '',
+      billToAddress2: billToInfo?.address2 || '',
+      billToCity: billToInfo?.city || '',
+      billToState: billToInfo?.state || '',
+      billToStateCode: billToInfo?.stateCode || null,
+      billToCountry: billToInfo?.country || '',
+      billToPostalCode: billToInfo?.postalCode || '',
+      billToEmail: billToInfo?.email || '',
+      billToPhone: billToInfo?.phone || '',
+      billToGstin: billToInfo?.gstin || '',
+      billToCin: billToInfo?.cin || '',
+      // Remit To
+      remitToName: remitToInfo?.name || '',
+      remitToAddress1: remitToInfo?.address1 || '',
+      remitToAddress2: remitToInfo?.address2 || '',
+      remitToCity: remitToInfo?.city || '',
+      remitToState: remitToInfo?.state || '',
+      remitToStateCode: remitToInfo?.stateCode || null,
+      remitToCountry: remitToInfo?.country || '',
+      remitToPostalCode: remitToInfo?.postalCode || '',
+      remitToEmail: remitToInfo?.email || '',
+      remitToPhone: remitToInfo?.phone || '',
+      remitToGstin: remitToInfo?.gstin || '',
+      remitToCin: remitToInfo?.cin || '',
+      // Ship To
+      shipToName: shipToAddress?.name || '',
+      shipToAddress1: shipToAddress?.address1 || '',
+      shipToAddress2: shipToAddress?.address2 || '',
+      shipToCity: shipToAddress?.city || '',
+      shipToState: shipToAddress?.state || '',
+      shipToStateCode: shipToAddress?.stateCode || null,
+      shipToCountry: shipToAddress?.country || '',
+      shipToPostalCode: shipToAddress?.postalCode || '',
+      shipToPhone: shipToAddress?.phone || '',
+    };
+
     try {
-      await invoiceService.createInvoice(formData as InvoiceFormData, organizationId!, user?.email || '');
+      await invoiceService.createInvoice(mergedFormData as InvoiceFormData, organizationId!, user?.email || '');
       toast({ title: "Success", description: "Invoice saved as draft" });
       navigate("/finance/invoices");
     } catch (error) {
