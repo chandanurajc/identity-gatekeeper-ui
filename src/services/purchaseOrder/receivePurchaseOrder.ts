@@ -30,8 +30,8 @@ export const receivePurchaseOrder = async (
     throw new Error(`Purchase Order not found: ${fetchError?.message}`);
   }
 
-  if (currentPO.status !== 'Approved') {
-    throw new Error(`Cannot receive Purchase Order with status: ${currentPO.status}. Only 'Approved' POs can be received.`);
+  if (currentPO.status !== 'Created' && currentPO.status !== 'Approved') {
+    throw new Error(`Cannot receive Purchase Order with status: ${currentPO.status}. Only 'Created' or 'Approved' POs can be received.`);
   }
 
   // Validate received lines
