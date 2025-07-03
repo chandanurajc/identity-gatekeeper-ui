@@ -22,20 +22,17 @@ const PurchaseOrderEdit = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (id && canEditPurchaseOrder) {
+    if (id && canEditPurchaseOrder && user?.organizationId) {
       fetchPurchaseOrder();
     }
-  }, [id, canEditPurchaseOrder]);
+  }, [id, canEditPurchaseOrder, user?.organizationId]);
 
   const fetchPurchaseOrder = async () => {
-    if (!id) return;
-    
-    const organizationId = getCurrentOrganizationId();
-    if (!organizationId) return;
+    if (!id || !user?.organizationId) return;
     
     try {
       setLoading(true);
-      const data = await purchaseOrderService.getPurchaseOrderById(id, organizationId);
+      const data = await purchaseOrderService.getPurchaseOrderById(id, user.organizationId);
       if (data) {
         setPurchaseOrder(data);
       } else {
@@ -59,8 +56,7 @@ const PurchaseOrderEdit = () => {
   };
 
   const handleSubmit = async (data: PurchaseOrderFormData) => {
-    const organizationId = getCurrentOrganizationId();
-    if (!organizationId || !user?.id || !id) {
+    if (!user?.organizationId || !user?.id || !id) {
       toast({
         title: "Error",
         description: "Missing required information",
@@ -73,7 +69,7 @@ const PurchaseOrderEdit = () => {
       const updatedPO = await purchaseOrderService.updatePurchaseOrder(
         id, 
         data, 
-        organizationId, 
+        user.organizationId, 
         user.id
       );
       
@@ -110,6 +106,7 @@ const PurchaseOrderEdit = () => {
       shipToPostalCode: po.shipToPostalCode || "",
       shipToCity: po.shipToCity || "",
       shipToState: po.shipToState || "",
+      shipToStateCode: po.shipToStateCode,
       shipToCountry: po.shipToCountry || "",
       shipToPhone: po.shipToPhone || "",
       shipToEmail: po.shipToEmail || "",
