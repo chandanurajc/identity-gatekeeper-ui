@@ -28,6 +28,26 @@ export const getPurchaseOrderById = async (poId: string, organizationId: string)
     ...data,
     createdOn: new Date(data.created_on),
     updatedOn: data.updated_on ? new Date(data.updated_on) : undefined,
+    lines: data.lines?.map(line => ({
+      ...line,
+      lineNumber: line.line_number,
+      itemId: line.item_id,
+      unitPrice: line.unit_price,
+      totalUnitPrice: line.total_unit_price,
+      gstPercent: line.gst_percent,
+      gstValue: line.gst_value,
+      lineTotal: line.line_total,
+      receivedQuantity: line.received_quantity,
+      itemWeightPerUnit: line.item_weight_per_unit,
+      totalLineWeight: line.total_line_weight,
+      itemWeightUom: line.item_weight_uom,
+      purchaseOrderId: line.purchase_order_id,
+      organizationId: line.organization_id,
+      createdBy: line.created_by,
+      createdOn: line.created_on ? new Date(line.created_on) : undefined,
+      updatedBy: line.updated_by,
+      updatedOn: line.updated_on ? new Date(line.updated_on) : undefined,
+    })),
   } as unknown as PurchaseOrder;
 };
 
