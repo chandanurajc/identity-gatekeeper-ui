@@ -14,7 +14,7 @@ export const divisionSchema = z.object({
     .array(
       z.object({
         id: z.string(),
-        type: z.enum(["Registered location", "Billing", "Shipping", "Owner"]),
+        type: z.enum(["Registered location", "Billing", "Shipping", "Owner", "Bill To", "Remit To"]),
         firstName: z.string().min(2, "First name must be at least 2 characters"),
         lastName: z.string().optional(),
         address1: z.string().min(1, "Address 1 is required"),
