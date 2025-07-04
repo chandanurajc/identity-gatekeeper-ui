@@ -218,6 +218,113 @@ export default function InvoiceEdit() {
     }
   }, [invoice]);
 
+  // Load division Bill To info when division changes
+  useEffect(() => {
+    if (formData.divisionId && invoice) {
+      loadDivisionBillToInfo(formData.divisionId);
+    }
+  }, [formData.divisionId]);
+
+  // Load supplier Remit To info when supplier changes
+  useEffect(() => {
+    if (formData.remitToOrgId && invoice) {
+      loadSupplierRemitToInfo(formData.remitToOrgId);
+    }
+  }, [formData.remitToOrgId]);
+
+  // Load ship to address when same as division is checked
+  useEffect(() => {
+    if (formData.sameAsDivisionAddress && formData.divisionId && invoice) {
+      loadDivisionRegisteredLocation(formData.divisionId);
+    } else if (!formData.sameAsDivisionAddress) {
+      // Keep existing ship to address if not same as division
+    }
+  }, [formData.sameAsDivisionAddress, formData.divisionId]);
+
+  const loadDivisionBillToInfo = async (divisionId: string) => {
+    try {
+      const division = await divisionService.getDivisionById(divisionId);
+      if (division) {
+        const billToContact = division.contacts?.find(c => c.type === 'Bill To' || c.type === 'Registered location');
+        const gstinRef = division.references?.find(r => r.type === 'GST');
+        const cinRef = division.references?.find(r => r.type === 'CIN');
+        
+        if (billToContact) {
+          setBillToInfo({
+            name: `${billToContact.firstName} ${billToContact.lastName || ''}`.trim(),
+            address1: billToContact.address1 || '',
+            address2: billToContact.address2 || '',
+            city: billToContact.city || '',
+            state: billToContact.state || '',
+            stateCode: billToContact.stateCode || null,
+            country: billToContact.country || '',
+            postalCode: billToContact.postalCode || '',
+            email: billToContact.email || '',
+            phone: billToContact.phoneNumber || '',
+            gstin: gstinRef?.value || '',
+            cin: cinRef?.value || ''
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error loading division Bill To info:", error);
+    }
+  };
+
+  const loadSupplierRemitToInfo = async (supplierId: string) => {
+    try {
+      const organization = await organizationService.getOrganizationById(supplierId);
+      if (organization) {
+        const remitToContact = organization.contacts?.find(c => c.type === 'Remit To' || c.type === 'Registered location');
+        const gstinRef = organization.references?.find(r => r.type === 'GST');
+        const cinRef = organization.references?.find(r => r.type === 'CIN');
+        
+        if (remitToContact) {
+          setRemitToInfo({
+            name: `${remitToContact.firstName} ${remitToContact.lastName || ''}`.trim(),
+            address1: remitToContact.address1 || '',
+            address2: remitToContact.address2 || '',
+            city: remitToContact.city || '',
+            state: remitToContact.state || '',
+            stateCode: remitToContact.stateCode || null,
+            country: remitToContact.country || '',
+            postalCode: remitToContact.postalCode || '',
+            email: remitToContact.email || '',
+            phone: remitToContact.phoneNumber || '',
+            gstin: gstinRef?.value || '',
+            cin: cinRef?.value || ''
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error loading supplier Remit To info:", error);
+    }
+  };
+
+  const loadDivisionRegisteredLocation = async (divisionId: string) => {
+    try {
+      const division = await divisionService.getDivisionById(divisionId);
+      if (division) {
+        const registeredContact = division.contacts?.find(c => c.type === 'Registered location');
+        if (registeredContact) {
+          setShipToAddress({
+            name: `${registeredContact.firstName} ${registeredContact.lastName || ''}`.trim(),
+            address1: registeredContact.address1 || '',
+            address2: registeredContact.address2 || '',
+            city: registeredContact.city || '',
+            state: registeredContact.state || '',
+            stateCode: registeredContact.stateCode || null,
+            country: registeredContact.country || '',
+            postalCode: registeredContact.postalCode || '',
+            phone: registeredContact.phoneNumber || ''
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error loading division registered location:", error);
+    }
+  };
+
   // Fetch suppliers and items
   useEffect(() => {
     const fetchData = async () => {
@@ -517,42 +624,108 @@ export default function InvoiceEdit() {
 
       {/* Address Information Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Bill To Card */}
         {billToInfo && (
           <Card>
             <CardHeader>
               <CardTitle>Bill To</CardTitle>
-              <CardDescription>{billToInfo.name}</CardDescription>
+              <CardDescription>Billing information from selected division</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="font-medium text-muted-foreground">Name:</p>
+                  <p>{billToInfo.name}</p>
+                </div>
                 <div>
                   <p className="font-medium text-muted-foreground">Address:</p>
                   <p>{billToInfo.address1}</p>
                 </div>
                 <div>
                   <p className="font-medium text-muted-foreground">City:</p>
-                  <p>{billToInfo.city}, {billToInfo.state}</p>
+                  <p>{billToInfo.city}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground">State:</p>
+                  <p>{billToInfo.state}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground">State Code:</p>
+                  <p>{billToInfo.stateCode}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground">Country:</p>
+                  <p>{billToInfo.country}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground">Phone:</p>
+                  <p>{billToInfo.phone}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground">Email:</p>
+                  <p>{billToInfo.email}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground">GSTIN:</p>
+                  <p>{billToInfo.gstin}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground">CIN:</p>
+                  <p>{billToInfo.cin}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
         )}
 
+        {/* Remit To Card */}
         {remitToInfo && (
           <Card>
             <CardHeader>
               <CardTitle>Remit To</CardTitle>
-              <CardDescription>{remitToInfo.name}</CardDescription>
+              <CardDescription>Payment information from selected supplier</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="font-medium text-muted-foreground">Name:</p>
+                  <p>{remitToInfo.name}</p>
+                </div>
                 <div>
                   <p className="font-medium text-muted-foreground">Address:</p>
                   <p>{remitToInfo.address1}</p>
                 </div>
                 <div>
                   <p className="font-medium text-muted-foreground">City:</p>
-                  <p>{remitToInfo.city}, {remitToInfo.state}</p>
+                  <p>{remitToInfo.city}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground">State:</p>
+                  <p>{remitToInfo.state}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground">State Code:</p>
+                  <p>{remitToInfo.stateCode}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground">Country:</p>
+                  <p>{remitToInfo.country}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground">Phone:</p>
+                  <p>{remitToInfo.phone}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground">Email:</p>
+                  <p>{remitToInfo.email}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground">GSTIN:</p>
+                  <p>{remitToInfo.gstin}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground">CIN:</p>
+                  <p>{remitToInfo.cin}</p>
                 </div>
               </div>
             </CardContent>
