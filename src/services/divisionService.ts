@@ -357,11 +357,18 @@ export const divisionService = {
         console.log("DivisionService: Creating new contacts:", divisionData.contacts);
         
         const allowedContactTypes = ['Registered location', 'Billing', 'Shipping', 'Owner', 'Bill To', 'Remit To'];
+        
+        // Log each contact type for debugging
+        divisionData.contacts.forEach((contact, index) => {
+          console.log(`Contact ${index}: type="${contact.type}", isAllowed=${allowedContactTypes.includes(contact.type)}`);
+        });
+        
         const validContacts = divisionData.contacts.filter(contact => {
           const validType = allowedContactTypes.includes(contact.type);
           
           if (!validType) {
             console.error("DivisionService: Invalid contact type:", contact.type, "Allowed:", allowedContactTypes);
+            console.error("DivisionService: Contact type length:", contact.type?.length, "First char code:", contact.type?.charCodeAt(0));
           }
           
           return validType;
@@ -387,15 +394,24 @@ export const divisionService = {
 
           console.log("DivisionService: Contact data to insert with state codes:", contacts);
 
-          const { error: contactError } = await supabase
+          const { data: insertedContacts, error: contactError } = await supabase
             .from('division_contacts')
-            .insert(contacts);
+            .insert(contacts)
+            .select();
 
           if (contactError) {
             console.error("DivisionService: Error creating contacts:", contactError);
+            console.error("DivisionService: Detailed error:", {
+              message: contactError.message,
+              details: contactError.details,
+              hint: contactError.hint,
+              code: contactError.code
+            });
             throw new Error(`Failed to create contacts: ${contactError.message}`);
           }
-          console.log("DivisionService: Contacts created successfully");
+          console.log("DivisionService: Contacts created successfully:", insertedContacts);
+        } else {
+          console.warn("DivisionService: No valid contacts to insert");
         }
       }
 
