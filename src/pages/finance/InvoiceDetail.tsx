@@ -108,419 +108,365 @@ export default function InvoiceDetail() {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <Button variant="outline" size="icon" onClick={() => navigate("/finance/invoices")}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold flex items-center space-x-2">
-              <FileText className="h-8 w-8" />
-              <span>{invoice.invoiceNumber}</span>
-            </h1>
-            <p className="text-muted-foreground">Invoice Details</p>
+    <div className="min-h-screen bg-background">
+      {/* Minimal Header */}
+      <div className="border-b bg-background/95 backdrop-blur sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Button variant="ghost" size="sm" onClick={() => navigate("/finance/invoices")}>
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back
+              </Button>
+              <div>
+                <h1 className="text-2xl font-semibold">{invoice.invoiceNumber}</h1>
+                <div className="flex items-center gap-2 mt-1">
+                  <Badge variant="outline" className={typeColors[invoice.invoiceType]}>
+                    {invoice.invoiceType}
+                  </Badge>
+                  <Badge variant="outline" className={statusColors[invoice.status]}>
+                    {invoice.status}
+                  </Badge>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {hasPermission("Edit Invoice") && (
+                <Button variant="outline" onClick={() => navigate(`/finance/invoices/${invoice.id}/edit`)}>
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit
+                </Button>
+              )}
+              {invoice.status === 'Draft' && hasPermission("Send Invoice for Approval") && (
+                <PermissionButton 
+                  permission="Send Invoice for Approval"
+                  onClick={async () => {
+                    try {
+                      await invoiceService.updateInvoiceStatus(invoice.id, 'Awaiting Approval', organizationId!, user?.email || '', 'Sent for approval');
+                      window.location.reload();
+                    } catch (error) {
+                      console.error("Error sending for approval:", error);
+                    }
+                  }}
+                >
+                  <Send className="h-4 w-4 mr-2" />
+                  Send for Approval
+                </PermissionButton>
+              )}
+            </div>
           </div>
         </div>
-        <div className="flex items-center space-x-2">
-          <Badge variant="outline" className={typeColors[invoice.invoiceType]}>
-            {invoice.invoiceType}
-          </Badge>
-          <Badge variant="outline" className={statusColors[invoice.status]}>
-            {invoice.status}
-          </Badge>
-          {hasPermission("Edit Invoice") && (
-            <Button onClick={() => navigate(`/finance/invoices/${invoice.id}/edit`)}>
-              <Edit className="h-4 w-4 mr-2" />
-              Edit
-            </Button>
-          )}
-          {invoice.status === 'Draft' && hasPermission("Send Invoice for Approval") && (
-            <PermissionButton 
-              permission="Send Invoice for Approval"
-              onClick={async () => {
-                try {
-                  await invoiceService.updateInvoiceStatus(invoice.id, 'Awaiting Approval', organizationId!, user?.email || '', 'Sent for approval');
-                  window.location.reload(); // Refresh to show updated status
-                } catch (error) {
-                  console.error("Error sending for approval:", error);
-                }
-              }}
-              className="flex items-center space-x-2"
-            >
-              <Send className="h-4 w-4" />
-              <span>Send for Approval</span>
-            </PermissionButton>
-          )}
+      </div>
+
+      <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+        {/* Key Information Strip */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="text-center p-4 rounded-lg border bg-card">
+            <div className="text-2xl font-bold">₹{invoice.totalInvoiceValue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
+            <div className="text-sm text-muted-foreground">Total Amount</div>
+          </div>
+          <div className="text-center p-4 rounded-lg border bg-card">
+            <div className="text-lg font-semibold">{new Date(invoice.invoiceDate).toLocaleDateString()}</div>
+            <div className="text-sm text-muted-foreground">Invoice Date</div>
+          </div>
+          <div className="text-center p-4 rounded-lg border bg-card">
+            <div className="text-lg font-semibold">{invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : "N/A"}</div>
+            <div className="text-sm text-muted-foreground">Due Date</div>
+          </div>
+          <div className="text-center p-4 rounded-lg border bg-card">
+            <div className="text-lg font-semibold">{invoice.paymentTerms}</div>
+            <div className="text-sm text-muted-foreground">Payment Terms</div>
+          </div>
         </div>
-      </div>
 
-      {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Invoice Date</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl font-bold">
-              {new Date(invoice.invoiceDate).toLocaleDateString()}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Due Date</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl font-bold">
-              {invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : "N/A"}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Payment Terms</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl font-bold">{invoice.paymentTerms}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Amount</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl font-bold">
-              ₹{invoice.totalInvoiceValue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Additional Information Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {invoice.supplierInvoiceNumber && (
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Supplier Invoice #</CardTitle>
-              <Hash className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-xl font-bold">{invoice.supplierInvoiceNumber}</div>
-            </CardContent>
-          </Card>
+        {/* Additional Info */}
+        {(invoice.supplierInvoiceNumber || invoice.notes || divisionName) && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {invoice.supplierInvoiceNumber && (
+              <div className="p-4 rounded-lg border bg-card">
+                <div className="font-semibold">{invoice.supplierInvoiceNumber}</div>
+                <div className="text-sm text-muted-foreground">Supplier Invoice #</div>
+              </div>
+            )}
+            {divisionName && (
+              <div className="p-4 rounded-lg border bg-card">
+                <div className="font-semibold">{divisionName}</div>
+                <div className="text-sm text-muted-foreground">Division</div>
+              </div>
+            )}
+            {invoice.notes && (
+              <div className="p-4 rounded-lg border bg-card">
+                <div className="text-sm">{invoice.notes}</div>
+                <div className="text-sm text-muted-foreground">Notes</div>
+              </div>
+            )}
+          </div>
         )}
-        {invoice.notes && (
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Notes</CardTitle>
-              <FileText className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-sm">{invoice.notes}</div>
-            </CardContent>
-          </Card>
-        )}
-      </div>
 
-      {/* Division Information */}
-      {divisionName && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Users className="h-5 w-5" />
-              <span>Division</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-1">
-            <InfoRow label="Division Name" value={divisionName} icon={Users} />
-          </CardContent>
-        </Card>
-      )}
+        {/* Parties Information - Simplified */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Bill To */}
+          <div className="space-y-3">
+            <h3 className="font-semibold flex items-center gap-2">
+              <Building2 className="h-4 w-4" />
+              Bill To
+            </h3>
+            <div className="p-4 rounded-lg border bg-card space-y-2 text-sm">
+              {billToOrgName && <div className="font-medium">{billToOrgName}</div>}
+              {invoice.billToName && <div>{invoice.billToName}</div>}
+              {invoice.billToAddress1 && <div>{invoice.billToAddress1}</div>}
+              {invoice.billToAddress2 && <div>{invoice.billToAddress2}</div>}
+              {(invoice.billToCity || invoice.billToState || invoice.billToPostalCode) && (
+                <div>
+                  {[invoice.billToCity, invoice.billToState, invoice.billToPostalCode].filter(Boolean).join(', ')}
+                </div>
+              )}
+              {invoice.billToCountry && <div>{invoice.billToCountry}</div>}
+              {invoice.billToEmail && <div className="text-muted-foreground">{invoice.billToEmail}</div>}
+              {invoice.billToPhone && <div className="text-muted-foreground">{invoice.billToPhone}</div>}
+              {invoice.billToGstin && <div className="text-xs text-muted-foreground">GSTIN: {invoice.billToGstin}</div>}
+              {invoice.billToCin && <div className="text-xs text-muted-foreground">CIN: {invoice.billToCin}</div>}
+            </div>
+          </div>
 
-      {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Bill To Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Building2 className="h-5 w-5" />
-              <span>Bill To</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-1">
-            {billToOrgName && (
-              <InfoRow label="Organization" value={billToOrgName} icon={Building2} />
-            )}
-            {invoice.billToName && (
-              <InfoRow label="Name" value={invoice.billToName} icon={Mail} />
-            )}
-            <InfoRow label="Address Line 1" value={invoice.billToAddress1} icon={MapPin} />
-            <InfoRow label="Address Line 2" value={invoice.billToAddress2} icon={MapPin} />
-            <InfoRow label="City" value={invoice.billToCity} icon={MapPin} />
-            <InfoRow label="State" value={invoice.billToState} icon={MapPin} />
-            <InfoRow label="State Code" value={invoice.billToStateCode} icon={Hash} />
-            <InfoRow label="Postal Code" value={invoice.billToPostalCode} icon={MapPin} />
-            <InfoRow label="Country" value={invoice.billToCountry} icon={Globe} />
-            <InfoRow label="Email" value={invoice.billToEmail} icon={Mail} />
-            <InfoRow label="Phone" value={invoice.billToPhone} icon={Phone} />
-            <InfoRow label="GSTIN" value={invoice.billToGstin} icon={Hash} />
-            <InfoRow label="CIN" value={invoice.billToCin} icon={Hash} />
-          </CardContent>
-        </Card>
+          {/* Remit To */}
+          <div className="space-y-3">
+            <h3 className="font-semibold flex items-center gap-2">
+              <Building2 className="h-4 w-4" />
+              Remit To
+            </h3>
+            <div className="p-4 rounded-lg border bg-card space-y-2 text-sm">
+              {remitToOrgName && <div className="font-medium">{remitToOrgName}</div>}
+              {invoice.remitToName && <div>{invoice.remitToName}</div>}
+              {invoice.remitToAddress1 && <div>{invoice.remitToAddress1}</div>}
+              {invoice.remitToAddress2 && <div>{invoice.remitToAddress2}</div>}
+              {(invoice.remitToCity || invoice.remitToState || invoice.remitToPostalCode) && (
+                <div>
+                  {[invoice.remitToCity, invoice.remitToState, invoice.remitToPostalCode].filter(Boolean).join(', ')}
+                </div>
+              )}
+              {invoice.remitToCountry && <div>{invoice.remitToCountry}</div>}
+              {invoice.remitToEmail && <div className="text-muted-foreground">{invoice.remitToEmail}</div>}
+              {invoice.remitToPhone && <div className="text-muted-foreground">{invoice.remitToPhone}</div>}
+              {invoice.remitToGstin && <div className="text-xs text-muted-foreground">GSTIN: {invoice.remitToGstin}</div>}
+              {invoice.remitToCin && <div className="text-xs text-muted-foreground">CIN: {invoice.remitToCin}</div>}
+            </div>
+          </div>
 
-        {/* Remit To Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Building2 className="h-5 w-5" />
-              <span>Remit To</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-1">
-            {remitToOrgName && (
-              <InfoRow label="Organization" value={remitToOrgName} icon={Building2} />
-            )}
-            {invoice.remitToName && (
-              <InfoRow label="Name" value={invoice.remitToName} icon={Mail} />
-            )}
-            <InfoRow label="Address Line 1" value={invoice.remitToAddress1} icon={MapPin} />
-            <InfoRow label="Address Line 2" value={invoice.remitToAddress2} icon={MapPin} />
-            <InfoRow label="City" value={invoice.remitToCity} icon={MapPin} />
-            <InfoRow label="State" value={invoice.remitToState} icon={MapPin} />
-            <InfoRow label="State Code" value={invoice.remitToStateCode} icon={Hash} />
-            <InfoRow label="Postal Code" value={invoice.remitToPostalCode} icon={MapPin} />
-            <InfoRow label="Country" value={invoice.remitToCountry} icon={Globe} />
-            <InfoRow label="Email" value={invoice.remitToEmail} icon={Mail} />
-            <InfoRow label="Phone" value={invoice.remitToPhone} icon={Phone} />
-            <InfoRow label="GSTIN" value={invoice.remitToGstin} icon={Hash} />
-            <InfoRow label="CIN" value={invoice.remitToCin} icon={Hash} />
-          </CardContent>
-        </Card>
-
-        {/* Ship To Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Package className="h-5 w-5" />
-              <span>Ship To</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-1">
-            <InfoRow label="Same as Division Address" value={invoice.sameAsDivisionAddress ? "Yes" : "No"} />
-            <InfoRow label="Name" value={invoice.shipToName} icon={Building2} />
-            <InfoRow label="Address Line 1" value={invoice.shipToAddress1} icon={MapPin} />
-            <InfoRow label="Address Line 2" value={invoice.shipToAddress2} icon={MapPin} />
-            <InfoRow label="City" value={invoice.shipToCity} icon={MapPin} />
-            <InfoRow label="State" value={invoice.shipToState} icon={MapPin} />
-            <InfoRow label="State Code" value={invoice.shipToStateCode} icon={Hash} />
-            <InfoRow label="Postal Code" value={invoice.shipToPostalCode} icon={MapPin} />
-            <InfoRow label="Country" value={invoice.shipToCountry} icon={Globe} />
-            <InfoRow label="Phone" value={invoice.shipToPhone} icon={Phone} />
-          </CardContent>
-        </Card>
+          {/* Ship To */}
+          <div className="space-y-3">
+            <h3 className="font-semibold flex items-center gap-2">
+              <Package className="h-4 w-4" />
+              Ship To
+            </h3>
+            <div className="p-4 rounded-lg border bg-card space-y-2 text-sm">
+              {invoice.sameAsDivisionAddress ? (
+                <div className="text-muted-foreground">Same as Division Address</div>
+              ) : (
+                <>
+                  {invoice.shipToName && <div className="font-medium">{invoice.shipToName}</div>}
+                  {invoice.shipToAddress1 && <div>{invoice.shipToAddress1}</div>}
+                  {invoice.shipToAddress2 && <div>{invoice.shipToAddress2}</div>}
+                  {(invoice.shipToCity || invoice.shipToState || invoice.shipToPostalCode) && (
+                    <div>
+                      {[invoice.shipToCity, invoice.shipToState, invoice.shipToPostalCode].filter(Boolean).join(', ')}
+                    </div>
+                  )}
+                  {invoice.shipToCountry && <div>{invoice.shipToCountry}</div>}
+                  {invoice.shipToPhone && <div className="text-muted-foreground">{invoice.shipToPhone}</div>}
+                </>
+              )}
+            </div>
+          </div>
+        </div>
 
         {/* Reference Transaction */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <FileText className="h-5 w-5" />
-              <span>Reference Transaction</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-1">
-            <InfoRow label="Type" value={invoice.referenceTransactionType} icon={FileText} />
-            <InfoRow label="Number" value={invoice.referenceTransactionNumber} icon={Hash} />
-            <InfoRow label="Date" value={invoice.referenceTransactionDate ? new Date(invoice.referenceTransactionDate).toLocaleDateString() : null} icon={Calendar} />
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Invoice Lines */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Package className="h-5 w-5" />
-            <span>Invoice Lines</span>
-          </CardTitle>
-          <CardDescription>Detailed breakdown of items and quantities</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-border">
-              <thead className="bg-muted/50">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Line</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Item ID</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Description</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Qty</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">UOM</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Weight/Unit</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Total Weight</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Unit Price</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Total Price</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">GST %</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">GST Value</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Line Total</th>
-                </tr>
-              </thead>
-              <tbody className="bg-background divide-y divide-border">
-                {invoice.invoiceLines?.map((line) => (
-                  <tr key={line.id} className="hover:bg-muted/50">
-                    <td className="px-4 py-4 whitespace-nowrap font-medium">{line.lineNumber}</td>
-                    <td className="px-4 py-4 whitespace-nowrap">{line.itemId}</td>
-                    <td className="px-4 py-4">{line.itemDescription}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-right">{line.quantity}</td>
-                    <td className="px-4 py-4 whitespace-nowrap">{line.uom}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-right">
-                      {line.weightPerUnit ? `${line.weightPerUnit} ${line.weightUom || 'kg'}` : '-'}
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-right">
-                      {line.totalWeight ? `${line.totalWeight} ${line.weightUom || 'kg'}` : '-'}
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-right">
-                      ₹{line.unitPrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-right">
-                      ₹{line.totalPrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-right">{line.gstPercentage}%</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-right">
-                      ₹{line.gstValue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-right font-medium">
-                      ₹{line.lineTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        {(invoice.referenceTransactionType || invoice.referenceTransactionNumber || invoice.referenceTransactionDate) && (
+          <div className="space-y-3">
+            <h3 className="font-semibold flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              Reference Transaction
+            </h3>
+            <div className="p-4 rounded-lg border bg-card">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                {invoice.referenceTransactionType && (
+                  <div>
+                    <div className="font-medium">{invoice.referenceTransactionType}</div>
+                    <div className="text-muted-foreground">Type</div>
+                  </div>
+                )}
+                {invoice.referenceTransactionNumber && (
+                  <div>
+                    <div className="font-medium">{invoice.referenceTransactionNumber}</div>
+                    <div className="text-muted-foreground">Number</div>
+                  </div>
+                )}
+                {invoice.referenceTransactionDate && (
+                  <div>
+                    <div className="font-medium">{new Date(invoice.referenceTransactionDate).toLocaleDateString()}</div>
+                    <div className="text-muted-foreground">Date</div>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
+        )}
 
-          {/* Totals Summary */}
-          <div className="mt-6 pt-4 border-t">
-            <div className="space-y-2">
+        {/* Invoice Lines */}
+        <div className="space-y-3">
+          <h3 className="font-semibold flex items-center gap-2">
+            <Package className="h-4 w-4" />
+            Invoice Lines
+          </h3>
+          <div className="rounded-lg border bg-card">
+            <div className="overflow-x-auto">
+              <table className="min-w-full">
+                <thead className="border-b bg-muted/30">
+                  <tr>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase">Line</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase">Item</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase">Description</th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground uppercase">Qty</th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground uppercase">Price</th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground uppercase">GST</th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground uppercase">Total</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {invoice.invoiceLines?.map((line) => (
+                    <tr key={line.id} className="hover:bg-muted/30">
+                      <td className="px-3 py-3 text-sm font-medium">{line.lineNumber}</td>
+                      <td className="px-3 py-3 text-sm">{line.itemId}</td>
+                      <td className="px-3 py-3 text-sm">{line.itemDescription}</td>
+                      <td className="px-3 py-3 text-sm text-right">{line.quantity} {line.uom}</td>
+                      <td className="px-3 py-3 text-sm text-right">
+                        ₹{line.unitPrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      </td>
+                      <td className="px-3 py-3 text-sm text-right">
+                        {line.gstPercentage}% (₹{line.gstValue.toLocaleString('en-IN', { minimumFractionDigits: 2 })})
+                      </td>
+                      <td className="px-3 py-3 text-sm text-right font-medium">
+                        ₹{line.lineTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Totals */}
+            <div className="border-t p-4 space-y-2">
               <div className="flex justify-between text-sm">
                 <span>Total Item Value:</span>
-                <span className="font-medium">₹{invoice.totalItemValue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                <span>₹{invoice.totalItemValue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span>Total GST Value:</span>
-                <span className="font-medium">₹{invoice.totalGstValue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                <span>₹{invoice.totalGstValue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
               </div>
-              <Separator />
-              <div className="flex justify-between font-bold text-lg">
+              <div className="flex justify-between font-bold text-lg border-t pt-2">
                 <span>Total Invoice Value:</span>
                 <span>₹{invoice.totalInvoiceValue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
               </div>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* GST Breakdown */}
-      {invoice.gstBreakdown && invoice.gstBreakdown.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Hash className="h-5 w-5" />
-              <span>GST Breakdown</span>
-            </CardTitle>
-            <CardDescription>Detailed GST calculation breakdown</CardDescription>
-          </CardHeader>
-          <CardContent>
+        {/* GST Breakdown */}
+        {invoice.gstBreakdown && invoice.gstBreakdown.length > 0 && (
+          <div className="space-y-3">
+            <h3 className="font-semibold flex items-center gap-2">
+              <Hash className="h-4 w-4" />
+              GST Breakdown
+            </h3>
             <div className="space-y-4">
-              {invoice.gstBreakdown.map((breakdown, index) => (
-                <div key={breakdown.id} className="border rounded-lg p-4">
+              {invoice.gstBreakdown.map((breakdown) => (
+                <div key={breakdown.id} className="p-4 rounded-lg border bg-card">
                   <div className="flex justify-between items-center mb-3">
-                    <h4 className="font-medium">GST Rate: {breakdown.gstPercentage}%</h4>
-                    <div className="font-bold">
+                    <span className="font-medium">GST Rate: {breakdown.gstPercentage}%</span>
+                    <span className="font-bold">
                       ₹{breakdown.totalGstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                    </div>
+                    </span>
                   </div>
-                  
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                    <InfoRow label="Taxable Amount" value={`₹${breakdown.taxableAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`} />
-                    <InfoRow label="CGST %" value={breakdown.cgstPercentage > 0 ? `${breakdown.cgstPercentage}%` : null} />
-                    <InfoRow label="CGST Amount" value={breakdown.cgstAmount > 0 ? `₹${breakdown.cgstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : null} />
-                    <InfoRow label="SGST %" value={breakdown.sgstPercentage > 0 ? `${breakdown.sgstPercentage}%` : null} />
-                    <InfoRow label="SGST Amount" value={breakdown.sgstAmount > 0 ? `₹${breakdown.sgstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : null} />
-                    <InfoRow label="IGST %" value={breakdown.igstPercentage > 0 ? `${breakdown.igstPercentage}%` : null} />
-                    <InfoRow label="IGST Amount" value={breakdown.igstAmount > 0 ? `₹${breakdown.igstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : null} />
+                    <div>
+                      <div className="font-medium">₹{breakdown.taxableAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
+                      <div className="text-muted-foreground">Taxable Amount</div>
+                    </div>
+                    {breakdown.cgstAmount > 0 && (
+                      <div>
+                        <div className="font-medium">₹{breakdown.cgstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
+                        <div className="text-muted-foreground">CGST ({breakdown.cgstPercentage}%)</div>
+                      </div>
+                    )}
+                    {breakdown.sgstAmount > 0 && (
+                      <div>
+                        <div className="font-medium">₹{breakdown.sgstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
+                        <div className="text-muted-foreground">SGST ({breakdown.sgstPercentage}%)</div>
+                      </div>
+                    )}
+                    {breakdown.igstAmount > 0 && (
+                      <div>
+                        <div className="font-medium">₹{breakdown.igstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
+                        <div className="text-muted-foreground">IGST ({breakdown.igstPercentage}%)</div>
+                      </div>
+                    )}
                   </div>
-                  
-                  {index < invoice.gstBreakdown!.length - 1 && <Separator className="mt-4" />}
                 </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        )}
 
-      {/* Audit Information and Status Change History */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Calendar className="h-5 w-5" />
-            <span>Audit Information & Status History</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-6">
-            {/* Audit Information */}
-            <div>
-              <h4 className="font-medium mb-3">Audit Information</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <InfoRow label="Created By" value={invoice.createdBy} />
-                  <InfoRow label="Created On" value={invoice.createdOn.toLocaleString()} icon={Calendar} />
-                  {invoice.approvalRequestedBy && (
-                    <InfoRow label="Approval Requested By" value={invoice.approvalRequestedBy} />
-                  )}
-                </div>
-                <div className="space-y-1">
-                  <InfoRow label="Updated By" value={invoice.updatedBy} />
-                  <InfoRow label="Updated On" value={invoice.updatedOn?.toLocaleString()} icon={Calendar} />
-                  {invoice.approvalRequestedOn && (
-                    <InfoRow label="Approval Requested On" value={invoice.approvalRequestedOn.toLocaleString()} icon={Calendar} />
-                  )}
-                </div>
+        {/* Audit Information */}
+        <div className="space-y-3">
+          <h3 className="font-semibold flex items-center gap-2">
+            <Calendar className="h-4 w-4" />
+            Audit & History
+          </h3>
+          <div className="p-4 rounded-lg border bg-card space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div>
+                <div className="font-medium">{invoice.createdBy}</div>
+                <div className="text-muted-foreground">Created by</div>
               </div>
+              <div>
+                <div className="font-medium">{invoice.createdOn.toLocaleString()}</div>
+                <div className="text-muted-foreground">Created on</div>
+              </div>
+              {invoice.updatedBy && (
+                <div>
+                  <div className="font-medium">{invoice.updatedBy}</div>
+                  <div className="text-muted-foreground">Updated by</div>
+                </div>
+              )}
+              {invoice.updatedOn && (
+                <div>
+                  <div className="font-medium">{invoice.updatedOn.toLocaleString()}</div>
+                  <div className="text-muted-foreground">Updated on</div>
+                </div>
+              )}
             </div>
 
-            {/* Status Change History */}
+            {/* Status History */}
             {invoice.auditLog && invoice.auditLog.length > 0 && (
-              <div>
-                <h4 className="font-medium mb-3">Status Change History</h4>
-                <div className="space-y-3">
+              <div className="pt-4 border-t">
+                <div className="font-medium mb-3">Status History</div>
+                <div className="space-y-2">
                   {invoice.auditLog.map((log) => (
-                    <div key={log.id} className="border rounded-lg p-3">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <div className="flex items-center space-x-2">
-                            {log.oldStatus && (
-                              <Badge variant="outline" className="text-xs">
-                                {log.oldStatus}
-                              </Badge>
-                            )}
-                            <span className="text-xs text-muted-foreground">→</span>
-                            <Badge variant="outline" className="text-xs">
-                              {log.newStatus}
-                            </Badge>
-                          </div>
-                          {log.comments && (
-                            <p className="text-sm text-muted-foreground mt-1">{log.comments}</p>
-                          )}
-                        </div>
-                        <div className="text-right text-xs text-muted-foreground">
-                          <div>{log.changedBy}</div>
-                          <div>{log.changedOn.toLocaleString()}</div>
-                        </div>
+                    <div key={log.id} className="flex justify-between items-center p-2 rounded border">
+                      <div className="flex items-center gap-2">
+                        {log.oldStatus && (
+                          <Badge variant="outline" className="text-xs">{log.oldStatus}</Badge>
+                        )}
+                        <span className="text-xs text-muted-foreground">→</span>
+                        <Badge variant="outline" className="text-xs">{log.newStatus}</Badge>
+                        {log.comments && (
+                          <span className="text-xs text-muted-foreground">- {log.comments}</span>
+                        )}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {log.changedBy} • {log.changedOn.toLocaleDateString()}
                       </div>
                     </div>
                   ))}
@@ -528,8 +474,8 @@ export default function InvoiceDetail() {
               </div>
             )}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
