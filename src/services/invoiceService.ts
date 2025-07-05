@@ -372,7 +372,7 @@ class InvoiceService {
     if (params.transactionType === 'Purchase Order') {
       let query = supabase
         .from('purchase_order')
-        .select('id, po_number, po_date, supplier:organizations!purchase_order_supplier_id_fkey(name), total_value')
+        .select('id, po_number, po_date, supplier:organizations!purchase_order_supplier_id_fkey(name)')
         .eq('organization_id', organizationId);
 
       if (params.transactionNumber) {
@@ -390,14 +390,39 @@ class InvoiceService {
         console.error('Error searching purchase orders:', error);
         return [];
       }
-      return (data || []).map((row: any) => ({
-        id: row.id,
-        transactionType: 'Purchase Order',
-        transactionNumber: row.po_number,
-        transactionDate: row.po_date,
-        supplierName: row.supplier?.name || '',
-        totalValue: row.total_value || 0,
+
+      // Get total values for each PO by summing line totals
+      const results = await Promise.all((data || []).map(async (row: any) => {
+        const { data: lineData, error: lineError } = await supabase
+          .from('purchase_order_line')
+          .select('line_total')
+          .eq('purchase_order_id', row.id);
+
+        if (lineError) {
+          console.error('Error fetching PO line totals:', lineError);
+          return {
+            id: row.id,
+            transactionType: 'Purchase Order',
+            transactionNumber: row.po_number,
+            transactionDate: row.po_date,
+            supplierName: row.supplier?.name || '',
+            totalValue: 0,
+          };
+        }
+
+        const totalValue = (lineData || []).reduce((sum: number, line: any) => sum + (parseFloat(line.line_total) || 0), 0);
+
+        return {
+          id: row.id,
+          transactionType: 'Purchase Order',
+          transactionNumber: row.po_number,
+          transactionDate: row.po_date,
+          supplierName: row.supplier?.name || '',
+          totalValue,
+        };
       }));
+
+      return results;
     }
     // TODO: Implement for Sales Order if/when available
     return [];
