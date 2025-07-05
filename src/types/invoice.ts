@@ -9,6 +9,7 @@ export interface Invoice {
   organizationId: string;
   divisionId: string;
   invoiceNumber: string;
+  supplierInvoiceNumber?: string;
   invoiceDate: string;
   invoiceType: InvoiceType;
   status: InvoiceStatus;
@@ -63,6 +64,9 @@ export interface Invoice {
   // Payment terms
   paymentTerms: PaymentTerms;
   dueDate?: string;
+  
+  // Notes
+  notes?: string;
   
   // Totals
   totalItemValue: number;
@@ -130,6 +134,7 @@ export interface InvoiceAuditLog {
 export interface InvoiceFormData {
   divisionId: string;
   invoiceNumber: string;
+  supplierInvoiceNumber?: string;
   invoiceDate: string;
   invoiceType: InvoiceType;
   billToOrgId: string;
@@ -175,6 +180,7 @@ export interface InvoiceFormData {
   referenceTransactionDate?: string;
   paymentTerms: PaymentTerms;
   dueDate?: string;
+  notes?: string;
   invoiceLines: InvoiceLineFormData[];
 }
 

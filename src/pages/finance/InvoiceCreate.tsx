@@ -607,6 +607,16 @@ export default function InvoiceCreate() {
               </div>
 
               <div className="space-y-2">
+                <Label htmlFor="supplierInvoiceNumber">Supplier Invoice #</Label>
+                <Input
+                  id="supplierInvoiceNumber"
+                  value={formData.supplierInvoiceNumber || ''}
+                  onChange={(e) => handleInputChange('supplierInvoiceNumber', e.target.value)}
+                  placeholder="Enter supplier invoice number"
+                />
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="division">Division *</Label>
                 <Select
                   value={formData.divisionId || ''}
@@ -685,6 +695,16 @@ export default function InvoiceCreate() {
                     <SelectItem value="Due on Receipt">Due on Receipt</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="notes">Notes</Label>
+                <Input
+                  id="notes"
+                  value={formData.notes || ''}
+                  onChange={(e) => handleInputChange('notes', e.target.value)}
+                  placeholder="Enter invoice notes"
+                />
               </div>
 
               <div className="space-y-2">

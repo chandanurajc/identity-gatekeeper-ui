@@ -202,6 +202,32 @@ export default function InvoiceDetail() {
         </Card>
       </div>
 
+      {/* Additional Information Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {invoice.supplierInvoiceNumber && (
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Supplier Invoice #</CardTitle>
+              <Hash className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-xl font-bold">{invoice.supplierInvoiceNumber}</div>
+            </CardContent>
+          </Card>
+        )}
+        {invoice.notes && (
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Notes</CardTitle>
+              <FileText className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-sm">{invoice.notes}</div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
       {/* Division Information */}
       {divisionName && (
         <Card>
@@ -436,75 +462,74 @@ export default function InvoiceDetail() {
         </Card>
       )}
 
-      {/* Audit Information */}
+      {/* Audit Information and Status Change History */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Calendar className="h-5 w-5" />
-            <span>Audit Information</span>
+            <span>Audit Information & Status History</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
+          <div className="space-y-6">
+            {/* Audit Information */}
+            <div>
+              <h4 className="font-medium mb-3">Audit Information</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <InfoRow label="Created By" value={invoice.createdBy} />
-              <InfoRow label="Created On" value={invoice.createdOn.toLocaleString()} icon={Calendar} />
-              {invoice.approvalRequestedBy && (
-                <InfoRow label="Approval Requested By" value={invoice.approvalRequestedBy} />
-              )}
+                <div className="space-y-1">
+                  <InfoRow label="Created By" value={invoice.createdBy} />
+                  <InfoRow label="Created On" value={invoice.createdOn.toLocaleString()} icon={Calendar} />
+                  {invoice.approvalRequestedBy && (
+                    <InfoRow label="Approval Requested By" value={invoice.approvalRequestedBy} />
+                  )}
+                </div>
+                <div className="space-y-1">
+                  <InfoRow label="Updated By" value={invoice.updatedBy} />
+                  <InfoRow label="Updated On" value={invoice.updatedOn?.toLocaleString()} icon={Calendar} />
+                  {invoice.approvalRequestedOn && (
+                    <InfoRow label="Approval Requested On" value={invoice.approvalRequestedOn.toLocaleString()} icon={Calendar} />
+                  )}
+                </div>
+              </div>
             </div>
-            <div className="space-y-1">
-              <InfoRow label="Updated By" value={invoice.updatedBy} />
-              <InfoRow label="Updated On" value={invoice.updatedOn?.toLocaleString()} icon={Calendar} />
-              {invoice.approvalRequestedOn && (
-                <InfoRow label="Approval Requested On" value={invoice.approvalRequestedOn.toLocaleString()} icon={Calendar} />
-              )}
-            </div>
+
+            {/* Status Change History */}
+            {invoice.auditLog && invoice.auditLog.length > 0 && (
+              <div>
+                <h4 className="font-medium mb-3">Status Change History</h4>
+                <div className="space-y-3">
+                  {invoice.auditLog.map((log) => (
+                    <div key={log.id} className="border rounded-lg p-3">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <div className="flex items-center space-x-2">
+                            {log.oldStatus && (
+                              <Badge variant="outline" className="text-xs">
+                                {log.oldStatus}
+                              </Badge>
+                            )}
+                            <span className="text-xs text-muted-foreground">→</span>
+                            <Badge variant="outline" className="text-xs">
+                              {log.newStatus}
+                            </Badge>
+                          </div>
+                          {log.comments && (
+                            <p className="text-sm text-muted-foreground mt-1">{log.comments}</p>
+                          )}
+                        </div>
+                        <div className="text-right text-xs text-muted-foreground">
+                          <div>{log.changedBy}</div>
+                          <div>{log.changedOn.toLocaleString()}</div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
-
-      {/* Audit Log */}
-      {invoice.auditLog && invoice.auditLog.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <FileText className="h-5 w-5" />
-              <span>Status Change History</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {invoice.auditLog.map((log) => (
-                <div key={log.id} className="border rounded-lg p-3">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <div className="flex items-center space-x-2">
-                        {log.oldStatus && (
-                          <Badge variant="outline" className="text-xs">
-                            {log.oldStatus}
-                          </Badge>
-                        )}
-                        <span className="text-xs text-muted-foreground">→</span>
-                        <Badge variant="outline" className="text-xs">
-                          {log.newStatus}
-                        </Badge>
-                      </div>
-                      {log.comments && (
-                        <p className="text-sm text-muted-foreground mt-1">{log.comments}</p>
-                      )}
-                    </div>
-                    <div className="text-right text-xs text-muted-foreground">
-                      <div>{log.changedBy}</div>
-                      <div>{log.changedOn.toLocaleString()}</div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }
