@@ -260,22 +260,19 @@ export default function InvoiceDetail() {
               Ship To
             </h3>
             <div className="p-4 rounded-lg border bg-card space-y-2 text-sm">
-              {invoice.sameAsDivisionAddress ? (
-                <div className="text-muted-foreground">Same as Division Address</div>
-              ) : (
-                <>
-                  {invoice.shipToName && <div className="font-medium">{invoice.shipToName}</div>}
-                  {invoice.shipToAddress1 && <div>{invoice.shipToAddress1}</div>}
-                  {invoice.shipToAddress2 && <div>{invoice.shipToAddress2}</div>}
-                  {(invoice.shipToCity || invoice.shipToState || invoice.shipToPostalCode) && (
-                    <div>
-                      {[invoice.shipToCity, invoice.shipToState, invoice.shipToPostalCode].filter(Boolean).join(', ')}
-                    </div>
-                  )}
-                  {invoice.shipToCountry && <div>{invoice.shipToCountry}</div>}
-                  {invoice.shipToPhone && <div className="text-muted-foreground">{invoice.shipToPhone}</div>}
-                </>
+              {invoice.sameAsDivisionAddress && (
+                <div className="text-xs text-muted-foreground mb-2">Same as Division Address</div>
               )}
+              {invoice.shipToName && <div className="font-medium">{invoice.shipToName}</div>}
+              {invoice.shipToAddress1 && <div>{invoice.shipToAddress1}</div>}
+              {invoice.shipToAddress2 && <div>{invoice.shipToAddress2}</div>}
+              {(invoice.shipToCity || invoice.shipToState || invoice.shipToPostalCode) && (
+                <div>
+                  {[invoice.shipToCity, invoice.shipToState, invoice.shipToPostalCode].filter(Boolean).join(', ')}
+                </div>
+              )}
+              {invoice.shipToCountry && <div>{invoice.shipToCountry}</div>}
+              {invoice.shipToPhone && <div className="text-muted-foreground">{invoice.shipToPhone}</div>}
             </div>
           </div>
         </div>
