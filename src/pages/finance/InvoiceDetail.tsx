@@ -321,12 +321,17 @@ export default function InvoiceDetail() {
                 <thead className="border-b bg-muted/30">
                   <tr>
                     <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase">Line</th>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase">Item</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase">Item ID</th>
                     <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase">Description</th>
                     <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground uppercase">Qty</th>
-                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground uppercase">Price</th>
-                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground uppercase">GST</th>
-                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground uppercase">Total</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase">UOM</th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground uppercase">Weight/Unit</th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground uppercase">Total Weight</th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground uppercase">Unit Price</th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground uppercase">Total Price</th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground uppercase">GST %</th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground uppercase">GST Value</th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground uppercase">Line Total</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
@@ -335,12 +340,23 @@ export default function InvoiceDetail() {
                       <td className="px-3 py-3 text-sm font-medium">{line.lineNumber}</td>
                       <td className="px-3 py-3 text-sm">{line.itemId}</td>
                       <td className="px-3 py-3 text-sm">{line.itemDescription}</td>
-                      <td className="px-3 py-3 text-sm text-right">{line.quantity} {line.uom}</td>
+                      <td className="px-3 py-3 text-sm text-right">{line.quantity}</td>
+                      <td className="px-3 py-3 text-sm">{line.uom}</td>
+                      <td className="px-3 py-3 text-sm text-right">
+                        {line.weightPerUnit ? `${line.weightPerUnit} ${line.weightUom || 'kg'}` : '-'}
+                      </td>
+                      <td className="px-3 py-3 text-sm text-right">
+                        {line.totalWeight ? `${line.totalWeight} ${line.weightUom || 'kg'}` : '-'}
+                      </td>
                       <td className="px-3 py-3 text-sm text-right">
                         ₹{line.unitPrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                       </td>
                       <td className="px-3 py-3 text-sm text-right">
-                        {line.gstPercentage}% (₹{line.gstValue.toLocaleString('en-IN', { minimumFractionDigits: 2 })})
+                        ₹{line.totalPrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      </td>
+                      <td className="px-3 py-3 text-sm text-right">{line.gstPercentage}%</td>
+                      <td className="px-3 py-3 text-sm text-right">
+                        ₹{line.gstValue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                       </td>
                       <td className="px-3 py-3 text-sm text-right font-medium">
                         ₹{line.lineTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
