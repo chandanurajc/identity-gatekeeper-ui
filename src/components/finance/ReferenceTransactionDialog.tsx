@@ -7,19 +7,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Search } from "lucide-react";
 import type { ReferenceTransactionSearchParams, ReferenceTransactionResult } from "@/types/invoice";
+import { invoiceService } from "@/services/invoiceService";
 
 interface ReferenceTransactionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSelect: (transaction: ReferenceTransactionResult) => void;
   suppliers: Array<{ id: string; name: string }>;
+  organizationId?: string;
 }
 
 export function ReferenceTransactionDialog({ 
   open, 
   onOpenChange, 
   onSelect,
-  suppliers 
+  suppliers,
+  organizationId
 }: ReferenceTransactionDialogProps) {
   const [searchParams, setSearchParams] = useState<ReferenceTransactionSearchParams>({
     transactionType: 'Purchase Order',
@@ -34,29 +37,15 @@ export function ReferenceTransactionDialog({
   const handleSearch = async () => {
     setIsSearching(true);
     try {
-      // Mock search results for now - in real implementation this would call the API
-      const mockResults: ReferenceTransactionResult[] = [
-        {
-          id: "1",
-          transactionType: searchParams.transactionType,
-          transactionNumber: "PO-2024-001",
-          transactionDate: "2024-01-15",
-          supplierName: "ABC Suppliers",
-          totalValue: 15000
-        },
-        {
-          id: "2", 
-          transactionType: searchParams.transactionType,
-          transactionNumber: "PO-2024-002",
-          transactionDate: "2024-01-16",
-          supplierName: "XYZ Corp",
-          totalValue: 25000
-        }
-      ];
-      
-      setSearchResults(mockResults);
+      if (!organizationId) {
+        setSearchResults([]);
+        return;
+      }
+      const results = await invoiceService.searchReferenceTransactions(searchParams, organizationId);
+      setSearchResults(results);
     } catch (error) {
       console.error("Error searching transactions:", error);
+      setSearchResults([]);
     } finally {
       setIsSearching(false);
     }

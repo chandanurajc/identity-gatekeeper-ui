@@ -713,8 +713,8 @@ export default function InvoiceCreate() {
                   <Input
                     id="referenceTransaction"
                     value={formData.referenceTransactionNumber || ''}
-                    placeholder="Search transaction..."
-                    readOnly
+                    onChange={(e) => handleInputChange('referenceTransactionNumber', e.target.value)}
+                    placeholder="Search or enter transaction..."
                   />
                   <Button
                     type="button"
@@ -1320,6 +1320,7 @@ export default function InvoiceCreate() {
         onOpenChange={setShowReferenceDialog}
         onSelect={handleReferenceTransactionSelect}
         suppliers={suppliers}
+        organizationId={organizationId}
       />
     </div>
   );

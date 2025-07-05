@@ -626,8 +626,8 @@ export default function InvoiceEdit() {
                 <Input
                   id="referenceTransaction"
                   value={formData.referenceTransactionNumber || ''}
-                  placeholder="Search transaction..."
-                  readOnly
+                  onChange={(e) => handleInputChange('referenceTransactionNumber', e.target.value)}
+                  placeholder="Search or enter transaction..."
                 />
                 <Button
                   type="button"
@@ -1296,6 +1296,7 @@ export default function InvoiceEdit() {
           }));
         }}
         suppliers={suppliers}
+        organizationId={organizationId}
       />
     </div>
   );

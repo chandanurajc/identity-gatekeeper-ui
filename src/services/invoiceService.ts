@@ -368,9 +368,38 @@ class InvoiceService {
   }
 
   async searchReferenceTransactions(params: ReferenceTransactionSearchParams, organizationId: string): Promise<ReferenceTransactionResult[]> {
-    // This would typically search purchase orders or sales orders
-    // For now, returning empty array as these tables may not exist yet
-    console.log('Searching reference transactions:', params, organizationId);
+    // For now, only implement for Purchase Order
+    if (params.transactionType === 'Purchase Order') {
+      let query = supabase
+        .from('purchase_order')
+        .select('id, po_number, po_date, supplier:organizations(name), total_value')
+        .eq('organization_id', organizationId);
+
+      if (params.transactionNumber) {
+        query = query.ilike('po_number', `%${params.transactionNumber}%`);
+      }
+      if (params.transactionDate) {
+        query = query.eq('po_date', params.transactionDate);
+      }
+      if (params.supplierName) {
+        query = query.ilike('supplier.name', `%${params.supplierName}%`);
+      }
+
+      const { data, error } = await query;
+      if (error) {
+        console.error('Error searching purchase orders:', error);
+        return [];
+      }
+      return (data || []).map((row: any) => ({
+        id: row.id,
+        transactionType: 'Purchase Order',
+        transactionNumber: row.po_number,
+        transactionDate: row.po_date,
+        supplierName: row.supplier?.name || '',
+        totalValue: row.total_value || 0,
+      }));
+    }
+    // TODO: Implement for Sales Order if/when available
     return [];
   }
 
