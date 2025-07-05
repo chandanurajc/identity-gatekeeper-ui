@@ -372,7 +372,7 @@ class InvoiceService {
     if (params.transactionType === 'Purchase Order') {
       let query = supabase
         .from('purchase_order')
-        .select('id, po_number, po_date, supplier:organizations(name), total_value')
+        .select('id, po_number, po_date, supplier:organizations!purchase_order_supplier_id_fkey(name), total_value')
         .eq('organization_id', organizationId);
 
       if (params.transactionNumber) {
