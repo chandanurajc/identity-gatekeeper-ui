@@ -185,6 +185,7 @@ class InvoiceService {
     const gstBreakdown = this.calculateGstBreakdown(invoiceData.invoiceLines, invoiceData.remitToStateCode, invoiceData.shipToStateCode);
 
     const invoiceToUpdate = {
+      division_id: invoiceData.divisionId,
       invoice_date: invoiceData.invoiceDate,
       invoice_type: invoiceData.invoiceType,
       bill_to_org_id: invoiceData.billToOrgId,
