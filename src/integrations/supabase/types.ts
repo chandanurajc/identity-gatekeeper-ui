@@ -382,6 +382,7 @@ export type Database = {
           invoice_date: string
           invoice_number: string
           invoice_type: Database["public"]["Enums"]["invoice_type"]
+          notes: string | null
           organization_id: string
           payment_terms: Database["public"]["Enums"]["payment_terms"] | null
           reference_transaction_date: string | null
@@ -413,6 +414,7 @@ export type Database = {
           ship_to_state: string | null
           ship_to_state_code: number | null
           status: Database["public"]["Enums"]["invoice_status"]
+          supplier_invoice_number: string | null
           total_gst_value: number | null
           total_invoice_value: number | null
           total_item_value: number | null
@@ -441,6 +443,7 @@ export type Database = {
           invoice_date?: string
           invoice_number: string
           invoice_type: Database["public"]["Enums"]["invoice_type"]
+          notes?: string | null
           organization_id: string
           payment_terms?: Database["public"]["Enums"]["payment_terms"] | null
           reference_transaction_date?: string | null
@@ -472,6 +475,7 @@ export type Database = {
           ship_to_state?: string | null
           ship_to_state_code?: number | null
           status?: Database["public"]["Enums"]["invoice_status"]
+          supplier_invoice_number?: string | null
           total_gst_value?: number | null
           total_invoice_value?: number | null
           total_item_value?: number | null
@@ -500,6 +504,7 @@ export type Database = {
           invoice_date?: string
           invoice_number?: string
           invoice_type?: Database["public"]["Enums"]["invoice_type"]
+          notes?: string | null
           organization_id?: string
           payment_terms?: Database["public"]["Enums"]["payment_terms"] | null
           reference_transaction_date?: string | null
@@ -531,6 +536,7 @@ export type Database = {
           ship_to_state?: string | null
           ship_to_state_code?: number | null
           status?: Database["public"]["Enums"]["invoice_status"]
+          supplier_invoice_number?: string | null
           total_gst_value?: number | null
           total_invoice_value?: number | null
           total_item_value?: number | null
