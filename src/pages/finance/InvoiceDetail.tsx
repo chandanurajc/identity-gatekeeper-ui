@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Edit, FileText, Calendar, DollarSign, Building2, MapPin, Phone, Mail, Globe, Hash, Weight, Package, Send } from "lucide-react";
+import { ArrowLeft, Edit, FileText, Calendar, DollarSign, Building2, MapPin, Phone, Mail, Globe, Hash, Weight, Package, Send, Users } from "lucide-react";
 import PermissionButton from "@/components/PermissionButton";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { invoiceService } from "@/services/invoiceService";
+import { divisionService } from "@/services/divisionService";
 import { useMultiTenant } from "@/hooks/useMultiTenant";
 import { usePermissions } from "@/hooks/usePermissions";
 import type { Invoice, InvoiceStatus, InvoiceType } from "@/types/invoice";
@@ -45,6 +46,7 @@ export default function InvoiceDetail() {
 
   const [billToOrgName, setBillToOrgName] = useState<string>("");
   const [remitToOrgName, setRemitToOrgName] = useState<string>("");
+  const [divisionName, setDivisionName] = useState<string>("");
 
   useEffect(() => {
     if (invoice?.billToOrgId) {
@@ -57,7 +59,12 @@ export default function InvoiceDetail() {
         setRemitToOrgName(org?.name || "");
       });
     }
-  }, [invoice?.billToOrgId, invoice?.remitToOrgId]);
+    if (invoice?.divisionId) {
+      divisionService.getDivisionById(invoice.divisionId).then(division => {
+        setDivisionName(division?.name || "");
+      });
+    }
+  }, [invoice?.billToOrgId, invoice?.remitToOrgId, invoice?.divisionId]);
 
   if (isLoading) {
     return (
@@ -194,6 +201,21 @@ export default function InvoiceDetail() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Division Information */}
+      {divisionName && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Users className="h-5 w-5" />
+              <span>Division</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-1">
+            <InfoRow label="Division Name" value={divisionName} icon={Users} />
+          </CardContent>
+        </Card>
+      )}
 
       {/* Main Content */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
