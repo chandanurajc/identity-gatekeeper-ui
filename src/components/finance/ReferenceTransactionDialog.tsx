@@ -65,7 +65,7 @@ export function ReferenceTransactionDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-4xl">
+      <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Search Reference Transaction</DialogTitle>
           <DialogDescription>
@@ -75,7 +75,7 @@ export function ReferenceTransactionDialog({
         
         <div className="space-y-4">
           {/* Search Form */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-2">
               <Label htmlFor="transactionType">Transaction Type *</Label>
               <Select
@@ -144,10 +144,10 @@ export function ReferenceTransactionDialog({
           {/* Search Results */}
           {searchResults.length > 0 && (
             <div className="space-y-2">
-              <Label>Search Results</Label>
-              <div className="border rounded-md">
+              <Label>Search Results ({searchResults.length} found)</Label>
+              <div className="border rounded-md max-h-96 overflow-y-auto">
                 <Table>
-                  <TableHeader>
+                  <TableHeader className="sticky top-0 bg-background z-10">
                     <TableRow>
                       <TableHead>Transaction Type</TableHead>
                       <TableHead>Number</TableHead>
