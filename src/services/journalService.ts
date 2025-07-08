@@ -86,6 +86,63 @@ class JournalService {
     return this.getJournalById(journal.id, organizationId) as Promise<JournalHeader>;
   }
 
+  async updateJournal(
+    id: string,
+    journalData: JournalFormData,
+    organizationId: string,
+    updatedBy: string
+  ): Promise<JournalHeader> {
+    const journalToUpdate = {
+      journal_date: journalData.journalDate,
+      source_type: journalData.sourceType,
+      source_reference: journalData.sourceReference,
+      updated_by: updatedBy,
+      updated_on: new Date().toISOString(),
+    };
+
+    const { error } = await supabase
+      .from('journal_header')
+      .update(journalToUpdate)
+      .eq('id', id)
+      .eq('organization_id', organizationId);
+
+    if (error) {
+      throw new Error(`Failed to update journal: ${error.message}`);
+    }
+
+    // Delete existing lines and recreate them
+    const { error: deleteError } = await supabase
+      .from('journal_line')
+      .delete()
+      .eq('journal_id', id);
+
+    if (deleteError) {
+      throw new Error(`Failed to delete existing journal lines: ${deleteError.message}`);
+    }
+
+    // Create new journal lines
+    if (journalData.journalLines.length > 0) {
+      const linesToCreate = journalData.journalLines.map(line => ({
+        journal_id: id,
+        line_number: line.lineNumber,
+        account_code: line.accountCode,
+        debit_amount: line.debitAmount,
+        credit_amount: line.creditAmount,
+        narration: line.narration,
+      }));
+
+      const { error: linesError } = await supabase
+        .from('journal_line')
+        .insert(linesToCreate);
+
+      if (linesError) {
+        throw new Error(`Failed to create journal lines: ${linesError.message}`);
+      }
+    }
+
+    return this.getJournalById(id, organizationId) as Promise<JournalHeader>;
+  }
+
   async postJournal(id: string, organizationId: string, updatedBy: string): Promise<void> {
     const { error } = await supabase
       .from('journal_header')

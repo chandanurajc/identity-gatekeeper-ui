@@ -10,7 +10,9 @@ import InvoiceEdit from "@/pages/finance/InvoiceEdit";
 import ChartOfAccountsList from "@/pages/finance/ChartOfAccountsList";
 import ChartOfAccountsForm from "@/pages/finance/ChartOfAccountsForm";
 import AccountingRulesList from "@/pages/finance/AccountingRulesList";
+import AccountingRulesForm from "@/pages/finance/AccountingRulesForm";
 import JournalsList from "@/pages/finance/JournalsList";
+import JournalForm from "@/pages/finance/JournalForm";
 import SubledgerList from "@/pages/finance/SubledgerList";
 
 export function FinanceRoutes() {
@@ -41,6 +43,14 @@ export function FinanceRoutes() {
         }
       />
       <Route
+        path="/chart-of-accounts/:id/edit"
+        element={
+          <PermissionProtectedRoute requiredPermission="Edit COA">
+            <ChartOfAccountsForm mode="edit" />
+          </PermissionProtectedRoute>
+        }
+      />
+      <Route
         path="/accounting-rules"
         element={
           <PermissionProtectedRoute requiredPermission="View Rules">
@@ -49,10 +59,42 @@ export function FinanceRoutes() {
         }
       />
       <Route
+        path="/accounting-rules/create"
+        element={
+          <PermissionProtectedRoute requiredPermission="Create Rules">
+            <AccountingRulesForm mode="create" />
+          </PermissionProtectedRoute>
+        }
+      />
+      <Route
+        path="/accounting-rules/:id/edit"
+        element={
+          <PermissionProtectedRoute requiredPermission="Edit Rules">
+            <AccountingRulesForm mode="edit" />
+          </PermissionProtectedRoute>
+        }
+      />
+      <Route
         path="/journals"
         element={
           <PermissionProtectedRoute requiredPermission="View Journal">
             <JournalsList />
+          </PermissionProtectedRoute>
+        }
+      />
+      <Route
+        path="/journals/create"
+        element={
+          <PermissionProtectedRoute requiredPermission="Create Journal">
+            <JournalForm mode="create" />
+          </PermissionProtectedRoute>
+        }
+      />
+      <Route
+        path="/journals/:id/edit"
+        element={
+          <PermissionProtectedRoute requiredPermission="Edit Journal">
+            <JournalForm mode="edit" />
           </PermissionProtectedRoute>
         }
       />
