@@ -15,6 +15,10 @@ import { useItemPermissions } from "@/hooks/useItemPermissions";
 import { useItemGroupPermissions } from "@/hooks/useItemGroupPermissions";
 import { usePurchaseOrderPermissions } from "@/hooks/usePurchaseOrderPermissions";
 import { useInventoryPermissions } from "@/hooks/useInventoryPermissions";
+import { useChartOfAccountsPermissions } from "@/hooks/useChartOfAccountsPermissions";
+import { useAccountingRulesPermissions } from "@/hooks/useAccountingRulesPermissions";
+import { useJournalPermissions } from "@/hooks/useJournalPermissions";
+import { useSubledgerPermissions } from "@/hooks/useSubledgerPermissions";
 import { createModuleGroups } from "./sidebar/moduleGroups";
 import { SidebarNavContent } from "./sidebar/SidebarNavContent";
 import { SidebarFooterContent } from "./sidebar/SidebarFooterContent";
@@ -30,6 +34,10 @@ export function AppSidebar() {
   const { canViewItemGroup } = useItemGroupPermissions();
   const { canViewPurchaseOrders, canViewPOReceive } = usePurchaseOrderPermissions();
   const { canViewInventory } = useInventoryPermissions();
+  const { canViewCOA } = useChartOfAccountsPermissions();
+  const { canViewRules } = useAccountingRulesPermissions();
+  const { canViewJournal } = useJournalPermissions();
+  const { canViewSubledger } = useSubledgerPermissions();
   const { setOpen } = useSidebar();
   
   const permissions = {
@@ -47,6 +55,10 @@ export function AppSidebar() {
     canViewInventory,
     canViewGeneralLedger: hasPermission("View General Ledger"),
     canViewInvoices: hasPermission("View Invoices"),
+    canViewCOA,
+    canViewRules,
+    canViewJournal,
+    canViewSubledger,
   };
 
   const moduleGroups = createModuleGroups(permissions);
