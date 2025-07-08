@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import type { Invoice, InvoiceFormData, ReferenceTransactionSearchParams, ReferenceTransactionResult, InvoiceStatus } from "@/types/invoice";
+import type { Invoice, InvoiceFormData, ReferenceTransactionSearchParams, ReferenceTransactionResult, InvoiceStatus, TransactionType } from "@/types/invoice";
 
 class InvoiceService {
   async getInvoices(organizationId: string): Promise<Invoice[]> {
@@ -402,7 +402,7 @@ class InvoiceService {
           console.error('Error fetching PO line totals:', lineError);
           return {
             id: row.id,
-            transactionType: 'Purchase Order',
+            transactionType: 'Purchase Order' as TransactionType,
             transactionNumber: row.po_number,
             transactionDate: row.po_date,
             supplierName: row.supplier?.name || '',
@@ -414,7 +414,7 @@ class InvoiceService {
 
         return {
           id: row.id,
-          transactionType: 'Purchase Order' as const,
+          transactionType: 'Purchase Order' as TransactionType,
           transactionNumber: row.po_number,
           transactionDate: row.po_date,
           supplierName: row.supplier?.name || '',

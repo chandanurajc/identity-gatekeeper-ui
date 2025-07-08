@@ -113,17 +113,11 @@ export default function ChartOfAccountsList() {
                     <TableCell>{account.createdBy}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <PermissionButton
-                          permission="Edit COA"
-                          onClick={() => {}}
-                          size="sm"
-                          variant="outline"
-                          asChild
-                        >
-                          <Link to={`/finance/chart-of-accounts/${account.id}/edit`}>
+                        <Link to={`/finance/chart-of-accounts/${account.id}/edit`}>
+                          <Button size="sm" variant="outline">
                             <Pencil className="h-4 w-4" />
-                          </Link>
-                        </PermissionButton>
+                          </Button>
+                        </Link>
                         <Button
                           size="sm"
                           variant="outline"

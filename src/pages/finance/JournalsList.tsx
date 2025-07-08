@@ -16,7 +16,8 @@ import PermissionButton from "@/components/PermissionButton";
 export default function JournalsList() {
   const { toast } = useToast();
   const { user } = useAuth();
-  const { organizationId } = useMultiTenant();
+  const { getCurrentOrganizationId } = useMultiTenant();
+  const organizationId = getCurrentOrganizationId();
   const { canViewJournal, canPostJournal, canReverseJournal } = useJournalPermissions();
   const [processingId, setProcessingId] = useState<string | null>(null);
 

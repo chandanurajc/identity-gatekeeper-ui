@@ -16,7 +16,8 @@ import PermissionButton from "@/components/PermissionButton";
 export default function AccountingRulesList() {
   const { toast } = useToast();
   const { user } = useAuth();
-  const { organizationId } = useMultiTenant();
+  const { getCurrentOrganizationId } = useMultiTenant();
+  const organizationId = getCurrentOrganizationId();
   const { canViewRules, canCreateRules, canEditRules, canDeleteRules } = useAccountingRulesPermissions();
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -68,18 +69,12 @@ export default function AccountingRulesList() {
           <h1 className="text-3xl font-bold tracking-tight">Accounting Rules</h1>
           <p className="text-muted-foreground">Manage automated accounting rules</p>
         </div>
-        <PermissionButton 
-          permission="Create Rules"
-          onClick={() => {}}
-          asChild
-        >
-          <Link to="/finance/accounting-rules/create">
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Rule
-            </Button>
-          </Link>
-        </PermissionButton>
+        <Link to="/finance/accounting-rules/create">
+          <Button>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Rule
+          </Button>
+        </Link>
       </div>
 
       <Card>
@@ -120,17 +115,11 @@ export default function AccountingRulesList() {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <PermissionButton
-                          permission="Edit Rules"
-                          onClick={() => {}}
-                          size="sm"
-                          variant="outline"
-                          asChild
-                        >
-                          <Link to={`/finance/accounting-rules/${rule.id}/edit`}>
+                        <Link to={`/finance/accounting-rules/${rule.id}/edit`}>
+                          <Button size="sm" variant="outline">
                             <Pencil className="h-4 w-4" />
-                          </Link>
-                        </PermissionButton>
+                          </Button>
+                        </Link>
                         <PermissionButton
                           permission="Delete Rules"
                           onClick={() => handleDelete(rule.id)}

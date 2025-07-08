@@ -1,3 +1,4 @@
+import React from "react";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -33,7 +34,8 @@ export default function ChartOfAccountsForm({ mode }: ChartOfAccountsFormProps) 
   const { id } = useParams();
   const { toast } = useToast();
   const { user } = useAuth();
-  const { organizationId } = useMultiTenant();
+  const { getCurrentOrganizationId } = useMultiTenant();
+  const organizationId = getCurrentOrganizationId();
 
   const form = useForm<ChartOfAccountFormData>({
     resolver: zodResolver(formSchema),
@@ -46,21 +48,23 @@ export default function ChartOfAccountsForm({ mode }: ChartOfAccountsFormProps) 
   });
 
   // Load existing account for edit mode
-  const { isLoading } = useQuery({
+  const { data: existingAccount, isLoading } = useQuery({
     queryKey: ['chart-of-account', id],
     queryFn: () => id && organizationId ? chartOfAccountsService.getChartOfAccountById(id, organizationId) : null,
     enabled: mode === 'edit' && !!id && !!organizationId,
-    onSuccess: (data) => {
-      if (data) {
-        form.reset({
-          accountCode: data.accountCode,
-          accountName: data.accountName,
-          accountType: data.accountType,
-          status: data.status,
-        });
-      }
-    },
   });
+
+  // Reset form when data loads
+  React.useEffect(() => {
+    if (existingAccount) {
+      form.reset({
+        accountCode: existingAccount.accountCode,
+        accountName: existingAccount.accountName,
+        accountType: existingAccount.accountType,
+        status: existingAccount.status,
+      });
+    }
+  }, [existingAccount, form]);
 
   const createMutation = useMutation({
     mutationFn: (data: ChartOfAccountFormData) =>

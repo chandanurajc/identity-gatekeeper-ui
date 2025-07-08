@@ -7,7 +7,8 @@ import { useSubledgerPermissions } from "@/hooks/useSubledgerPermissions";
 import { subledgerService } from "@/services/subledgerService";
 
 export default function SubledgerList() {
-  const { organizationId } = useMultiTenant();
+  const { getCurrentOrganizationId } = useMultiTenant();
+  const organizationId = getCurrentOrganizationId();
   const { canViewSubledger } = useSubledgerPermissions();
 
   const { data: subledgers = [], isLoading } = useQuery({
