@@ -14,6 +14,136 @@ export type Database = {
   }
   public: {
     Tables: {
+      accounting_rules: {
+        Row: {
+          amount_source: string
+          created_by: string
+          created_on: string
+          credit_account_code: string
+          debit_account_code: string
+          enable_subledger: boolean
+          filter_criteria: Json | null
+          filter_logic_type:
+            | Database["public"]["Enums"]["filter_logic_type"]
+            | null
+          id: string
+          organization_id: string
+          party_code: string | null
+          party_name: string | null
+          party_type: Database["public"]["Enums"]["party_type"] | null
+          rule_name: string
+          source_reference: string
+          source_type: Database["public"]["Enums"]["rule_source_type"]
+          status: string
+          triggering_action: Database["public"]["Enums"]["rule_action"]
+          updated_by: string | null
+          updated_on: string | null
+        }
+        Insert: {
+          amount_source: string
+          created_by: string
+          created_on?: string
+          credit_account_code: string
+          debit_account_code: string
+          enable_subledger?: boolean
+          filter_criteria?: Json | null
+          filter_logic_type?:
+            | Database["public"]["Enums"]["filter_logic_type"]
+            | null
+          id?: string
+          organization_id: string
+          party_code?: string | null
+          party_name?: string | null
+          party_type?: Database["public"]["Enums"]["party_type"] | null
+          rule_name: string
+          source_reference: string
+          source_type: Database["public"]["Enums"]["rule_source_type"]
+          status?: string
+          triggering_action: Database["public"]["Enums"]["rule_action"]
+          updated_by?: string | null
+          updated_on?: string | null
+        }
+        Update: {
+          amount_source?: string
+          created_by?: string
+          created_on?: string
+          credit_account_code?: string
+          debit_account_code?: string
+          enable_subledger?: boolean
+          filter_criteria?: Json | null
+          filter_logic_type?:
+            | Database["public"]["Enums"]["filter_logic_type"]
+            | null
+          id?: string
+          organization_id?: string
+          party_code?: string | null
+          party_name?: string | null
+          party_type?: Database["public"]["Enums"]["party_type"] | null
+          rule_name?: string
+          source_reference?: string
+          source_type?: Database["public"]["Enums"]["rule_source_type"]
+          status?: string
+          triggering_action?: Database["public"]["Enums"]["rule_action"]
+          updated_by?: string | null
+          updated_on?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "accounting_rules_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chart_of_accounts: {
+        Row: {
+          account_code: string
+          account_name: string
+          account_type: Database["public"]["Enums"]["account_type"]
+          created_by: string
+          created_on: string
+          id: string
+          organization_id: string
+          status: string
+          updated_by: string | null
+          updated_on: string | null
+        }
+        Insert: {
+          account_code: string
+          account_name: string
+          account_type: Database["public"]["Enums"]["account_type"]
+          created_by: string
+          created_on?: string
+          id?: string
+          organization_id: string
+          status?: string
+          updated_by?: string | null
+          updated_on?: string | null
+        }
+        Update: {
+          account_code?: string
+          account_name?: string
+          account_type?: Database["public"]["Enums"]["account_type"]
+          created_by?: string
+          created_on?: string
+          id?: string
+          organization_id?: string
+          status?: string
+          updated_by?: string | null
+          updated_on?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chart_of_accounts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       division_contacts: {
         Row: {
           address1: string | null
@@ -993,6 +1123,97 @@ export type Database = {
           },
         ]
       }
+      journal_header: {
+        Row: {
+          created_by: string
+          created_on: string
+          id: string
+          journal_date: string
+          organization_id: string
+          source_reference: string | null
+          source_type: Database["public"]["Enums"]["rule_source_type"] | null
+          status: Database["public"]["Enums"]["journal_status"]
+          updated_by: string | null
+          updated_on: string | null
+        }
+        Insert: {
+          created_by: string
+          created_on?: string
+          id?: string
+          journal_date: string
+          organization_id: string
+          source_reference?: string | null
+          source_type?: Database["public"]["Enums"]["rule_source_type"] | null
+          status?: Database["public"]["Enums"]["journal_status"]
+          updated_by?: string | null
+          updated_on?: string | null
+        }
+        Update: {
+          created_by?: string
+          created_on?: string
+          id?: string
+          journal_date?: string
+          organization_id?: string
+          source_reference?: string | null
+          source_type?: Database["public"]["Enums"]["rule_source_type"] | null
+          status?: Database["public"]["Enums"]["journal_status"]
+          updated_by?: string | null
+          updated_on?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journal_header_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      journal_line: {
+        Row: {
+          account_code: string
+          created_on: string
+          credit_amount: number | null
+          debit_amount: number | null
+          id: string
+          journal_id: string
+          line_number: number
+          narration: string | null
+          sl_reference_id: string | null
+        }
+        Insert: {
+          account_code: string
+          created_on?: string
+          credit_amount?: number | null
+          debit_amount?: number | null
+          id?: string
+          journal_id: string
+          line_number: number
+          narration?: string | null
+          sl_reference_id?: string | null
+        }
+        Update: {
+          account_code?: string
+          created_on?: string
+          credit_amount?: number | null
+          debit_amount?: number | null
+          id?: string
+          journal_id?: string
+          line_number?: number
+          narration?: string | null
+          sl_reference_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journal_line_journal_id_fkey"
+            columns: ["journal_id"]
+            isOneToOne: false
+            referencedRelation: "journal_header"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_contacts: {
         Row: {
           address1: string | null
@@ -1708,6 +1929,69 @@ export type Database = {
           },
         ]
       }
+      subledger: {
+        Row: {
+          amount: number
+          created_by: string
+          created_on: string
+          id: string
+          journal_id: string | null
+          organization_id: string
+          party_code: string
+          party_name: string
+          source_reference: string | null
+          status: Database["public"]["Enums"]["subledger_status"]
+          transaction_date: string
+          updated_by: string | null
+          updated_on: string | null
+        }
+        Insert: {
+          amount: number
+          created_by: string
+          created_on?: string
+          id?: string
+          journal_id?: string | null
+          organization_id: string
+          party_code: string
+          party_name: string
+          source_reference?: string | null
+          status?: Database["public"]["Enums"]["subledger_status"]
+          transaction_date: string
+          updated_by?: string | null
+          updated_on?: string | null
+        }
+        Update: {
+          amount?: number
+          created_by?: string
+          created_on?: string
+          id?: string
+          journal_id?: string | null
+          organization_id?: string
+          party_code?: string
+          party_name?: string
+          source_reference?: string | null
+          status?: Database["public"]["Enums"]["subledger_status"]
+          transaction_date?: string
+          updated_by?: string | null
+          updated_on?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subledger_journal_id_fkey"
+            columns: ["journal_id"]
+            isOneToOne: false
+            referencedRelation: "journal_line"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subledger_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           assigned_by: string | null
@@ -1789,8 +2073,10 @@ export type Database = {
       }
     }
     Enums: {
+      account_type: "Asset" | "Liability" | "Equity" | "Revenue" | "Expense"
       app_role: "admin" | "user" | "guest"
       attachment_file_type: "display_picture" | "other_document"
+      filter_logic_type: "AND" | "OR"
       gl_transaction_type:
         | "Payable Invoice"
         | "Payment"
@@ -1798,12 +2084,17 @@ export type Database = {
         | "Debit Note"
       invoice_status: "Draft" | "Awaiting Approval" | "Approved" | "Rejected"
       invoice_type: "Payable" | "Receivable"
+      journal_status: "Draft" | "Posted" | "Reversed"
+      party_type: "Bill To" | "Remit To"
       payment_terms:
         | "Net 30"
         | "Net 60"
         | "Net 90"
         | "Due on Receipt"
         | "Net 15"
+      rule_action: "Invoice Approved" | "PO Created" | "Payment Processed"
+      rule_source_type: "Invoice" | "PO" | "Payment"
+      subledger_status: "Open" | "Settled"
       transaction_type: "Purchase Order" | "Sales Order"
     }
     CompositeTypes: {
@@ -1932,8 +2223,10 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      account_type: ["Asset", "Liability", "Equity", "Revenue", "Expense"],
       app_role: ["admin", "user", "guest"],
       attachment_file_type: ["display_picture", "other_document"],
+      filter_logic_type: ["AND", "OR"],
       gl_transaction_type: [
         "Payable Invoice",
         "Payment",
@@ -1942,7 +2235,12 @@ export const Constants = {
       ],
       invoice_status: ["Draft", "Awaiting Approval", "Approved", "Rejected"],
       invoice_type: ["Payable", "Receivable"],
+      journal_status: ["Draft", "Posted", "Reversed"],
+      party_type: ["Bill To", "Remit To"],
       payment_terms: ["Net 30", "Net 60", "Net 90", "Due on Receipt", "Net 15"],
+      rule_action: ["Invoice Approved", "PO Created", "Payment Processed"],
+      rule_source_type: ["Invoice", "PO", "Payment"],
+      subledger_status: ["Open", "Settled"],
       transaction_type: ["Purchase Order", "Sales Order"],
     },
   },
