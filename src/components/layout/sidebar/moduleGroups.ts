@@ -152,6 +152,42 @@ export const createModuleGroups = (permissions: PermissionsMap): ModuleGroup[] =
     });
   }
 
+  if (permissions.canViewCOA) {
+    financeItems.push({
+      label: "Chart of Accounts",
+      path: "/finance/chart-of-accounts",
+      icon: BookCopy,
+      permission: true,
+    });
+  }
+
+  if (permissions.canViewRules) {
+    financeItems.push({
+      label: "Accounting Rules",
+      path: "/finance/accounting-rules",
+      icon: ListChecks,
+      permission: true,
+    });
+  }
+
+  if (permissions.canViewJournal) {
+    financeItems.push({
+      label: "Journals",
+      path: "/finance/journals",
+      icon: FileText,
+      permission: true,
+    });
+  }
+
+  if (permissions.canViewSubledger) {
+    financeItems.push({
+      label: "Subledger",
+      path: "/finance/subledger",
+      icon: BookCopy,
+      permission: true,
+    });
+  }
+
   if (financeItems.length > 0) {
     moduleGroups.push({
       name: "Finance",

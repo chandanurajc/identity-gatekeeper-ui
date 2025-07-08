@@ -414,7 +414,7 @@ class InvoiceService {
 
         return {
           id: row.id,
-          transactionType: 'Purchase Order',
+          transactionType: 'Purchase Order' as const,
           transactionNumber: row.po_number,
           transactionDate: row.po_date,
           supplierName: row.supplier?.name || '',
