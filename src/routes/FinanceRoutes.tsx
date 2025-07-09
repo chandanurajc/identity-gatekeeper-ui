@@ -13,6 +13,7 @@ import AccountingRulesList from "@/pages/finance/AccountingRulesList";
 import AccountingRulesForm from "@/pages/finance/AccountingRulesForm";
 import JournalsList from "@/pages/finance/JournalsList";
 import JournalForm from "@/pages/finance/JournalForm";
+import JournalDetail from "@/pages/finance/JournalDetail";
 import SubledgerList from "@/pages/finance/SubledgerList";
 
 export function FinanceRoutes() {
