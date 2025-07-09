@@ -50,6 +50,7 @@ export const getPurchaseOrderById = async (poId: string, organizationId: string)
     createdOn: new Date(data.created_on),
     updatedBy: data.updated_by,
     updatedOn: data.updated_on ? new Date(data.updated_on) : undefined,
+    poType: data.po_type, // <-- add this line
     lines: data.lines?.map(line => ({
       ...line,
       lineNumber: line.line_number,

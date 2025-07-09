@@ -85,7 +85,6 @@ export interface PurchaseOrderFormData {
   supplierId: string;
   poDate: string;
   requestedDeliveryDate?: string;
-  poType?: POType;
   sameAsDivisionAddress: boolean;
   shipToAddress1: string;
   shipToAddress2?: string;
@@ -100,6 +99,7 @@ export interface PurchaseOrderFormData {
   notes?: string;
   trackingNumber?: string;
   lines: PurchaseOrderLine[];
+  poType?: string; // <-- add this line
 }
 
 export interface ShippingAddress {

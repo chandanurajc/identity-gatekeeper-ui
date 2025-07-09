@@ -39,7 +39,8 @@ export async function updatePurchaseOrder(id: string, formData: PurchaseOrderFor
       tracking_number: formData.trackingNumber,
       supplier_state_code: supplierStateCode,
       updated_by: updatedByUsername,
-      updated_on: new Date().toISOString()
+      updated_on: new Date().toISOString(),
+      po_type: formData.poType
     })
     .eq('id', id)
     .eq('organization_id', organizationId);

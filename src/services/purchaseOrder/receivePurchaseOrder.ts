@@ -1,6 +1,8 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { PurchaseOrder } from '@/types/purchaseOrder';
+import { accountingRulesService } from '../accountingRulesService';
+import { journalService } from '../journalService';
 
 export const receivePurchaseOrder = async (
   poId: string,
@@ -153,6 +155,63 @@ export const receivePurchaseOrder = async (
     console.error(`[PO Receive] Error updating PO status:`, statusUpdateError);
     throw new Error(`Failed to update purchase order status: ${statusUpdateError?.message}`);
   }
+
+  // --- Auto Journal Posting Logic ---
+  if (newStatus === 'Received') {
+    try {
+      // 1. Fetch matching accounting rules
+      const rules = await accountingRulesService.getAccountingRules(finalPO.organization_id);
+      const matchingRules = rules.filter(rule =>
+        rule.transactionType === 'PO' &&
+        rule.triggeringAction === 'Purchase order receive' &&
+        rule.transactionTypeText === finalPO.po_type
+      );
+
+      for (const rule of matchingRules) {
+        // 2. Calculate amount
+        let amount = 0;
+        if (rule.amountSource === 'sum of gst') {
+          amount = (finalPO.lines || []).reduce((sum, line) => sum + (line.gst_value || 0), 0);
+        } else if (rule.amountSource === 'sum of line') {
+          amount = (finalPO.lines || []).reduce((sum, line) => sum + (line.line_total || 0), 0);
+        }
+
+        // 3. Prepare journal lines
+        const journalLines = [
+          {
+            lineNumber: 1,
+            accountCode: rule.debitAccountCode,
+            debitAmount: amount,
+            creditAmount: null,
+            narration: `PO Receive - Debit`,
+          },
+          {
+            lineNumber: 2,
+            accountCode: rule.creditAccountCode,
+            debitAmount: null,
+            creditAmount: amount,
+            narration: `PO Receive - Credit`,
+          }
+        ];
+
+        // 4. Create and post journal entry
+        const createdJournal = await journalService.createJournal({
+          journalDate: new Date().toISOString().split('T')[0],
+          transactionType: 'PO',
+          transactionReference: finalPO.po_number,
+          journalLines,
+        }, finalPO.organization_id, receivedByName);
+
+        if (createdJournal && createdJournal.id) {
+          await journalService.postJournal(createdJournal.id, finalPO.organization_id, receivedByName);
+        }
+      }
+    } catch (err) {
+      console.error('[PO Receive] Error in auto journal posting:', err);
+      // Optionally: throw or continue
+    }
+  }
+  // --- End Auto Journal Posting Logic ---
 
   console.log(`[PO Receive] Successfully processed PO ${poId} with status: ${newStatus}`);
 

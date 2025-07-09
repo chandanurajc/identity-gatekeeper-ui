@@ -245,6 +245,10 @@ const PurchaseOrderDetail = () => {
               </p>
             </div>
             <div>
+              <p className="text-sm font-medium">PO Type</p>
+              <p className="text-sm text-muted-foreground">{purchaseOrder.poType || 'Not specified'}</p>
+            </div>
+            <div>
               <p className="text-sm font-medium">Requested Delivery Date</p>
               <p className="text-sm text-muted-foreground">
                 {purchaseOrder.requestedDeliveryDate 
@@ -264,6 +268,7 @@ const PurchaseOrderDetail = () => {
         </CardContent>
       </Card>
 
+      {/* Remove duplicate fields from below, keep only unique details */}
       {/* Shipping Address */}
       <Card className="mb-6">
         <CardHeader>

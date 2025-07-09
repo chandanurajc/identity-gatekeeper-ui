@@ -37,7 +37,8 @@ export async function createPurchaseOrder(formData: PurchaseOrderFormData, organ
     tracking_number: formData.trackingNumber,
     supplier_state_code: supplierStateCode,
     organization_id: organizationId,
-    created_by: createdByUsername
+    created_by: createdByUsername,
+    po_type: formData.poType
   };
 
   const { data: poData, error: poError } = await supabase

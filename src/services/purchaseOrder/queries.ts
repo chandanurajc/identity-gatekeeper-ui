@@ -67,7 +67,8 @@ export async function getAllPurchaseOrders(organizationId: string): Promise<Purc
     updatedBy: (po.updated_by && (usernameMap.get(po.updated_by) || po.updated_by)) || undefined,
     updatedOn: po.updated_on ? new Date(po.updated_on) : undefined,
     division: po.division,
-    supplier: po.supplier
+    supplier: po.supplier,
+    poType: po.po_type
   }));
 }
 
@@ -150,6 +151,7 @@ export async function getPurchaseOrderById(id: string): Promise<PurchaseOrder | 
     updatedOn: data.updated_on ? new Date(data.updated_on) : undefined,
     division: data.division,
     supplier: data.supplier,
+    poType: data.po_type,
     lines: data.purchase_order_line?.map((line: any) => ({
       id: line.id,
       purchaseOrderId: line.purchase_order_id,
