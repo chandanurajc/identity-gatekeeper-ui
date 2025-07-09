@@ -12,6 +12,10 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ChevronsUpDown, Check } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useMultiTenant } from "@/hooks/useMultiTenant";
 import { useAuth } from "@/context/AuthContext";
@@ -23,6 +27,30 @@ const triggeringActions: RuleAction[] = ['Invoice Approved', 'PO Created', 'Paym
 const partyTypes: PartyType[] = ['Bill To', 'Remit To'];
 const filterLogicTypes: FilterLogicType[] = ['AND', 'OR'];
 const amountSourceOptions = ['Item total price', 'Total GST value'];
+
+// Transaction reference columns by transaction type
+const transactionReferenceColumns = {
+  'Invoice': [
+    { value: 'invoice.invoice_number', label: 'Invoice Number' },
+    { value: 'invoice.supplier_id', label: 'Supplier ID' },
+    { value: 'invoice.division_id', label: 'Division ID' },
+    { value: 'invoice.total_invoice_value', label: 'Total Invoice Value' },
+    { value: 'invoice.invoice_date', label: 'Invoice Date' },
+  ],
+  'PO': [
+    { value: 'purchase_order.po_number', label: 'PO Number' },
+    { value: 'purchase_order.supplier_id', label: 'Supplier ID' },
+    { value: 'purchase_order.division_id', label: 'Division ID' },
+    { value: 'purchase_order.po_date', label: 'PO Date' },
+    { value: 'purchase_order.status', label: 'PO Status' },
+  ],
+  'Payment': [
+    { value: 'payment.payment_reference', label: 'Payment Reference' },
+    { value: 'payment.amount', label: 'Payment Amount' },
+    { value: 'payment.payment_date', label: 'Payment Date' },
+    { value: 'payment.payment_method', label: 'Payment Method' },
+  ],
+};
 
 const formSchema = z.object({
   ruleName: z.string().min(1, "Rule name is required"),
@@ -52,6 +80,8 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
   const { user } = useAuth();
   const { getCurrentOrganizationId } = useMultiTenant();
   const organizationId = getCurrentOrganizationId();
+  
+  const [openTransactionRef, setOpenTransactionRef] = useState(false);
 
   const form = useForm<AccountingRuleFormData>({
     resolver: zodResolver(formSchema),
@@ -68,6 +98,9 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
       status: "Active",
     },
   });
+
+  const watchedTransactionType = form.watch('transactionType');
+  const availableColumns = watchedTransactionType ? transactionReferenceColumns[watchedTransactionType] || [] : [];
 
   // Load existing rule for edit mode
   const { data: existingRule, isLoading } = useQuery({
@@ -243,9 +276,54 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Transaction Reference *</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter transaction reference" {...field} />
-                      </FormControl>
+                      <Popover open={openTransactionRef} onOpenChange={setOpenTransactionRef}>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              aria-expanded={openTransactionRef}
+                              className={cn(
+                                "w-full justify-between",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value
+                                ? availableColumns.find((column) => column.value === field.value)?.label
+                                : "Select transaction reference column"}
+                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-full p-0" align="start">
+                          <Command>
+                            <CommandInput placeholder="Search columns..." />
+                            <CommandList>
+                              <CommandEmpty>No columns found.</CommandEmpty>
+                              <CommandGroup>
+                                {availableColumns.map((column) => (
+                                  <CommandItem
+                                    key={column.value}
+                                    value={column.value}
+                                    onSelect={(currentValue) => {
+                                      field.onChange(currentValue === field.value ? "" : currentValue);
+                                      setOpenTransactionRef(false);
+                                    }}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        field.value === column.value ? "opacity-100" : "opacity-0"
+                                      )}
+                                    />
+                                    {column.label}
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
                       <FormMessage />
                     </FormItem>
                   )}

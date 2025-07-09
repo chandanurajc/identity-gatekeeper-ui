@@ -379,6 +379,29 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
                   </FormItem>
                 )}
               />
+              <FormField
+                control={control}
+                name="poType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>PO Type</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select PO Type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Consumables">Consumables</SelectItem>
+                        <SelectItem value="Assets">Assets</SelectItem>
+                        <SelectItem value="Finished goods">Finished goods</SelectItem>
+                        <SelectItem value="Raw materials">Raw materials</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
           </section>
           {/* Ship to Address section */}
