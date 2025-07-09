@@ -69,8 +69,8 @@ class JournalService {
         journal_id: journal.id,
         line_number: line.lineNumber,
         account_code: line.accountCode,
-        debit_amount: line.debitAmount === 0 ? null : line.debitAmount,
-        credit_amount: line.creditAmount === 0 ? null : line.creditAmount,
+        debit_amount: !line.debitAmount ? null : line.debitAmount,
+        credit_amount: !line.creditAmount ? null : line.creditAmount,
         narration: line.narration,
       }));
 
@@ -126,8 +126,8 @@ class JournalService {
         journal_id: id,
         line_number: line.lineNumber,
         account_code: line.accountCode,
-        debit_amount: line.debitAmount === 0 ? null : line.debitAmount,
-        credit_amount: line.creditAmount === 0 ? null : line.creditAmount,
+        debit_amount: !line.debitAmount ? null : line.debitAmount,
+        credit_amount: !line.creditAmount ? null : line.creditAmount,
         narration: line.narration,
       }));
 
