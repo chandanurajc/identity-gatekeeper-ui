@@ -113,6 +113,7 @@ const PurchaseOrderEdit = () => {
       paymentTerms: po.paymentTerms,
       notes: po.notes,
       trackingNumber: po.trackingNumber,
+      poType: po.poType,
       lines: po.lines || []
     };
   };
