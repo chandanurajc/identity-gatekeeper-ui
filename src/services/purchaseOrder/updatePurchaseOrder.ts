@@ -40,7 +40,7 @@ export async function updatePurchaseOrder(id: string, formData: PurchaseOrderFor
       supplier_state_code: supplierStateCode,
       updated_by: updatedByUsername,
       updated_on: new Date().toISOString(),
-      po_type: formData.poType
+      po_type: formData.poType as "Consumables" | "Assets" | "Finished goods" | "Raw materials" | null
     })
     .eq('id', id)
     .eq('organization_id', organizationId);

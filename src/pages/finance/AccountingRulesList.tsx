@@ -103,7 +103,7 @@ export default function AccountingRulesList() {
                   <TableRow key={rule.id}>
                     <TableCell className="font-medium">{rule.ruleName}</TableCell>
                     <TableCell>
-                      <Badge variant="outline">{rule.sourceType}</Badge>
+                      <Badge variant="outline">{rule.transactionType}</Badge>
                     </TableCell>
                     <TableCell>{rule.triggeringAction}</TableCell>
                     <TableCell>{rule.debitAccountCode}</TableCell>

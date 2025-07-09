@@ -212,7 +212,7 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Transaction Type *</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select transaction type" />
@@ -251,7 +251,7 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Triggering Action *</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select triggering action" />
@@ -388,7 +388,7 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Status</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue />

@@ -38,7 +38,7 @@ export async function createPurchaseOrder(formData: PurchaseOrderFormData, organ
     supplier_state_code: supplierStateCode,
     organization_id: organizationId,
     created_by: createdByUsername,
-    po_type: formData.poType
+    po_type: formData.poType as "Consumables" | "Assets" | "Finished goods" | "Raw materials" | null
   };
 
   const { data: poData, error: poError } = await supabase
