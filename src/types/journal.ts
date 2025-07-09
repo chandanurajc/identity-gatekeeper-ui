@@ -1,12 +1,12 @@
 export type JournalStatus = 'Draft' | 'Posted' | 'Reversed';
-export type RuleSourceType = 'Invoice' | 'PO' | 'Payment';
+export type RuleTransactionType = 'Invoice' | 'PO' | 'Payment';
 
 export interface JournalHeader {
   id: string;
   organizationId: string;
   journalDate: string;
-  sourceType?: RuleSourceType;
-  sourceReference?: string;
+  transactionType?: RuleTransactionType;
+  transactionReference?: string;
   status: JournalStatus;
   createdOn: Date;
   updatedOn?: Date;
@@ -29,8 +29,8 @@ export interface JournalLine {
 
 export interface JournalFormData {
   journalDate: string;
-  sourceType?: RuleSourceType;
-  sourceReference?: string;
+  transactionType?: RuleTransactionType;
+  transactionReference?: string;
   journalLines: JournalLineFormData[];
 }
 

@@ -112,8 +112,8 @@ export default function JournalsList() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Journal Date</TableHead>
-                  <TableHead>Source Type</TableHead>
-                  <TableHead>Source Reference</TableHead>
+                  <TableHead>Transaction Type</TableHead>
+                  <TableHead>Transaction Reference</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Lines</TableHead>
                   <TableHead>Created By</TableHead>
@@ -127,11 +127,11 @@ export default function JournalsList() {
                       {new Date(journal.journalDate).toLocaleDateString()}
                     </TableCell>
                     <TableCell>
-                      {journal.sourceType && (
-                        <Badge variant="outline">{journal.sourceType}</Badge>
+                      {journal.transactionType && (
+                        <Badge variant="outline">{journal.transactionType}</Badge>
                       )}
                     </TableCell>
-                    <TableCell>{journal.sourceReference || '-'}</TableCell>
+                    <TableCell>{journal.transactionReference || '-'}</TableCell>
                     <TableCell>
                       <Badge 
                         variant={

@@ -32,9 +32,10 @@ export type Database = {
           party_name: string | null
           party_type: Database["public"]["Enums"]["party_type"] | null
           rule_name: string
-          source_reference: string
-          source_type: Database["public"]["Enums"]["rule_source_type"]
           status: string
+          transaction_reference: string
+          transaction_type: Database["public"]["Enums"]["rule_source_type"]
+          transaction_type_text: string | null
           triggering_action: Database["public"]["Enums"]["rule_action"]
           updated_by: string | null
           updated_on: string | null
@@ -56,9 +57,10 @@ export type Database = {
           party_name?: string | null
           party_type?: Database["public"]["Enums"]["party_type"] | null
           rule_name: string
-          source_reference: string
-          source_type: Database["public"]["Enums"]["rule_source_type"]
           status?: string
+          transaction_reference: string
+          transaction_type: Database["public"]["Enums"]["rule_source_type"]
+          transaction_type_text?: string | null
           triggering_action: Database["public"]["Enums"]["rule_action"]
           updated_by?: string | null
           updated_on?: string | null
@@ -80,9 +82,10 @@ export type Database = {
           party_name?: string | null
           party_type?: Database["public"]["Enums"]["party_type"] | null
           rule_name?: string
-          source_reference?: string
-          source_type?: Database["public"]["Enums"]["rule_source_type"]
           status?: string
+          transaction_reference?: string
+          transaction_type?: Database["public"]["Enums"]["rule_source_type"]
+          transaction_type_text?: string | null
           triggering_action?: Database["public"]["Enums"]["rule_action"]
           updated_by?: string | null
           updated_on?: string | null
@@ -1130,9 +1133,11 @@ export type Database = {
           id: string
           journal_date: string
           organization_id: string
-          source_reference: string | null
-          source_type: Database["public"]["Enums"]["rule_source_type"] | null
           status: Database["public"]["Enums"]["journal_status"]
+          transaction_reference: string | null
+          transaction_type:
+            | Database["public"]["Enums"]["rule_source_type"]
+            | null
           updated_by: string | null
           updated_on: string | null
         }
@@ -1142,9 +1147,11 @@ export type Database = {
           id?: string
           journal_date: string
           organization_id: string
-          source_reference?: string | null
-          source_type?: Database["public"]["Enums"]["rule_source_type"] | null
           status?: Database["public"]["Enums"]["journal_status"]
+          transaction_reference?: string | null
+          transaction_type?:
+            | Database["public"]["Enums"]["rule_source_type"]
+            | null
           updated_by?: string | null
           updated_on?: string | null
         }
@@ -1154,9 +1161,11 @@ export type Database = {
           id?: string
           journal_date?: string
           organization_id?: string
-          source_reference?: string | null
-          source_type?: Database["public"]["Enums"]["rule_source_type"] | null
           status?: Database["public"]["Enums"]["journal_status"]
+          transaction_reference?: string | null
+          transaction_type?:
+            | Database["public"]["Enums"]["rule_source_type"]
+            | null
           updated_by?: string | null
           updated_on?: string | null
         }
@@ -1614,6 +1623,7 @@ export type Database = {
           payment_terms: string | null
           po_date: string
           po_number: string
+          po_type: Database["public"]["Enums"]["po_type"] | null
           requested_delivery_date: string | null
           ship_to_address_1: string | null
           ship_to_address_2: string | null
@@ -1641,6 +1651,7 @@ export type Database = {
           payment_terms?: string | null
           po_date?: string
           po_number: string
+          po_type?: Database["public"]["Enums"]["po_type"] | null
           requested_delivery_date?: string | null
           ship_to_address_1?: string | null
           ship_to_address_2?: string | null
@@ -1668,6 +1679,7 @@ export type Database = {
           payment_terms?: string | null
           po_date?: string
           po_number?: string
+          po_type?: Database["public"]["Enums"]["po_type"] | null
           requested_delivery_date?: string | null
           ship_to_address_1?: string | null
           ship_to_address_2?: string | null
@@ -2092,7 +2104,12 @@ export type Database = {
         | "Net 90"
         | "Due on Receipt"
         | "Net 15"
-      rule_action: "Invoice Approved" | "PO Created" | "Payment Processed"
+      po_type: "Consumables" | "Assets" | "Finished goods" | "Raw materials"
+      rule_action:
+        | "Invoice Approved"
+        | "PO Created"
+        | "Payment Processed"
+        | "Purchase order receive"
       rule_source_type: "Invoice" | "PO" | "Payment"
       subledger_status: "Open" | "Settled"
       transaction_type: "Purchase Order" | "Sales Order"
@@ -2238,7 +2255,13 @@ export const Constants = {
       journal_status: ["Draft", "Posted", "Reversed"],
       party_type: ["Bill To", "Remit To"],
       payment_terms: ["Net 30", "Net 60", "Net 90", "Due on Receipt", "Net 15"],
-      rule_action: ["Invoice Approved", "PO Created", "Payment Processed"],
+      po_type: ["Consumables", "Assets", "Finished goods", "Raw materials"],
+      rule_action: [
+        "Invoice Approved",
+        "PO Created",
+        "Payment Processed",
+        "Purchase order receive",
+      ],
       rule_source_type: ["Invoice", "PO", "Payment"],
       subledger_status: ["Open", "Settled"],
       transaction_type: ["Purchase Order", "Sales Order"],

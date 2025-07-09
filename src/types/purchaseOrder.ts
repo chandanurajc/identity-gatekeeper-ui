@@ -1,6 +1,8 @@
 
 import { Organization } from './organization';
 
+export type POType = 'Consumables' | 'Assets' | 'Finished goods' | 'Raw materials';
+
 export interface PurchaseOrder {
   id: string;
   poNumber: string;
@@ -8,6 +10,7 @@ export interface PurchaseOrder {
   supplierId: string;
   poDate: string;
   requestedDeliveryDate?: string;
+  poType?: POType;
   shipToAddress1?: string;
   shipToAddress2?: string;
   shipToPostalCode?: string;
@@ -82,6 +85,7 @@ export interface PurchaseOrderFormData {
   supplierId: string;
   poDate: string;
   requestedDeliveryDate?: string;
+  poType?: POType;
   sameAsDivisionAddress: boolean;
   shipToAddress1: string;
   shipToAddress2?: string;

@@ -16,18 +16,20 @@ import { useToast } from "@/hooks/use-toast";
 import { useMultiTenant } from "@/hooks/useMultiTenant";
 import { useAuth } from "@/context/AuthContext";
 import { accountingRulesService } from "@/services/accountingRulesService";
-import type { AccountingRuleFormData, RuleSourceType, RuleAction, PartyType, FilterLogicType } from "@/types/accountingRules";
+import type { AccountingRuleFormData, RuleTransactionType, RuleAction, PartyType, FilterLogicType } from "@/types/accountingRules";
 
-const sourceTypes: RuleSourceType[] = ['Invoice', 'PO', 'Payment'];
-const triggeringActions: RuleAction[] = ['Invoice Approved', 'PO Created', 'Payment Processed'];
+const transactionTypes: RuleTransactionType[] = ['Invoice', 'PO', 'Payment'];
+const triggeringActions: RuleAction[] = ['Invoice Approved', 'PO Created', 'Payment Processed', 'Purchase order receive'];
 const partyTypes: PartyType[] = ['Bill To', 'Remit To'];
 const filterLogicTypes: FilterLogicType[] = ['AND', 'OR'];
+const amountSourceOptions = ['Item total price', 'Total GST value'];
 
 const formSchema = z.object({
   ruleName: z.string().min(1, "Rule name is required"),
-  sourceType: z.enum(['Invoice', 'PO', 'Payment']),
-  triggeringAction: z.enum(['Invoice Approved', 'PO Created', 'Payment Processed']),
-  sourceReference: z.string().min(1, "Source reference is required"),
+  transactionType: z.enum(['Invoice', 'PO', 'Payment']),
+  triggeringAction: z.enum(['Invoice Approved', 'PO Created', 'Payment Processed', 'Purchase order receive']),
+  transactionReference: z.string().min(1, "Transaction reference is required"),
+  transactionTypeText: z.string().optional(),
   debitAccountCode: z.string().min(1, "Debit account code is required"),
   creditAccountCode: z.string().min(1, "Credit account code is required"),
   amountSource: z.string().min(1, "Amount source is required"),
@@ -55,9 +57,10 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
     resolver: zodResolver(formSchema),
     defaultValues: {
       ruleName: "",
-      sourceType: "Invoice",
+      transactionType: "Invoice",
       triggeringAction: "Invoice Approved",
-      sourceReference: "",
+      transactionReference: "",
+      transactionTypeText: "",
       debitAccountCode: "",
       creditAccountCode: "",
       amountSource: "",
@@ -78,9 +81,10 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
     if (existingRule) {
       form.reset({
         ruleName: existingRule.ruleName,
-        sourceType: existingRule.sourceType,
+        transactionType: existingRule.transactionType,
         triggeringAction: existingRule.triggeringAction,
-        sourceReference: existingRule.sourceReference,
+        transactionReference: existingRule.transactionReference,
+        transactionTypeText: existingRule.transactionTypeText || "",
         debitAccountCode: existingRule.debitAccountCode,
         creditAccountCode: existingRule.creditAccountCode,
         amountSource: existingRule.amountSource,
@@ -171,24 +175,38 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
 
                 <FormField
                   control={form.control}
-                  name="sourceType"
+                  name="transactionType"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Source Type *</FormLabel>
+                      <FormLabel>Transaction Type *</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select source type" />
+                            <SelectValue placeholder="Select transaction type" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {sourceTypes.map((type) => (
+                          {transactionTypes.map((type) => (
                             <SelectItem key={type} value={type}>
                               {type}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="transactionTypeText"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Transaction Type Text</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter transaction type text" {...field} />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -221,12 +239,12 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
 
                 <FormField
                   control={form.control}
-                  name="sourceReference"
+                  name="transactionReference"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Source Reference *</FormLabel>
+                      <FormLabel>Transaction Reference *</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter source reference" {...field} />
+                        <Input placeholder="Enter transaction reference" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -267,9 +285,20 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Amount Source *</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter amount source field" {...field} />
-                      </FormControl>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select amount source" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {amountSourceOptions.map((option) => (
+                            <SelectItem key={option} value={option}>
+                              {option}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}

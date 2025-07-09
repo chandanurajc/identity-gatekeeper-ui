@@ -1,5 +1,5 @@
-export type RuleSourceType = 'Invoice' | 'PO' | 'Payment';
-export type RuleAction = 'Invoice Approved' | 'PO Created' | 'Payment Processed';
+export type RuleTransactionType = 'Invoice' | 'PO' | 'Payment';
+export type RuleAction = 'Invoice Approved' | 'PO Created' | 'Payment Processed' | 'Purchase order receive';
 export type PartyType = 'Bill To' | 'Remit To';
 export type FilterLogicType = 'AND' | 'OR';
 
@@ -13,8 +13,9 @@ export interface AccountingRule {
   id: string;
   organizationId: string;
   ruleName: string;
-  sourceType: RuleSourceType;
-  sourceReference: string;
+  transactionType: RuleTransactionType;
+  transactionReference: string;
+  transactionTypeText?: string;
   triggeringAction: RuleAction;
   debitAccountCode: string;
   creditAccountCode: string;
@@ -34,8 +35,9 @@ export interface AccountingRule {
 
 export interface AccountingRuleFormData {
   ruleName: string;
-  sourceType: RuleSourceType;
-  sourceReference: string;
+  transactionType: RuleTransactionType;
+  transactionReference: string;
+  transactionTypeText?: string;
   triggeringAction: RuleAction;
   debitAccountCode: string;
   creditAccountCode: string;

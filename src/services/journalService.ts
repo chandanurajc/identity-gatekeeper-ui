@@ -48,8 +48,8 @@ class JournalService {
     const journalToCreate = {
       organization_id: organizationId,
       journal_date: journalData.journalDate,
-      source_type: journalData.sourceType,
-      source_reference: journalData.sourceReference,
+      transaction_type: journalData.transactionType,
+      transaction_reference: journalData.transactionReference,
       created_by: createdBy,
     };
 
@@ -94,8 +94,8 @@ class JournalService {
   ): Promise<JournalHeader> {
     const journalToUpdate = {
       journal_date: journalData.journalDate,
-      source_type: journalData.sourceType,
-      source_reference: journalData.sourceReference,
+      transaction_type: journalData.transactionType,
+      transaction_reference: journalData.transactionReference,
       updated_by: updatedBy,
       updated_on: new Date().toISOString(),
     };
@@ -180,8 +180,8 @@ class JournalService {
       id: dbJournal.id,
       organizationId: dbJournal.organization_id,
       journalDate: dbJournal.journal_date,
-      sourceType: dbJournal.source_type,
-      sourceReference: dbJournal.source_reference,
+      transactionType: dbJournal.transaction_type,
+      transactionReference: dbJournal.transaction_reference,
       status: dbJournal.status,
       createdOn: new Date(dbJournal.created_on),
       updatedOn: dbJournal.updated_on ? new Date(dbJournal.updated_on) : undefined,

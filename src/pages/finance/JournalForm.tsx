@@ -15,14 +15,14 @@ import { useToast } from "@/hooks/use-toast";
 import { useMultiTenant } from "@/hooks/useMultiTenant";
 import { useAuth } from "@/context/AuthContext";
 import { journalService } from "@/services/journalService";
-import type { JournalFormData, JournalStatus, RuleSourceType } from "@/types/journal";
+import type { JournalFormData, JournalStatus, RuleTransactionType } from "@/types/journal";
 
-const sourceTypes: RuleSourceType[] = ['Invoice', 'PO', 'Payment'];
+const transactionTypes: RuleTransactionType[] = ['Invoice', 'PO', 'Payment'];
 
 const formSchema = z.object({
   journalDate: z.string().min(1, "Journal date is required"),
-  sourceType: z.enum(['Invoice', 'PO', 'Payment']).optional(),
-  sourceReference: z.string().optional(),
+  transactionType: z.enum(['Invoice', 'PO', 'Payment']).optional(),
+  transactionReference: z.string().optional(),
   journalLines: z.array(z.object({
     lineNumber: z.number(),
     accountCode: z.string().min(1, "Account code is required"),
@@ -67,8 +67,8 @@ export default function JournalForm({ mode }: JournalFormProps) {
     if (existingJournal) {
       form.reset({
         journalDate: existingJournal.journalDate,
-        sourceType: existingJournal.sourceType || undefined,
-        sourceReference: existingJournal.sourceReference || "",
+        transactionType: existingJournal.transactionType || undefined,
+        transactionReference: existingJournal.transactionReference || "",
         journalLines: existingJournal.journalLines || [],
       });
     }
@@ -175,18 +175,18 @@ export default function JournalForm({ mode }: JournalFormProps) {
 
                 <FormField
                   control={form.control}
-                  name="sourceType"
+                  name="transactionType"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Source Type</FormLabel>
+                      <FormLabel>Transaction Type</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select source type" />
+                            <SelectValue placeholder="Select transaction type" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {sourceTypes.map((type) => (
+                          {transactionTypes.map((type) => (
                             <SelectItem key={type} value={type}>
                               {type}
                             </SelectItem>
@@ -200,12 +200,12 @@ export default function JournalForm({ mode }: JournalFormProps) {
 
                 <FormField
                   control={form.control}
-                  name="sourceReference"
+                  name="transactionReference"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Source Reference</FormLabel>
+                      <FormLabel>Transaction Reference</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter source reference" {...field} />
+                        <Input placeholder="Enter transaction reference" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

@@ -99,6 +99,14 @@ export function FinanceRoutes() {
         }
       />
       <Route
+        path="/journals/:id"
+        element={
+          <PermissionProtectedRoute requiredPermission="View Journal">
+            <JournalDetail />
+          </PermissionProtectedRoute>
+        }
+      />
+      <Route
         path="/subledger"
         element={
           <PermissionProtectedRoute requiredPermission="View Subledger">
