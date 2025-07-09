@@ -175,8 +175,15 @@ export const receivePurchaseOrder = async (
         } else if (rule.amountSource === 'sum of line') {
           amount = (finalPO.lines || []).reduce((sum, line) => sum + (line.line_total || 0), 0);
         }
-
-        // 3. Prepare journal lines
+        // Safety checks
+        if (!amount || amount === 0) {
+          console.warn('[Auto Journal] Skipping journal creation: amount is zero');
+          continue;
+        }
+        if (!rule.debitAccountCode || !rule.creditAccountCode) {
+          console.warn('[Auto Journal] Skipping journal creation: missing account codes');
+          continue;
+        }
         const journalLines = [
           {
             lineNumber: 1,
@@ -193,17 +200,18 @@ export const receivePurchaseOrder = async (
             narration: `PO Receive - Credit`,
           }
         ];
-
-        // 4. Create and post journal entry
+        console.log('[Auto Journal] journalLines:', journalLines);
         const createdJournal = await journalService.createJournal({
           journalDate: new Date().toISOString().split('T')[0],
           transactionType: 'PO',
           transactionReference: finalPO.po_number,
           journalLines,
         }, finalPO.organization_id, receivedByName);
-
+        console.log('[Auto Journal] createdJournal:', createdJournal);
         if (createdJournal && createdJournal.id) {
           await journalService.postJournal(createdJournal.id, finalPO.organization_id, receivedByName);
+        } else {
+          console.error('[Auto Journal] Journal not created or missing ID');
         }
       }
     } catch (err) {

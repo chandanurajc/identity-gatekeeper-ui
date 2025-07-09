@@ -90,7 +90,7 @@ export default function AccountingRulesList() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Rule Name</TableHead>
-                  <TableHead>Source Type</TableHead>
+                  <TableHead>Transaction Type</TableHead>
                   <TableHead>Triggering Action</TableHead>
                   <TableHead>Debit Account</TableHead>
                   <TableHead>Credit Account</TableHead>
