@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { useMultiTenant } from "@/hooks/useMultiTenant";
 import { useJournalPermissions } from "@/hooks/useJournalPermissions";
 import { journalService } from "@/services/journalService";
+import { chartOfAccountsService } from "@/services/chartOfAccountsService";
 
 export default function JournalDetail() {
   const { id } = useParams<{ id: string }>();
@@ -21,6 +22,15 @@ export default function JournalDetail() {
     queryFn: () => id && organizationId ? journalService.getJournalById(id, organizationId) : null,
     enabled: !!id && !!organizationId && canViewJournal,
   });
+
+  const { data: accounts = [] } = useQuery({
+    queryKey: ['chart-of-accounts', organizationId],
+    queryFn: () => organizationId ? chartOfAccountsService.getChartOfAccounts(organizationId) : Promise.resolve([]),
+    enabled: !!organizationId,
+  });
+
+  // Create a map for accountCode -> accountName
+  const accountCodeToName = new Map(accounts.map(acc => [acc.accountCode, acc.accountName]));
 
   if (!canViewJournal) {
     return (
@@ -191,6 +201,7 @@ export default function JournalDetail() {
                 <TableRow>
                   <TableHead>Line #</TableHead>
                   <TableHead>Account Code</TableHead>
+                  <TableHead>Account Name</TableHead>
                   <TableHead>Narration</TableHead>
                   <TableHead className="text-right">Debit Amount</TableHead>
                   <TableHead className="text-right">Credit Amount</TableHead>
@@ -201,6 +212,7 @@ export default function JournalDetail() {
                   <TableRow key={line.id}>
                     <TableCell className="font-medium">{line.lineNumber}</TableCell>
                     <TableCell>{line.accountCode}</TableCell>
+                    <TableCell>{accountCodeToName.get(line.accountCode) || '-'}</TableCell>
                     <TableCell>{line.narration || '-'}</TableCell>
                     <TableCell className="text-right">
                       {line.debitAmount ? `₹${line.debitAmount.toLocaleString()}` : '-'}

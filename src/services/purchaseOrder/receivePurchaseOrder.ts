@@ -174,7 +174,8 @@ export const receivePurchaseOrder = async (
           continue;
         }
 
-        // Process each line in the rule
+        // Collect all journal lines for this rule
+        const allJournalLines = [];
         for (const line of rule.lines) {
           // Calculate amount based on line's amount source
           let amount = 0;
@@ -185,7 +186,7 @@ export const receivePurchaseOrder = async (
           } else if (line.amountSource === 'Item total price') {
             amount = (finalPO.lines || []).reduce((sum, poLine) => sum + (poLine.total_unit_price || 0), 0);
           }
-          
+
           // Safety checks
           if (!amount || amount === 0) {
             console.warn(`[Auto Journal] Amount is 0 for rule ${rule.ruleName} line ${line.lineNumber}, skipping`);
@@ -196,10 +197,8 @@ export const receivePurchaseOrder = async (
             continue;
           }
 
-          const journalLines = [];
-          
           if (line.debitAccountCode) {
-            journalLines.push({
+            allJournalLines.push({
               lineNumber: (line.lineNumber * 2) - 1,
               accountCode: line.debitAccountCode,
               debitAmount: amount,
@@ -207,9 +206,9 @@ export const receivePurchaseOrder = async (
               narration: `PO Receive - Debit - Line ${line.lineNumber}`,
             });
           }
-          
+
           if (line.creditAccountCode) {
-            journalLines.push({
+            allJournalLines.push({
               lineNumber: line.lineNumber * 2,
               accountCode: line.creditAccountCode,
               debitAmount: null,
@@ -217,33 +216,33 @@ export const receivePurchaseOrder = async (
               narration: `PO Receive - Credit - Line ${line.lineNumber}`,
             });
           }
-          
-          // Skip if no journal lines to create
-          if (journalLines.length === 0) {
-            console.warn(`[Auto Journal] No journal lines to create for rule ${rule.ruleName} line ${line.lineNumber}, skipping`);
-            continue;
+        }
+
+        // Skip if no journal lines to create
+        if (allJournalLines.length === 0) {
+          console.warn(`[Auto Journal] No journal lines to create for rule ${rule.ruleName}, skipping`);
+          continue;
+        }
+
+        console.log(`[Auto Journal] Creating journal for rule ${rule.ruleName} with lines:`, allJournalLines);
+
+        try {
+          const createdJournal = await journalService.createJournal({
+            journalDate: new Date().toISOString().split('T')[0],
+            transactionType: 'PO',
+            transactionReference: finalPO.po_number,
+            journalLines: allJournalLines,
+          }, finalPO.organization_id, receivedByName);
+
+          console.log(`[Auto Journal] Created journal for rule ${rule.ruleName}:`, createdJournal);
+
+          if (createdJournal && createdJournal.id) {
+            await journalService.postJournal(createdJournal.id, finalPO.organization_id, receivedByName);
+          } else {
+            console.error(`[Auto Journal] Journal not created or missing ID for rule ${rule.ruleName}`);
           }
-          
-          console.log(`[Auto Journal] Creating journal for rule ${rule.ruleName} line ${line.lineNumber}:`, journalLines);
-          
-          try {
-            const createdJournal = await journalService.createJournal({
-              journalDate: new Date().toISOString().split('T')[0],
-              transactionType: 'PO',
-              transactionReference: finalPO.po_number,
-              journalLines,
-            }, finalPO.organization_id, receivedByName);
-            
-            console.log(`[Auto Journal] Created journal for rule ${rule.ruleName} line ${line.lineNumber}:`, createdJournal);
-            
-            if (createdJournal && createdJournal.id) {
-              await journalService.postJournal(createdJournal.id, finalPO.organization_id, receivedByName);
-            } else {
-              console.error(`[Auto Journal] Journal not created or missing ID for rule ${rule.ruleName} line ${line.lineNumber}`);
-            }
-          } catch (journalError) {
-            console.error(`[Auto Journal] Failed to create journal for rule ${rule.ruleName} line ${line.lineNumber}:`, journalError);
-          }
+        } catch (journalError) {
+          console.error(`[Auto Journal] Failed to create journal for rule ${rule.ruleName}:`, journalError);
         }
       }
     } catch (err) {

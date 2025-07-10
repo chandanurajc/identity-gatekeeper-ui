@@ -92,8 +92,6 @@ export default function AccountingRulesList() {
                   <TableHead>Rule Name</TableHead>
                   <TableHead>Transaction Category</TableHead>
                   <TableHead>Triggering Action</TableHead>
-                  <TableHead>Debit Account</TableHead>
-                  <TableHead>Credit Account</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
@@ -106,8 +104,6 @@ export default function AccountingRulesList() {
                       <Badge variant="outline">{rule.transactionCategory}</Badge>
                     </TableCell>
                     <TableCell>{rule.triggeringAction}</TableCell>
-                    <TableCell>{rule.debitAccountCode}</TableCell>
-                    <TableCell>{rule.creditAccountCode}</TableCell>
                     <TableCell>
                       <Badge variant={rule.status === 'Active' ? 'default' : 'secondary'}>
                         {rule.status}

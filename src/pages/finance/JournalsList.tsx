@@ -27,6 +27,17 @@ export default function JournalsList() {
     enabled: !!organizationId && canViewJournal,
   });
 
+  // Sort journals by journalDate and createdOn in descending order
+  const sortedJournals = [...journals].sort((a, b) => {
+    const dateA = new Date(a.journalDate).getTime() || 0;
+    const dateB = new Date(b.journalDate).getTime() || 0;
+    // If journalDate is the same, use createdOn
+    if (dateA === dateB) {
+      return (new Date(b.createdOn).getTime() || 0) - (new Date(a.createdOn).getTime() || 0);
+    }
+    return dateB - dateA;
+  });
+
   const handlePostJournal = async (id: string) => {
     if (!organizationId) return;
     
@@ -121,10 +132,10 @@ export default function JournalsList() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {journals.map((journal) => (
+                {sortedJournals.map((journal) => (
                   <TableRow key={journal.id}>
                     <TableCell className="font-medium">
-                      {new Date(journal.journalDate).toLocaleDateString()}
+                      {journal.journalDate ? new Date(journal.journalDate).toLocaleString() : '-'}
                     </TableCell>
                     <TableCell>
                       {journal.transactionType && (
