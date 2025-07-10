@@ -174,6 +174,8 @@ export const receivePurchaseOrder = async (
           amount = (finalPO.lines || []).reduce((sum, line) => sum + (line.gst_value || 0), 0);
         } else if (rule.amountSource === 'sum of line') {
           amount = (finalPO.lines || []).reduce((sum, line) => sum + (line.line_total || 0), 0);
+        } else if (rule.amountSource === 'Item total price') {
+          amount = (finalPO.lines || []).reduce((sum, line) => sum + (line.total_unit_price || 0), 0);
         }
         // Safety checks
         if (!amount || amount === 0) {
