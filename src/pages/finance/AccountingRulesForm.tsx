@@ -21,7 +21,7 @@ import type { AccountingRuleFormData, RuleTransactionCategory } from "@/types/ac
 
 const transactionCategories: RuleTransactionCategory[] = ['Invoice', 'PO', 'Payment'];
 const triggeringActions = ['Invoice Approved', 'PO Created', 'Payment Processed', 'Purchase order receive'];
-const amountSourceOptions = ['Item total price', 'Total GST value'];
+const amountSourceOptions = ['Item total price', 'Total GST value', 'sum of line', 'Total item value', 'Total invoice value'];
 
 const formSchema = z.object({
   ruleName: z.string().min(1, "Rule name is required"),
@@ -61,8 +61,8 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
       transactionType: "",
       lines: [{
         lineNumber: 1,
-        debitAccountCode: "",
-        creditAccountCode: "",
+        debitAccountCode: undefined,
+        creditAccountCode: undefined,
         amountSource: "",
         enableSubledger: false,
       }],
@@ -95,8 +95,8 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
         transactionType: existingRule.transactionType || "",
         lines: existingRule.lines.length > 0 ? existingRule.lines : [{
           lineNumber: 1,
-          debitAccountCode: "",
-          creditAccountCode: "",
+          debitAccountCode: undefined,
+          creditAccountCode: undefined,
           amountSource: "",
           enableSubledger: false,
         }],
@@ -164,8 +164,8 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
     const currentLines = form.getValues("lines");
     const newLine = {
       lineNumber: currentLines.length + 1,
-      debitAccountCode: "",
-      creditAccountCode: "",
+      debitAccountCode: undefined,
+      creditAccountCode: undefined,
       amountSource: "",
       enableSubledger: false,
     };
@@ -174,13 +174,16 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
 
   // Database field options for transaction reference dropdown
   const databaseFields = [
-    { value: "po_number", label: "PO Number" },
-    { value: "invoice_number", label: "Invoice Number" },
-    { value: "reference_number", label: "Reference Number" },
-    { value: "transaction_reference", label: "Transaction Reference" },
-    { value: "supplier_invoice_number", label: "Supplier Invoice Number" },
-    { value: "tracking_number", label: "Tracking Number" },
-    { value: "notes", label: "Notes" },
+    { value: "purchase_order.po_number", label: "Purchase Order - PO Number" },
+    { value: "purchase_order.tracking_number", label: "Purchase Order - Tracking Number" },
+    { value: "purchase_order.notes", label: "Purchase Order - Notes" },
+    { value: "invoice.invoice_number", label: "Invoice - Invoice Number" },
+    { value: "invoice.supplier_invoice_number", label: "Invoice - Supplier Invoice Number" },
+    { value: "invoice.reference_transaction_number", label: "Invoice - Reference Transaction Number" },
+    { value: "invoice.notes", label: "Invoice - Notes" },
+    { value: "journal_header.transaction_reference", label: "Journal - Transaction Reference" },
+    { value: "general_ledger.reference_number", label: "General Ledger - Reference Number" },
+    { value: "general_ledger.notes", label: "General Ledger - Notes" },
   ];
 
   const removeLine = (index: number) => {
@@ -357,7 +360,7 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Debit Account</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
+                            <Select onValueChange={(value) => field.onChange(value === "" ? undefined : value)} value={field.value || ""}>
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Select account" />
@@ -383,7 +386,7 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Credit Account</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
+                            <Select onValueChange={(value) => field.onChange(value === "" ? undefined : value)} value={field.value || ""}>
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Select account" />
