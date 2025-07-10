@@ -135,7 +135,11 @@ export default function JournalsList() {
                 {sortedJournals.map((journal) => (
                   <TableRow key={journal.id}>
                     <TableCell className="font-medium">
-                      {journal.journalDate ? new Date(journal.journalDate).toLocaleString() : '-'}
+                      {journal.journalDate ? new Date(journal.journalDate).toLocaleDateString() : '-'}
+                      <br />
+                      <span className="text-xs text-muted-foreground">
+                        {journal.createdOn ? new Date(journal.createdOn).toLocaleTimeString() : ''}
+                      </span>
                     </TableCell>
                     <TableCell>
                       {journal.transactionType && (

@@ -371,14 +371,14 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Debit Account</FormLabel>
-                            <Select onValueChange={(value) => field.onChange(value === '' ? undefined : value)} value={field.value || ''}>
+                            <Select onValueChange={(value) => field.onChange(value === '__BLANK__' ? undefined : value)} value={field.value || '__BLANK__'}>
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Select account" />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="">Blank</SelectItem>
+                                <SelectItem value="__BLANK__">Blank</SelectItem>
                                 {chartOfAccounts.map((account) => (
                                   <SelectItem key={account.id} value={account.accountCode}>
                                     {account.accountCode} - {account.accountName}
@@ -397,14 +397,14 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Credit Account</FormLabel>
-                            <Select onValueChange={(value) => field.onChange(value === '' ? undefined : value)} value={field.value || ''}>
+                            <Select onValueChange={(value) => field.onChange(value === '__BLANK__' ? undefined : value)} value={field.value || '__BLANK__'}>
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Select account" />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="">Blank</SelectItem>
+                                <SelectItem value="__BLANK__">Blank</SelectItem>
                                 {chartOfAccounts.map((account) => (
                                   <SelectItem key={account.id} value={account.accountCode}>
                                     {account.accountCode} - {account.accountName}
