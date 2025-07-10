@@ -179,9 +179,9 @@ export const receivePurchaseOrder = async (
         for (const line of rule.lines) {
           // Calculate amount based on line's amount source
           let amount = 0;
-          if (line.amountSource === 'Total GST value') {
+          if (line.amountSource === 'Total GST value' || line.amountSource === 'Total GST Value') {
             amount = (finalPO.lines || []).reduce((sum, poLine) => sum + (poLine.gst_value || 0), 0);
-          } else if (line.amountSource === 'sum of line') {
+          } else if (line.amountSource === 'sum of line' || line.amountSource === 'Total PO Value') {
             amount = (finalPO.lines || []).reduce((sum, poLine) => sum + (poLine.line_total || 0), 0);
           } else if (line.amountSource === 'Item total price') {
             amount = (finalPO.lines || []).reduce((sum, poLine) => sum + (poLine.total_unit_price || 0), 0);

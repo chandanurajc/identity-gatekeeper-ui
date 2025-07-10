@@ -21,7 +21,18 @@ import type { AccountingRuleFormData, RuleTransactionCategory } from "@/types/ac
 
 const transactionCategories: RuleTransactionCategory[] = ['Invoice', 'PO', 'Payment'];
 const triggeringActions = ['Invoice Approved', 'PO Created', 'Payment Processed', 'Purchase order receive'];
-const amountSourceOptions = ['Item total price', 'Total GST value', 'sum of line', 'Total item value', 'Total invoice value'];
+const poAmountSourceOptions = [
+  'Item total price',
+  'Total GST Value',
+  'Total PO Value',
+];
+const amountSourceOptions = [
+  'Item total price',
+  'Total GST value',
+  'sum of line',
+  'Total item value',
+  'Total invoice value',
+];
 
 const formSchema = z.object({
   ruleName: z.string().min(1, "Rule name is required"),
@@ -360,14 +371,14 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Debit Account</FormLabel>
-                            <Select onValueChange={(value) => field.onChange(value === "" ? undefined : value)} value={field.value || ""}>
+                            <Select onValueChange={(value) => field.onChange(value === '' ? undefined : value)} value={field.value || ''}>
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Select account" />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="">-- No Account --</SelectItem>
+                                <SelectItem value="">Blank</SelectItem>
                                 {chartOfAccounts.map((account) => (
                                   <SelectItem key={account.id} value={account.accountCode}>
                                     {account.accountCode} - {account.accountName}
@@ -386,14 +397,14 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Credit Account</FormLabel>
-                            <Select onValueChange={(value) => field.onChange(value === "" ? undefined : value)} value={field.value || ""}>
+                            <Select onValueChange={(value) => field.onChange(value === '' ? undefined : value)} value={field.value || ''}>
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Select account" />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="">-- No Account --</SelectItem>
+                                <SelectItem value="">Blank</SelectItem>
                                 {chartOfAccounts.map((account) => (
                                   <SelectItem key={account.id} value={account.accountCode}>
                                     {account.accountCode} - {account.accountName}
@@ -409,26 +420,34 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
                       <FormField
                         control={form.control}
                         name={`lines.${index}.amountSource`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Amount Source *</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select source" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {amountSourceOptions.map((option) => (
-                                  <SelectItem key={option} value={option}>
-                                    {option}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
+                        render={({ field }) => {
+                          // Show PO-specific options if transactionCategory is 'PO'
+                          const transactionCategory = form.watch('transactionCategory');
+                          let options = amountSourceOptions;
+                          if (transactionCategory === 'PO') {
+                            options = poAmountSourceOptions;
+                          }
+                          return (
+                            <FormItem>
+                              <FormLabel>Amount Source *</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select source" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {options.map((option) => (
+                                    <SelectItem key={option} value={option}>
+                                      {option}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          );
+                        }}
                       />
 
                       <div className="flex items-end gap-2">
