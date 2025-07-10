@@ -71,8 +71,8 @@ class AccountingRulesService {
       const linesToCreate = ruleData.lines.map(line => ({
         rule_id: createdRule.id,
         line_number: line.lineNumber,
-        debit_account_code: line.debitAccountCode,
-        credit_account_code: line.creditAccountCode,
+        debit_account_code: line.debitAccountCode || null,
+        credit_account_code: line.creditAccountCode || null,
         amount_source: line.amountSource,
         enable_subledger: line.enableSubledger,
       }));
@@ -129,8 +129,8 @@ class AccountingRulesService {
       const linesToCreate = ruleData.lines.map(line => ({
         rule_id: id,
         line_number: line.lineNumber,
-        debit_account_code: line.debitAccountCode,
-        credit_account_code: line.creditAccountCode,
+        debit_account_code: line.debitAccountCode || null,
+        credit_account_code: line.creditAccountCode || null,
         amount_source: line.amountSource,
         enable_subledger: line.enableSubledger,
       }));
@@ -165,8 +165,8 @@ class AccountingRulesService {
       .map((line: any) => ({
         id: line.id,
         lineNumber: line.line_number,
-        debitAccountCode: line.debit_account_code,
-        creditAccountCode: line.credit_account_code,
+        debitAccountCode: line.debit_account_code || "",
+        creditAccountCode: line.credit_account_code || "",
         amountSource: line.amount_source,
         enableSubledger: line.enable_subledger,
       }));

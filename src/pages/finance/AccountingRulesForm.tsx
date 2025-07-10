@@ -31,8 +31,8 @@ const formSchema = z.object({
   transactionType: z.string().optional(),
   lines: z.array(z.object({
     lineNumber: z.number(),
-    debitAccountCode: z.string().min(1, "Debit account code is required"),
-    creditAccountCode: z.string().min(1, "Credit account code is required"),
+    debitAccountCode: z.string().optional(),
+    creditAccountCode: z.string().optional(),
     amountSource: z.string().min(1, "Amount source is required"),
     enableSubledger: z.boolean().default(false),
   })).min(1, "At least one line is required"),
@@ -172,6 +172,17 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
     form.setValue("lines", [...currentLines, newLine]);
   };
 
+  // Database field options for transaction reference dropdown
+  const databaseFields = [
+    { value: "po_number", label: "PO Number" },
+    { value: "invoice_number", label: "Invoice Number" },
+    { value: "reference_number", label: "Reference Number" },
+    { value: "transaction_reference", label: "Transaction Reference" },
+    { value: "supplier_invoice_number", label: "Supplier Invoice Number" },
+    { value: "tracking_number", label: "Tracking Number" },
+    { value: "notes", label: "Notes" },
+  ];
+
   const removeLine = (index: number) => {
     const currentLines = form.getValues("lines");
     if (currentLines.length > 1) {
@@ -278,9 +289,20 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Transaction Reference *</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter transaction reference" {...field} />
-                      </FormControl>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select database field" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {databaseFields.map((dbField) => (
+                            <SelectItem key={dbField.value} value={dbField.value}>
+                              {dbField.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -329,12 +351,12 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
                         </div>
                       </div>
                       
-                      <FormField
+                       <FormField
                         control={form.control}
                         name={`lines.${index}.debitAccountCode`}
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Debit Account *</FormLabel>
+                            <FormLabel>Debit Account</FormLabel>
                             <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
                                 <SelectTrigger>
@@ -342,6 +364,7 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
+                                <SelectItem value="">-- No Account --</SelectItem>
                                 {chartOfAccounts.map((account) => (
                                   <SelectItem key={account.id} value={account.accountCode}>
                                     {account.accountCode} - {account.accountName}
@@ -359,7 +382,7 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
                         name={`lines.${index}.creditAccountCode`}
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Credit Account *</FormLabel>
+                            <FormLabel>Credit Account</FormLabel>
                             <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
                                 <SelectTrigger>
@@ -367,6 +390,7 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
+                                <SelectItem value="">-- No Account --</SelectItem>
                                 {chartOfAccounts.map((account) => (
                                   <SelectItem key={account.id} value={account.accountCode}>
                                     {account.accountCode} - {account.accountName}

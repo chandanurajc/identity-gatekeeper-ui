@@ -17,8 +17,8 @@ export type Database = {
       accounting_rule_lines: {
         Row: {
           amount_source: string
-          credit_account_code: string
-          debit_account_code: string
+          credit_account_code: string | null
+          debit_account_code: string | null
           enable_subledger: boolean
           id: string
           line_number: number
@@ -26,8 +26,8 @@ export type Database = {
         }
         Insert: {
           amount_source: string
-          credit_account_code: string
-          debit_account_code: string
+          credit_account_code?: string | null
+          debit_account_code?: string | null
           enable_subledger?: boolean
           id?: string
           line_number: number
@@ -35,8 +35,8 @@ export type Database = {
         }
         Update: {
           amount_source?: string
-          credit_account_code?: string
-          debit_account_code?: string
+          credit_account_code?: string | null
+          debit_account_code?: string | null
           enable_subledger?: boolean
           id?: string
           line_number?: number

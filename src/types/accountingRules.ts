@@ -12,8 +12,8 @@ export interface FilterCriteria {
 export interface AccountingRuleLine {
   id?: string;
   lineNumber: number;
-  debitAccountCode: string;
-  creditAccountCode: string;
+  debitAccountCode?: string;
+  creditAccountCode?: string;
   amountSource: string;
   enableSubledger: boolean;
 }

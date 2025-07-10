@@ -191,27 +191,38 @@ export const receivePurchaseOrder = async (
             console.warn(`[Auto Journal] Amount is 0 for rule ${rule.ruleName} line ${line.lineNumber}, skipping`);
             continue;
           }
-          if (!line.debitAccountCode || !line.creditAccountCode) {
-            console.warn(`[Auto Journal] Missing account codes for rule ${rule.ruleName} line ${line.lineNumber}, skipping`);
+          if (!line.debitAccountCode && !line.creditAccountCode) {
+            console.warn(`[Auto Journal] Both account codes missing for rule ${rule.ruleName} line ${line.lineNumber}, skipping`);
             continue;
           }
 
-          const journalLines = [
-            {
+          const journalLines = [];
+          
+          if (line.debitAccountCode) {
+            journalLines.push({
               lineNumber: (line.lineNumber * 2) - 1,
               accountCode: line.debitAccountCode,
               debitAmount: amount,
               creditAmount: null,
               narration: `PO Receive - Debit - Line ${line.lineNumber}`,
-            },
-            {
+            });
+          }
+          
+          if (line.creditAccountCode) {
+            journalLines.push({
               lineNumber: line.lineNumber * 2,
               accountCode: line.creditAccountCode,
               debitAmount: null,
               creditAmount: amount,
               narration: `PO Receive - Credit - Line ${line.lineNumber}`,
-            }
-          ];
+            });
+          }
+          
+          // Skip if no journal lines to create
+          if (journalLines.length === 0) {
+            console.warn(`[Auto Journal] No journal lines to create for rule ${rule.ruleName} line ${line.lineNumber}, skipping`);
+            continue;
+          }
           
           console.log(`[Auto Journal] Creating journal for rule ${rule.ruleName} line ${line.lineNumber}:`, journalLines);
           
