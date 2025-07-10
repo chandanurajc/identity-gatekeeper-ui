@@ -65,14 +65,26 @@ class JournalService {
 
     // Create journal lines
     if (journalData.journalLines.length > 0) {
-      const linesToCreate = journalData.journalLines.map(line => ({
-        journal_id: journal.id,
-        line_number: line.lineNumber,
-        account_code: line.accountCode,
-        debit_amount: line.debitAmount === 0 || line.debitAmount == null ? null : line.debitAmount,
-        credit_amount: line.creditAmount === 0 || line.creditAmount == null ? null : line.creditAmount,
-        narration: line.narration,
-      }));
+      const linesToCreate = journalData.journalLines
+        .filter(line => {
+          const debitAmount = line.debitAmount === 0 || line.debitAmount == null ? null : line.debitAmount;
+          const creditAmount = line.creditAmount === 0 || line.creditAmount == null ? null : line.creditAmount;
+          
+          // Throw error if both debit and credit are null
+          if (debitAmount === null && creditAmount === null) {
+            throw new Error(`Journal line ${line.lineNumber}: Both debit and credit amounts cannot be null or zero`);
+          }
+          
+          return true;
+        })
+        .map(line => ({
+          journal_id: journal.id,
+          line_number: line.lineNumber,
+          account_code: line.accountCode,
+          debit_amount: line.debitAmount === 0 || line.debitAmount == null ? null : line.debitAmount,
+          credit_amount: line.creditAmount === 0 || line.creditAmount == null ? null : line.creditAmount,
+          narration: line.narration,
+        }));
 
       const { error: linesError } = await supabase
         .from('journal_line')
@@ -122,14 +134,26 @@ class JournalService {
 
     // Create new journal lines
     if (journalData.journalLines.length > 0) {
-      const linesToCreate = journalData.journalLines.map(line => ({
-        journal_id: id,
-        line_number: line.lineNumber,
-        account_code: line.accountCode,
-        debit_amount: line.debitAmount === 0 || line.debitAmount == null ? null : line.debitAmount,
-        credit_amount: line.creditAmount === 0 || line.creditAmount == null ? null : line.creditAmount,
-        narration: line.narration,
-      }));
+      const linesToCreate = journalData.journalLines
+        .filter(line => {
+          const debitAmount = line.debitAmount === 0 || line.debitAmount == null ? null : line.debitAmount;
+          const creditAmount = line.creditAmount === 0 || line.creditAmount == null ? null : line.creditAmount;
+          
+          // Throw error if both debit and credit are null
+          if (debitAmount === null && creditAmount === null) {
+            throw new Error(`Journal line ${line.lineNumber}: Both debit and credit amounts cannot be null or zero`);
+          }
+          
+          return true;
+        })
+        .map(line => ({
+          journal_id: id,
+          line_number: line.lineNumber,
+          account_code: line.accountCode,
+          debit_amount: line.debitAmount === 0 || line.debitAmount == null ? null : line.debitAmount,
+          credit_amount: line.creditAmount === 0 || line.creditAmount == null ? null : line.creditAmount,
+          narration: line.narration,
+        }));
 
       const { error: linesError } = await supabase
         .from('journal_line')
