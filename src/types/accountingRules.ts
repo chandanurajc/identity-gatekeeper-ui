@@ -1,4 +1,4 @@
-export type RuleTransactionType = 'Invoice' | 'PO' | 'Payment';
+export type RuleTransactionCategory = 'Invoice' | 'PO' | 'Payment';
 export type RuleAction = 'Invoice Approved' | 'PO Created' | 'Payment Processed' | 'Purchase order receive';
 export type PartyType = 'Bill To' | 'Remit To';
 export type FilterLogicType = 'AND' | 'OR';
@@ -9,18 +9,24 @@ export interface FilterCriteria {
   value: string;
 }
 
-export interface AccountingRule {
-  id: string;
-  organizationId: string;
-  ruleName: string;
-  transactionType: RuleTransactionType;
-  transactionReference: string;
-  transactionTypeText?: string;
-  triggeringAction: RuleAction;
+export interface AccountingRuleLine {
+  id?: string;
+  lineNumber: number;
   debitAccountCode: string;
   creditAccountCode: string;
   amountSource: string;
   enableSubledger: boolean;
+}
+
+export interface AccountingRule {
+  id: string;
+  organizationId: string;
+  ruleName: string;
+  transactionCategory: RuleTransactionCategory;
+  transactionReference: string;
+  transactionType?: string;
+  triggeringAction: RuleAction;
+  lines: AccountingRuleLine[];
   partyType?: PartyType;
   partyName?: string;
   partyCode?: string;
@@ -35,14 +41,11 @@ export interface AccountingRule {
 
 export interface AccountingRuleFormData {
   ruleName: string;
-  transactionType: RuleTransactionType;
+  transactionCategory: RuleTransactionCategory;
   transactionReference: string;
-  transactionTypeText?: string;
+  transactionType?: string;
   triggeringAction: RuleAction;
-  debitAccountCode: string;
-  creditAccountCode: string;
-  amountSource: string;
-  enableSubledger: boolean;
+  lines: AccountingRuleLine[];
   partyType?: PartyType;
   partyName?: string;
   partyCode?: string;

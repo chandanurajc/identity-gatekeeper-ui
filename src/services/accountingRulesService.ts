@@ -1,11 +1,14 @@
 import { supabase } from "@/integrations/supabase/client";
-import type { AccountingRule, AccountingRuleFormData } from "@/types/accountingRules";
+import type { AccountingRule, AccountingRuleFormData, AccountingRuleLine } from "@/types/accountingRules";
 
 class AccountingRulesService {
   async getAccountingRules(organizationId: string): Promise<AccountingRule[]> {
     const { data, error } = await supabase
       .from('accounting_rules')
-      .select('*')
+      .select(`
+        *,
+        accounting_rule_lines (*)
+      `)
       .eq('organization_id', organizationId)
       .order('rule_name', { ascending: true });
 
@@ -20,7 +23,10 @@ class AccountingRulesService {
   async getAccountingRuleById(id: string, organizationId: string): Promise<AccountingRule | null> {
     const { data, error } = await supabase
       .from('accounting_rules')
-      .select('*')
+      .select(`
+        *,
+        accounting_rule_lines (*)
+      `)
       .eq('id', id)
       .eq('organization_id', organizationId)
       .single();
@@ -42,34 +48,45 @@ class AccountingRulesService {
     const ruleToCreate = {
       organization_id: organizationId,
       rule_name: ruleData.ruleName,
-      transaction_type: ruleData.transactionType,
+      transaction_category: ruleData.transactionCategory,
       transaction_reference: ruleData.transactionReference,
-      transaction_type_text: ruleData.transactionTypeText,
+      transaction_type: ruleData.transactionType,
       triggering_action: ruleData.triggeringAction,
-      debit_account_code: ruleData.debitAccountCode,
-      credit_account_code: ruleData.creditAccountCode,
-      amount_source: ruleData.amountSource,
-      enable_subledger: ruleData.enableSubledger,
-      party_type: ruleData.partyType,
-      party_name: ruleData.partyName,
-      party_code: ruleData.partyCode,
-      filter_logic_type: ruleData.filterLogicType,
-      filter_criteria: ruleData.filterCriteria ? JSON.stringify(ruleData.filterCriteria) : null,
       status: ruleData.status,
       created_by: createdBy,
     };
 
-    const { data, error } = await supabase
+    const { data: createdRule, error: ruleError } = await supabase
       .from('accounting_rules')
       .insert(ruleToCreate)
       .select()
       .single();
 
-    if (error) {
-      throw new Error(`Failed to create accounting rule: ${error.message}`);
+    if (ruleError) {
+      throw new Error(`Failed to create accounting rule: ${ruleError.message}`);
     }
 
-    return this.transformFromDb(data);
+    // Create rule lines
+    if (ruleData.lines && ruleData.lines.length > 0) {
+      const linesToCreate = ruleData.lines.map(line => ({
+        rule_id: createdRule.id,
+        line_number: line.lineNumber,
+        debit_account_code: line.debitAccountCode,
+        credit_account_code: line.creditAccountCode,
+        amount_source: line.amountSource,
+        enable_subledger: line.enableSubledger,
+      }));
+
+      const { error: linesError } = await supabase
+        .from('accounting_rule_lines')
+        .insert(linesToCreate);
+
+      if (linesError) {
+        throw new Error(`Failed to create accounting rule lines: ${linesError.message}`);
+      }
+    }
+
+    return this.getAccountingRuleById(createdRule.id, organizationId) as Promise<AccountingRule>;
   }
 
   async updateAccountingRule(
@@ -80,19 +97,10 @@ class AccountingRulesService {
   ): Promise<AccountingRule> {
     const ruleToUpdate = {
       rule_name: ruleData.ruleName,
-      transaction_type: ruleData.transactionType,
+      transaction_category: ruleData.transactionCategory,
       transaction_reference: ruleData.transactionReference,
-      transaction_type_text: ruleData.transactionTypeText,
+      transaction_type: ruleData.transactionType,
       triggering_action: ruleData.triggeringAction,
-      debit_account_code: ruleData.debitAccountCode,
-      credit_account_code: ruleData.creditAccountCode,
-      amount_source: ruleData.amountSource,
-      enable_subledger: ruleData.enableSubledger,
-      party_type: ruleData.partyType,
-      party_name: ruleData.partyName,
-      party_code: ruleData.partyCode,
-      filter_logic_type: ruleData.filterLogicType,
-      filter_criteria: ruleData.filterCriteria ? JSON.stringify(ruleData.filterCriteria) : null,
       status: ruleData.status,
       updated_by: updatedBy,
       updated_on: new Date().toISOString(),
@@ -110,7 +118,33 @@ class AccountingRulesService {
       throw new Error(`Failed to update accounting rule: ${error.message}`);
     }
 
-    return this.transformFromDb(data);
+    // Delete existing lines
+    await supabase
+      .from('accounting_rule_lines')
+      .delete()
+      .eq('rule_id', id);
+
+    // Create new lines
+    if (ruleData.lines && ruleData.lines.length > 0) {
+      const linesToCreate = ruleData.lines.map(line => ({
+        rule_id: id,
+        line_number: line.lineNumber,
+        debit_account_code: line.debitAccountCode,
+        credit_account_code: line.creditAccountCode,
+        amount_source: line.amountSource,
+        enable_subledger: line.enableSubledger,
+      }));
+
+      const { error: linesError } = await supabase
+        .from('accounting_rule_lines')
+        .insert(linesToCreate);
+
+      if (linesError) {
+        throw new Error(`Failed to create accounting rule lines: ${linesError.message}`);
+      }
+    }
+
+    return this.getAccountingRuleById(id, organizationId) as Promise<AccountingRule>;
   }
 
   async deleteAccountingRule(id: string, organizationId: string): Promise<void> {
@@ -126,18 +160,26 @@ class AccountingRulesService {
   }
 
   private transformFromDb(dbRule: any): AccountingRule {
+    const lines: AccountingRuleLine[] = (dbRule.accounting_rule_lines || [])
+      .sort((a: any, b: any) => a.line_number - b.line_number)
+      .map((line: any) => ({
+        id: line.id,
+        lineNumber: line.line_number,
+        debitAccountCode: line.debit_account_code,
+        creditAccountCode: line.credit_account_code,
+        amountSource: line.amount_source,
+        enableSubledger: line.enable_subledger,
+      }));
+
     return {
       id: dbRule.id,
       organizationId: dbRule.organization_id,
       ruleName: dbRule.rule_name,
-      transactionType: dbRule.transaction_type,
+      transactionCategory: dbRule.transaction_category,
       transactionReference: dbRule.transaction_reference,
-      transactionTypeText: dbRule.transaction_type_text,
+      transactionType: dbRule.transaction_type,
       triggeringAction: dbRule.triggering_action,
-      debitAccountCode: dbRule.debit_account_code,
-      creditAccountCode: dbRule.credit_account_code,
-      amountSource: dbRule.amount_source,
-      enableSubledger: dbRule.enable_subledger,
+      lines,
       partyType: dbRule.party_type,
       partyName: dbRule.party_name,
       partyCode: dbRule.party_code,

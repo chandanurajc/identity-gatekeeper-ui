@@ -14,79 +14,84 @@ export type Database = {
   }
   public: {
     Tables: {
-      accounting_rules: {
+      accounting_rule_lines: {
         Row: {
           amount_source: string
-          created_by: string
-          created_on: string
           credit_account_code: string
           debit_account_code: string
           enable_subledger: boolean
-          filter_criteria: Json | null
-          filter_logic_type:
-            | Database["public"]["Enums"]["filter_logic_type"]
-            | null
+          id: string
+          line_number: number
+          rule_id: string
+        }
+        Insert: {
+          amount_source: string
+          credit_account_code: string
+          debit_account_code: string
+          enable_subledger?: boolean
+          id?: string
+          line_number: number
+          rule_id: string
+        }
+        Update: {
+          amount_source?: string
+          credit_account_code?: string
+          debit_account_code?: string
+          enable_subledger?: boolean
+          id?: string
+          line_number?: number
+          rule_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "accounting_rule_lines_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "accounting_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      accounting_rules: {
+        Row: {
+          created_by: string
+          created_on: string
           id: string
           organization_id: string
-          party_code: string | null
-          party_name: string | null
-          party_type: Database["public"]["Enums"]["party_type"] | null
           rule_name: string
           status: string
+          transaction_category: string
           transaction_reference: string
-          transaction_type: Database["public"]["Enums"]["rule_source_type"]
-          transaction_type_text: string | null
-          triggering_action: Database["public"]["Enums"]["rule_action"]
+          transaction_type: string | null
+          triggering_action: string
           updated_by: string | null
           updated_on: string | null
         }
         Insert: {
-          amount_source: string
           created_by: string
           created_on?: string
-          credit_account_code: string
-          debit_account_code: string
-          enable_subledger?: boolean
-          filter_criteria?: Json | null
-          filter_logic_type?:
-            | Database["public"]["Enums"]["filter_logic_type"]
-            | null
           id?: string
           organization_id: string
-          party_code?: string | null
-          party_name?: string | null
-          party_type?: Database["public"]["Enums"]["party_type"] | null
           rule_name: string
           status?: string
+          transaction_category: string
           transaction_reference: string
-          transaction_type: Database["public"]["Enums"]["rule_source_type"]
-          transaction_type_text?: string | null
-          triggering_action: Database["public"]["Enums"]["rule_action"]
+          transaction_type?: string | null
+          triggering_action: string
           updated_by?: string | null
           updated_on?: string | null
         }
         Update: {
-          amount_source?: string
           created_by?: string
           created_on?: string
-          credit_account_code?: string
-          debit_account_code?: string
-          enable_subledger?: boolean
-          filter_criteria?: Json | null
-          filter_logic_type?:
-            | Database["public"]["Enums"]["filter_logic_type"]
-            | null
           id?: string
           organization_id?: string
-          party_code?: string | null
-          party_name?: string | null
-          party_type?: Database["public"]["Enums"]["party_type"] | null
           rule_name?: string
           status?: string
+          transaction_category?: string
           transaction_reference?: string
-          transaction_type?: Database["public"]["Enums"]["rule_source_type"]
-          transaction_type_text?: string | null
-          triggering_action?: Database["public"]["Enums"]["rule_action"]
+          transaction_type?: string | null
+          triggering_action?: string
           updated_by?: string | null
           updated_on?: string | null
         }
