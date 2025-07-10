@@ -162,58 +162,77 @@ export const receivePurchaseOrder = async (
       // 1. Fetch matching accounting rules
       const rules = await accountingRulesService.getAccountingRules(finalPO.organization_id);
       const matchingRules = rules.filter(rule =>
-        rule.transactionType === 'PO' &&
+        rule.transactionCategory === 'PO' &&
         rule.triggeringAction === 'Purchase order receive' &&
-        rule.transactionTypeText === finalPO.po_type
+        rule.transactionType === finalPO.po_type
       );
 
       for (const rule of matchingRules) {
-        // 2. Calculate amount
-        let amount = 0;
-        if (rule.amountSource === 'sum of gst') {
-          amount = (finalPO.lines || []).reduce((sum, line) => sum + (line.gst_value || 0), 0);
-        } else if (rule.amountSource === 'sum of line') {
-          amount = (finalPO.lines || []).reduce((sum, line) => sum + (line.line_total || 0), 0);
-        } else if (rule.amountSource === 'Item total price') {
-          amount = (finalPO.lines || []).reduce((sum, line) => sum + (line.total_unit_price || 0), 0);
-        }
-        // Safety checks
-        if (!amount || amount === 0) {
-          console.warn('[Auto Journal] Skipping journal creation: amount is zero');
+        // Skip rules without lines
+        if (!rule.lines || rule.lines.length === 0) {
+          console.warn(`[Auto Journal] No lines defined for rule ${rule.ruleName}, skipping`);
           continue;
         }
-        if (!rule.debitAccountCode || !rule.creditAccountCode) {
-          console.warn('[Auto Journal] Skipping journal creation: missing account codes');
-          continue;
-        }
-        const journalLines = [
-          {
-            lineNumber: 1,
-            accountCode: rule.debitAccountCode,
-            debitAmount: amount,
-            creditAmount: null,
-            narration: `PO Receive - Debit`,
-          },
-          {
-            lineNumber: 2,
-            accountCode: rule.creditAccountCode,
-            debitAmount: null,
-            creditAmount: amount,
-            narration: `PO Receive - Credit`,
+
+        // Process each line in the rule
+        for (const line of rule.lines) {
+          // Calculate amount based on line's amount source
+          let amount = 0;
+          if (line.amountSource === 'Total GST value') {
+            amount = (finalPO.lines || []).reduce((sum, poLine) => sum + (poLine.gst_value || 0), 0);
+          } else if (line.amountSource === 'sum of line') {
+            amount = (finalPO.lines || []).reduce((sum, poLine) => sum + (poLine.line_total || 0), 0);
+          } else if (line.amountSource === 'Item total price') {
+            amount = (finalPO.lines || []).reduce((sum, poLine) => sum + (poLine.total_unit_price || 0), 0);
           }
-        ];
-        console.log('[Auto Journal] journalLines:', journalLines);
-        const createdJournal = await journalService.createJournal({
-          journalDate: new Date().toISOString().split('T')[0],
-          transactionType: 'PO',
-          transactionReference: finalPO.po_number,
-          journalLines,
-        }, finalPO.organization_id, receivedByName);
-        console.log('[Auto Journal] createdJournal:', createdJournal);
-        if (createdJournal && createdJournal.id) {
-          await journalService.postJournal(createdJournal.id, finalPO.organization_id, receivedByName);
-        } else {
-          console.error('[Auto Journal] Journal not created or missing ID');
+          
+          // Safety checks
+          if (!amount || amount === 0) {
+            console.warn(`[Auto Journal] Amount is 0 for rule ${rule.ruleName} line ${line.lineNumber}, skipping`);
+            continue;
+          }
+          if (!line.debitAccountCode || !line.creditAccountCode) {
+            console.warn(`[Auto Journal] Missing account codes for rule ${rule.ruleName} line ${line.lineNumber}, skipping`);
+            continue;
+          }
+
+          const journalLines = [
+            {
+              lineNumber: (line.lineNumber * 2) - 1,
+              accountCode: line.debitAccountCode,
+              debitAmount: amount,
+              creditAmount: null,
+              narration: `PO Receive - Debit - Line ${line.lineNumber}`,
+            },
+            {
+              lineNumber: line.lineNumber * 2,
+              accountCode: line.creditAccountCode,
+              debitAmount: null,
+              creditAmount: amount,
+              narration: `PO Receive - Credit - Line ${line.lineNumber}`,
+            }
+          ];
+          
+          console.log(`[Auto Journal] Creating journal for rule ${rule.ruleName} line ${line.lineNumber}:`, journalLines);
+          
+          try {
+            const createdJournal = await journalService.createJournal({
+              journalDate: new Date().toISOString().split('T')[0],
+              transactionType: 'PO',
+              transactionReference: finalPO.po_number,
+              journalLines,
+            }, finalPO.organization_id, receivedByName);
+            
+            console.log(`[Auto Journal] Created journal for rule ${rule.ruleName} line ${line.lineNumber}:`, createdJournal);
+            
+            if (createdJournal && createdJournal.id) {
+              await journalService.postJournal(createdJournal.id, finalPO.organization_id, receivedByName);
+            } else {
+              console.error(`[Auto Journal] Journal not created or missing ID for rule ${rule.ruleName} line ${line.lineNumber}`);
+            }
+          } catch (journalError) {
+            console.error(`[Auto Journal] Failed to create journal for rule ${rule.ruleName} line ${line.lineNumber}:`, journalError);
+          }
         }
       }
     } catch (err) {

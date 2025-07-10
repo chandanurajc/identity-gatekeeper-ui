@@ -10,62 +10,32 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { ChevronsUpDown, Check } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useMultiTenant } from "@/hooks/useMultiTenant";
 import { useAuth } from "@/context/AuthContext";
 import { accountingRulesService } from "@/services/accountingRulesService";
-import type { AccountingRuleFormData, RuleTransactionType, RuleAction, PartyType, FilterLogicType } from "@/types/accountingRules";
+import { chartOfAccountsService } from "@/services/chartOfAccountsService";
+import type { AccountingRuleFormData, RuleTransactionCategory } from "@/types/accountingRules";
 
-const transactionTypes: RuleTransactionType[] = ['Invoice', 'PO', 'Payment'];
-const triggeringActions: RuleAction[] = ['Invoice Approved', 'PO Created', 'Payment Processed', 'Purchase order receive'];
-const partyTypes: PartyType[] = ['Bill To', 'Remit To'];
-const filterLogicTypes: FilterLogicType[] = ['AND', 'OR'];
+const transactionCategories: RuleTransactionCategory[] = ['Invoice', 'PO', 'Payment'];
+const triggeringActions = ['Invoice Approved', 'PO Created', 'Payment Processed', 'Purchase order receive'];
 const amountSourceOptions = ['Item total price', 'Total GST value'];
-
-// Transaction reference columns by transaction type
-const transactionReferenceColumns = {
-  'Invoice': [
-    { value: 'invoice.invoice_number', label: 'Invoice Number' },
-    { value: 'invoice.supplier_id', label: 'Supplier ID' },
-    { value: 'invoice.division_id', label: 'Division ID' },
-    { value: 'invoice.total_invoice_value', label: 'Total Invoice Value' },
-    { value: 'invoice.invoice_date', label: 'Invoice Date' },
-  ],
-  'PO': [
-    { value: 'purchase_order.po_number', label: 'PO Number' },
-    { value: 'purchase_order.supplier_id', label: 'Supplier ID' },
-    { value: 'purchase_order.division_id', label: 'Division ID' },
-    { value: 'purchase_order.po_date', label: 'PO Date' },
-    { value: 'purchase_order.status', label: 'PO Status' },
-  ],
-  'Payment': [
-    { value: 'payment.payment_reference', label: 'Payment Reference' },
-    { value: 'payment.amount', label: 'Payment Amount' },
-    { value: 'payment.payment_date', label: 'Payment Date' },
-    { value: 'payment.payment_method', label: 'Payment Method' },
-  ],
-};
 
 const formSchema = z.object({
   ruleName: z.string().min(1, "Rule name is required"),
-  transactionType: z.enum(['Invoice', 'PO', 'Payment']),
+  transactionCategory: z.enum(['Invoice', 'PO', 'Payment']),
   triggeringAction: z.enum(['Invoice Approved', 'PO Created', 'Payment Processed', 'Purchase order receive']),
   transactionReference: z.string().min(1, "Transaction reference is required"),
-  transactionTypeText: z.string().optional(),
-  debitAccountCode: z.string().min(1, "Debit account code is required"),
-  creditAccountCode: z.string().min(1, "Credit account code is required"),
-  amountSource: z.string().min(1, "Amount source is required"),
-  enableSubledger: z.boolean().default(false),
-  partyType: z.enum(['Bill To', 'Remit To']).optional(),
-  partyName: z.string().optional(),
-  partyCode: z.string().optional(),
-  filterLogicType: z.enum(['AND', 'OR']).optional(),
+  transactionType: z.string().optional(),
+  lines: z.array(z.object({
+    lineNumber: z.number(),
+    debitAccountCode: z.string().min(1, "Debit account code is required"),
+    creditAccountCode: z.string().min(1, "Credit account code is required"),
+    amountSource: z.string().min(1, "Amount source is required"),
+    enableSubledger: z.boolean().default(false),
+  })).min(1, "At least one line is required"),
   status: z.enum(['Active', 'Inactive']).default('Active'),
 });
 
@@ -80,27 +50,32 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
   const { user } = useAuth();
   const { getCurrentOrganizationId } = useMultiTenant();
   const organizationId = getCurrentOrganizationId();
-  
-  const [openTransactionRef, setOpenTransactionRef] = useState(false);
 
   const form = useForm<AccountingRuleFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       ruleName: "",
-      transactionType: "Invoice",
+      transactionCategory: "Invoice",
       triggeringAction: "Invoice Approved",
       transactionReference: "",
-      transactionTypeText: "",
-      debitAccountCode: "",
-      creditAccountCode: "",
-      amountSource: "",
-      enableSubledger: false,
+      transactionType: "",
+      lines: [{
+        lineNumber: 1,
+        debitAccountCode: "",
+        creditAccountCode: "",
+        amountSource: "",
+        enableSubledger: false,
+      }],
       status: "Active",
     },
   });
 
-  const watchedTransactionType = form.watch('transactionType');
-  const availableColumns = watchedTransactionType ? transactionReferenceColumns[watchedTransactionType] || [] : [];
+  // Load chart of accounts for dropdowns
+  const { data: chartOfAccounts = [] } = useQuery({
+    queryKey: ['chart-of-accounts', organizationId],
+    queryFn: () => organizationId ? chartOfAccountsService.getChartOfAccounts(organizationId) : Promise.resolve([]),
+    enabled: !!organizationId,
+  });
 
   // Load existing rule for edit mode
   const { data: existingRule, isLoading } = useQuery({
@@ -114,18 +89,17 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
     if (existingRule) {
       form.reset({
         ruleName: existingRule.ruleName,
-        transactionType: existingRule.transactionType,
+        transactionCategory: existingRule.transactionCategory,
         triggeringAction: existingRule.triggeringAction,
         transactionReference: existingRule.transactionReference,
-        transactionTypeText: existingRule.transactionTypeText || "",
-        debitAccountCode: existingRule.debitAccountCode,
-        creditAccountCode: existingRule.creditAccountCode,
-        amountSource: existingRule.amountSource,
-        enableSubledger: existingRule.enableSubledger,
-        partyType: existingRule.partyType || undefined,
-        partyName: existingRule.partyName || "",
-        partyCode: existingRule.partyCode || "",
-        filterLogicType: existingRule.filterLogicType || undefined,
+        transactionType: existingRule.transactionType || "",
+        lines: existingRule.lines.length > 0 ? existingRule.lines : [{
+          lineNumber: 1,
+          debitAccountCode: "",
+          creditAccountCode: "",
+          amountSource: "",
+          enableSubledger: false,
+        }],
         status: existingRule.status,
       });
     }
@@ -170,10 +144,38 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
   });
 
   const onSubmit = (data: AccountingRuleFormData) => {
+    // Ensure line numbers are sequential
+    const processedData = {
+      ...data,
+      lines: data.lines.map((line, index) => ({
+        ...line,
+        lineNumber: index + 1,
+      })),
+    };
+
     if (mode === 'create') {
-      createMutation.mutate(data);
+      createMutation.mutate(processedData);
     } else {
-      updateMutation.mutate(data);
+      updateMutation.mutate(processedData);
+    }
+  };
+
+  const addLine = () => {
+    const currentLines = form.getValues("lines");
+    const newLine = {
+      lineNumber: currentLines.length + 1,
+      debitAccountCode: "",
+      creditAccountCode: "",
+      amountSource: "",
+      enableSubledger: false,
+    };
+    form.setValue("lines", [...currentLines, newLine]);
+  };
+
+  const removeLine = (index: number) => {
+    const currentLines = form.getValues("lines");
+    if (currentLines.length > 1) {
+      form.setValue("lines", currentLines.filter((_, i) => i !== index));
     }
   };
 
@@ -208,20 +210,20 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
 
                 <FormField
                   control={form.control}
-                  name="transactionType"
+                  name="transactionCategory"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Transaction Type *</FormLabel>
+                      <FormLabel>Transaction Category *</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select transaction type" />
+                            <SelectValue placeholder="Select transaction category" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {transactionTypes.map((type) => (
-                            <SelectItem key={type} value={type}>
-                              {type}
+                          {transactionCategories.map((category) => (
+                            <SelectItem key={category} value={category}>
+                              {category}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -233,12 +235,12 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
 
                 <FormField
                   control={form.control}
-                  name="transactionTypeText"
+                  name="transactionType"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Transaction Type Text</FormLabel>
+                      <FormLabel>Transaction Type</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter transaction type text" {...field} />
+                        <Input placeholder="Enter transaction type" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -276,107 +278,9 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Transaction Reference *</FormLabel>
-                      <Popover open={openTransactionRef} onOpenChange={setOpenTransactionRef}>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant="outline"
-                              role="combobox"
-                              aria-expanded={openTransactionRef}
-                              className={cn(
-                                "w-full justify-between",
-                                !field.value && "text-muted-foreground"
-                              )}
-                            >
-                              {field.value
-                                ? availableColumns.find((column) => column.value === field.value)?.label
-                                : "Select transaction reference column"}
-                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-full p-0" align="start">
-                          <Command>
-                            <CommandInput placeholder="Search columns..." />
-                            <CommandList>
-                              <CommandEmpty>No columns found.</CommandEmpty>
-                              <CommandGroup>
-                                {availableColumns.map((column) => (
-                                  <CommandItem
-                                    key={column.value}
-                                    value={column.value}
-                                    onSelect={(currentValue) => {
-                                      field.onChange(currentValue === field.value ? "" : currentValue);
-                                      setOpenTransactionRef(false);
-                                    }}
-                                  >
-                                    <Check
-                                      className={cn(
-                                        "mr-2 h-4 w-4",
-                                        field.value === column.value ? "opacity-100" : "opacity-0"
-                                      )}
-                                    />
-                                    {column.label}
-                                  </CommandItem>
-                                ))}
-                              </CommandGroup>
-                            </CommandList>
-                          </Command>
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="debitAccountCode"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Debit Account Code *</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter debit account code" {...field} />
+                        <Input placeholder="Enter transaction reference" {...field} />
                       </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="creditAccountCode"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Credit Account Code *</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter credit account code" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="amountSource"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Amount Source *</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select amount source" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {amountSourceOptions.map((option) => (
-                            <SelectItem key={option} value={option}>
-                              {option}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -405,83 +309,133 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
                 />
               </div>
 
-              <FormField
-                control={form.control}
-                name="enableSubledger"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                    <div className="space-y-0.5">
-                      <FormLabel className="text-base">Enable Subledger</FormLabel>
-                      <p className="text-sm text-muted-foreground">
-                        Create subledger entries for this rule
-                      </p>
-                    </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-
-              {form.watch("enableSubledger") && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <FormField
-                    control={form.control}
-                    name="partyType"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Party Type</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select party type" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {partyTypes.map((type) => (
-                              <SelectItem key={type} value={type}>
-                                {type}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="partyName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Party Name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter party name" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="partyCode"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Party Code</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter party code" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+              {/* Lines Section */}
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-medium">Accounting Lines</h3>
+                  <Button type="button" onClick={addLine} size="sm">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Line
+                  </Button>
                 </div>
-              )}
+
+                {form.watch("lines").map((line, index) => (
+                  <Card key={index} className="p-4">
+                    <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+                      <div>
+                        <FormLabel>Line {index + 1}</FormLabel>
+                        <div className="text-sm font-medium p-2 bg-muted rounded">
+                          {index + 1}
+                        </div>
+                      </div>
+                      
+                      <FormField
+                        control={form.control}
+                        name={`lines.${index}.debitAccountCode`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Debit Account *</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select account" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {chartOfAccounts.map((account) => (
+                                  <SelectItem key={account.id} value={account.accountCode}>
+                                    {account.accountCode} - {account.accountName}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name={`lines.${index}.creditAccountCode`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Credit Account *</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select account" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {chartOfAccounts.map((account) => (
+                                  <SelectItem key={account.id} value={account.accountCode}>
+                                    {account.accountCode} - {account.accountName}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name={`lines.${index}.amountSource`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Amount Source *</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select source" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {amountSourceOptions.map((option) => (
+                                  <SelectItem key={option} value={option}>
+                                    {option}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <div className="flex items-end gap-2">
+                        <FormField
+                          control={form.control}
+                          name={`lines.${index}.enableSubledger`}
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-center space-x-2 space-y-0">
+                              <FormControl>
+                                <Switch
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                              <FormLabel>Subledger</FormLabel>
+                            </FormItem>
+                          )}
+                        />
+                        
+                        {form.watch("lines").length > 1 && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => removeLine(index)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
 
               <div className="flex gap-4">
                 <Button

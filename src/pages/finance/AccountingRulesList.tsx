@@ -90,7 +90,7 @@ export default function AccountingRulesList() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Rule Name</TableHead>
-                  <TableHead>Transaction Type</TableHead>
+                  <TableHead>Transaction Category</TableHead>
                   <TableHead>Triggering Action</TableHead>
                   <TableHead>Debit Account</TableHead>
                   <TableHead>Credit Account</TableHead>
@@ -103,7 +103,7 @@ export default function AccountingRulesList() {
                   <TableRow key={rule.id}>
                     <TableCell className="font-medium">{rule.ruleName}</TableCell>
                     <TableCell>
-                      <Badge variant="outline">{rule.transactionType}</Badge>
+                      <Badge variant="outline">{rule.transactionCategory}</Badge>
                     </TableCell>
                     <TableCell>{rule.triggeringAction}</TableCell>
                     <TableCell>{rule.debitAccountCode}</TableCell>
