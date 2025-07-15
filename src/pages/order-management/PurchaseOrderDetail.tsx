@@ -467,6 +467,49 @@ const PurchaseOrderDetail = () => {
         </CardContent>
       </Card>
 
+      {/* GST Breakdown */}
+      {purchaseOrder.gstBreakdown && purchaseOrder.gstBreakdown.length > 0 && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>GST Breakdown</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>GST Rate</TableHead>
+                    <TableHead>Taxable Amount</TableHead>
+                    <TableHead>CGST %</TableHead>
+                    <TableHead>CGST Amount</TableHead>
+                    <TableHead>SGST %</TableHead>
+                    <TableHead>SGST Amount</TableHead>
+                    <TableHead>IGST %</TableHead>
+                    <TableHead>IGST Amount</TableHead>
+                    <TableHead>Total GST Amount</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {purchaseOrder.gstBreakdown.map((breakdown, index) => (
+                    <TableRow key={breakdown.id || index}>
+                      <TableCell>{breakdown.gstPercentage}%</TableCell>
+                      <TableCell>₹{breakdown.taxableAmount.toFixed(2)}</TableCell>
+                      <TableCell>{breakdown.cgstPercentage || 0}%</TableCell>
+                      <TableCell>₹{(breakdown.cgstAmount || 0).toFixed(2)}</TableCell>
+                      <TableCell>{breakdown.sgstPercentage || 0}%</TableCell>
+                      <TableCell>₹{(breakdown.sgstAmount || 0).toFixed(2)}</TableCell>
+                      <TableCell>{breakdown.igstPercentage || 0}%</TableCell>
+                      <TableCell>₹{(breakdown.igstAmount || 0).toFixed(2)}</TableCell>
+                      <TableCell>₹{breakdown.totalGstAmount.toFixed(2)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Notes */}
       {purchaseOrder.notes && (
         <Card className="mb-6">
