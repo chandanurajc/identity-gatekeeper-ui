@@ -22,6 +22,8 @@ export interface AccountingRule {
   id: string;
   organizationId: string;
   ruleName: string;
+  divisionId?: string;
+  divisionName?: string;
   transactionCategory: RuleTransactionCategory;
   transactionReference: string;
   transactionType?: string;
@@ -41,6 +43,7 @@ export interface AccountingRule {
 
 export interface AccountingRuleFormData {
   ruleName: string;
+  divisionId?: string;
   transactionCategory: RuleTransactionCategory;
   transactionReference: string;
   transactionType?: string;

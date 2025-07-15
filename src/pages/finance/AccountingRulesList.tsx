@@ -90,6 +90,7 @@ export default function AccountingRulesList() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Rule Name</TableHead>
+                  <TableHead>Division</TableHead>
                   <TableHead>Transaction Category</TableHead>
                   <TableHead>Triggering Action</TableHead>
                   <TableHead>Status</TableHead>
@@ -100,6 +101,7 @@ export default function AccountingRulesList() {
                 {rules.map((rule) => (
                   <TableRow key={rule.id}>
                     <TableCell className="font-medium">{rule.ruleName}</TableCell>
+                    <TableCell>{rule.divisionName || '-'}</TableCell>
                     <TableCell>
                       <Badge variant="outline">{rule.transactionCategory}</Badge>
                     </TableCell>
