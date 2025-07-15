@@ -392,41 +392,37 @@ export default function InvoiceDetail() {
               <Hash className="h-4 w-4" />
               GST Breakdown
             </h3>
-            <div className="space-y-4">
-              {invoice.gstBreakdown.map((breakdown) => (
-                <div key={breakdown.id} className="p-4 rounded-lg border bg-card">
-                  <div className="flex justify-between items-center mb-3">
-                    <span className="font-medium">GST Rate: {breakdown.gstPercentage}%</span>
-                    <span className="font-bold">
-                      ₹{breakdown.totalGstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                    <div>
-                      <div className="font-medium">₹{breakdown.taxableAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
-                      <div className="text-muted-foreground">Taxable Amount</div>
-                    </div>
-                    {breakdown.cgstAmount > 0 && (
-                      <div>
-                        <div className="font-medium">₹{breakdown.cgstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
-                        <div className="text-muted-foreground">CGST ({breakdown.cgstPercentage}%)</div>
-                      </div>
-                    )}
-                    {breakdown.sgstAmount > 0 && (
-                      <div>
-                        <div className="font-medium">₹{breakdown.sgstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
-                        <div className="text-muted-foreground">SGST ({breakdown.sgstPercentage}%)</div>
-                      </div>
-                    )}
-                    {breakdown.igstAmount > 0 && (
-                      <div>
-                        <div className="font-medium">₹{breakdown.igstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
-                        <div className="text-muted-foreground">IGST ({breakdown.igstPercentage}%)</div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
+            <div className="rounded-lg border bg-card overflow-x-auto">
+              <table className="min-w-full">
+                <thead className="border-b bg-muted/30">
+                  <tr>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase">GST %</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase">Taxable Amount</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase">CGST %</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase">CGST Amount</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase">SGST %</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase">SGST Amount</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase">IGST %</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase">IGST Amount</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase">Total GST</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {invoice.gstBreakdown.map((breakdown, idx) => (
+                    <tr key={breakdown.id || idx} className="hover:bg-muted/30">
+                      <td className="px-3 py-3 text-sm">{breakdown.gstPercentage}%</td>
+                      <td className="px-3 py-3 text-sm">₹{breakdown.taxableAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                      <td className="px-3 py-3 text-sm">{breakdown.cgstPercentage || 0}%</td>
+                      <td className="px-3 py-3 text-sm">₹{(breakdown.cgstAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                      <td className="px-3 py-3 text-sm">{breakdown.sgstPercentage || 0}%</td>
+                      <td className="px-3 py-3 text-sm">₹{(breakdown.sgstAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                      <td className="px-3 py-3 text-sm">{breakdown.igstPercentage || 0}%</td>
+                      <td className="px-3 py-3 text-sm">₹{(breakdown.igstAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                      <td className="px-3 py-3 text-sm font-medium">₹{breakdown.totalGstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         )}

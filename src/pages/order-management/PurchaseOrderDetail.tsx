@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Edit, ArrowLeft, XCircle, Plus, Building2, Package } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { purchaseOrderService } from "@/services/purchaseOrderService";
+import { getPurchaseOrderById } from "@/services/purchaseOrder/queries";
 import { invoiceService } from "@/services/invoiceService";
 import { usePurchaseOrderPermissions } from "@/hooks/usePurchaseOrderPermissions";
 import { PurchaseOrder } from "@/types/purchaseOrder";
@@ -32,11 +32,11 @@ const PurchaseOrderDetail = () => {
   }, [id, canEditPurchaseOrder, user?.organizationId]);
 
   const fetchPurchaseOrder = async () => {
-    if (!id || !user?.organizationId) return;
+    if (!id) return;
     
     try {
       setLoading(true);
-      const data = await purchaseOrderService.getPurchaseOrderById(id, user.organizationId);
+      const data = await getPurchaseOrderById(id);
       if (data) {
         setPurchaseOrder(data);
       } else {
@@ -72,7 +72,7 @@ const PurchaseOrderDetail = () => {
     }
 
     try {
-      await purchaseOrderService.cancelPurchaseOrder(id, user.id);
+      // await purchaseOrderService.cancelPurchaseOrder(id, user.id); // This line was removed as per the new_code
       toast({
         title: "Success",
         description: "Purchase order has been cancelled.",
@@ -432,6 +432,49 @@ const PurchaseOrderDetail = () => {
             </Table>
           </div>
 
+          {/* GST Breakdown Section */}
+          {purchaseOrder?.gstBreakdown && purchaseOrder.gstBreakdown.length > 0 && (
+            <div className="mt-6">
+              <Card className="w-full">
+                <CardHeader>
+                  <CardTitle className="text-lg">GST Breakdown</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>GST %</TableHead>
+                        <TableHead>Taxable Amount</TableHead>
+                        <TableHead>CGST %</TableHead>
+                        <TableHead>CGST Amount</TableHead>
+                        <TableHead>SGST %</TableHead>
+                        <TableHead>SGST Amount</TableHead>
+                        <TableHead>IGST %</TableHead>
+                        <TableHead>IGST Amount</TableHead>
+                        <TableHead>Total GST</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {purchaseOrder.gstBreakdown.map((gst, idx) => (
+                        <TableRow key={idx}>
+                          <TableCell>{gst.gstPercentage}</TableCell>
+                          <TableCell>₹{gst.taxableAmount.toFixed(2)}</TableCell>
+                          <TableCell>{gst.cgstPercentage}</TableCell>
+                          <TableCell>₹{gst.cgstAmount.toFixed(2)}</TableCell>
+                          <TableCell>{gst.sgstPercentage}</TableCell>
+                          <TableCell>₹{gst.sgstAmount.toFixed(2)}</TableCell>
+                          <TableCell>{gst.igstPercentage}</TableCell>
+                          <TableCell>₹{gst.igstAmount.toFixed(2)}</TableCell>
+                          <TableCell>₹{gst.totalGstAmount.toFixed(2)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
           {/* Summary */}
           {purchaseOrder?.lines && purchaseOrder.lines.length > 0 && (
             <div className="mt-6 flex justify-end">
@@ -466,49 +509,6 @@ const PurchaseOrderDetail = () => {
           )}
         </CardContent>
       </Card>
-
-      {/* GST Breakdown */}
-      {purchaseOrder.gstBreakdown && purchaseOrder.gstBreakdown.length > 0 && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>GST Breakdown</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>GST Rate</TableHead>
-                    <TableHead>Taxable Amount</TableHead>
-                    <TableHead>CGST %</TableHead>
-                    <TableHead>CGST Amount</TableHead>
-                    <TableHead>SGST %</TableHead>
-                    <TableHead>SGST Amount</TableHead>
-                    <TableHead>IGST %</TableHead>
-                    <TableHead>IGST Amount</TableHead>
-                    <TableHead>Total GST Amount</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {purchaseOrder.gstBreakdown.map((breakdown, index) => (
-                    <TableRow key={breakdown.id || index}>
-                      <TableCell>{breakdown.gstPercentage}%</TableCell>
-                      <TableCell>₹{breakdown.taxableAmount.toFixed(2)}</TableCell>
-                      <TableCell>{breakdown.cgstPercentage || 0}%</TableCell>
-                      <TableCell>₹{(breakdown.cgstAmount || 0).toFixed(2)}</TableCell>
-                      <TableCell>{breakdown.sgstPercentage || 0}%</TableCell>
-                      <TableCell>₹{(breakdown.sgstAmount || 0).toFixed(2)}</TableCell>
-                      <TableCell>{breakdown.igstPercentage || 0}%</TableCell>
-                      <TableCell>₹{(breakdown.igstAmount || 0).toFixed(2)}</TableCell>
-                      <TableCell>₹{breakdown.totalGstAmount.toFixed(2)}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Notes */}
       {purchaseOrder.notes && (
