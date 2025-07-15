@@ -54,6 +54,7 @@ export async function getAllPurchaseOrders(organizationId: string): Promise<Purc
     shipToPostalCode: po.ship_to_postal_code,
     shipToCity: po.ship_to_city,
     shipToState: po.ship_to_state,
+    shipToStateCode: po.ship_to_state_code,
     shipToCountry: po.ship_to_country,
     shipToPhone: po.ship_to_phone,
     shipToEmail: po.ship_to_email,
@@ -95,7 +96,8 @@ export async function getPurchaseOrderById(id: string): Promise<PurchaseOrder | 
             sub_classification
           )
         )
-      )
+      ),
+      purchase_order_gst_breakdown (*)
     `)
     .eq('id', id)
     .single();
@@ -137,6 +139,7 @@ export async function getPurchaseOrderById(id: string): Promise<PurchaseOrder | 
     shipToPostalCode: data.ship_to_postal_code,
     shipToCity: data.ship_to_city,
     shipToState: data.ship_to_state,
+    shipToStateCode: data.ship_to_state_code,
     shipToCountry: data.ship_to_country,
     shipToPhone: data.ship_to_phone,
     shipToEmail: data.ship_to_email,
@@ -152,6 +155,34 @@ export async function getPurchaseOrderById(id: string): Promise<PurchaseOrder | 
     division: data.division,
     supplier: data.supplier,
     poType: data.po_type,
+    // Bill To fields
+    billToOrgId: data.bill_to_org_id,
+    billToName: data.bill_to_name,
+    billToAddress1: data.bill_to_address1,
+    billToAddress2: data.bill_to_address2,
+    billToCity: data.bill_to_city,
+    billToState: data.bill_to_state,
+    billToStateCode: data.bill_to_state_code,
+    billToCountry: data.bill_to_country,
+    billToPostalCode: data.bill_to_postal_code,
+    billToEmail: data.bill_to_email,
+    billToPhone: data.bill_to_phone,
+    billToGstin: data.bill_to_gstin,
+    billToCin: data.bill_to_cin,
+    // Remit To fields
+    remitToOrgId: data.remit_to_org_id,
+    remitToName: data.remit_to_name,
+    remitToAddress1: data.remit_to_address1,
+    remitToAddress2: data.remit_to_address2,
+    remitToCity: data.remit_to_city,
+    remitToState: data.remit_to_state,
+    remitToStateCode: data.remit_to_state_code,
+    remitToCountry: data.remit_to_country,
+    remitToPostalCode: data.remit_to_postal_code,
+    remitToEmail: data.remit_to_email,
+    remitToPhone: data.remit_to_phone,
+    remitToGstin: data.remit_to_gstin,
+    remitToCin: data.remit_to_cin,
     lines: data.purchase_order_line?.map((line: any) => ({
       id: line.id,
       purchaseOrderId: line.purchase_order_id,
@@ -178,6 +209,19 @@ export async function getPurchaseOrderById(id: string): Promise<PurchaseOrder | 
         itemGroupId: line.items.item_group_id,
         itemGroup: line.items.item_groups
       } : undefined
+    })) || [],
+    gstBreakdown: data.purchase_order_gst_breakdown?.map((breakdown: any) => ({
+      id: breakdown.id,
+      purchaseOrderId: breakdown.purchase_order_id,
+      gstPercentage: breakdown.gst_percentage,
+      taxableAmount: breakdown.taxable_amount,
+      cgstPercentage: breakdown.cgst_percentage,
+      cgstAmount: breakdown.cgst_amount,
+      sgstPercentage: breakdown.sgst_percentage,
+      sgstAmount: breakdown.sgst_amount,
+      igstPercentage: breakdown.igst_percentage,
+      igstAmount: breakdown.igst_amount,
+      totalGstAmount: breakdown.total_gst_amount
     })) || []
   };
 }
@@ -289,24 +333,3 @@ export async function getDivisionShippingAddress(divisionId: string): Promise<an
   }
 }
 
-// Add function to get supplier state code
-export async function getSupplierStateCode(supplierId: string): Promise<number | null> {
-  try {
-    const { data: contact, error } = await supabase
-      .from('organization_contacts')  
-      .select('state_code')
-      .eq('organization_id', supplierId)
-      .eq('contact_type', 'Registered location')
-      .single();
-
-    if (error) {
-      console.error('Error fetching supplier registered location contact:', error);
-      return null;
-    }
-
-    return contact?.state_code || null;
-  } catch (error) {
-    console.error('Error in getSupplierStateCode:', error);
-    return null;
-  }
-}

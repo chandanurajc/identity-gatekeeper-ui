@@ -1,7 +1,37 @@
 import { supabase } from "@/integrations/supabase/client";
-import { PurchaseOrder, PurchaseOrderFormData } from "@/types/purchaseOrder";
+import { PurchaseOrder, PurchaseOrderFormData, PurchaseOrderLine, PurchaseOrderGSTBreakdown } from "@/types/purchaseOrder";
 import { getUserNameById } from "@/lib/userUtils";
-import { getSupplierStateCode } from './queries';
+
+const calculateGSTBreakdown = (lines: PurchaseOrderLine[], billToStateCode?: number, remitToStateCode?: number): PurchaseOrderGSTBreakdown[] => {
+  const gstGroups = new Map<number, { taxableAmount: number; gstValue: number }>();
+  
+  lines.forEach(line => {
+    const existing = gstGroups.get(line.gstPercent) || { taxableAmount: 0, gstValue: 0 };
+    gstGroups.set(line.gstPercent, {
+      taxableAmount: existing.taxableAmount + line.totalUnitPrice,
+      gstValue: existing.gstValue + line.gstValue
+    });
+  });
+
+  const breakdown: PurchaseOrderGSTBreakdown[] = [];
+  gstGroups.forEach((value, gstPercentage) => {
+    const isSameState = billToStateCode === remitToStateCode;
+    
+    breakdown.push({
+      gstPercentage,
+      taxableAmount: value.taxableAmount,
+      cgstPercentage: isSameState ? gstPercentage / 2 : 0,
+      cgstAmount: isSameState ? value.gstValue / 2 : 0,
+      sgstPercentage: isSameState ? gstPercentage / 2 : 0,
+      sgstAmount: isSameState ? value.gstValue / 2 : 0,
+      igstPercentage: isSameState ? 0 : gstPercentage,
+      igstAmount: isSameState ? 0 : value.gstValue,
+      totalGstAmount: value.gstValue
+    });
+  });
+
+  return breakdown;
+};
 
 export async function createPurchaseOrder(formData: PurchaseOrderFormData, organizationId: string, userId: string): Promise<PurchaseOrder> {
   const poDate = formData.poDate;
@@ -10,12 +40,6 @@ export async function createPurchaseOrder(formData: PurchaseOrderFormData, organ
   }
   
   const createdByUsername = await getUserNameById(userId);
-
-  // Get supplier state code
-  let supplierStateCode = null;
-  if (formData.supplierId) {
-    supplierStateCode = await getSupplierStateCode(formData.supplierId);
-  }
 
   const poHeader = {
     po_number: formData.poNumber,
@@ -35,10 +59,37 @@ export async function createPurchaseOrder(formData: PurchaseOrderFormData, organ
     payment_terms: formData.paymentTerms,
     notes: formData.notes,
     tracking_number: formData.trackingNumber,
-    supplier_state_code: supplierStateCode,
     organization_id: organizationId,
     created_by: createdByUsername,
-    po_type: formData.poType as "Consumables" | "Assets" | "Finished goods" | "Raw materials" | null
+    po_type: formData.poType as "Consumables" | "Assets" | "Finished goods" | "Raw materials" | null,
+    // Bill To fields
+    bill_to_org_id: formData.billToOrgId || null,
+    bill_to_name: formData.billToName || null,
+    bill_to_address1: formData.billToAddress1 || null,
+    bill_to_address2: formData.billToAddress2 || null,
+    bill_to_city: formData.billToCity || null,
+    bill_to_state: formData.billToState || null,
+    bill_to_state_code: formData.billToStateCode || null,
+    bill_to_country: formData.billToCountry || null,
+    bill_to_postal_code: formData.billToPostalCode || null,
+    bill_to_email: formData.billToEmail || null,
+    bill_to_phone: formData.billToPhone || null,
+    bill_to_gstin: formData.billToGstin || null,
+    bill_to_cin: formData.billToCin || null,
+    // Remit To fields
+    remit_to_org_id: formData.remitToOrgId || null,
+    remit_to_name: formData.remitToName || null,
+    remit_to_address1: formData.remitToAddress1 || null,
+    remit_to_address2: formData.remitToAddress2 || null,
+    remit_to_city: formData.remitToCity || null,
+    remit_to_state: formData.remitToState || null,
+    remit_to_state_code: formData.remitToStateCode || null,
+    remit_to_country: formData.remitToCountry || null,
+    remit_to_postal_code: formData.remitToPostalCode || null,
+    remit_to_email: formData.remitToEmail || null,
+    remit_to_phone: formData.remitToPhone || null,
+    remit_to_gstin: formData.remitToGstin || null,
+    remit_to_cin: formData.remitToCin || null
   };
 
   const { data: poData, error: poError } = await supabase
@@ -118,6 +169,32 @@ export async function createPurchaseOrder(formData: PurchaseOrderFormData, organ
       console.error("[PO] Error creating purchase order lines:", lineError);
       // Note: This leaves an orphaned PO header. A transaction would be ideal here.
       throw new Error(`Failed to create purchase order lines: ${lineError.message}`);
+    }
+
+    // Calculate and save GST breakdown
+    const gstBreakdown = calculateGSTBreakdown(formData.lines, formData.billToStateCode, formData.remitToStateCode);
+    if (gstBreakdown.length > 0) {
+      const gstBreakdownData = gstBreakdown.map(breakdown => ({
+        purchase_order_id: poData.id,
+        gst_percentage: breakdown.gstPercentage,
+        taxable_amount: breakdown.taxableAmount,
+        cgst_percentage: breakdown.cgstPercentage || 0,
+        cgst_amount: breakdown.cgstAmount || 0,
+        sgst_percentage: breakdown.sgstPercentage || 0,
+        sgst_amount: breakdown.sgstAmount || 0,
+        igst_percentage: breakdown.igstPercentage || 0,
+        igst_amount: breakdown.igstAmount || 0,
+        total_gst_amount: breakdown.totalGstAmount
+      }));
+
+      const { error: gstError } = await supabase
+        .from('purchase_order_gst_breakdown')
+        .insert(gstBreakdownData);
+
+      if (gstError) {
+        console.error("[PO] Error creating GST breakdown:", gstError);
+        throw new Error(`Failed to create GST breakdown: ${gstError.message}`);
+      }
     }
   }
 

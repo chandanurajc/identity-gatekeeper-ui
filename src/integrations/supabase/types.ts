@@ -1667,7 +1667,6 @@ export type Database = {
           ship_to_state_code: number | null
           status: string
           supplier_id: string | null
-          supplier_state_code: number | null
           tracking_number: string | null
           updated_by: string | null
           updated_on: string | null
@@ -1721,7 +1720,6 @@ export type Database = {
           ship_to_state_code?: number | null
           status?: string
           supplier_id?: string | null
-          supplier_state_code?: number | null
           tracking_number?: string | null
           updated_by?: string | null
           updated_on?: string | null
@@ -1775,7 +1773,6 @@ export type Database = {
           ship_to_state_code?: number | null
           status?: string
           supplier_id?: string | null
-          supplier_state_code?: number | null
           tracking_number?: string | null
           updated_by?: string | null
           updated_on?: string | null
@@ -1836,13 +1833,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "purchase_order_supplier_state_code_fkey"
-            columns: ["supplier_state_code"]
-            isOneToOne: false
-            referencedRelation: "india_state_code"
-            referencedColumns: ["state_code"]
           },
         ]
       }
