@@ -9,17 +9,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { PurchaseOrderFormData, PurchaseOrderLine, ShippingAddress } from "@/types/purchaseOrder";
+import { PurchaseOrderFormData, PurchaseOrderLine, ShippingAddress, PurchaseOrderGSTBreakdown } from "@/types/purchaseOrder";
 import { divisionService } from "@/services/divisionService";
 import { itemService } from "@/services/itemService";
+import { organizationService } from "@/services/organizationService";
+import { partnerSupplierService } from "@/services/partnerSupplierService";
 import { generatePONumber, getDivisionShippingAddress } from "@/services/purchaseOrder/queries";
 import { useMultiTenant } from "@/hooks/useMultiTenant";
 import { useAuth } from "@/context/AuthContext";
 import { Division } from "@/types/division";
 import { Item } from "@/types/item";
+import { Organization } from "@/types/organization";
 import ShipToAddressSection from "./ShipToAddressSection";
 import PurchaseOrderLinesSection from "./PurchaseOrderLinesSection";
 import SupplierSelect from "./SupplierSelect";
+import { Building2, Package } from "lucide-react";
 import {
   Form,
   FormControl,
@@ -32,6 +36,36 @@ import {
 // --- UI Clean: helper styles for lean form ---
 const sectionTitleClass = "text-base font-semibold text-muted-foreground tracking-tight mb-1";
 const formGridClass = "grid grid-cols-1 md:grid-cols-3 gap-4";
+
+interface BillToInfo {
+  name: string;
+  address1: string;
+  address2: string;
+  city: string;
+  state: string;
+  stateCode: number | null;
+  country: string;
+  postalCode: string;
+  email: string;
+  phone: string;
+  gstin: string;
+  cin: string;
+}
+
+interface RemitToInfo {
+  name: string;
+  address1: string;
+  address2: string;
+  city: string;
+  state: string;
+  stateCode: number | null;
+  country: string;
+  postalCode: string;
+  email: string;
+  phone: string;
+  gstin: string;
+  cin: string;
+}
 
 interface PurchaseOrderFormProps {
   initialData?: PurchaseOrderFormData;
@@ -54,6 +88,9 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
   const [items, setItems] = useState<Item[]>([]);
   const [filteredItems, setFilteredItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(false);
+  const [billToInfo, setBillToInfo] = useState<BillToInfo | null>(null);
+  const [remitToInfo, setRemitToInfo] = useState<RemitToInfo | null>(null);
+  const [suppliers, setSuppliers] = useState<Organization[]>([]);
 
   const defaultFormData: PurchaseOrderFormData = {
     poNumber: "",
@@ -102,6 +139,27 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
       generatePONumberAsync();
     }
   }, [isEdit]);
+
+  // Load division Bill To info when division changes
+  useEffect(() => {
+    if (watchedDivisionId) {
+      loadDivisionBillToInfo(watchedDivisionId);
+    }
+  }, [watchedDivisionId]);
+
+  // Load supplier Remit To info when supplier changes
+  useEffect(() => {
+    if (watchedSupplierId) {
+      loadSupplierRemitToInfo(watchedSupplierId);
+    }
+  }, [watchedSupplierId]);
+
+  // Load suppliers data
+  useEffect(() => {
+    if (currentOrganization?.id) {
+      loadSuppliers();
+    }
+  }, [currentOrganization?.id]);
 
   const resetShippingFields = () => {
     setValue("shipToAddress1", "");
@@ -188,6 +246,114 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
     setFilteredItems(filtered);
   };
 
+  const loadSuppliers = async () => {
+    if (!currentOrganization?.id) return;
+    try {
+      const suppliersData = await partnerSupplierService.getPartnerSuppliers(currentOrganization.id);
+      setSuppliers(suppliersData);
+    } catch (error) {
+      console.error("Error loading suppliers:", error);
+    }
+  };
+
+  const loadDivisionBillToInfo = async (divisionId: string) => {
+    try {
+      const division = await divisionService.getDivisionById(divisionId);
+      if (division) {
+        const billToContact = division.contacts?.find(c => c.type === 'Bill To' || c.type === 'Registered location');
+        const gstinRef = division.references?.find(r => r.type === 'GST');
+        const cinRef = division.references?.find(r => r.type === 'CIN');
+        
+        if (billToContact) {
+          setBillToInfo({
+            name: `${billToContact.firstName} ${billToContact.lastName || ''}`.trim(),
+            address1: billToContact.address1 || '',
+            address2: billToContact.address2 || '',
+            city: billToContact.city || '',
+            state: billToContact.state || '',
+            stateCode: billToContact.stateCode || null,
+            country: billToContact.country || '',
+            postalCode: billToContact.postalCode || '',
+            email: billToContact.email || '',
+            phone: billToContact.phoneNumber || '',
+            gstin: gstinRef?.value || '',
+            cin: cinRef?.value || ''
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error loading division Bill To info:", error);
+    }
+  };
+
+  const loadSupplierRemitToInfo = async (supplierId: string) => {
+    try {
+      const organization = await organizationService.getOrganizationById(supplierId);
+      if (organization) {
+        const remitToContact = organization.contacts?.find(c => c.type === 'Remit To' || c.type === 'Registered location');
+        const gstinRef = organization.references?.find(r => r.type === 'GST');
+        const cinRef = organization.references?.find(r => r.type === 'CIN');
+        
+        if (remitToContact) {
+          setRemitToInfo({
+            name: `${remitToContact.firstName} ${remitToContact.lastName || ''}`.trim(),
+            address1: remitToContact.address1 || '',
+            address2: remitToContact.address2 || '',
+            city: remitToContact.city || '',
+            state: remitToContact.state || '',
+            stateCode: remitToContact.stateCode || null,
+            country: remitToContact.country || '',
+            postalCode: remitToContact.postalCode || '',
+            email: remitToContact.email || '',
+            phone: remitToContact.phoneNumber || '',
+            gstin: gstinRef?.value || '',
+            cin: cinRef?.value || ''
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error loading supplier Remit To info:", error);
+    }
+  };
+
+  const calculateGSTBreakdown = (): PurchaseOrderGSTBreakdown[] => {
+    const lines = watchedLines || [];
+    const gstGroups = new Map<number, { taxableAmount: number; gstValue: number }>();
+    
+    lines.forEach(line => {
+      const existing = gstGroups.get(line.gstPercent) || { taxableAmount: 0, gstValue: 0 };
+      gstGroups.set(line.gstPercent, {
+        taxableAmount: existing.taxableAmount + line.totalUnitPrice,
+        gstValue: existing.gstValue + line.gstValue
+      });
+    });
+
+    const breakdown: PurchaseOrderGSTBreakdown[] = [];
+    gstGroups.forEach((value, gstPercentage) => {
+      const isSameState = billToInfo?.stateCode === remitToInfo?.stateCode;
+      
+      breakdown.push({
+        gstPercentage,
+        taxableAmount: value.taxableAmount,
+        cgstAmount: isSameState ? value.gstValue / 2 : 0,
+        sgstAmount: isSameState ? value.gstValue / 2 : 0,
+        igstAmount: isSameState ? 0 : value.gstValue,
+        totalGstAmount: value.gstValue
+      });
+    });
+
+    return breakdown;
+  };
+
+  const calculateTotals = () => {
+    const lines = watchedLines || [];
+    const subtotal = lines.reduce((sum, line) => sum + line.totalUnitPrice, 0);
+    const totalGst = lines.reduce((sum, line) => sum + line.gstValue, 0);
+    const total = subtotal + totalGst;
+    
+    return { subtotal, totalGst, total };
+  };
+
   const addPOLine = () => {
     const newLineNumber = fields.length + 1;
     const newLine: PurchaseOrderLine = {
@@ -255,10 +421,41 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
   };
 
   const onFormSubmit = async (data: PurchaseOrderFormData) => {
-    console.log("Submitting PO Form Data:", JSON.stringify(data, null, 2));
+    // Merge Bill To and Remit To info into form data
+    const mergedData = {
+      ...data,
+      billToOrgId: currentOrganization?.id,
+      billToName: billToInfo?.name || '',
+      billToAddress1: billToInfo?.address1 || '',
+      billToAddress2: billToInfo?.address2 || '',
+      billToCity: billToInfo?.city || '',
+      billToState: billToInfo?.state || '',
+      billToStateCode: billToInfo?.stateCode || null,
+      billToCountry: billToInfo?.country || '',
+      billToPostalCode: billToInfo?.postalCode || '',
+      billToEmail: billToInfo?.email || '',
+      billToPhone: billToInfo?.phone || '',
+      billToGstin: billToInfo?.gstin || '',
+      billToCin: billToInfo?.cin || '',
+      remitToOrgId: data.supplierId,
+      remitToName: remitToInfo?.name || '',
+      remitToAddress1: remitToInfo?.address1 || '',
+      remitToAddress2: remitToInfo?.address2 || '',
+      remitToCity: remitToInfo?.city || '',
+      remitToState: remitToInfo?.state || '',
+      remitToStateCode: remitToInfo?.stateCode || null,
+      remitToCountry: remitToInfo?.country || '',
+      remitToPostalCode: remitToInfo?.postalCode || '',
+      remitToEmail: remitToInfo?.email || '',
+      remitToPhone: remitToInfo?.phone || '',
+      remitToGstin: remitToInfo?.gstin || '',
+      remitToCin: remitToInfo?.cin || ''
+    };
+
+    console.log("Submitting PO Form Data:", JSON.stringify(mergedData, null, 2));
     setLoading(true);
     try {
-      await onSubmit(data);
+      await onSubmit(mergedData);
     } catch (error) {
       // error handling is outside for clarity/UI
     } finally {
@@ -404,6 +601,64 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
               />
             </div>
           </section>
+
+          {/* Parties Information */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Bill To */}
+            <div className="space-y-3">
+              <h3 className="font-semibold flex items-center gap-2">
+                <Building2 className="h-4 w-4" />
+                Bill To
+              </h3>
+              <div className="p-4 rounded-lg border bg-card space-y-2 text-sm">
+                {billToInfo ? (
+                  <>
+                    <div className="font-medium">{billToInfo.name}</div>
+                    <div>{billToInfo.address1}</div>
+                    {billToInfo.address2 && <div>{billToInfo.address2}</div>}
+                    <div>
+                      {[billToInfo.city, billToInfo.state, billToInfo.postalCode].filter(Boolean).join(', ')}
+                    </div>
+                    <div>{billToInfo.country}</div>
+                    {billToInfo.email && <div className="text-muted-foreground">{billToInfo.email}</div>}
+                    {billToInfo.phone && <div className="text-muted-foreground">{billToInfo.phone}</div>}
+                    {billToInfo.gstin && <div className="text-xs text-muted-foreground">GSTIN: {billToInfo.gstin}</div>}
+                    {billToInfo.cin && <div className="text-xs text-muted-foreground">CIN: {billToInfo.cin}</div>}
+                  </>
+                ) : (
+                  <div className="text-muted-foreground">Select a division to load Bill To information</div>
+                )}
+              </div>
+            </div>
+
+            {/* Remit To */}
+            <div className="space-y-3">
+              <h3 className="font-semibold flex items-center gap-2">
+                <Building2 className="h-4 w-4" />
+                Remit To
+              </h3>
+              <div className="p-4 rounded-lg border bg-card space-y-2 text-sm">
+                {remitToInfo ? (
+                  <>
+                    <div className="font-medium">{remitToInfo.name}</div>
+                    <div>{remitToInfo.address1}</div>
+                    {remitToInfo.address2 && <div>{remitToInfo.address2}</div>}
+                    <div>
+                      {[remitToInfo.city, remitToInfo.state, remitToInfo.postalCode].filter(Boolean).join(', ')}
+                    </div>
+                    <div>{remitToInfo.country}</div>
+                    {remitToInfo.email && <div className="text-muted-foreground">{remitToInfo.email}</div>}
+                    {remitToInfo.phone && <div className="text-muted-foreground">{remitToInfo.phone}</div>}
+                    {remitToInfo.gstin && <div className="text-xs text-muted-foreground">GSTIN: {remitToInfo.gstin}</div>}
+                    {remitToInfo.cin && <div className="text-xs text-muted-foreground">CIN: {remitToInfo.cin}</div>}
+                  </>
+                ) : (
+                  <div className="text-muted-foreground">Select a supplier to load Remit To information</div>
+                )}
+              </div>
+            </div>
+          </div>
+
           {/* Ship to Address section */}
           <ShipToAddressSection
             control={control}
@@ -429,6 +684,77 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
             errors={errors}
             addPOLine={addPOLine}
           />
+
+          {/* GST Breakdown */}
+          {watchedLines && watchedLines.length > 0 && (
+            <div className="space-y-3">
+              <h3 className="font-semibold flex items-center gap-2">
+                <Package className="h-4 w-4" />
+                GST Breakdown
+              </h3>
+              <div className="rounded-lg border bg-card">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full">
+                    <thead className="border-b bg-muted/30">
+                      <tr>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase">GST %</th>
+                        <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground uppercase">Taxable Amount</th>
+                        <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground uppercase">CGST</th>
+                        <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground uppercase">SGST</th>
+                        <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground uppercase">IGST</th>
+                        <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground uppercase">Total GST</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {calculateGSTBreakdown().map((breakdown, index) => (
+                        <tr key={index} className="hover:bg-muted/30">
+                          <td className="px-3 py-3 text-sm font-medium">{breakdown.gstPercentage}%</td>
+                          <td className="px-3 py-3 text-sm text-right">
+                            ₹{breakdown.taxableAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                          </td>
+                          <td className="px-3 py-3 text-sm text-right">
+                            ₹{breakdown.cgstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                          </td>
+                          <td className="px-3 py-3 text-sm text-right">
+                            ₹{breakdown.sgstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                          </td>
+                          <td className="px-3 py-3 text-sm text-right">
+                            ₹{breakdown.igstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                          </td>
+                          <td className="px-3 py-3 text-sm text-right font-medium">
+                            ₹{breakdown.totalGstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                
+                {/* Summary */}
+                <div className="border-t p-4">
+                  <div className="flex justify-end">
+                    <div className="w-80 space-y-2">
+                      <div className="flex justify-between">
+                        <span>Item Total:</span>
+                        <span>₹{calculateTotals().subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Total GST:</span>
+                        <span>₹{calculateTotals().totalGst.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                      </div>
+                      <div className="border-t pt-2">
+                        <div className="flex justify-between font-semibold text-lg">
+                          <span>Grand Total:</span>
+                          <span>₹{calculateTotals().total.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Notes */}
           <section className="bg-transparent">
             <h2 className={sectionTitleClass}>Additional Information</h2>

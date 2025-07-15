@@ -30,6 +30,36 @@ export interface PurchaseOrder {
   updatedBy?: string;
   updatedOn?: Date;
   
+  // Bill To fields
+  billToOrgId?: string;
+  billToName?: string;
+  billToAddress1?: string;
+  billToAddress2?: string;
+  billToCity?: string;
+  billToState?: string;
+  billToStateCode?: number;
+  billToCountry?: string;
+  billToPostalCode?: string;
+  billToEmail?: string;
+  billToPhone?: string;
+  billToGstin?: string;
+  billToCin?: string;
+  
+  // Remit To fields
+  remitToOrgId?: string;
+  remitToName?: string;
+  remitToAddress1?: string;
+  remitToAddress2?: string;
+  remitToCity?: string;
+  remitToState?: string;
+  remitToStateCode?: number;
+  remitToCountry?: string;
+  remitToPostalCode?: string;
+  remitToEmail?: string;
+  remitToPhone?: string;
+  remitToGstin?: string;
+  remitToCin?: string;
+  
   // Related data
   division?: {
     name: string;
@@ -38,6 +68,7 @@ export interface PurchaseOrder {
   supplier?: Partial<Organization>;
   organization?: Organization;
   lines?: PurchaseOrderLine[];
+  gstBreakdown?: PurchaseOrderGSTBreakdown[];
 }
 
 export interface PurchaseOrderLine {
@@ -99,7 +130,37 @@ export interface PurchaseOrderFormData {
   notes?: string;
   trackingNumber?: string;
   lines: PurchaseOrderLine[];
-  poType?: string; // <-- add this line
+  poType?: string;
+  
+  // Bill To fields
+  billToOrgId?: string;
+  billToName?: string;
+  billToAddress1?: string;
+  billToAddress2?: string;
+  billToCity?: string;
+  billToState?: string;
+  billToStateCode?: number;
+  billToCountry?: string;
+  billToPostalCode?: string;
+  billToEmail?: string;
+  billToPhone?: string;
+  billToGstin?: string;
+  billToCin?: string;
+  
+  // Remit To fields
+  remitToOrgId?: string;
+  remitToName?: string;
+  remitToAddress1?: string;
+  remitToAddress2?: string;
+  remitToCity?: string;
+  remitToState?: string;
+  remitToStateCode?: number;
+  remitToCountry?: string;
+  remitToPostalCode?: string;
+  remitToEmail?: string;
+  remitToPhone?: string;
+  remitToGstin?: string;
+  remitToCin?: string;
 }
 
 export interface ShippingAddress {
@@ -145,4 +206,18 @@ export interface POReceiveFormData {
     poDate: string;
     divisionName: string;
     lines: POReceiveLineData[];
+}
+
+export interface PurchaseOrderGSTBreakdown {
+  id?: string;
+  purchaseOrderId?: string;
+  gstPercentage: number;
+  taxableAmount: number;
+  cgstPercentage?: number;
+  cgstAmount?: number;
+  sgstPercentage?: number;
+  sgstAmount?: number;
+  igstPercentage?: number;
+  igstAmount?: number;
+  totalGstAmount: number;
 }

@@ -1619,6 +1619,19 @@ export type Database = {
       }
       purchase_order: {
         Row: {
+          bill_to_address1: string | null
+          bill_to_address2: string | null
+          bill_to_cin: string | null
+          bill_to_city: string | null
+          bill_to_country: string | null
+          bill_to_email: string | null
+          bill_to_gstin: string | null
+          bill_to_name: string | null
+          bill_to_org_id: string | null
+          bill_to_phone: string | null
+          bill_to_postal_code: string | null
+          bill_to_state: string | null
+          bill_to_state_code: number | null
           created_by: string
           created_on: string
           division_id: string | null
@@ -1629,6 +1642,19 @@ export type Database = {
           po_date: string
           po_number: string
           po_type: Database["public"]["Enums"]["po_type"] | null
+          remit_to_address1: string | null
+          remit_to_address2: string | null
+          remit_to_cin: string | null
+          remit_to_city: string | null
+          remit_to_country: string | null
+          remit_to_email: string | null
+          remit_to_gstin: string | null
+          remit_to_name: string | null
+          remit_to_org_id: string | null
+          remit_to_phone: string | null
+          remit_to_postal_code: string | null
+          remit_to_state: string | null
+          remit_to_state_code: number | null
           requested_delivery_date: string | null
           ship_to_address_1: string | null
           ship_to_address_2: string | null
@@ -1647,6 +1673,19 @@ export type Database = {
           updated_on: string | null
         }
         Insert: {
+          bill_to_address1?: string | null
+          bill_to_address2?: string | null
+          bill_to_cin?: string | null
+          bill_to_city?: string | null
+          bill_to_country?: string | null
+          bill_to_email?: string | null
+          bill_to_gstin?: string | null
+          bill_to_name?: string | null
+          bill_to_org_id?: string | null
+          bill_to_phone?: string | null
+          bill_to_postal_code?: string | null
+          bill_to_state?: string | null
+          bill_to_state_code?: number | null
           created_by: string
           created_on?: string
           division_id?: string | null
@@ -1657,6 +1696,19 @@ export type Database = {
           po_date?: string
           po_number: string
           po_type?: Database["public"]["Enums"]["po_type"] | null
+          remit_to_address1?: string | null
+          remit_to_address2?: string | null
+          remit_to_cin?: string | null
+          remit_to_city?: string | null
+          remit_to_country?: string | null
+          remit_to_email?: string | null
+          remit_to_gstin?: string | null
+          remit_to_name?: string | null
+          remit_to_org_id?: string | null
+          remit_to_phone?: string | null
+          remit_to_postal_code?: string | null
+          remit_to_state?: string | null
+          remit_to_state_code?: number | null
           requested_delivery_date?: string | null
           ship_to_address_1?: string | null
           ship_to_address_2?: string | null
@@ -1675,6 +1727,19 @@ export type Database = {
           updated_on?: string | null
         }
         Update: {
+          bill_to_address1?: string | null
+          bill_to_address2?: string | null
+          bill_to_cin?: string | null
+          bill_to_city?: string | null
+          bill_to_country?: string | null
+          bill_to_email?: string | null
+          bill_to_gstin?: string | null
+          bill_to_name?: string | null
+          bill_to_org_id?: string | null
+          bill_to_phone?: string | null
+          bill_to_postal_code?: string | null
+          bill_to_state?: string | null
+          bill_to_state_code?: number | null
           created_by?: string
           created_on?: string
           division_id?: string | null
@@ -1685,6 +1750,19 @@ export type Database = {
           po_date?: string
           po_number?: string
           po_type?: Database["public"]["Enums"]["po_type"] | null
+          remit_to_address1?: string | null
+          remit_to_address2?: string | null
+          remit_to_cin?: string | null
+          remit_to_city?: string | null
+          remit_to_country?: string | null
+          remit_to_email?: string | null
+          remit_to_gstin?: string | null
+          remit_to_name?: string | null
+          remit_to_org_id?: string | null
+          remit_to_phone?: string | null
+          remit_to_postal_code?: string | null
+          remit_to_state?: string | null
+          remit_to_state_code?: number | null
           requested_delivery_date?: string | null
           ship_to_address_1?: string | null
           ship_to_address_2?: string | null
@@ -1703,6 +1781,34 @@ export type Database = {
           updated_on?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_purchase_order_bill_to_org"
+            columns: ["bill_to_org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_purchase_order_bill_to_state_code"
+            columns: ["bill_to_state_code"]
+            isOneToOne: false
+            referencedRelation: "india_state_code"
+            referencedColumns: ["state_code"]
+          },
+          {
+            foreignKeyName: "fk_purchase_order_remit_to_org"
+            columns: ["remit_to_org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_purchase_order_remit_to_state_code"
+            columns: ["remit_to_state_code"]
+            isOneToOne: false
+            referencedRelation: "india_state_code"
+            referencedColumns: ["state_code"]
+          },
           {
             foreignKeyName: "purchase_order_division_id_fkey"
             columns: ["division_id"]
@@ -1737,6 +1843,56 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "india_state_code"
             referencedColumns: ["state_code"]
+          },
+        ]
+      }
+      purchase_order_gst_breakdown: {
+        Row: {
+          cgst_amount: number | null
+          cgst_percentage: number | null
+          gst_percentage: number
+          id: string
+          igst_amount: number | null
+          igst_percentage: number | null
+          purchase_order_id: string
+          sgst_amount: number | null
+          sgst_percentage: number | null
+          taxable_amount: number
+          total_gst_amount: number
+        }
+        Insert: {
+          cgst_amount?: number | null
+          cgst_percentage?: number | null
+          gst_percentage: number
+          id?: string
+          igst_amount?: number | null
+          igst_percentage?: number | null
+          purchase_order_id: string
+          sgst_amount?: number | null
+          sgst_percentage?: number | null
+          taxable_amount: number
+          total_gst_amount: number
+        }
+        Update: {
+          cgst_amount?: number | null
+          cgst_percentage?: number | null
+          gst_percentage?: number
+          id?: string
+          igst_amount?: number | null
+          igst_percentage?: number | null
+          purchase_order_id?: string
+          sgst_amount?: number | null
+          sgst_percentage?: number | null
+          taxable_amount?: number
+          total_gst_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_order_gst_breakdown_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_order"
+            referencedColumns: ["id"]
           },
         ]
       }

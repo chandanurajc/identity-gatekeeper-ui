@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Edit, ArrowLeft, XCircle, Plus } from "lucide-react";
+import { Edit, ArrowLeft, XCircle, Plus, Building2, Package } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { purchaseOrderService } from "@/services/purchaseOrderService";
 import { invoiceService } from "@/services/invoiceService";
@@ -268,7 +268,75 @@ const PurchaseOrderDetail = () => {
         </CardContent>
       </Card>
 
-      {/* Remove duplicate fields from below, keep only unique details */}
+      {/* Parties Information */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        {/* Bill To */}
+        <div className="space-y-3">
+          <h3 className="font-semibold flex items-center gap-2">
+            <Building2 className="h-4 w-4" />
+            Bill To
+          </h3>
+          <div className="p-4 rounded-lg border bg-card space-y-2 text-sm">
+            {purchaseOrder.billToName && <div className="font-medium">{purchaseOrder.billToName}</div>}
+            {purchaseOrder.billToAddress1 && <div>{purchaseOrder.billToAddress1}</div>}
+            {purchaseOrder.billToAddress2 && <div>{purchaseOrder.billToAddress2}</div>}
+            {(purchaseOrder.billToCity || purchaseOrder.billToState || purchaseOrder.billToPostalCode) && (
+              <div>
+                {[purchaseOrder.billToCity, purchaseOrder.billToState, purchaseOrder.billToPostalCode].filter(Boolean).join(', ')}
+              </div>
+            )}
+            {purchaseOrder.billToCountry && <div>{purchaseOrder.billToCountry}</div>}
+            {purchaseOrder.billToEmail && <div className="text-muted-foreground">{purchaseOrder.billToEmail}</div>}
+            {purchaseOrder.billToPhone && <div className="text-muted-foreground">{purchaseOrder.billToPhone}</div>}
+            {purchaseOrder.billToGstin && <div className="text-xs text-muted-foreground">GSTIN: {purchaseOrder.billToGstin}</div>}
+            {purchaseOrder.billToCin && <div className="text-xs text-muted-foreground">CIN: {purchaseOrder.billToCin}</div>}
+          </div>
+        </div>
+
+        {/* Remit To */}
+        <div className="space-y-3">
+          <h3 className="font-semibold flex items-center gap-2">
+            <Building2 className="h-4 w-4" />
+            Remit To
+          </h3>
+          <div className="p-4 rounded-lg border bg-card space-y-2 text-sm">
+            {purchaseOrder.remitToName && <div className="font-medium">{purchaseOrder.remitToName}</div>}
+            {purchaseOrder.remitToAddress1 && <div>{purchaseOrder.remitToAddress1}</div>}
+            {purchaseOrder.remitToAddress2 && <div>{purchaseOrder.remitToAddress2}</div>}
+            {(purchaseOrder.remitToCity || purchaseOrder.remitToState || purchaseOrder.remitToPostalCode) && (
+              <div>
+                {[purchaseOrder.remitToCity, purchaseOrder.remitToState, purchaseOrder.remitToPostalCode].filter(Boolean).join(', ')}
+              </div>
+            )}
+            {purchaseOrder.remitToCountry && <div>{purchaseOrder.remitToCountry}</div>}
+            {purchaseOrder.remitToEmail && <div className="text-muted-foreground">{purchaseOrder.remitToEmail}</div>}
+            {purchaseOrder.remitToPhone && <div className="text-muted-foreground">{purchaseOrder.remitToPhone}</div>}
+            {purchaseOrder.remitToGstin && <div className="text-xs text-muted-foreground">GSTIN: {purchaseOrder.remitToGstin}</div>}
+            {purchaseOrder.remitToCin && <div className="text-xs text-muted-foreground">CIN: {purchaseOrder.remitToCin}</div>}
+          </div>
+        </div>
+
+        {/* Ship To */}
+        <div className="space-y-3">
+          <h3 className="font-semibold flex items-center gap-2">
+            <Package className="h-4 w-4" />
+            Ship To
+          </h3>
+          <div className="p-4 rounded-lg border bg-card space-y-2 text-sm">
+            {purchaseOrder.shipToAddress1 && <div>{purchaseOrder.shipToAddress1}</div>}
+            {purchaseOrder.shipToAddress2 && <div>{purchaseOrder.shipToAddress2}</div>}
+            {(purchaseOrder.shipToCity || purchaseOrder.shipToState || purchaseOrder.shipToPostalCode) && (
+              <div>
+                {[purchaseOrder.shipToCity, purchaseOrder.shipToState, purchaseOrder.shipToPostalCode].filter(Boolean).join(', ')}
+              </div>
+            )}
+            {purchaseOrder.shipToCountry && <div>{purchaseOrder.shipToCountry}</div>}
+            {purchaseOrder.shipToPhone && <div className="text-muted-foreground">{purchaseOrder.shipToPhone}</div>}
+            {purchaseOrder.shipToEmail && <div className="text-muted-foreground">{purchaseOrder.shipToEmail}</div>}
+          </div>
+        </div>
+      </div>
+
       {/* Shipping Address */}
       <Card className="mb-6">
         <CardHeader>
