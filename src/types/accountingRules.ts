@@ -1,3 +1,4 @@
+
 export type RuleTransactionCategory = 'Invoice' | 'PO' | 'Payment';
 export type RuleAction = 'Invoice Approved' | 'PO Created' | 'Payment Processed' | 'Purchase order receive';
 export type PartyType = 'Bill To' | 'Remit To';
@@ -56,3 +57,23 @@ export interface AccountingRuleFormData {
   filterCriteria?: FilterCriteria[];
   status: 'Active' | 'Inactive';
 }
+
+// Define PO-specific amount sources
+export const PO_AMOUNT_SOURCES = [
+  'Total GST value',
+  'Total GST Value',
+  'sum of line',
+  'Total PO Value',
+  'Item total price',
+  'Total PO CGST',
+  'Total PO SGST',
+  'Total PO IGST'
+] as const;
+
+// Define general amount sources for other transaction types
+export const GENERAL_AMOUNT_SOURCES = [
+  'Total GST value',
+  'Total GST Value',
+  'sum of line',
+  'Item total price'
+] as const;

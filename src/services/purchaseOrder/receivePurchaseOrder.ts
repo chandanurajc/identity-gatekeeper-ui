@@ -21,7 +21,8 @@ export const receivePurchaseOrder = async (
     .from('purchase_order')
     .select(`
       *,
-      lines:purchase_order_line(*)
+      lines:purchase_order_line(*),
+      gstBreakdown:purchase_order_gst_breakdown(*)
     `)
     .eq('id', poId)
     .eq('organization_id', organizationId)
@@ -118,7 +119,8 @@ export const receivePurchaseOrder = async (
     .from('purchase_order')
     .select(`
       *,
-      lines:purchase_order_line(*)
+      lines:purchase_order_line(*),
+      gstBreakdown:purchase_order_gst_breakdown(*)
     `)
     .eq('id', poId)
     .single();
@@ -146,6 +148,7 @@ export const receivePurchaseOrder = async (
     .select(`
       *,
       lines:purchase_order_line(*),
+      gstBreakdown:purchase_order_gst_breakdown(*),
       supplier:organizations!supplier_id(*),
       division:divisions(*)
     `)
@@ -159,13 +162,17 @@ export const receivePurchaseOrder = async (
   // --- Auto Journal Posting Logic ---
   if (newStatus === 'Received') {
     try {
-      // 1. Fetch matching accounting rules
+      // 1. Fetch matching accounting rules - now filter by division as well
       const rules = await accountingRulesService.getAccountingRules(finalPO.organization_id);
       const matchingRules = rules.filter(rule =>
         rule.transactionCategory === 'PO' &&
         rule.triggeringAction === 'Purchase order receive' &&
-        rule.transactionType === finalPO.po_type
+        rule.transactionType === finalPO.po_type &&
+        // Filter by division if rule has division specified
+        (!rule.divisionId || rule.divisionId === finalPO.division_id)
       );
+
+      console.log(`[Auto Journal] Found ${matchingRules.length} matching rules for PO ${finalPO.po_number} in division ${finalPO.division?.name}`);
 
       for (const rule of matchingRules) {
         // Skip rules without lines
@@ -173,6 +180,14 @@ export const receivePurchaseOrder = async (
           console.warn(`[Auto Journal] No lines defined for rule ${rule.ruleName}, skipping`);
           continue;
         }
+
+        // Calculate GST breakdown totals for new amount sources
+        const gstBreakdown = finalPO.gstBreakdown || [];
+        const totalCGST = gstBreakdown.reduce((sum, breakdown) => sum + (breakdown.cgst_amount || 0), 0);
+        const totalSGST = gstBreakdown.reduce((sum, breakdown) => sum + (breakdown.sgst_amount || 0), 0);
+        const totalIGST = gstBreakdown.reduce((sum, breakdown) => sum + (breakdown.igst_amount || 0), 0);
+
+        console.log(`[Auto Journal] GST Breakdown - CGST: ${totalCGST}, SGST: ${totalSGST}, IGST: ${totalIGST}`);
 
         // Collect all journal lines for this rule
         const allJournalLines = [];
@@ -185,6 +200,12 @@ export const receivePurchaseOrder = async (
             amount = (finalPO.lines || []).reduce((sum, poLine) => sum + (poLine.line_total || 0), 0);
           } else if (line.amountSource === 'Item total price') {
             amount = (finalPO.lines || []).reduce((sum, poLine) => sum + (poLine.total_unit_price || 0), 0);
+          } else if (line.amountSource === 'Total PO CGST') {
+            amount = totalCGST;
+          } else if (line.amountSource === 'Total PO SGST') {
+            amount = totalSGST;
+          } else if (line.amountSource === 'Total PO IGST') {
+            amount = totalIGST;
           }
 
           // Safety checks
@@ -203,7 +224,7 @@ export const receivePurchaseOrder = async (
               accountCode: line.debitAccountCode,
               debitAmount: amount,
               creditAmount: null,
-              narration: `PO Receive - Debit - Line ${line.lineNumber}`,
+              narration: `PO Receive - Debit - Line ${line.lineNumber} - ${line.amountSource}`,
             });
           }
 
@@ -213,7 +234,7 @@ export const receivePurchaseOrder = async (
               accountCode: line.creditAccountCode,
               debitAmount: null,
               creditAmount: amount,
-              narration: `PO Receive - Credit - Line ${line.lineNumber}`,
+              narration: `PO Receive - Credit - Line ${line.lineNumber} - ${line.amountSource}`,
             });
           }
         }
