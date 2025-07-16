@@ -101,7 +101,7 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
   // Load active divisions for the current organization
   const { data: divisions = [] } = useQuery({
     queryKey: ["divisions", organizationId],
-    queryFn: () => organizationId ? divisionService.getDivisions(organizationId, { status: "Active" }) : Promise.resolve([]),
+    queryFn: () => organizationId ? divisionService.getDivisions(organizationId).then(divs => divs.filter(d => d.status === 'active')) : Promise.resolve([]),
     enabled: !!organizationId,
   });
 
@@ -257,7 +257,7 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
                         <SelectContent>
                           <SelectItem value="">None</SelectItem>
                           {divisions.map((div) => (
-                            <SelectItem key={div.id} value={div.id}>{div.divisionName}</SelectItem>
+                            <SelectItem key={div.id} value={div.id}>{div.name}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>

@@ -56,6 +56,7 @@ export type Database = {
         Row: {
           created_by: string
           created_on: string
+          division_id: string | null
           id: string
           organization_id: string
           rule_name: string
@@ -70,6 +71,7 @@ export type Database = {
         Insert: {
           created_by: string
           created_on?: string
+          division_id?: string | null
           id?: string
           organization_id: string
           rule_name: string
@@ -84,6 +86,7 @@ export type Database = {
         Update: {
           created_by?: string
           created_on?: string
+          division_id?: string | null
           id?: string
           organization_id?: string
           rule_name?: string
@@ -96,6 +99,13 @@ export type Database = {
           updated_on?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "accounting_rules_division_id_fkey"
+            columns: ["division_id"]
+            isOneToOne: false
+            referencedRelation: "divisions"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "accounting_rules_organization_id_fkey"
             columns: ["organization_id"]
