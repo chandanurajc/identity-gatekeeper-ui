@@ -1,9 +1,8 @@
-
 import React from "react";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
@@ -11,57 +10,44 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useMultiTenant } from "@/hooks/useMultiTenant";
 import { useAuth } from "@/context/AuthContext";
 import { accountingRulesService } from "@/services/accountingRulesService";
-import { divisionService } from "@/services/divisionService";
-import type { AccountingRuleFormData, RuleTransactionCategory, RuleAction, PO_AMOUNT_SOURCES, GENERAL_AMOUNT_SOURCES } from "@/types/accountingRules";
-import { Trash2, Plus } from "lucide-react";
+import { chartOfAccountsService } from "@/services/chartOfAccountsService";
+import type { AccountingRuleFormData, RuleTransactionCategory } from "@/types/accountingRules";
 
 const transactionCategories: RuleTransactionCategory[] = ['Invoice', 'PO', 'Payment'];
-const triggeringActions: RuleAction[] = ['Invoice Approved', 'PO Created', 'Payment Processed', 'Purchase order receive'];
-
-// Define amount sources based on transaction category
-const getAmountSourcesForTransactionCategory = (transactionCategory?: string) => {
-  if (transactionCategory === 'PO') {
-    return [
-      'Total GST value',
-      'Total GST Value', 
-      'sum of line',
-      'Total PO Value',
-      'Item total price',
-      'Total PO CGST',
-      'Total PO SGST', 
-      'Total PO IGST'
-    ];
-  }
-  
-  return [
-    'Total GST value',
-    'Total GST Value',
-    'sum of line', 
-    'Item total price'
-  ];
-};
+const triggeringActions = ['Invoice Approved', 'PO Created', 'Payment Processed', 'Purchase order receive'];
+const poAmountSourceOptions = [
+  'Item total price',
+  'Total GST Value',
+  'Total PO Value',
+];
+const amountSourceOptions = [
+  'Item total price',
+  'Total GST value',
+  'sum of line',
+  'Total item value',
+  'Total invoice value',
+];
 
 const formSchema = z.object({
   ruleName: z.string().min(1, "Rule name is required"),
-  divisionId: z.string().optional(),
   transactionCategory: z.enum(['Invoice', 'PO', 'Payment']),
+  triggeringAction: z.enum(['Invoice Approved', 'PO Created', 'Payment Processed', 'Purchase order receive']),
   transactionReference: z.string().min(1, "Transaction reference is required"),
   transactionType: z.string().optional(),
-  triggeringAction: z.enum(['Invoice Approved', 'PO Created', 'Payment Processed', 'Purchase order receive']),
-  status: z.enum(['Active', 'Inactive']),
   lines: z.array(z.object({
     lineNumber: z.number(),
     debitAccountCode: z.string().optional(),
     creditAccountCode: z.string().optional(),
     amountSource: z.string().min(1, "Amount source is required"),
-    enableSubledger: z.boolean(),
+    enableSubledger: z.boolean().default(false),
   })).min(1, "At least one line is required"),
+  status: z.enum(['Active', 'Inactive']).default('Active'),
 });
 
 interface AccountingRulesFormProps {
@@ -75,53 +61,36 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
   const { user } = useAuth();
   const { getCurrentOrganizationId } = useMultiTenant();
   const organizationId = getCurrentOrganizationId();
-  const queryClient = useQueryClient();
-
-  const [watchedTransactionType, setWatchedTransactionType] = useState<string>('');
 
   const form = useForm<AccountingRuleFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       ruleName: "",
-      divisionId: "",
-      transactionCategory: "PO",
+      transactionCategory: "Invoice",
+      triggeringAction: "Invoice Approved",
       transactionReference: "",
       transactionType: "",
-      triggeringAction: "PO Created",
+      lines: [{
+        lineNumber: 1,
+        debitAccountCode: undefined,
+        creditAccountCode: undefined,
+        amountSource: "",
+        enableSubledger: false,
+      }],
       status: "Active",
-      lines: [
-        {
-          lineNumber: 1,
-          debitAccountCode: "",
-          creditAccountCode: "",
-          amountSource: "",
-          enableSubledger: false,
-        },
-      ],
     },
   });
 
-  const { fields, append, remove } = useFieldArray({
-    control: form.control,
-    name: "lines",
-  });
-
-  // Watch transaction category to update amount source options
-  const transactionCategory = form.watch('transactionCategory');
-  React.useEffect(() => {
-    setWatchedTransactionType(transactionCategory || '');
-  }, [transactionCategory]);
-
-  // Fetch divisions
-  const { data: divisions = [], isLoading: divisionsLoading, error: divisionsError } = useQuery({
-    queryKey: ['divisions', organizationId],
-    queryFn: () => organizationId ? divisionService.getDivisions(organizationId) : Promise.resolve([]),
+  // Load chart of accounts for dropdowns
+  const { data: chartOfAccounts = [] } = useQuery({
+    queryKey: ['chart-of-accounts', organizationId],
+    queryFn: () => organizationId ? chartOfAccountsService.getChartOfAccounts(organizationId) : Promise.resolve([]),
     enabled: !!organizationId,
   });
 
   // Load existing rule for edit mode
   const { data: existingRule, isLoading } = useQuery({
-    queryKey: ['accountingRule', id],
+    queryKey: ['accounting-rule', id],
     queryFn: () => id && organizationId ? accountingRulesService.getAccountingRuleById(id, organizationId) : null,
     enabled: mode === 'edit' && !!id && !!organizationId,
   });
@@ -129,18 +98,21 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
   // Reset form when data loads
   React.useEffect(() => {
     if (existingRule) {
-      console.log('Resetting form with existing rule:', existingRule);
       form.reset({
         ruleName: existingRule.ruleName,
-        divisionId: existingRule.divisionId || "",
         transactionCategory: existingRule.transactionCategory,
+        triggeringAction: existingRule.triggeringAction,
         transactionReference: existingRule.transactionReference,
         transactionType: existingRule.transactionType || "",
-        triggeringAction: existingRule.triggeringAction,
+        lines: existingRule.lines.length > 0 ? existingRule.lines : [{
+          lineNumber: 1,
+          debitAccountCode: undefined,
+          creditAccountCode: undefined,
+          amountSource: "",
+          enableSubledger: false,
+        }],
         status: existingRule.status,
-        lines: existingRule.lines || [],
       });
-      setWatchedTransactionType(existingRule.transactionType || '');
     }
   }, [existingRule, form]);
 
@@ -148,7 +120,6 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
     mutationFn: (data: AccountingRuleFormData) =>
       organizationId ? accountingRulesService.createAccountingRule(data, organizationId, user?.email || '') : Promise.reject('No organization'),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['accountingRules'] });
       toast({
         title: "Success",
         description: "Accounting rule created successfully",
@@ -158,7 +129,7 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
     onError: (error) => {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to create accounting rule",
+        description: error instanceof Error ? error.message : "Failed to create rule",
         variant: "destructive",
       });
     },
@@ -168,8 +139,6 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
     mutationFn: (data: AccountingRuleFormData) =>
       id && organizationId ? accountingRulesService.updateAccountingRule(id, data, organizationId, user?.email || '') : Promise.reject('Missing ID or organization'),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['accountingRules'] });
-      queryClient.invalidateQueries({ queryKey: ['accountingRule', id] });
       toast({
         title: "Success",
         description: "Accounting rule updated successfully",
@@ -178,16 +147,14 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
     },
     onError: (error) => {
       toast({
-        title: "Error", 
-        description: error instanceof Error ? error.message : "Failed to update accounting rule",
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update rule",
         variant: "destructive",
       });
     },
   });
 
   const onSubmit = (data: AccountingRuleFormData) => {
-    console.log('Form submitted with data:', data);
-    
     // Ensure line numbers are sequential
     const processedData = {
       ...data,
@@ -197,8 +164,6 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
       })),
     };
 
-    console.log('Processed data being sent:', processedData);
-
     if (mode === 'create') {
       createMutation.mutate(processedData);
     } else {
@@ -207,34 +172,47 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
   };
 
   const addLine = () => {
-    append({
-      lineNumber: fields.length + 1,
-      debitAccountCode: "",
-      creditAccountCode: "",
+    const currentLines = form.getValues("lines");
+    const newLine = {
+      lineNumber: currentLines.length + 1,
+      debitAccountCode: undefined,
+      creditAccountCode: undefined,
       amountSource: "",
       enableSubledger: false,
-    });
+    };
+    form.setValue("lines", [...currentLines, newLine]);
   };
 
+  // Database field options for transaction reference dropdown
+  const databaseFields = [
+    { value: "purchase_order.po_number", label: "Purchase Order - PO Number" },
+    { value: "purchase_order.tracking_number", label: "Purchase Order - Tracking Number" },
+    { value: "purchase_order.notes", label: "Purchase Order - Notes" },
+    { value: "invoice.invoice_number", label: "Invoice - Invoice Number" },
+    { value: "invoice.supplier_invoice_number", label: "Invoice - Supplier Invoice Number" },
+    { value: "invoice.reference_transaction_number", label: "Invoice - Reference Transaction Number" },
+    { value: "invoice.notes", label: "Invoice - Notes" },
+    { value: "journal_header.transaction_reference", label: "Journal - Transaction Reference" },
+    { value: "general_ledger.reference_number", label: "General Ledger - Reference Number" },
+    { value: "general_ledger.notes", label: "General Ledger - Notes" },
+  ];
+
   const removeLine = (index: number) => {
-    if (fields.length > 1) {
-      remove(index);
+    const currentLines = form.getValues("lines");
+    if (currentLines.length > 1) {
+      form.setValue("lines", currentLines.filter((_, i) => i !== index));
     }
   };
 
   const isSubmitting = createMutation.isPending || updateMutation.isPending;
 
-  if (isLoading) {
-    return <div className="p-4">Loading...</div>;
-  }
-
   return (
-    <div className="container mx-auto py-8 max-w-6xl">
+    <div className="container mx-auto py-8 max-w-4xl">
       <Card>
         <CardHeader>
           <CardTitle>{mode === 'create' ? 'Create Accounting Rule' : 'Edit Accounting Rule'}</CardTitle>
           <CardDescription>
-            {mode === 'create' ? 'Add a new accounting rule' : 'Update accounting rule information'}
+            {mode === 'create' ? 'Add a new accounting rule for automated journal entries' : 'Update accounting rule information'}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -250,36 +228,6 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
                       <FormControl>
                         <Input placeholder="Enter rule name" {...field} />
                       </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="divisionId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Division</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder={
-                              divisionsLoading ? "Loading divisions..." : 
-                              divisionsError ? "Error loading divisions" :
-                              "Select division (optional)"} />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {divisions
-                            .filter(div => div.status === 'active')
-                            .map((division) => (
-                            <SelectItem key={division.id} value={division.id}>
-                              {division.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -305,20 +253,6 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
                           ))}
                         </SelectContent>
                       </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="transactionReference"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Transaction Reference *</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter transaction reference" {...field} />
-                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -365,14 +299,39 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
 
                 <FormField
                   control={form.control}
-                  name="status"
+                  name="transactionReference"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Status *</FormLabel>
+                      <FormLabel>Transaction Reference *</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select status" />
+                            <SelectValue placeholder="Select database field" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {databaseFields.map((dbField) => (
+                            <SelectItem key={dbField.value} value={dbField.value}>
+                              {dbField.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Status</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -386,62 +345,43 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
                 />
               </div>
 
+              {/* Lines Section */}
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-medium">Rule Lines</h3>
-                  <Button type="button" variant="outline" onClick={addLine}>
-                    <Plus className="w-4 h-4 mr-2" />
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-medium">Accounting Lines</h3>
+                  <Button type="button" onClick={addLine} size="sm">
+                    <Plus className="h-4 w-4 mr-2" />
                     Add Line
                   </Button>
                 </div>
 
-                {fields.map((field, index) => (
-                  <Card key={field.id} className="p-4">
-                    <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
-                      <FormField
+                {form.watch("lines").map((line, index) => (
+                  <Card key={index} className="p-4">
+                    <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+                      <div>
+                        <FormLabel>Line {index + 1}</FormLabel>
+                        <div className="text-sm font-medium p-2 bg-muted rounded">
+                          {index + 1}
+                        </div>
+                      </div>
+                      
+                       <FormField
                         control={form.control}
                         name={`lines.${index}.debitAccountCode`}
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Debit Account</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Account code" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name={`lines.${index}.creditAccountCode`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Credit Account</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Account code" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name={`lines.${index}.amountSource`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Amount Source *</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
+                            <Select onValueChange={(value) => field.onChange(value === '' ? undefined : value)} value={field.value || ''}>
                               <FormControl>
                                 <SelectTrigger>
-                                  <SelectValue placeholder="Select source" />
+                                  <SelectValue placeholder="Select account" />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                {getAmountSourcesForTransactionCategory(watchedTransactionType).map((source) => (
-                                  <SelectItem key={source} value={source}>
-                                    {source}
+                                <SelectItem value="">Blank</SelectItem>
+                                {chartOfAccounts.map((account) => (
+                                  <SelectItem key={account.id} value={account.accountCode}>
+                                    {account.accountCode} - {account.accountName}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
@@ -453,31 +393,88 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
 
                       <FormField
                         control={form.control}
-                        name={`lines.${index}.enableSubledger`}
+                        name={`lines.${index}.creditAccountCode`}
                         render={({ field }) => (
-                          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                            <div className="space-y-0.5">
-                              <FormLabel>Subledger</FormLabel>
-                            </div>
-                            <FormControl>
-                              <Switch
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                              />
-                            </FormControl>
+                          <FormItem>
+                            <FormLabel>Credit Account</FormLabel>
+                            <Select onValueChange={(value) => field.onChange(value === '' ? undefined : value)} value={field.value || ''}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select account" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="">Blank</SelectItem>
+                                {chartOfAccounts.map((account) => (
+                                  <SelectItem key={account.id} value={account.accountCode}>
+                                    {account.accountCode} - {account.accountName}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
                           </FormItem>
                         )}
                       />
 
-                      <div className="flex gap-2">
-                        {fields.length > 1 && (
+                      <FormField
+                        control={form.control}
+                        name={`lines.${index}.amountSource`}
+                        render={({ field }) => {
+                          // Show PO-specific options if transactionCategory is 'PO'
+                          const transactionCategory = form.watch('transactionCategory');
+                          let options = amountSourceOptions;
+                          if (transactionCategory === 'PO') {
+                            options = poAmountSourceOptions;
+                          }
+                          return (
+                            <FormItem>
+                              <FormLabel>Amount Source *</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select source" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {options.map((option) => (
+                                    <SelectItem key={option} value={option}>
+                                      {option}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          );
+                        }}
+                      />
+
+                      <div className="flex items-end gap-2">
+                        <FormField
+                          control={form.control}
+                          name={`lines.${index}.enableSubledger`}
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-center space-x-2 space-y-0">
+                              <FormControl>
+                                <Switch
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                              <FormLabel>Subledger</FormLabel>
+                            </FormItem>
+                          )}
+                        />
+                        
+                        {form.watch("lines").length > 1 && (
                           <Button
                             type="button"
                             variant="outline"
                             size="sm"
                             onClick={() => removeLine(index)}
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         )}
                       </div>
