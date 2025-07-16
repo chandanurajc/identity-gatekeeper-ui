@@ -17,7 +17,9 @@ import { useMultiTenant } from "@/hooks/useMultiTenant";
 import { useAuth } from "@/context/AuthContext";
 import { accountingRulesService } from "@/services/accountingRulesService";
 import { chartOfAccountsService } from "@/services/chartOfAccountsService";
+import { divisionService } from "@/services/divisionService";
 import type { AccountingRuleFormData, RuleTransactionCategory } from "@/types/accountingRules";
+import type { Division } from "@/types/division";
 
 const transactionCategories: RuleTransactionCategory[] = ['Invoice', 'PO', 'Payment'];
 const triggeringActions = ['Invoice Approved', 'PO Created', 'Payment Processed', 'Purchase order receive'];
@@ -25,6 +27,9 @@ const poAmountSourceOptions = [
   'Item total price',
   'Total GST Value',
   'Total PO Value',
+  'Total PO CGST',
+  'Total PO SGST',
+  'Total PO IGST',
 ];
 const amountSourceOptions = [
   'Item total price',
@@ -36,6 +41,7 @@ const amountSourceOptions = [
 
 const formSchema = z.object({
   ruleName: z.string().min(1, "Rule name is required"),
+  divisionId: z.string().optional(),
   transactionCategory: z.enum(['Invoice', 'PO', 'Payment']),
   triggeringAction: z.enum(['Invoice Approved', 'PO Created', 'Payment Processed', 'Purchase order receive']),
   transactionReference: z.string().min(1, "Transaction reference is required"),
@@ -95,11 +101,19 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
     enabled: mode === 'edit' && !!id && !!organizationId,
   });
 
+  // Load active divisions
+  const { data: divisions = [] } = useQuery<Division[]>({
+    queryKey: ["divisions", organizationId],
+    queryFn: () => organizationId ? divisionService.getDivisions(organizationId) : Promise.resolve([]),
+    enabled: !!organizationId,
+  });
+
   // Reset form when data loads
   React.useEffect(() => {
     if (existingRule) {
       form.reset({
         ruleName: existingRule.ruleName,
+        divisionId: existingRule.divisionId || "",
         transactionCategory: existingRule.transactionCategory,
         triggeringAction: existingRule.triggeringAction,
         transactionReference: existingRule.transactionReference,
@@ -228,6 +242,31 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
                       <FormControl>
                         <Input placeholder="Enter rule name" {...field} />
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="divisionId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Division</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value || ""}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select division (optional)" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="">None</SelectItem>
+                          {divisions.filter(div => div.status === 'active').map((division) => (
+                            <SelectItem key={division.id} value={division.id}>
+                              {division.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
