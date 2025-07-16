@@ -98,12 +98,30 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
     enabled: mode === 'edit' && !!id && !!organizationId,
   });
 
-  // Load active divisions for the current organization
-  const { data: divisions = [] } = useQuery({
+  // Load divisions for the current organization - simplified query
+  const { data: divisions = [], isLoading: divisionsLoading, error: divisionsError } = useQuery({
     queryKey: ["divisions", organizationId],
-    queryFn: () => organizationId ? divisionService.getDivisions(organizationId).then(divs => divs.filter(d => d.status === 'active')) : Promise.resolve([]),
+    queryFn: async () => {
+      if (!organizationId) return [];
+      console.log('Fetching divisions for organization:', organizationId);
+      try {
+        const allDivisions = await divisionService.getDivisions(organizationId);
+        console.log('All divisions:', allDivisions);
+        const activeDivisions = allDivisions.filter(d => d.status === 'active');
+        console.log('Active divisions:', activeDivisions);
+        return activeDivisions;
+      } catch (error) {
+        console.error('Error fetching divisions:', error);
+        throw error;
+      }
+    },
     enabled: !!organizationId,
   });
+
+  // Log for debugging
+  React.useEffect(() => {
+    console.log('Divisions state:', { divisions, divisionsLoading, divisionsError, organizationId });
+  }, [divisions, divisionsLoading, divisionsError, organizationId]);
 
   // Reset form when data loads
   React.useEffect(() => {
@@ -256,9 +274,19 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
                         </FormControl>
                         <SelectContent>
                           <SelectItem value="">None</SelectItem>
-                          {divisions.map((div) => (
-                            <SelectItem key={div.id} value={div.id}>{div.name}</SelectItem>
-                          ))}
+                          {divisionsLoading ? (
+                            <SelectItem value="" disabled>Loading divisions...</SelectItem>
+                          ) : divisionsError ? (
+                            <SelectItem value="" disabled>Error loading divisions</SelectItem>
+                          ) : divisions.length === 0 ? (
+                            <SelectItem value="" disabled>No active divisions found</SelectItem>
+                          ) : (
+                            divisions.map((div) => (
+                              <SelectItem key={div.id} value={div.id}>
+                                {div.name}
+                              </SelectItem>
+                            ))
+                          )}
                         </SelectContent>
                       </Select>
                       <FormMessage />
