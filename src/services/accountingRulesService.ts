@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import type { AccountingRule, AccountingRuleFormData, AccountingRuleLine } from "@/types/accountingRules";
 
@@ -7,7 +8,11 @@ class AccountingRulesService {
       .from('accounting_rules')
       .select(`
         *,
-        accounting_rule_lines (*)
+        accounting_rule_lines (*),
+        divisions!accounting_rules_division_id_fkey (
+          id,
+          name
+        )
       `)
       .eq('organization_id', organizationId)
       .order('rule_name', { ascending: true });
@@ -25,7 +30,11 @@ class AccountingRulesService {
       .from('accounting_rules')
       .select(`
         *,
-        accounting_rule_lines (*)
+        accounting_rule_lines (*),
+        divisions!accounting_rules_division_id_fkey (
+          id,
+          name
+        )
       `)
       .eq('id', id)
       .eq('organization_id', organizationId)
@@ -45,8 +54,11 @@ class AccountingRulesService {
     organizationId: string,
     createdBy: string
   ): Promise<AccountingRule> {
+    console.log('Creating accounting rule with data:', ruleData);
+    
     const ruleToCreate = {
       organization_id: organizationId,
+      division_id: ruleData.divisionId || null, // Include divisionId
       rule_name: ruleData.ruleName,
       transaction_category: ruleData.transactionCategory,
       transaction_reference: ruleData.transactionReference,
@@ -56,6 +68,8 @@ class AccountingRulesService {
       created_by: createdBy,
     };
 
+    console.log('Inserting rule to DB:', ruleToCreate);
+
     const { data: createdRule, error: ruleError } = await supabase
       .from('accounting_rules')
       .insert(ruleToCreate)
@@ -63,6 +77,7 @@ class AccountingRulesService {
       .single();
 
     if (ruleError) {
+      console.error('Error creating accounting rule:', ruleError);
       throw new Error(`Failed to create accounting rule: ${ruleError.message}`);
     }
 
@@ -82,6 +97,7 @@ class AccountingRulesService {
         .insert(linesToCreate);
 
       if (linesError) {
+        console.error('Error creating accounting rule lines:', linesError);
         throw new Error(`Failed to create accounting rule lines: ${linesError.message}`);
       }
     }
@@ -95,7 +111,10 @@ class AccountingRulesService {
     organizationId: string,
     updatedBy: string
   ): Promise<AccountingRule> {
+    console.log('Updating accounting rule with data:', ruleData);
+    
     const ruleToUpdate = {
+      division_id: ruleData.divisionId || null, // Include divisionId
       rule_name: ruleData.ruleName,
       transaction_category: ruleData.transactionCategory,
       transaction_reference: ruleData.transactionReference,
@@ -106,6 +125,8 @@ class AccountingRulesService {
       updated_on: new Date().toISOString(),
     };
 
+    console.log('Updating rule in DB:', ruleToUpdate);
+
     const { data, error } = await supabase
       .from('accounting_rules')
       .update(ruleToUpdate)
@@ -115,6 +136,7 @@ class AccountingRulesService {
       .single();
 
     if (error) {
+      console.error('Error updating accounting rule:', error);
       throw new Error(`Failed to update accounting rule: ${error.message}`);
     }
 
@@ -140,6 +162,7 @@ class AccountingRulesService {
         .insert(linesToCreate);
 
       if (linesError) {
+        console.error('Error creating accounting rule lines:', linesError);
         throw new Error(`Failed to create accounting rule lines: ${linesError.message}`);
       }
     }
@@ -174,6 +197,8 @@ class AccountingRulesService {
     return {
       id: dbRule.id,
       organizationId: dbRule.organization_id,
+      divisionId: dbRule.division_id,
+      divisionName: dbRule.divisions?.name,
       ruleName: dbRule.rule_name,
       transactionCategory: dbRule.transaction_category,
       transactionReference: dbRule.transaction_reference,

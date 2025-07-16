@@ -126,6 +126,7 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
   // Reset form when data loads
   React.useEffect(() => {
     if (existingRule) {
+      console.log('Resetting form with existing rule:', existingRule);
       form.reset({
         ruleName: existingRule.ruleName,
         transactionCategory: existingRule.transactionCategory,
@@ -184,6 +185,8 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
   });
 
   const onSubmit = (data: AccountingRuleFormData) => {
+    console.log('Form submitted with data:', data);
+    
     // Ensure line numbers are sequential
     const processedData = {
       ...data,
@@ -192,6 +195,8 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
         lineNumber: index + 1,
       })),
     };
+
+    console.log('Processed data being sent:', processedData);
 
     if (mode === 'create') {
       createMutation.mutate(processedData);
