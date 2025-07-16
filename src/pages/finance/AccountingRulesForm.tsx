@@ -24,9 +24,9 @@ import { Trash2, Plus } from "lucide-react";
 const transactionCategories: RuleTransactionCategory[] = ['Invoice', 'PO', 'Payment'];
 const triggeringActions: RuleAction[] = ['Invoice Approved', 'PO Created', 'Payment Processed', 'Purchase order receive'];
 
-// Define amount sources based on transaction type
-const getAmountSourcesForTransactionType = (transactionType?: string) => {
-  if (transactionType === 'PO') {
+// Define amount sources based on transaction category
+const getAmountSourcesForTransactionCategory = (transactionCategory?: string) => {
+  if (transactionCategory === 'PO') {
     return [
       'Total GST value',
       'Total GST Value', 
@@ -106,11 +106,11 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
     name: "lines",
   });
 
-  // Watch transaction type to update amount source options
-  const transactionType = form.watch('transactionType');
+  // Watch transaction category to update amount source options
+  const transactionCategory = form.watch('transactionCategory');
   React.useEffect(() => {
-    setWatchedTransactionType(transactionType || '');
-  }, [transactionType]);
+    setWatchedTransactionType(transactionCategory || '');
+  }, [transactionCategory]);
 
   // Fetch divisions
   const { data: divisions = [], isLoading: divisionsLoading, error: divisionsError } = useQuery({
@@ -439,7 +439,7 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                {getAmountSourcesForTransactionType(watchedTransactionType).map((source) => (
+                                {getAmountSourcesForTransactionCategory(watchedTransactionType).map((source) => (
                                   <SelectItem key={source} value={source}>
                                     {source}
                                   </SelectItem>
