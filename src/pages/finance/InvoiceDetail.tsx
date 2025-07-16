@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Edit, FileText, Calendar, DollarSign, Building2, MapPin, Phone, Mail, Globe, Hash, Weight, Package, Send, Users } from "lucide-react";
+import { ArrowLeft, Edit, FileText, Calendar, DollarSign, Building2, MapPin, Phone, Mail, Globe, Hash, Weight, Package, Send, Users, CheckCircle2 } from "lucide-react";
 import PermissionButton from "@/components/PermissionButton";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -151,6 +151,23 @@ export default function InvoiceDetail() {
                 >
                   <Send className="h-4 w-4 mr-2" />
                   Send for Approval
+                </PermissionButton>
+              )}
+              {invoice.status === 'Awaiting Approval' && hasPermission("Approve Invoice") && (
+                <PermissionButton
+                  permission="Approve Invoice"
+                  onClick={async () => {
+                    try {
+                      await invoiceService.updateInvoiceStatus(invoice.id, 'Approved', organizationId!, user?.email || '', 'Invoice approved');
+                      window.location.reload();
+                    } catch (error) {
+                      console.error("Error approving invoice:", error);
+                    }
+                  }}
+                  variant="success"
+                >
+                  <CheckCircle2 className="h-4 w-4 mr-2" />
+                  Approve Invoice
                 </PermissionButton>
               )}
             </div>
