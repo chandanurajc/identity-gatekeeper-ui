@@ -38,6 +38,14 @@ const amountSourceOptions = [
   'Total item value',
   'Total invoice value',
 ];
+const invoiceAmountSourceOptions = [
+  'Total invoice value',
+  'Total item value',
+  'Total GST value',
+  'CGST Amount',
+  'SGST Amount',
+  'IGST Amount',
+];
 
 const formSchema = z.object({
   ruleName: z.string().min(1, "Rule name is required"),
@@ -460,11 +468,13 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
                         control={form.control}
                         name={`lines.${index}.amountSource`}
                         render={({ field }) => {
-                          // Show PO-specific options if transactionCategory is 'PO'
+                          // Show PO-specific or Invoice-specific options
                           const transactionCategory = form.watch('transactionCategory');
                           let options = amountSourceOptions;
                           if (transactionCategory === 'PO') {
                             options = poAmountSourceOptions;
+                          } else if (transactionCategory === 'Invoice') {
+                            options = invoiceAmountSourceOptions;
                           }
                           return (
                             <FormItem>

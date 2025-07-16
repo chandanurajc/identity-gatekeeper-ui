@@ -354,6 +354,90 @@ class InvoiceService {
     if (auditError) {
       console.error('Failed to create audit log:', auditError);
     }
+
+    // --- Auto Journal Posting Logic for Invoice Approval ---
+    if (newStatus === 'Approved') {
+      // Lazy import to avoid circular deps
+      const { accountingRulesService } = await import('./accountingRulesService');
+      const { journalService } = await import('./journalService');
+      // Fetch the latest invoice with lines and GST breakdown
+      const invoice = await this.getInvoiceById(id, organizationId);
+      if (!invoice) throw new Error('Invoice not found for journal posting');
+
+      // Fetch matching accounting rules
+      const rules = await accountingRulesService.getAccountingRules(organizationId);
+      const matchingRules = rules.filter(rule =>
+        rule.transactionCategory === 'Invoice' &&
+        rule.triggeringAction === 'Invoice Approved' &&
+        rule.transactionType === invoice.invoiceType &&
+        rule.status === 'Active' &&
+        (!rule.divisionId || rule.divisionId === invoice.divisionId)
+      );
+
+      // Calculate GST breakdown totals
+      const gstBreakdown = invoice.gstBreakdown || [];
+      const totalCGST = gstBreakdown.reduce((sum, b) => sum + (b.cgstAmount || 0), 0);
+      const totalSGST = gstBreakdown.reduce((sum, b) => sum + (b.sgstAmount || 0), 0);
+      const totalIGST = gstBreakdown.reduce((sum, b) => sum + (b.igstAmount || 0), 0);
+
+      for (const rule of matchingRules) {
+        if (!rule.lines || rule.lines.length === 0) continue;
+
+        const allJournalLines = [];
+        for (const line of rule.lines) {
+          let amount = 0;
+          if (line.amountSource === 'Total GST value') {
+            amount = invoice.totalGstValue || 0;
+          } else if (line.amountSource === 'Total invoice value') {
+            amount = invoice.totalInvoiceValue || 0;
+          } else if (line.amountSource === 'Total item value') {
+            amount = invoice.totalItemValue || 0;
+          } else if (line.amountSource === 'CGST Amount') {
+            amount = totalCGST;
+          } else if (line.amountSource === 'SGST Amount') {
+            amount = totalSGST;
+          } else if (line.amountSource === 'IGST Amount') {
+            amount = totalIGST;
+          }
+
+          if (!amount || amount === 0) continue;
+          if (!line.debitAccountCode && !line.creditAccountCode) continue;
+
+          if (line.debitAccountCode) {
+            allJournalLines.push({
+              lineNumber: (line.lineNumber * 2) - 1,
+              accountCode: line.debitAccountCode,
+              debitAmount: amount,
+              creditAmount: null,
+              narration: `Invoice Approved - Debit - Line ${line.lineNumber} - ${line.amountSource}`,
+            });
+          }
+          if (line.creditAccountCode) {
+            allJournalLines.push({
+              lineNumber: line.lineNumber * 2,
+              accountCode: line.creditAccountCode,
+              debitAmount: null,
+              creditAmount: amount,
+              narration: `Invoice Approved - Credit - Line ${line.lineNumber} - ${line.amountSource}`,
+            });
+          }
+        }
+
+        if (allJournalLines.length === 0) continue;
+
+        const createdJournal = await journalService.createJournal({
+          journalDate: new Date().toISOString().split('T')[0],
+          transactionType: 'Invoice',
+          transactionReference: invoice.invoiceNumber,
+          journalLines: allJournalLines,
+        }, organizationId, changedBy);
+
+        if (createdJournal && createdJournal.id) {
+          await journalService.postJournal(createdJournal.id, organizationId, changedBy);
+        }
+      }
+    }
+    // --- End Auto Journal Posting Logic ---
   }
 
   async generateInvoiceNumber(organizationId: string): Promise<string> {
