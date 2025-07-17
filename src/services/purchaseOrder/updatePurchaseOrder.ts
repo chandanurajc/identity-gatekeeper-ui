@@ -175,7 +175,7 @@ export async function updatePurchaseOrder(id: string, formData: PurchaseOrderFor
     }
 
     // Calculate and save GST breakdown
-    const gstBreakdown = calculateGSTBreakdown(formData.lines, formData.billToStateCode, formData.remitToStateCode);
+    const gstBreakdown = calculateGSTBreakdown(formData.lines, formData.shipToStateCode, formData.remitToStateCode);
     if (gstBreakdown.length > 0) {
       const gstBreakdownData = gstBreakdown.map(breakdown => ({
         purchase_order_id: id,
