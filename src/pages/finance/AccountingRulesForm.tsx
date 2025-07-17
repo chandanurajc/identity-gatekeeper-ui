@@ -229,7 +229,7 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
   const isSubmitting = createMutation.isPending || updateMutation.isPending;
 
   return (
-    <div className="container mx-auto py-8 max-w-4xl">
+    <div className="container mx-auto py-8 max-w-6xl">{/* Increased from max-w-4xl to max-w-6xl */}
       <Card>
         <CardHeader>
           <CardTitle>{mode === 'create' ? 'Create Accounting Rule' : 'Edit Accounting Rule'}</CardTitle>
@@ -240,7 +240,7 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <FormField
                   control={form.control}
                   name="ruleName"
@@ -307,20 +307,6 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
 
                 <FormField
                   control={form.control}
-                  name="transactionType"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Transaction Type</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter transaction type" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
                   name="triggeringAction"
                   render={({ field }) => (
                     <FormItem>
@@ -356,14 +342,31 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
                             <SelectValue placeholder="Select database field" />
                           </SelectTrigger>
                         </FormControl>
-                        <SelectContent>
+                        <SelectContent className="max-w-xs">
                           {databaseFields.map((dbField) => (
-                            <SelectItem key={dbField.value} value={dbField.value}>
-                              {dbField.label}
+                            <SelectItem key={dbField.value} value={dbField.value} className="text-sm">
+                              <div className="flex flex-col">
+                                <span className="font-medium">{dbField.label}</span>
+                                <span className="text-xs text-muted-foreground">{dbField.value}</span>
+                              </div>
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="transactionType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Transaction Type</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter transaction type" {...field} />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -404,7 +407,7 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
 
                 {form.watch("lines").map((line, index) => (
                   <Card key={index} className="p-4">
-                    <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+                    <div className="grid grid-cols-1 lg:grid-cols-6 gap-4 items-end">{/* Changed from md:grid-cols-5 to lg:grid-cols-6 */}
                       <div>
                         <FormLabel>Line {index + 1}</FormLabel>
                         <div className="text-sm font-medium p-2 bg-muted rounded">
@@ -424,14 +427,17 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
                                   <SelectValue placeholder="Select account" />
                                 </SelectTrigger>
                               </FormControl>
-                              <SelectContent>
-                                <SelectItem value="">Blank</SelectItem>
-                                {chartOfAccounts.map((account) => (
-                                  <SelectItem key={account.id} value={account.accountCode}>
-                                    {account.accountCode} - {account.accountName}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
+                               <SelectContent className="max-w-md">
+                                 <SelectItem value="">Blank</SelectItem>
+                                 {chartOfAccounts.map((account) => (
+                                   <SelectItem key={account.id} value={account.accountCode} className="text-sm">
+                                     <div className="flex flex-col py-1">
+                                       <span className="font-medium">{account.accountCode}</span>
+                                       <span className="text-xs text-muted-foreground truncate">{account.accountName}</span>
+                                     </div>
+                                   </SelectItem>
+                                 ))}
+                               </SelectContent>
                             </Select>
                             <FormMessage />
                           </FormItem>
@@ -450,14 +456,17 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
                                   <SelectValue placeholder="Select account" />
                                 </SelectTrigger>
                               </FormControl>
-                              <SelectContent>
-                                <SelectItem value="">Blank</SelectItem>
-                                {chartOfAccounts.map((account) => (
-                                  <SelectItem key={account.id} value={account.accountCode}>
-                                    {account.accountCode} - {account.accountName}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
+                               <SelectContent className="max-w-md">
+                                 <SelectItem value="">Blank</SelectItem>
+                                 {chartOfAccounts.map((account) => (
+                                   <SelectItem key={account.id} value={account.accountCode} className="text-sm">
+                                     <div className="flex flex-col py-1">
+                                       <span className="font-medium">{account.accountCode}</span>
+                                       <span className="text-xs text-muted-foreground truncate">{account.accountName}</span>
+                                     </div>
+                                   </SelectItem>
+                                 ))}
+                               </SelectContent>
                             </Select>
                             <FormMessage />
                           </FormItem>

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -100,7 +100,11 @@ export default function AccountingRulesList() {
               <TableBody>
                 {rules.map((rule) => (
                   <TableRow key={rule.id}>
-                    <TableCell className="font-medium">{rule.ruleName}</TableCell>
+                    <TableCell>
+                      <Link to={`/finance/accounting-rules/${rule.id}`} className="font-medium hover:underline">
+                        {rule.ruleName}
+                      </Link>
+                    </TableCell>
                     <TableCell>{rule.divisionName || '-'}</TableCell>
                     <TableCell>
                       <Badge variant="outline">{rule.transactionCategory}</Badge>
@@ -113,8 +117,13 @@ export default function AccountingRulesList() {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
+                        <Link to={`/finance/accounting-rules/${rule.id}`}>
+                          <Button size="sm" variant="outline" title="View Details">
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </Link>
                         <Link to={`/finance/accounting-rules/${rule.id}/edit`}>
-                          <Button size="sm" variant="outline">
+                          <Button size="sm" variant="outline" title="Edit">
                             <Pencil className="h-4 w-4" />
                           </Button>
                         </Link>

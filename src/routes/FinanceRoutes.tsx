@@ -10,6 +10,7 @@ import InvoiceEdit from "@/pages/finance/InvoiceEdit";
 import ChartOfAccountsList from "@/pages/finance/ChartOfAccountsList";
 import ChartOfAccountsForm from "@/pages/finance/ChartOfAccountsForm";
 import AccountingRulesList from "@/pages/finance/AccountingRulesList";
+import AccountingRulesDetail from "@/pages/finance/AccountingRulesDetail";
 import AccountingRulesForm from "@/pages/finance/AccountingRulesForm";
 import JournalsList from "@/pages/finance/JournalsList";
 import JournalForm from "@/pages/finance/JournalForm";
@@ -72,6 +73,14 @@ export function FinanceRoutes() {
         element={
           <PermissionProtectedRoute requiredPermission="Edit Rules">
             <AccountingRulesForm mode="edit" />
+          </PermissionProtectedRoute>
+        }
+      />
+      <Route
+        path="/accounting-rules/:id"
+        element={
+          <PermissionProtectedRoute requiredPermission="View Rules">
+            <AccountingRulesDetail />
           </PermissionProtectedRoute>
         }
       />
