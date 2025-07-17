@@ -164,7 +164,7 @@ export default function InvoiceDetail() {
                       console.error("Error approving invoice:", error);
                     }
                   }}
-                  variant="success"
+                  variant="default"
                 >
                   <CheckCircle2 className="h-4 w-4 mr-2" />
                   Approve Invoice

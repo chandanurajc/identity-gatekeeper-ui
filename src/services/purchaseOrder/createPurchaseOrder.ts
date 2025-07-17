@@ -15,17 +15,18 @@ const calculateGSTBreakdown = (lines: PurchaseOrderLine[], billToStateCode?: num
 
   const breakdown: PurchaseOrderGSTBreakdown[] = [];
   gstGroups.forEach((value, gstPercentage) => {
-    const isSameState = billToStateCode === remitToStateCode;
+    // Check if both state codes exist and are the same (intra-state)
+    const isIntraState = billToStateCode && remitToStateCode && billToStateCode === remitToStateCode;
     
     breakdown.push({
       gstPercentage,
       taxableAmount: value.taxableAmount,
-      cgstPercentage: isSameState ? gstPercentage / 2 : 0,
-      cgstAmount: isSameState ? value.gstValue / 2 : 0,
-      sgstPercentage: isSameState ? gstPercentage / 2 : 0,
-      sgstAmount: isSameState ? value.gstValue / 2 : 0,
-      igstPercentage: isSameState ? 0 : gstPercentage,
-      igstAmount: isSameState ? 0 : value.gstValue,
+      cgstPercentage: isIntraState ? gstPercentage / 2 : 0,
+      cgstAmount: isIntraState ? value.gstValue / 2 : 0,
+      sgstPercentage: isIntraState ? gstPercentage / 2 : 0,
+      sgstAmount: isIntraState ? value.gstValue / 2 : 0,
+      igstPercentage: isIntraState ? 0 : gstPercentage,
+      igstAmount: isIntraState ? 0 : value.gstValue,
       totalGstAmount: value.gstValue
     });
   });
