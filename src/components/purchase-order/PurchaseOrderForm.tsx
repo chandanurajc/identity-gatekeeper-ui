@@ -318,6 +318,7 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
 
   const calculateGSTBreakdown = (): PurchaseOrderGSTBreakdown[] => {
     const lines = watchedLines || [];
+    const shipToStateCode = watch("shipToStateCode");
     const gstGroups = new Map<number, { taxableAmount: number; gstValue: number }>();
     
     lines.forEach(line => {
@@ -330,7 +331,7 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
 
     const breakdown: PurchaseOrderGSTBreakdown[] = [];
     gstGroups.forEach((value, gstPercentage) => {
-      const isSameState = billToInfo?.stateCode === remitToInfo?.stateCode;
+      const isSameState = shipToStateCode === remitToInfo?.stateCode;
       
       breakdown.push({
         gstPercentage,

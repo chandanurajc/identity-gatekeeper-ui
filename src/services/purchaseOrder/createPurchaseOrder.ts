@@ -3,6 +3,10 @@ import { PurchaseOrder, PurchaseOrderFormData, PurchaseOrderLine, PurchaseOrderG
 import { getUserNameById } from "@/lib/userUtils";
 
 const calculateGSTBreakdown = (lines: PurchaseOrderLine[], billToStateCode?: number, remitToStateCode?: number): PurchaseOrderGSTBreakdown[] => {
+  console.log("=== GST Calculation Debug ===");
+  console.log("billToStateCode:", billToStateCode);
+  console.log("remitToStateCode:", remitToStateCode);
+  
   const gstGroups = new Map<number, { taxableAmount: number; gstValue: number }>();
   
   lines.forEach(line => {
@@ -18,6 +22,9 @@ const calculateGSTBreakdown = (lines: PurchaseOrderLine[], billToStateCode?: num
     // Check if both state codes exist and are the same (intra-state)
     const isIntraState = billToStateCode && remitToStateCode && billToStateCode === remitToStateCode;
     
+    console.log(`GST ${gstPercentage}%: isIntraState =`, isIntraState);
+    console.log(`Comparison: ${billToStateCode} === ${remitToStateCode} = ${billToStateCode === remitToStateCode}`);
+    
     breakdown.push({
       gstPercentage,
       taxableAmount: value.taxableAmount,
@@ -31,6 +38,7 @@ const calculateGSTBreakdown = (lines: PurchaseOrderLine[], billToStateCode?: num
     });
   });
 
+  console.log("Final GST breakdown:", breakdown);
   return breakdown;
 };
 
