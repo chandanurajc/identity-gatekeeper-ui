@@ -42,7 +42,7 @@ export default function PaymentsList() {
     }
   };
 
-  const columns: ColumnDef<Payment>[] = [
+  let columns: ColumnDef<Payment>[] = [
     {
       accessorKey: "paymentNumber",
       header: ({ column }) => (
@@ -85,24 +85,6 @@ export default function PaymentsList() {
       ),
     },
     {
-      accessorKey: "linkedInvoice.invoice_number",
-      header: "Linked Invoice",
-      cell: ({ row }) => {
-        const invoice = row.original.linkedInvoice;
-        return invoice && invoice.invoice_number ? invoice.invoice_number : "-";
-      },
-    },
-    {
-      accessorKey: "linkedInvoice.total_invoice_value",
-      header: "Invoice Value",
-      cell: ({ row }) => {
-        const invoice = row.original.linkedInvoice;
-        return invoice && invoice.total_invoice_value != null
-          ? row.original.currency + " " + Number(invoice.total_invoice_value).toLocaleString()
-          : "-";
-      },
-    },
-    {
       accessorKey: "amount",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Amount" />
@@ -134,6 +116,11 @@ export default function PaymentsList() {
       cell: ({ row }) => format(row.getValue("createdOn"), "dd/MM/yyyy"),
     },
   ];
+
+  // Remove the linked invoice columns from the columns array
+  columns = columns.filter(
+    col => col.accessorKey !== "linkedInvoice.invoice_number" && col.accessorKey !== "linkedInvoice.total_invoice_value"
+  );
 
   // Filter payments based on search and filters
   const filteredPayments = payments.filter((payment) => {
