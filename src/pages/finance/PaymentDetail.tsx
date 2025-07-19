@@ -17,7 +17,7 @@ export default function PaymentDetail() {
   const navigate = useNavigate();
   const { getCurrentOrganizationId } = useMultiTenant();
   const organizationId = getCurrentOrganizationId();
-  const { canEditPayments, canViewPayments } = usePaymentPermissions();
+  const { canEditPayments, canViewPayments, canApprovePayments, user } = usePaymentPermissions();
 
   const { data: payment, isLoading } = useQuery({
     queryKey: ["payment", id],
@@ -37,6 +37,20 @@ export default function PaymentDetail() {
       case 'Created': return 'secondary';
       case 'Rejected': return 'destructive';
       default: return 'outline';
+    }
+  };
+
+  const [isApproving, setIsApproving] = useState(false);
+
+  const handleApprove = async () => {
+    if (!payment) return;
+    setIsApproving(true);
+    try {
+      await paymentService.updatePaymentStatus(payment.id, "Approved", user?.email || "");
+      window.location.reload();
+    } catch (error) {
+      setIsApproving(false);
+      alert("Failed to approve payment: " + (error instanceof Error ? error.message : error));
     }
   };
 
@@ -110,6 +124,16 @@ export default function PaymentDetail() {
               >
                 <Edit className="h-4 w-4" />
                 Edit
+              </Button>
+            )}
+            {canApprovePayments && payment.status === "Created" && (
+              <Button 
+                onClick={handleApprove}
+                className="gap-2"
+                disabled={isApproving}
+                variant="success"
+              >
+                Approve
               </Button>
             )}
           </div>
