@@ -412,5 +412,68 @@ export const organizationService = {
       console.error("Service error deleting organization:", error);
       throw error;
     }
+  },
+
+  async getPartnerOrganizations(currentOrganizationId: string): Promise<Organization[]> {
+    console.log("Fetching partner organizations for org:", currentOrganizationId);
+    
+    try {
+      const { data, error } = await supabase
+        .from('partners')
+        .select(`
+          organization:organizations!partners_organization_id_fkey(
+            id,
+            code,
+            name,
+            type,
+            status,
+            description,
+            created_by,
+            created_on,
+            updated_by,
+            updated_on
+          )
+        `)
+        .eq('current_organization_id', currentOrganizationId)
+        .eq('status', 'active')
+        .order('created_on', { ascending: false });
+
+      if (error) {
+        console.error("Supabase error fetching partner organizations:", error);
+        throw new Error(`Failed to fetch partner organizations: ${error.message}`);
+      }
+      
+      if (!data) {
+        return [];
+      }
+
+      // Transform and filter partner organizations
+      const partnerOrganizations: Organization[] = data
+        .filter((partner): partner is typeof partner & { organization: any } => 
+          partner.organization !== null && 
+          partner.organization.status === 'active'
+        )
+        .map(partner => ({
+          id: partner.organization.id,
+          code: partner.organization.code,
+          name: partner.organization.name,
+          description: partner.organization.description,
+          type: partner.organization.type as Organization['type'],
+          status: partner.organization.status as 'active' | 'inactive',
+          references: [], // Partner organizations don't include references in this query
+          contacts: [], // Partner organizations don't include contacts in this query
+          createdBy: partner.organization.created_by,
+          createdOn: partner.organization.created_on ? new Date(partner.organization.created_on) : undefined,
+          updatedBy: partner.organization.updated_by,
+          updatedOn: partner.organization.updated_on ? new Date(partner.organization.updated_on) : undefined,
+        }));
+
+      console.log("Transformed partner organizations:", partnerOrganizations);
+      return partnerOrganizations;
+      
+    } catch (error) {
+      console.error("Service error fetching partner organizations:", error);
+      throw error;
+    }
   }
 };

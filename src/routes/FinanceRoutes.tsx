@@ -159,6 +159,38 @@ export function FinanceRoutes() {
           </PermissionProtectedRoute>
         }
       />
+      <Route
+        path="/payments"
+        element={
+          <PermissionProtectedRoute requiredPermission="View Payments">
+            <PaymentsList />
+          </PermissionProtectedRoute>
+        }
+      />
+      <Route
+        path="/payments/create"
+        element={
+          <PermissionProtectedRoute requiredPermission="Create Payment">
+            <PaymentForm />
+          </PermissionProtectedRoute>
+        }
+      />
+      <Route
+        path="/payments/:id"
+        element={
+          <PermissionProtectedRoute requiredPermission="View Payments">
+            <PaymentDetail />
+          </PermissionProtectedRoute>
+        }
+      />
+      <Route
+        path="/payments/:id/edit"
+        element={
+          <PermissionProtectedRoute requiredPermission="Edit Payment">
+            <PaymentForm />
+          </PermissionProtectedRoute>
+        }
+      />
     </Routes>
   );
 }
