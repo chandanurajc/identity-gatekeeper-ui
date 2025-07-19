@@ -131,6 +131,15 @@ export default function PaymentDetail() {
             <Badge variant={getStatusBadgeVariant(payment.status)} className="text-sm">
               {payment.status}
             </Badge>
+            {canEditPayments && payment.status === "Created" && (
+              <Button 
+                onClick={() => navigate(`/finance/payments/${payment.id}/edit`)}
+                className="gap-2"
+              >
+                <Edit className="h-4 w-4" />
+                Edit
+              </Button>
+            )}
           </div>
         </div>
 
