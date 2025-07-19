@@ -131,35 +131,6 @@ export default function PaymentDetail() {
             <Badge variant={getStatusBadgeVariant(payment.status)} className="text-sm">
               {payment.status}
             </Badge>
-            {canEdit && (
-              <Button 
-                onClick={() => navigate(`/finance/payments/${payment.id}/edit`)}
-                className="gap-2"
-              >
-                <Edit className="h-4 w-4" />
-                Edit
-              </Button>
-            )}
-            {canApprovePayments && payment.status === "Created" && (
-              <Button 
-                onClick={handleApprove}
-                className="gap-2"
-                disabled={isApproving}
-                variant="default"
-              >
-                Approve
-              </Button>
-            )}
-            {canRejectPayments && payment.status === "Created" && (
-              <Button 
-                onClick={handleReject}
-                className="gap-2"
-                disabled={isRejecting}
-                variant="destructive"
-              >
-                Reject
-              </Button>
-            )}
           </div>
         </div>
 
@@ -258,11 +229,11 @@ export default function PaymentDetail() {
             <CardContent>
               <div className="space-y-2">
                 <div className="text-lg font-semibold">
-                  Invoice Number: {payment.linkedInvoice.invoice_number || "-"}
+                  Invoice Number: {payment.linkedInvoice.invoiceNumber || "-"}
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  Invoice Value: {payment.linkedInvoice.total_invoice_value != null
-                    ? payment.currency + " " + Number(payment.linkedInvoice.total_invoice_value).toLocaleString()
+                  Invoice Value: {payment.linkedInvoice.totalInvoiceValue != null
+                    ? payment.currency + " " + Number(payment.linkedInvoice.totalInvoiceValue).toLocaleString()
                     : "-"}
                 </div>
               </div>
