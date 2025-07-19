@@ -246,7 +246,7 @@ export default function PaymentDetail() {
           </CardContent>
         </Card>
 
-        {/* Linked Invoice */}
+        {/* Linked Invoice Information */}
         {payment.linkedInvoice && (
           <Card>
             <CardHeader>
@@ -256,19 +256,31 @@ export default function PaymentDetail() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex justify-between items-center">
-                <div className="space-y-2">
-                  <div className="text-lg font-semibold">{payment.linkedInvoice.invoiceNumber}</div>
-                  <div className="text-sm text-muted-foreground">
-                    Invoice Value: ₹{Number(payment.linkedInvoice.totalInvoiceValue).toLocaleString()}
-                  </div>
+              <div className="space-y-2">
+                <div className="text-lg font-semibold">
+                  Invoice Number: {payment.linkedInvoice.invoice_number || "-"}
                 </div>
-                <Button
-                  variant="outline"
-                  onClick={() => navigate(`/finance/invoices/${payment.linkedInvoiceId}`)}
-                >
-                  View Invoice
-                </Button>
+                <div className="text-sm text-muted-foreground">
+                  Invoice Value: {payment.linkedInvoice.total_invoice_value != null
+                    ? payment.currency + " " + Number(payment.linkedInvoice.total_invoice_value).toLocaleString()
+                    : "-"}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+        {!payment.linkedInvoice && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Linked Invoice
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <div className="text-lg font-semibold">Invoice Number: -</div>
+                <div className="text-sm text-muted-foreground">Invoice Value: -</div>
               </div>
             </CardContent>
           </Card>

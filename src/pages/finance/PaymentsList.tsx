@@ -85,11 +85,22 @@ export default function PaymentsList() {
       ),
     },
     {
-      accessorKey: "linkedInvoice",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Linked Invoice" />
-      ),
-      cell: ({ row }) => row.original.linkedInvoice?.invoiceNumber || "-",
+      accessorKey: "linkedInvoice.invoice_number",
+      header: "Linked Invoice",
+      cell: ({ row }) => {
+        const invoice = row.original.linkedInvoice;
+        return invoice && invoice.invoice_number ? invoice.invoice_number : "-";
+      },
+    },
+    {
+      accessorKey: "linkedInvoice.total_invoice_value",
+      header: "Invoice Value",
+      cell: ({ row }) => {
+        const invoice = row.original.linkedInvoice;
+        return invoice && invoice.total_invoice_value != null
+          ? row.original.currency + " " + Number(invoice.total_invoice_value).toLocaleString()
+          : "-";
+      },
     },
     {
       accessorKey: "amount",
