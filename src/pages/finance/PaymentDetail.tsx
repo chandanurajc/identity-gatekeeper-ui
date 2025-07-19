@@ -17,7 +17,7 @@ export default function PaymentDetail() {
   const navigate = useNavigate();
   const { getCurrentOrganizationId } = useMultiTenant();
   const organizationId = getCurrentOrganizationId();
-  const { canEditPayments, canViewPayments, canApprovePayments, user } = usePaymentPermissions();
+  const { canEditPayments, canViewPayments, canApprovePayments, canRejectPayments, user } = usePaymentPermissions();
 
   const { data: payment, isLoading } = useQuery({
     queryKey: ["payment", id],
@@ -41,6 +41,7 @@ export default function PaymentDetail() {
   };
 
   const [isApproving, setIsApproving] = useState(false);
+  const [isRejecting, setIsRejecting] = useState(false);
 
   const handleApprove = async () => {
     if (!payment) return;
@@ -51,6 +52,19 @@ export default function PaymentDetail() {
     } catch (error) {
       setIsApproving(false);
       alert("Failed to approve payment: " + (error instanceof Error ? error.message : error));
+    }
+  };
+
+  const handleReject = async () => {
+    if (!payment) return;
+    const comments = window.prompt("Enter rejection reason (optional):", "");
+    setIsRejecting(true);
+    try {
+      await paymentService.updatePaymentStatus(payment.id, "Rejected", user?.email || "", comments || undefined);
+      window.location.reload();
+    } catch (error) {
+      setIsRejecting(false);
+      alert("Failed to reject payment: " + (error instanceof Error ? error.message : error));
     }
   };
 
@@ -131,9 +145,19 @@ export default function PaymentDetail() {
                 onClick={handleApprove}
                 className="gap-2"
                 disabled={isApproving}
-                variant="success"
+                variant="default"
               >
                 Approve
+              </Button>
+            )}
+            {canRejectPayments && payment.status === "Created" && (
+              <Button 
+                onClick={handleReject}
+                className="gap-2"
+                disabled={isRejecting}
+                variant="destructive"
+              >
+                Reject
               </Button>
             )}
           </div>
