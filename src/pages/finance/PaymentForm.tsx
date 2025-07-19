@@ -192,10 +192,18 @@ export default function PaymentForm() {
   };
 
   const onSubmit = (data: PaymentFormData) => {
+    // Convert empty string UUIDs to null
+    const processedData = {
+      ...data,
+      divisionId: data.divisionId || null,
+      payeeOrganizationId: data.payeeOrganizationId || null,
+      linkedInvoiceId: data.linkedInvoiceId || null,
+    };
+
     if (isEditMode) {
-      updatePaymentMutation.mutate(data);
+      updatePaymentMutation.mutate(processedData);
     } else {
-      createPaymentMutation.mutate(data);
+      createPaymentMutation.mutate(processedData);
     }
   };
 
