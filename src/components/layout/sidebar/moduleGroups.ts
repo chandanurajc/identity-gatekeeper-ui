@@ -15,6 +15,7 @@ import {
   List,
   BookCopy,
   FileText,
+  DollarSign,
 } from "lucide-react";
 import { MenuItem, ModuleGroup } from "./types";
 
@@ -184,6 +185,15 @@ export const createModuleGroups = (permissions: PermissionsMap): ModuleGroup[] =
       label: "Subledger",
       path: "/finance/subledger",
       icon: BookCopy,
+      permission: true,
+    });
+  }
+
+  if (permissions.canViewPayments) {
+    financeItems.push({
+      label: "Payments",
+      path: "/finance/payments",
+      icon: DollarSign,
       permission: true,
     });
   }

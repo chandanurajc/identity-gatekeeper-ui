@@ -1438,6 +1438,99 @@ export type Database = {
           },
         ]
       }
+      payment_audit_log: {
+        Row: {
+          changed_by: string
+          changed_on: string
+          comments: string | null
+          id: string
+          new_status: Database["public"]["Enums"]["payment_status"]
+          old_status: Database["public"]["Enums"]["payment_status"] | null
+          payment_id: string
+        }
+        Insert: {
+          changed_by: string
+          changed_on?: string
+          comments?: string | null
+          id?: string
+          new_status: Database["public"]["Enums"]["payment_status"]
+          old_status?: Database["public"]["Enums"]["payment_status"] | null
+          payment_id: string
+        }
+        Update: {
+          changed_by?: string
+          changed_on?: string
+          comments?: string | null
+          id?: string
+          new_status?: Database["public"]["Enums"]["payment_status"]
+          old_status?: Database["public"]["Enums"]["payment_status"] | null
+          payment_id?: string
+        }
+        Relationships: []
+      }
+      payments: {
+        Row: {
+          amount: number
+          created_by: string
+          created_on: string
+          currency: string
+          division_id: string
+          id: string
+          linked_invoice_id: string | null
+          notes: string | null
+          organization_id: string
+          payee_organization_id: string
+          payment_date: string
+          payment_mode: Database["public"]["Enums"]["payment_mode"]
+          payment_number: string
+          payment_type: Database["public"]["Enums"]["payment_type"]
+          reference_number: string | null
+          status: Database["public"]["Enums"]["payment_status"]
+          updated_by: string | null
+          updated_on: string | null
+        }
+        Insert: {
+          amount: number
+          created_by: string
+          created_on?: string
+          currency?: string
+          division_id: string
+          id?: string
+          linked_invoice_id?: string | null
+          notes?: string | null
+          organization_id: string
+          payee_organization_id: string
+          payment_date: string
+          payment_mode: Database["public"]["Enums"]["payment_mode"]
+          payment_number: string
+          payment_type: Database["public"]["Enums"]["payment_type"]
+          reference_number?: string | null
+          status?: Database["public"]["Enums"]["payment_status"]
+          updated_by?: string | null
+          updated_on?: string | null
+        }
+        Update: {
+          amount?: number
+          created_by?: string
+          created_on?: string
+          currency?: string
+          division_id?: string
+          id?: string
+          linked_invoice_id?: string | null
+          notes?: string | null
+          organization_id?: string
+          payee_organization_id?: string
+          payment_date?: string
+          payment_mode?: Database["public"]["Enums"]["payment_mode"]
+          payment_number?: string
+          payment_type?: Database["public"]["Enums"]["payment_type"]
+          reference_number?: string | null
+          status?: Database["public"]["Enums"]["payment_status"]
+          updated_by?: string | null
+          updated_on?: string | null
+        }
+        Relationships: []
+      }
       permissions: {
         Row: {
           component: string
@@ -2213,6 +2306,10 @@ export type Database = {
         Args: { org_id: string }
         Returns: string
       }
+      generate_payment_number: {
+        Args: { org_id: string }
+        Returns: string
+      }
       get_inventory_stock_summary: {
         Args: { p_organization_id: string; p_include_zero_stock?: boolean }
         Returns: {
@@ -2259,12 +2356,21 @@ export type Database = {
       invoice_type: "Payable" | "Receivable"
       journal_status: "Draft" | "Posted" | "Reversed"
       party_type: "Bill To" | "Remit To"
+      payment_mode:
+        | "Bank Transfer"
+        | "UPI"
+        | "Cheque"
+        | "Cash"
+        | "Online Payment"
+        | "Wire Transfer"
+      payment_status: "Created" | "Approved" | "Rejected"
       payment_terms:
         | "Net 30"
         | "Net 60"
         | "Net 90"
         | "Due on Receipt"
         | "Net 15"
+      payment_type: "Invoice-based" | "Ad-hoc"
       po_type: "Consumables" | "Assets" | "Finished goods" | "Raw materials"
       rule_action:
         | "Invoice Approved"
@@ -2415,7 +2521,17 @@ export const Constants = {
       invoice_type: ["Payable", "Receivable"],
       journal_status: ["Draft", "Posted", "Reversed"],
       party_type: ["Bill To", "Remit To"],
+      payment_mode: [
+        "Bank Transfer",
+        "UPI",
+        "Cheque",
+        "Cash",
+        "Online Payment",
+        "Wire Transfer",
+      ],
+      payment_status: ["Created", "Approved", "Rejected"],
       payment_terms: ["Net 30", "Net 60", "Net 90", "Due on Receipt", "Net 15"],
+      payment_type: ["Invoice-based", "Ad-hoc"],
       po_type: ["Consumables", "Assets", "Finished goods", "Raw materials"],
       rule_action: [
         "Invoice Approved",

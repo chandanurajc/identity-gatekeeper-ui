@@ -195,6 +195,11 @@ export const usePermissions = () => {
         canRejectInvoice: false,
         canViewGeneralLedger: false,
         canRecordPayment: false,
+        canViewPayments: false,
+        canCreatePayments: false,
+        canEditPayments: false,
+        canApprovePayments: false,
+        canRejectPayments: false,
         // Inventory permissions
         canViewInventory: false,
         // Module access
@@ -257,6 +262,11 @@ export const usePermissions = () => {
         canRejectInvoice: true,
         canViewGeneralLedger: true,
         canRecordPayment: true,
+        canViewPayments: true,
+        canCreatePayments: true,
+        canEditPayments: true,
+        canApprovePayments: true,
+        canRejectPayments: true,
         // Inventory
         canViewInventory: true,
         // Module access
@@ -318,6 +328,11 @@ export const usePermissions = () => {
       canRejectInvoice: permissions.includes("Reject Invoice"),
       canViewGeneralLedger: permissions.includes("View General Ledger"),
       canRecordPayment: permissions.includes("Record Payment"),
+      canViewPayments: permissions.includes("view_payments"),
+      canCreatePayments: permissions.includes("create_payments"),
+      canEditPayments: permissions.includes("edit_payments"),
+      canApprovePayments: permissions.includes("approve_payments"),
+      canRejectPayments: permissions.includes("reject_payments"),
       // Inventory permissions
       canViewInventory: permissions.includes("View Inventory"),
       // Module access
@@ -338,6 +353,7 @@ export const usePermissions = () => {
   return {
     hasPermission,
     isLoading: loading,
+    user,
     // Spread memoized permissions
     ...memoizedPermissions,
     

@@ -16,6 +16,9 @@ import JournalsList from "@/pages/finance/JournalsList";
 import JournalForm from "@/pages/finance/JournalForm";
 import JournalDetail from "@/pages/finance/JournalDetail";
 import SubledgerList from "@/pages/finance/SubledgerList";
+import PaymentsList from "@/pages/finance/PaymentsList";
+import PaymentForm from "@/pages/finance/PaymentForm";
+import PaymentDetail from "@/pages/finance/PaymentDetail";
 
 export function FinanceRoutes() {
   return (
