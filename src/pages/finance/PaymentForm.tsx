@@ -40,6 +40,19 @@ const paymentFormSchema = z.object({
   notes: z.string().optional(),
 });
 
+// Utility to convert all empty string fields to null
+function convertEmptyStringsToNull(obj: any) {
+  const result: any = {};
+  for (const key in obj) {
+    if (obj[key] === "") {
+      result[key] = null;
+    } else {
+      result[key] = obj[key];
+    }
+  }
+  return result;
+}
+
 export default function PaymentForm() {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -192,14 +205,8 @@ export default function PaymentForm() {
   };
 
   const onSubmit = (data: PaymentFormData) => {
-    // Convert empty string UUIDs to null
-    const processedData = {
-      ...data,
-      divisionId: data.divisionId || null,
-      payeeOrganizationId: data.payeeOrganizationId || null,
-      linkedInvoiceId: data.linkedInvoiceId || null,
-    };
-
+    // Convert all empty string fields to null
+    const processedData = convertEmptyStringsToNull(data);
     if (isEditMode) {
       updatePaymentMutation.mutate(processedData);
     } else {
