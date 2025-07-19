@@ -19,6 +19,7 @@ import { useChartOfAccountsPermissions } from "@/hooks/useChartOfAccountsPermiss
 import { useAccountingRulesPermissions } from "@/hooks/useAccountingRulesPermissions";
 import { useJournalPermissions } from "@/hooks/useJournalPermissions";
 import { useSubledgerPermissions } from "@/hooks/useSubledgerPermissions";
+import { usePaymentPermissions } from "@/hooks/usePaymentPermissions";
 import { createModuleGroups } from "./sidebar/moduleGroups";
 import { SidebarNavContent } from "./sidebar/SidebarNavContent";
 import { SidebarFooterContent } from "./sidebar/SidebarFooterContent";
@@ -38,6 +39,7 @@ export function AppSidebar() {
   const { canViewRules } = useAccountingRulesPermissions();
   const { canViewJournal } = useJournalPermissions();
   const { canViewSubledger } = useSubledgerPermissions();
+  const { canViewPayments } = usePaymentPermissions();
   const { setOpen } = useSidebar();
   
   const permissions = {
@@ -59,6 +61,7 @@ export function AppSidebar() {
     canViewRules,
     canViewJournal,
     canViewSubledger,
+    canViewPayments,
   };
 
   const moduleGroups = createModuleGroups(permissions);
