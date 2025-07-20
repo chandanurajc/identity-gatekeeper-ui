@@ -107,35 +107,48 @@ export default function PaymentForm() {
 
   // Set form values when payment is loaded
   useEffect(() => {
-    if (payment) {
-      form.reset({
-        paymentNumber: payment.paymentNumber,
-        paymentDate: payment.paymentDate,
-        paymentType: payment.paymentType,
-        divisionId: payment.divisionId,
-        payeeOrganizationId: payment.payeeOrganizationId,
-        paymentMode: payment.paymentMode,
-        referenceNumber: payment.referenceNumber || "",
-        amount: payment.amount,
-        linkedInvoiceId: payment.linkedInvoiceId || "",
-        notes: payment.notes || "",
-      });
-      // Set selectedInvoice if linkedInvoice exists
-      if (payment.linkedInvoice) {
-        setSelectedInvoice({
-          id: payment.linkedInvoice.id,
-          invoiceNumber: payment.linkedInvoice.invoice_number,
-          invoiceDate: payment.linkedInvoice.invoice_date,
-          supplierOrganizationId: payment.linkedInvoice.remit_to_org_id,
-          supplierName: payment.linkedInvoice.remit_to_name,
-          totalInvoiceValue: payment.linkedInvoice.total_invoice_value,
-          billToOrgId: payment.linkedInvoice.bill_to_org_id,
-          remitToOrgId: payment.linkedInvoice.remit_to_org_id,
-          status: payment.linkedInvoice.status,
+    try {
+      if (payment) {
+        console.log('Loaded payment:', payment);
+        form.reset({
+          paymentNumber: payment.paymentNumber,
+          paymentDate: payment.paymentDate,
+          paymentType: payment.paymentType,
+          divisionId: payment.divisionId,
+          payeeOrganizationId: payment.payeeOrganizationId,
+          paymentMode: payment.paymentMode,
+          referenceNumber: payment.referenceNumber || "",
+          amount: payment.amount,
+          linkedInvoiceId: payment.linkedInvoiceId || "",
+          notes: payment.notes || "",
         });
+        // Set selectedInvoice if linkedInvoice exists
+        if (payment.linkedInvoice) {
+          setSelectedInvoice({
+            id: payment.linkedInvoice.id,
+            invoiceNumber: payment.linkedInvoice.invoiceNumber,
+            invoiceDate: payment.linkedInvoice.invoiceDate,
+            supplierOrganizationId: payment.linkedInvoice.supplierOrganizationId,
+            supplierName: payment.linkedInvoice.supplierName,
+            totalInvoiceValue: payment.linkedInvoice.totalInvoiceValue,
+            billToOrgId: payment.linkedInvoice.billToOrgId,
+            remitToOrgId: payment.linkedInvoice.remitToOrgId,
+            status: payment.linkedInvoice.status,
+          });
+        }
       }
+    } catch (err) {
+      console.error('Error in useEffect for payment:', err);
     }
   }, [payment, form]);
+
+  // Fallback error UI
+  if (isEditMode && payment === undefined) {
+    return <div>Loading payment data...</div>;
+  }
+  if (isEditMode && payment === null) {
+    return <div className="text-red-600">Error: Payment not found or failed to load.</div>;
+  }
 
   // Set generated payment number
   useEffect(() => {
