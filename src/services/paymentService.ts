@@ -6,12 +6,7 @@ export const paymentService = {
   getPayments: async (organizationId: string): Promise<Payment[]> => {
     const { data, error } = await supabase
       .from('payments')
-      .select(`
-        *,
-        payeeOrganization:organizations!payments_payee_organization_id_fkey(id, name),
-        division:divisions!payments_division_id_fkey(id, name),
-        linkedInvoice:invoice!payments_linked_invoice_id_fkey(id, invoice_number, total_invoice_value)
-      `)
+      .select('*')
       .eq('organization_id', organizationId)
       .order('created_on', { ascending: false });
 
@@ -21,7 +16,7 @@ export const paymentService = {
     }
 
     return data.map(payment => ({
-      ...payment,
+      id: payment.id,
       paymentNumber: payment.payment_number,
       paymentDate: payment.payment_date,
       paymentType: payment.payment_type,
@@ -30,14 +25,15 @@ export const paymentService = {
       payeeOrganizationId: payment.payee_organization_id,
       paymentMode: payment.payment_mode,
       referenceNumber: payment.reference_number,
+      amount: payment.amount,
+      currency: payment.currency,
       linkedInvoiceId: payment.linked_invoice_id,
+      notes: payment.notes,
+      status: payment.status,
       createdBy: payment.created_by,
       createdOn: new Date(payment.created_on),
       updatedBy: payment.updated_by,
       updatedOn: payment.updated_on ? new Date(payment.updated_on) : undefined,
-      payeeOrganization: payment.payeeOrganization || undefined,
-      division: payment.division || undefined,
-      linkedInvoice: payment.linkedInvoice || undefined
     }));
   },
 
@@ -45,12 +41,7 @@ export const paymentService = {
   getPaymentById: async (id: string): Promise<Payment | null> => {
     const { data, error } = await supabase
       .from('payments')
-      .select(`
-        *,
-        payeeOrganization:organizations!payments_payee_organization_id_fkey(id, name),
-        division:divisions!payments_division_id_fkey(id, name),
-        linkedInvoice:invoice!payments_linked_invoice_id_fkey(id, invoice_number, total_invoice_value)
-      `)
+      .select('*')
       .eq('id', id)
       .single();
 
@@ -61,7 +52,7 @@ export const paymentService = {
     }
 
     return {
-      ...data,
+      id: data.id,
       paymentNumber: data.payment_number,
       paymentDate: data.payment_date,
       paymentType: data.payment_type,
@@ -70,14 +61,15 @@ export const paymentService = {
       payeeOrganizationId: data.payee_organization_id,
       paymentMode: data.payment_mode,
       referenceNumber: data.reference_number,
+      amount: data.amount,
+      currency: data.currency,
       linkedInvoiceId: data.linked_invoice_id,
+      notes: data.notes,
+      status: data.status,
       createdBy: data.created_by,
       createdOn: new Date(data.created_on),
       updatedBy: data.updated_by,
       updatedOn: data.updated_on ? new Date(data.updated_on) : undefined,
-      payeeOrganization: data.payeeOrganization || undefined,
-      division: data.division || undefined,
-      linkedInvoice: data.linkedInvoice || undefined
     };
   },
 

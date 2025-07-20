@@ -34,7 +34,13 @@ export interface Payment {
   linkedInvoice?: {
     id: string;
     invoiceNumber: string;
+    invoiceDate: string;
+    supplierOrganizationId: string;
+    supplierName: string;
     totalInvoiceValue: number;
+    billToOrgId: string;
+    remitToOrgId: string;
+    status: string;
   };
 }
 

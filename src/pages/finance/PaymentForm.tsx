@@ -142,12 +142,20 @@ export default function PaymentForm() {
     }
   }, [payment, form]);
 
-  // Fallback error UI
+  // Show loading state for edit mode
   if (isEditMode && payment === undefined) {
-    return <div>Loading payment data...</div>;
-  }
-  if (isEditMode && payment === null) {
-    return <div className="text-red-600">Error: Payment not found or failed to load.</div>;
+    return (
+      <div className="container mx-auto py-8">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-center space-x-2">
+              <Loader2 className="h-6 w-6 animate-spin" />
+              <span>Loading payment data...</span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   // Set generated payment number
@@ -221,9 +229,7 @@ export default function PaymentForm() {
   const canEdit = (isEditMode && canEditPayments && payment?.status === "Created") || 
                  (!isEditMode && canCreatePayments);
 
-  if (isEditMode && !payment) {
-    return <div>Loading...</div>;
-  }
+  // Remove duplicate loading check since we handle it above
 
   if (!canEdit && !isEditMode) {
     return (

@@ -117,10 +117,8 @@ export default function PaymentsList() {
     },
   ];
 
-  // Remove the linked invoice columns from the columns array
-  columns = columns.filter(
-    col => col.accessorKey !== "linkedInvoice.invoice_number" && col.accessorKey !== "linkedInvoice.total_invoice_value"
-  );
+  // Remove the linked invoice columns from the columns array (since columns don't use accessorKey)
+  // This filtering is not needed as we don't have those columns
 
   // Filter payments based on search and filters
   const filteredPayments = payments.filter((payment) => {
