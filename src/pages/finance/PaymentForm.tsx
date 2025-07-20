@@ -50,6 +50,8 @@ function convertEmptyStringsToNull(obj: any) {
       result[key] = obj[key];
     }
   }
+  console.log("Original form data:", obj);
+  console.log("Processed form data:", result);
   return result;
 }
 
@@ -516,6 +518,15 @@ export default function PaymentForm() {
                 />
               </CardContent>
             </Card>
+
+            {/* Hidden field for linkedInvoiceId */}
+            <FormField
+              control={form.control}
+              name="linkedInvoiceId"
+              render={({ field }) => (
+                <input type="hidden" {...field} />
+              )}
+            />
 
             {/* Action Buttons */}
             <div className="flex justify-end gap-4">
