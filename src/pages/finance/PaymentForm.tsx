@@ -302,7 +302,14 @@ export default function PaymentForm() {
                               )}
                             >
                               {field.value ? (
-                                format(new Date(field.value), "PPP")
+                                (() => {
+                                  const date = new Date(field.value);
+                                  return isNaN(date.getTime()) ? (
+                                    <span className="text-red-500">Invalid date</span>
+                                  ) : (
+                                    format(date, "PPP")
+                                  );
+                                })()
                               ) : (
                                 <span>Pick a date</span>
                               )}
@@ -313,7 +320,7 @@ export default function PaymentForm() {
                         <PopoverContent className="w-auto p-0" align="start">
                           <Calendar
                             mode="single"
-                            selected={field.value ? new Date(field.value) : undefined}
+                            selected={field.value && !isNaN(new Date(field.value).getTime()) ? new Date(field.value) : undefined}
                             onSelect={(date) => field.onChange(date ? format(date, "yyyy-MM-dd") : "")}
                             initialFocus
                             className="pointer-events-auto"
