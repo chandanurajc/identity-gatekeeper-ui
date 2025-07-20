@@ -39,7 +39,7 @@ export const paymentService = {
 
   // Get payment by ID
   getPaymentById: async (id: string): Promise<Payment | null> => {
-    const { data, error } = await supabase
+    const { data: payment, error } = await supabase
       .from('payments')
       .select('*')
       .eq('id', id)
@@ -51,25 +51,68 @@ export const paymentService = {
       throw new Error(error.message);
     }
 
+    // Fetch related data separately
+    const [payeeOrg, division, invoice] = await Promise.all([
+      // Fetch payee organization
+      supabase
+        .from('organizations')
+        .select('id, name')
+        .eq('id', payment.payee_organization_id)
+        .single(),
+      
+      // Fetch division
+      supabase
+        .from('divisions')
+        .select('id, name')
+        .eq('id', payment.division_id)
+        .single(),
+      
+      // Fetch linked invoice if exists
+      payment.linked_invoice_id ? supabase
+        .from('invoice')
+        .select('id, invoice_number, invoice_date, total_invoice_value, remit_to_name, remit_to_org_id, bill_to_org_id, status')
+        .eq('id', payment.linked_invoice_id)
+        .single() : Promise.resolve({ data: null, error: null })
+    ]);
+
     return {
-      id: data.id,
-      paymentNumber: data.payment_number,
-      paymentDate: data.payment_date,
-      paymentType: data.payment_type,
-      organizationId: data.organization_id,
-      divisionId: data.division_id,
-      payeeOrganizationId: data.payee_organization_id,
-      paymentMode: data.payment_mode,
-      referenceNumber: data.reference_number,
-      amount: data.amount,
-      currency: data.currency,
-      linkedInvoiceId: data.linked_invoice_id,
-      notes: data.notes,
-      status: data.status,
-      createdBy: data.created_by,
-      createdOn: new Date(data.created_on),
-      updatedBy: data.updated_by,
-      updatedOn: data.updated_on ? new Date(data.updated_on) : undefined,
+      id: payment.id,
+      paymentNumber: payment.payment_number,
+      paymentDate: payment.payment_date,
+      paymentType: payment.payment_type,
+      organizationId: payment.organization_id,
+      divisionId: payment.division_id,
+      payeeOrganizationId: payment.payee_organization_id,
+      paymentMode: payment.payment_mode,
+      referenceNumber: payment.reference_number,
+      amount: payment.amount,
+      currency: payment.currency,
+      linkedInvoiceId: payment.linked_invoice_id,
+      notes: payment.notes,
+      status: payment.status,
+      createdBy: payment.created_by,
+      createdOn: new Date(payment.created_on),
+      updatedBy: payment.updated_by,
+      updatedOn: payment.updated_on ? new Date(payment.updated_on) : undefined,
+      payeeOrganization: payeeOrg.data ? {
+        id: payeeOrg.data.id,
+        name: payeeOrg.data.name
+      } : undefined,
+      division: division.data ? {
+        id: division.data.id,
+        name: division.data.name
+      } : undefined,
+      linkedInvoice: invoice.data ? {
+        id: invoice.data.id,
+        invoiceNumber: invoice.data.invoice_number,
+        invoiceDate: invoice.data.invoice_date,
+        supplierOrganizationId: invoice.data.remit_to_org_id,
+        supplierName: invoice.data.remit_to_name,
+        totalInvoiceValue: invoice.data.total_invoice_value,
+        billToOrgId: invoice.data.bill_to_org_id,
+        remitToOrgId: invoice.data.remit_to_org_id,
+        status: invoice.data.status,
+      } : undefined
     };
   },
 
