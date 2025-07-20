@@ -61,7 +61,7 @@ export default function PaymentForm() {
   const queryClient = useQueryClient();
   const { getCurrentOrganizationId } = useMultiTenant();
   const organizationId = getCurrentOrganizationId();
-  const { canCreatePayments, canEditPayments, canApprovePayments, canRejectPayments, user } = usePaymentPermissions();
+  const { canCreatePayments, canEditPayments, user } = usePaymentPermissions();
   
   const [selectedInvoice, setSelectedInvoice] = useState<InvoiceSearchResult | null>(null);
   const [isInvoiceSearchOpen, setIsInvoiceSearchOpen] = useState(false);
@@ -156,31 +156,6 @@ export default function PaymentForm() {
     },
   });
 
-  // Status change mutations
-  const approvePaymentMutation = useMutation({
-    mutationFn: () => paymentService.updatePaymentStatus(id!, "Approved", user?.email || ""),
-    onSuccess: () => {
-      toast({ title: "Success", description: "Payment approved successfully" });
-      queryClient.invalidateQueries({ queryKey: ["payments"] });
-      navigate("/finance/payments");
-    },
-    onError: (error: Error) => {
-      toast({ variant: "destructive", title: "Error", description: error.message });
-    },
-  });
-
-  const rejectPaymentMutation = useMutation({
-    mutationFn: () => paymentService.updatePaymentStatus(id!, "Rejected", user?.email || ""),
-    onSuccess: () => {
-      toast({ title: "Success", description: "Payment rejected successfully" });
-      queryClient.invalidateQueries({ queryKey: ["payments"] });
-      navigate("/finance/payments");
-    },
-    onError: (error: Error) => {
-      toast({ variant: "destructive", title: "Error", description: error.message });
-    },
-  });
-
   const watchPaymentType = form.watch("paymentType");
   const watchPayeeOrgId = form.watch("payeeOrganizationId");
 
@@ -248,30 +223,6 @@ export default function PaymentForm() {
               {isEditMode ? "Update payment details" : "Create a new payment transaction"}
             </p>
           </div>
-          {isEditMode && payment && (
-            <div className="flex gap-2">
-              {canApprovePayments && payment.status === "Created" && (
-                <Button
-                  onClick={() => approvePaymentMutation.mutate()}
-                  disabled={approvePaymentMutation.isPending}
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  {approvePaymentMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Approve
-                </Button>
-              )}
-              {canRejectPayments && payment.status === "Created" && (
-                <Button
-                  variant="destructive"
-                  onClick={() => rejectPaymentMutation.mutate()}
-                  disabled={rejectPaymentMutation.isPending}
-                >
-                  {rejectPaymentMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Reject
-                </Button>
-              )}
-            </div>
-          )}
         </div>
 
         <Form {...form}>

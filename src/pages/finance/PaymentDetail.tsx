@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
-import { ArrowLeft, Edit, FileText, Building, Calendar, DollarSign, CreditCard, Hash, User, Clock } from "lucide-react";
+import { ArrowLeft, Edit, FileText, Building, Calendar, DollarSign, CreditCard, Hash, User, Clock, CheckCircle2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -138,6 +138,28 @@ export default function PaymentDetail() {
               >
                 <Edit className="h-4 w-4" />
                 Edit
+              </Button>
+            )}
+            {canApprovePayments && payment.status === "Created" && (
+              <Button 
+                onClick={handleApprove}
+                className="gap-2"
+                disabled={isApproving}
+                variant="default"
+              >
+                <CheckCircle2 className="h-4 w-4" />
+                Approve
+              </Button>
+            )}
+            {canRejectPayments && payment.status === "Created" && (
+              <Button 
+                onClick={handleReject}
+                className="gap-2"
+                disabled={isRejecting}
+                variant="destructive"
+              >
+                <XCircle className="h-4 w-4" />
+                Reject
               </Button>
             )}
           </div>
