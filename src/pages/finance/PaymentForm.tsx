@@ -296,7 +296,7 @@ export default function PaymentForm() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Payment Type *</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select payment type" />
@@ -318,7 +318,7 @@ export default function PaymentForm() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Division *</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select division" />
@@ -343,7 +343,7 @@ export default function PaymentForm() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Payee *</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select payee" />
@@ -368,7 +368,7 @@ export default function PaymentForm() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Payment Mode *</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select payment mode" />
