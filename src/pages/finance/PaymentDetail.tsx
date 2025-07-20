@@ -249,7 +249,7 @@ export default function PaymentDetail() {
         </Card>
 
         {/* Linked Invoice Information */}
-        {payment.linkedInvoice && (
+        {payment.linkedInvoice ? (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -260,18 +260,17 @@ export default function PaymentDetail() {
             <CardContent>
               <div className="space-y-2">
                 <div className="text-lg font-semibold">
-                  Invoice Number: {payment.linkedInvoice.invoiceNumber || "-"}
+                  Invoice Number: {payment.linkedInvoice.invoice_number || "-"}
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  Invoice Value: {payment.linkedInvoice.totalInvoiceValue != null
-                    ? payment.currency + " " + Number(payment.linkedInvoice.totalInvoiceValue).toLocaleString()
+                  Invoice Value: {payment.linkedInvoice.total_invoice_value != null
+                    ? payment.currency + " " + Number(payment.linkedInvoice.total_invoice_value).toLocaleString()
                     : "-"}
                 </div>
               </div>
             </CardContent>
           </Card>
-        )}
-        {!payment.linkedInvoice && (
+        ) : (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">

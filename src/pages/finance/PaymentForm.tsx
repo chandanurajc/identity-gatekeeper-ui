@@ -120,6 +120,20 @@ export default function PaymentForm() {
         linkedInvoiceId: payment.linkedInvoiceId || "",
         notes: payment.notes || "",
       });
+      // Set selectedInvoice if linkedInvoice exists
+      if (payment.linkedInvoice) {
+        setSelectedInvoice({
+          id: payment.linkedInvoice.id,
+          invoiceNumber: payment.linkedInvoice.invoice_number,
+          invoiceDate: payment.linkedInvoice.invoice_date,
+          supplierOrganizationId: payment.linkedInvoice.remit_to_org_id,
+          supplierName: payment.linkedInvoice.remit_to_name,
+          totalInvoiceValue: payment.linkedInvoice.total_invoice_value,
+          billToOrgId: payment.linkedInvoice.bill_to_org_id,
+          remitToOrgId: payment.linkedInvoice.remit_to_org_id,
+          status: payment.linkedInvoice.status,
+        });
+      }
     }
   }, [payment, form]);
 
