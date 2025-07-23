@@ -23,6 +23,10 @@ import type { Division } from "@/types/division";
 
 const transactionCategories: RuleTransactionCategory[] = ['Invoice', 'PO', 'Payment'];
 const triggeringActions = ['Invoice Approved', 'PO Created', 'Payment Processed', 'Purchase order receive'];
+const paymentTriggeringActions = [
+  { label: 'Payment created', value: 'Payment Created', status: 'Created' },
+  { label: 'Payment approved', value: 'Payment Approved', status: 'Approved' },
+];
 const poAmountSourceOptions = [
   'Item total price',
   'Total GST Value',
@@ -46,6 +50,7 @@ const invoiceAmountSourceOptions = [
   'SGST Amount',
   'IGST Amount',
 ];
+const paymentAmountSourceOptions = ['Amount'];
 
 const formSchema = z.object({
   ruleName: z.string().min(1, "Rule name is required"),
@@ -206,6 +211,10 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
   };
 
   // Database field options for transaction reference dropdown
+  const paymentDatabaseFields = [
+    { value: "payment.payment_number", label: "Payment - Payment Number" },
+    { value: "payment.reference_number", label: "Payment - Reference Number" },
+  ];
   const databaseFields = [
     { value: "purchase_order.po_number", label: "Purchase Order - PO Number" },
     { value: "purchase_order.tracking_number", label: "Purchase Order - Tracking Number" },
@@ -308,54 +317,67 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
                 <FormField
                   control={form.control}
                   name="triggeringAction"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Triggering Action *</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select triggering action" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {triggeringActions.map((action) => (
-                            <SelectItem key={action} value={action}>
-                              {action}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  render={({ field }) => {
+                    const transactionCategory = form.watch('transactionCategory');
+                    return (
+                      <FormItem>
+                        <FormLabel>Triggering Action *</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select triggering action" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {transactionCategory === 'Payment'
+                              ? paymentTriggeringActions.map((action) => (
+                                  <SelectItem key={action.value} value={action.value}>
+                                    {action.label}
+                                  </SelectItem>
+                                ))
+                              : triggeringActions.map((action) => (
+                                  <SelectItem key={action} value={action}>
+                                    {action}
+                                  </SelectItem>
+                                ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
                 />
 
                 <FormField
                   control={form.control}
                   name="transactionReference"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Transaction Reference *</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select database field" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent className="max-w-xs">
-                          {databaseFields.map((dbField) => (
-                            <SelectItem key={dbField.value} value={dbField.value} className="text-sm">
-                              <div className="flex flex-col">
-                                <span className="font-medium">{dbField.label}</span>
-                                <span className="text-xs text-muted-foreground">{dbField.value}</span>
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  render={({ field }) => {
+                    const transactionCategory = form.watch('transactionCategory');
+                    const fields = transactionCategory === 'Payment' ? paymentDatabaseFields : databaseFields;
+                    return (
+                      <FormItem>
+                        <FormLabel>Transaction Reference *</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select database field" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent className="max-w-xs">
+                            {fields.map((dbField) => (
+                              <SelectItem key={dbField.value} value={dbField.value} className="text-sm">
+                                <div className="flex flex-col">
+                                  <span className="font-medium">{dbField.label}</span>
+                                  <span className="text-xs text-muted-foreground">{dbField.value}</span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
                 />
 
                 <FormField
@@ -477,13 +499,14 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
                         control={form.control}
                         name={`lines.${index}.amountSource`}
                         render={({ field }) => {
-                          // Show PO-specific or Invoice-specific options
                           const transactionCategory = form.watch('transactionCategory');
                           let options = amountSourceOptions;
                           if (transactionCategory === 'PO') {
                             options = poAmountSourceOptions;
                           } else if (transactionCategory === 'Invoice') {
                             options = invoiceAmountSourceOptions;
+                          } else if (transactionCategory === 'Payment') {
+                            options = paymentAmountSourceOptions;
                           }
                           return (
                             <FormItem>

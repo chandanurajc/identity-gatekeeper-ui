@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
-import { ArrowLeft, Edit, FileText, Building, Calendar, DollarSign, CreditCard, Hash, User, Clock, CheckCircle2, XCircle } from "lucide-react";
+import { ArrowLeft, Edit, FileText, Building, Calendar, CreditCard, Hash, User, Clock, CheckCircle2, XCircle } from "lucide-react";
+import { FaRupeeSign } from "react-icons/fa";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -195,11 +196,11 @@ export default function PaymentDetail() {
 
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                  <DollarSign className="h-4 w-4" />
+                  <FaRupeeSign className="h-4 w-4" />
                   Amount
                 </div>
                 <div className="text-lg font-semibold">
-                  {payment.currency} {Number(payment.amount).toLocaleString()}
+                  ₹{Number(payment.amount).toLocaleString()}
                 </div>
               </div>
 
