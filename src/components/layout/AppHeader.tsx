@@ -9,7 +9,7 @@ export function AppHeader() {
       <div className="flex items-center gap-2">
         <Button variant="ghost" size="sm" className="flex items-center gap-2 p-2" onClick={() => navigate("/dashboard")}>
           <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-gray-950">
-            <span className="text-white font-bold text-sm">N</span>
+            <span className="text-white font-bold text-sm">∞</span>
           </div>
           <span className="font-semibold text-lg">Nexuz</span>
         </Button>
