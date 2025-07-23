@@ -343,9 +343,4 @@ export const paymentService = {
       comments: log.comments,
     }));
   },
-
-  // Create journal for existing payment (manual trigger)
-  createJournalForPayment: async (paymentId: string): Promise<void> => {
-    await paymentJournalService.createJournalForExistingPayment(paymentId);
-  },
 };

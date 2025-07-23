@@ -137,6 +137,10 @@ export class PaymentJournalService {
     try {
       const result = await journalService.createJournal(journalData, payment.organizationId, createdBy);
       console.log('Journal created successfully:', result.id);
+      
+      // Auto-post the journal entry
+      await journalService.postJournal(result.id, payment.organizationId, createdBy);
+      console.log('Journal auto-posted successfully:', result.id);
     } catch (error) {
       console.error('Error creating journal:', error);
       throw error;

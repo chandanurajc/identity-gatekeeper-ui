@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
-import { ArrowLeft, Edit, FileText, Building, Calendar, CreditCard, Hash, User, Clock, CheckCircle2, XCircle, BookOpen } from "lucide-react";
+import { ArrowLeft, Edit, FileText, Building, Calendar, CreditCard, Hash, User, Clock, CheckCircle2, XCircle } from "lucide-react";
 import { FaRupeeSign } from "react-icons/fa";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -46,31 +46,6 @@ export default function PaymentDetail() {
 
   const [isApproving, setIsApproving] = useState(false);
   const [isRejecting, setIsRejecting] = useState(false);
-
-  // Mutation for creating journal entries
-  const createJournalMutation = useMutation({
-    mutationFn: (paymentId: string) => paymentService.createJournalForPayment(paymentId),
-    onSuccess: () => {
-      toast({
-        title: "Success",
-        description: "Journal entry created successfully",
-      });
-      queryClient.invalidateQueries({ queryKey: ["payment", id] });
-    },
-    onError: (error) => {
-      console.error('Error creating journal:', error);
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to create journal entry",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleCreateJournal = () => {
-    if (!id) return;
-    createJournalMutation.mutate(id);
-  };
 
   const handleApprove = async () => {
     if (!payment) return;
@@ -213,16 +188,6 @@ export default function PaymentDetail() {
                 Reject
               </Button>
             )}
-            {/* Manual Journal Creation Button for Development */}
-            <Button 
-              onClick={handleCreateJournal}
-              className="gap-2"
-              disabled={createJournalMutation.isPending}
-              variant="outline"
-            >
-              <BookOpen className="h-4 w-4" />
-              Create Journal
-            </Button>
           </div>
         </div>
 
