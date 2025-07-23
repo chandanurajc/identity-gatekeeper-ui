@@ -1,13 +1,14 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
-import { ArrowLeft, Edit, FileText, Building, Calendar, CreditCard, Hash, User, Clock, CheckCircle2, XCircle } from "lucide-react";
+import { ArrowLeft, Edit, FileText, Building, Calendar, CreditCard, Hash, User, Clock, CheckCircle2, XCircle, BookOpen } from "lucide-react";
 import { FaRupeeSign } from "react-icons/fa";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { useToast } from "@/components/ui/use-toast";
 import { useMultiTenant } from "@/hooks/useMultiTenant";
 import { usePaymentPermissions } from "@/hooks/usePaymentPermissions";
 import { paymentService } from "@/services/paymentService";
@@ -16,6 +17,8 @@ import { PaymentStatus } from "@/types/payment";
 export default function PaymentDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const { getCurrentOrganizationId } = useMultiTenant();
   const organizationId = getCurrentOrganizationId();
   const { canEditPayments, canViewPayments, canApprovePayments, canRejectPayments, user } = usePaymentPermissions();
@@ -44,15 +47,51 @@ export default function PaymentDetail() {
   const [isApproving, setIsApproving] = useState(false);
   const [isRejecting, setIsRejecting] = useState(false);
 
+  // Mutation for creating journal entries
+  const createJournalMutation = useMutation({
+    mutationFn: (paymentId: string) => paymentService.createJournalForPayment(paymentId),
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Journal entry created successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: ["payment", id] });
+    },
+    onError: (error) => {
+      console.error('Error creating journal:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to create journal entry",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleCreateJournal = () => {
+    if (!id) return;
+    createJournalMutation.mutate(id);
+  };
+
   const handleApprove = async () => {
     if (!payment) return;
     setIsApproving(true);
     try {
-      await paymentService.updatePaymentStatus(payment.id, "Approved", user?.email || "");
-      window.location.reload();
+      await paymentService.updatePaymentStatus(payment.id, 'Approved', user?.email || '', 'Payment approved via UI');
+      toast({
+        title: "Success",
+        description: "Payment approved successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: ["payment", id] });
+      queryClient.invalidateQueries({ queryKey: ["paymentAuditLogs", id] });
     } catch (error) {
+      console.error('Error approving payment:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to approve payment",
+        variant: "destructive",
+      });
+    } finally {
       setIsApproving(false);
-      alert("Failed to approve payment: " + (error instanceof Error ? error.message : error));
     }
   };
 
@@ -61,11 +100,22 @@ export default function PaymentDetail() {
     const comments = window.prompt("Enter rejection reason (optional):", "");
     setIsRejecting(true);
     try {
-      await paymentService.updatePaymentStatus(payment.id, "Rejected", user?.email || "", comments || undefined);
-      window.location.reload();
+      await paymentService.updatePaymentStatus(payment.id, 'Rejected', user?.email || '', comments || undefined);
+      toast({
+        title: "Success",
+        description: "Payment rejected successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: ["payment", id] });
+      queryClient.invalidateQueries({ queryKey: ["paymentAuditLogs", id] });
     } catch (error) {
+      console.error('Error rejecting payment:', error);
+      toast({
+        title: "Error", 
+        description: error instanceof Error ? error.message : "Failed to reject payment",
+        variant: "destructive",
+      });
+    } finally {
       setIsRejecting(false);
-      alert("Failed to reject payment: " + (error instanceof Error ? error.message : error));
     }
   };
 
@@ -163,6 +213,16 @@ export default function PaymentDetail() {
                 Reject
               </Button>
             )}
+            {/* Manual Journal Creation Button for Development */}
+            <Button 
+              onClick={handleCreateJournal}
+              className="gap-2"
+              disabled={createJournalMutation.isPending}
+              variant="outline"
+            >
+              <BookOpen className="h-4 w-4" />
+              Create Journal
+            </Button>
           </div>
         </div>
 
