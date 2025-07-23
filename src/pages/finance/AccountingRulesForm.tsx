@@ -22,7 +22,7 @@ import type { AccountingRuleFormData, RuleTransactionCategory } from "@/types/ac
 import type { Division } from "@/types/division";
 
 const transactionCategories: RuleTransactionCategory[] = ['Invoice', 'PO', 'Payment'];
-const triggeringActions = ['Invoice Approved', 'PO Created', 'Payment Processed', 'Purchase order receive'];
+const triggeringActions = ['Invoice Approved', 'PO Created', 'Payment Processed', 'Purchase order receive', 'Payment Created', 'Payment Approved'];
 const paymentTriggeringActions = [
   { label: 'Payment created', value: 'Payment Created', status: 'Created' },
   { label: 'Payment approved', value: 'Payment Approved', status: 'Approved' },
@@ -56,7 +56,14 @@ const formSchema = z.object({
   ruleName: z.string().min(1, "Rule name is required"),
   divisionId: z.string().optional(),
   transactionCategory: z.enum(['Invoice', 'PO', 'Payment']),
-  triggeringAction: z.enum(['Invoice Approved', 'PO Created', 'Payment Processed', 'Purchase order receive']),
+  triggeringAction: z.enum([
+    'Invoice Approved',
+    'PO Created',
+    'Payment Processed',
+    'Purchase order receive',
+    'Payment Created',
+    'Payment Approved',
+  ]),
   transactionReference: z.string().min(1, "Transaction reference is required"),
   transactionType: z.string().optional(),
   lines: z.array(z.object({
