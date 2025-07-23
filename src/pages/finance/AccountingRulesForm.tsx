@@ -20,6 +20,7 @@ import { chartOfAccountsService } from "@/services/chartOfAccountsService";
 import { divisionService } from "@/services/divisionService";
 import type { AccountingRuleFormData, RuleTransactionCategory } from "@/types/accountingRules";
 import type { Division } from "@/types/division";
+import { PAYMENT_AMOUNT_SOURCES } from "@/types/payment";
 
 const transactionCategories: RuleTransactionCategory[] = ['Invoice', 'PO', 'Payment'];
 const triggeringActions = ['Invoice Approved', 'PO Created', 'Payment Processed', 'Purchase order receive', 'Payment Created', 'Payment Approved'];
@@ -50,7 +51,7 @@ const invoiceAmountSourceOptions = [
   'SGST Amount',
   'IGST Amount',
 ];
-const paymentAmountSourceOptions = ['Amount'];
+const paymentAmountSourceOptions = [...PAYMENT_AMOUNT_SOURCES];
 
 const formSchema = z.object({
   ruleName: z.string().min(1, "Rule name is required"),

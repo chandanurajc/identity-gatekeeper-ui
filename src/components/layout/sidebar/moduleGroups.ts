@@ -15,8 +15,8 @@ import {
   List,
   BookCopy,
   FileText,
+  CreditCard,
 } from "lucide-react";
-import { FaRupeeSign } from "react-icons/fa";
 import { MenuItem, ModuleGroup } from "./types";
 
 type PermissionsMap = {
@@ -193,7 +193,7 @@ export const createModuleGroups = (permissions: PermissionsMap): ModuleGroup[] =
     financeItems.push({
       label: "Payments",
       path: "/finance/payments",
-      icon: FaRupeeSign,
+      icon: CreditCard,
       permission: true,
     });
   }

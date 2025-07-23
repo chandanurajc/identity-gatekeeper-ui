@@ -1,5 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { Payment, PaymentFormData, PaymentAuditLog, InvoiceSearchParams, InvoiceSearchResult } from '@/types/payment';
+import { paymentJournalService } from './paymentJournalService';
 
 export const paymentService = {
   // Get all payments for organization
@@ -165,7 +166,18 @@ export const paymentService = {
       throw new Error(error.message);
     }
 
-    return paymentService.getPaymentById(data.id) as Promise<Payment>;
+    // Get the created payment with all related data
+    const createdPayment = await paymentService.getPaymentById(data.id) as Payment;
+    
+    // Create journal entry for payment creation
+    try {
+      await paymentJournalService.createPaymentJournal(createdPayment, 'Created', createdBy);
+    } catch (journalError) {
+      console.error('Error creating payment journal:', journalError);
+      // Don't throw here - payment creation should succeed even if journal fails
+    }
+
+    return createdPayment;
   },
 
   // Update payment
@@ -225,6 +237,14 @@ export const paymentService = {
     if (updateError) {
       console.error('Error updating payment status:', updateError);
       throw new Error(updateError.message);
+    }
+
+    // Create journal entry for status change
+    try {
+      await paymentJournalService.createPaymentJournal(currentPayment, newStatus, changedBy);
+    } catch (journalError) {
+      console.error('Error creating payment journal for status change:', journalError);
+      // Don't throw here - status update should succeed even if journal fails
     }
 
     // Add audit log entry

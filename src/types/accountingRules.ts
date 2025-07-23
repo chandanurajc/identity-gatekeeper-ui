@@ -1,6 +1,6 @@
 
 export type RuleTransactionCategory = 'Invoice' | 'PO' | 'Payment';
-export type RuleAction = 'Invoice Approved' | 'PO Created' | 'Payment Processed' | 'Purchase order receive';
+export type RuleAction = 'Invoice Approved' | 'PO Created' | 'Payment Processed' | 'Purchase order receive' | 'Payment Created' | 'Payment Approved';
 export type PartyType = 'Bill To' | 'Remit To';
 export type FilterLogicType = 'AND' | 'OR';
 

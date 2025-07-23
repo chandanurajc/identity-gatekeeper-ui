@@ -85,3 +85,11 @@ export interface InvoiceSearchResult {
   remitToOrgId: string;
   status: string;
 }
+
+// Define payment-specific amount sources for accounting rules
+export const PAYMENT_AMOUNT_SOURCES = [
+  'Payment Amount',
+  'Amount',
+  'Total Amount',
+  'Payment Value'
+] as const;
