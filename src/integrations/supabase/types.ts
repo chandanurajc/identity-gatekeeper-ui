@@ -2306,7 +2306,7 @@ export type Database = {
             foreignKeyName: "subledger_journal_id_fkey"
             columns: ["journal_id"]
             isOneToOne: false
-            referencedRelation: "journal_line"
+            referencedRelation: "journal_header"
             referencedColumns: ["id"]
           },
           {
