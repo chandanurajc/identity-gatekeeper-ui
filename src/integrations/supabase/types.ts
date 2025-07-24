@@ -2250,11 +2250,8 @@ export type Database = {
           debit_amount: number | null
           id: string
           journal_id: string | null
-          organization_contact_id: string | null
           organization_id: string
-          party_code: string | null
           party_contact_id: string | null
-          party_name: string
           party_org_id: string
           source_reference: string | null
           transaction_category: string | null
@@ -2270,11 +2267,8 @@ export type Database = {
           debit_amount?: number | null
           id?: string
           journal_id?: string | null
-          organization_contact_id?: string | null
           organization_id: string
-          party_code?: string | null
           party_contact_id?: string | null
-          party_name: string
           party_org_id: string
           source_reference?: string | null
           transaction_category?: string | null
@@ -2290,11 +2284,8 @@ export type Database = {
           debit_amount?: number | null
           id?: string
           journal_id?: string | null
-          organization_contact_id?: string | null
           organization_id?: string
-          party_code?: string | null
           party_contact_id?: string | null
-          party_name?: string
           party_org_id?: string
           source_reference?: string | null
           transaction_category?: string | null
@@ -2316,13 +2307,6 @@ export type Database = {
             columns: ["journal_id"]
             isOneToOne: false
             referencedRelation: "journal_header"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "subledger_organization_contact_id_fkey"
-            columns: ["organization_contact_id"]
-            isOneToOne: false
-            referencedRelation: "organization_contacts"
             referencedColumns: ["id"]
           },
           {
