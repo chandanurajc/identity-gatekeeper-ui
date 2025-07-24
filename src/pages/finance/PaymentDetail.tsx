@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
@@ -28,6 +28,24 @@ export default function PaymentDetail() {
     queryFn: () => paymentService.getPaymentById(id!),
     enabled: !!id && canViewPayments,
   });
+
+  // Remit to contact state
+  const [remitToContact, setRemitToContact] = useState<{ firstName: string; lastName?: string } | null>(null);
+  useEffect(() => {
+    async function fetchRemitContact() {
+      if (payment && payment.remitToContactId && !payment.remitToContact) {
+        // Fetch contact from organizationService
+        const org = payment.payeeOrganizationId ? await organizationService.getOrganizationById(payment.payeeOrganizationId) : null;
+        const contact = org?.contacts?.find((c: any) => String(c.id) === String(payment.remitToContactId));
+        if (contact) setRemitToContact({ firstName: contact.firstName, lastName: contact.lastName });
+      } else if (payment && payment.remitToContact) {
+        setRemitToContact({ firstName: payment.remitToContact.firstName, lastName: payment.remitToContact.lastName });
+      } else {
+        setRemitToContact(null);
+      }
+    }
+    fetchRemitContact();
+  }, [payment]);
 
   const { data: auditLogs = [] } = useQuery({
     queryKey: ["paymentAuditLogs", id],
@@ -258,18 +276,29 @@ export default function PaymentDetail() {
           </CardContent>
         </Card>
 
-        {/* Payee Information */}
+        {/* Payee Organization & Remit To */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Building className="h-5 w-5" />
-              Payee Information
+              Payee organization
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
               <div className="text-lg font-semibold">{payment.payeeOrganization?.name}</div>
               <div className="text-sm text-muted-foreground">Organization ID: {payment.payeeOrganizationId}</div>
+              {remitToContact ? (
+                <div className="text-sm">
+                  <span className="font-medium">Remit to: </span>
+                  {remitToContact.firstName} {remitToContact.lastName || ''}
+                </div>
+              ) : payment.remitToContactId ? (
+                <div className="text-sm">
+                  <span className="font-medium">Remit to Contact ID: </span>
+                  {payment.remitToContactId}
+                </div>
+              ) : null}
             </div>
           </CardContent>
         </Card>

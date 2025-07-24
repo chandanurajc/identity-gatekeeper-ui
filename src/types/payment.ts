@@ -10,6 +10,7 @@ export interface Payment {
   organizationId: string;
   divisionId: string;
   payeeOrganizationId: string;
+  remitToContactId?: string;
   paymentMode: PaymentMode;
   referenceNumber?: string;
   amount: number;
@@ -21,7 +22,6 @@ export interface Payment {
   createdOn: Date;
   updatedBy?: string;
   updatedOn?: Date;
-  
   // Populated joins
   payeeOrganization?: {
     id: string;
@@ -42,6 +42,11 @@ export interface Payment {
     remitToOrgId: string;
     status: string;
   };
+  remitToContact?: {
+    id: string;
+    firstName: string;
+    lastName?: string;
+  };
 }
 
 export interface PaymentFormData {
@@ -50,6 +55,7 @@ export interface PaymentFormData {
   paymentType: PaymentType;
   divisionId: string;
   payeeOrganizationId: string;
+  remitToContactId: string;
   paymentMode: PaymentMode;
   referenceNumber?: string;
   amount: number;

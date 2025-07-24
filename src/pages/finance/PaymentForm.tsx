@@ -30,13 +30,14 @@ const paymentFormSchema = z.object({
   paymentDate: z.string().min(1, "Payment date is required"),
   paymentType: z.enum(["Invoice-based", "Ad-hoc"] as const),
   divisionId: z.string().min(1, "Division is required"),
-  payeeOrganizationId: z.string().min(1, "Payee is required"),
+  payeeOrganizationId: z.string().min(1, "Payee organization is required"),
   paymentMode: z.enum([
     "Bank Transfer", "UPI", "Cheque", "Cash", "Online Payment", "Wire Transfer"
   ] as const),
   referenceNumber: z.string().optional(),
   amount: z.coerce.number().positive("Amount must be positive"),
   linkedInvoiceId: z.string().optional(),
+  remitToContactId: z.string().min(1, "Remit to contact is required"),
   notes: z.string().optional(),
 });
 
@@ -384,11 +385,11 @@ export default function PaymentForm() {
                   name="payeeOrganizationId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Payee *</FormLabel>
+                      <FormLabel>Payee organization *</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select payee" />
+                            <SelectValue placeholder="Select payee organization" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -402,6 +403,54 @@ export default function PaymentForm() {
                       <FormMessage />
                     </FormItem>
                   )}
+                />
+
+                {/* Remit to field */}
+                <FormField
+                  control={form.control}
+                  name="remitToContactId"
+                  render={({ field }) => {
+                    const payeeOrgId = form.watch("payeeOrganizationId");
+                    const [remitContacts, setRemitContacts] = useState<{id: string, firstName: string, lastName?: string}[]>([]);
+                    const [loadingRemit, setLoadingRemit] = useState(false);
+                    useEffect(() => {
+                      async function fetchContacts() {
+                        if (!payeeOrgId) { setRemitContacts([]); return; }
+                        setLoadingRemit(true);
+                        try {
+                          const org = await organizationService.getOrganizationById(payeeOrgId);
+                          setRemitContacts(
+                            (org?.contacts?.filter(c => c.type === 'Remit To' && c.id) || []).map(c => ({
+                              id: String(c.id),
+                              firstName: c.firstName,
+                              lastName: c.lastName
+                            }))
+                          );
+                        } finally { setLoadingRemit(false); }
+                      }
+                      fetchContacts();
+                    }, [payeeOrgId]);
+                    return (
+                      <FormItem>
+                        <FormLabel>Remit to *</FormLabel>
+                        <Select onValueChange={val => field.onChange(String(val))} value={field.value || ''} disabled={!payeeOrgId || loadingRemit}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder={loadingRemit ? "Loading..." : "Select remit to contact"} />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {remitContacts.map((contact: any) => (
+                              <SelectItem key={contact.id} value={contact.id}>
+                                {contact.firstName} {contact.lastName || ''}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
                 />
 
                 <FormField
