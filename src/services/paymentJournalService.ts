@@ -1,8 +1,9 @@
 import { supabase } from '@/integrations/supabase/client';
 import { journalService } from './journalService';
 import { accountingRulesService } from './accountingRulesService';
+import { subledgerService } from './subledgerService';
 import type { Payment, PaymentStatus } from '@/types/payment';
-import type { AccountingRule } from '@/types/accountingRules';
+import type { AccountingRule, AccountingRuleLine } from '@/types/accountingRules';
 import type { JournalFormData } from '@/types/journal';
 
 export class PaymentJournalService {
@@ -111,7 +112,8 @@ export class PaymentJournalService {
         debitAccount: line.debitAccountCode,
         creditAccount: line.creditAccountCode,
         amount,
-        amountSource: line.amountSource
+        amountSource: line.amountSource,
+        enableSubledger: line.enableSubledger
       });
       
       return {
@@ -138,6 +140,9 @@ export class PaymentJournalService {
       const result = await journalService.createJournal(journalData, payment.organizationId, createdBy);
       console.log('Journal created successfully:', result.id);
       
+      // Create subledger entries for lines with enableSubledger = true
+      await this.createSubledgerEntries(payment, rule, result.id, createdBy);
+      
       // Auto-post the journal entry
       await journalService.postJournal(result.id, payment.organizationId, createdBy);
       console.log('Journal auto-posted successfully:', result.id);
@@ -145,6 +150,88 @@ export class PaymentJournalService {
       console.error('Error creating journal:', error);
       throw error;
     }
+  }
+
+  /**
+   * Creates subledger entries for accounting rule lines with enableSubledger = true
+   */
+  private async createSubledgerEntries(
+    payment: Payment,
+    rule: AccountingRule,
+    journalId: string,
+    createdBy: string
+  ): Promise<void> {
+    console.log('Creating subledger entries for payment:', payment.paymentNumber);
+    
+    const subledgerLines = rule.lines.filter(line => line.enableSubledger);
+    
+    if (subledgerLines.length === 0) {
+      console.log('No subledger lines found for rule:', rule.ruleName);
+      return;
+    }
+
+    for (const line of subledgerLines) {
+      try {
+        const amount = this.getAmountFromSource(payment, line.amountSource);
+        const { partyOrgId, partyName, partyContactId } = await this.getPartyDetails(payment, rule.transactionCategory);
+        
+        await subledgerService.createSubledgerEntry({
+          organizationId: payment.organizationId,
+          journalId,
+          partyOrgId,
+          partyName,
+          partyContactId,
+          transactionDate: new Date().toISOString().split('T')[0], // Current date
+          amount,
+          sourceReference: payment.paymentNumber,
+          status: 'Open',
+          createdBy,
+        });
+        
+        console.log(`Subledger entry created for line ${line.lineNumber}`);
+      } catch (error) {
+        console.error(`Error creating subledger entry for line ${line.lineNumber}:`, error);
+        throw error;
+      }
+    }
+  }
+
+  /**
+   * Gets party details based on transaction category
+   */
+  private async getPartyDetails(payment: Payment, transactionCategory: string): Promise<{
+    partyOrgId: string;
+    partyName: string;
+    partyContactId?: string;
+  }> {
+    // For Payment category, use payee organization details
+    if (transactionCategory === 'Payment') {
+      // Get payee organization details
+      const { data: orgData, error: orgError } = await supabase
+        .from('organizations')
+        .select('id, name')
+        .eq('id', payment.payeeOrganizationId)
+        .single();
+
+      if (orgError) {
+        console.error('Error fetching payee organization:', orgError);
+        throw new Error(`Failed to fetch payee organization: ${orgError.message}`);
+      }
+
+      // Get remit to contact ID from payment if available
+      let partyContactId = undefined;
+      if (payment.remitToContactId) {
+        partyContactId = payment.remitToContactId;
+      }
+
+      return {
+        partyOrgId: payment.payeeOrganizationId,
+        partyName: orgData.name,
+        partyContactId,
+      };
+    }
+
+    throw new Error(`Unsupported transaction category for subledger: ${transactionCategory}`);
   }
 
   /**

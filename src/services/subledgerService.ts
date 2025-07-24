@@ -49,13 +49,43 @@ class SubledgerService {
     return data?.reduce((sum, record) => sum + (record.amount || 0), 0) || 0;
   }
 
+  async createSubledgerEntry(subledgerData: Omit<Subledger, 'id' | 'createdOn' | 'updatedOn'>): Promise<Subledger> {
+    const { data, error } = await supabase
+      .from('subledger')
+      .insert({
+        organization_id: subledgerData.organizationId,
+        journal_id: subledgerData.journalId,
+        party_org_id: subledgerData.partyOrgId,
+        party_name: subledgerData.partyName,
+        party_code: subledgerData.partyCode,
+        party_contact_id: subledgerData.partyContactId,
+        transaction_date: subledgerData.transactionDate,
+        amount: subledgerData.amount,
+        source_reference: subledgerData.sourceReference,
+        status: subledgerData.status,
+        created_by: subledgerData.createdBy,
+        updated_by: subledgerData.updatedBy,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating subledger entry:', error);
+      throw new Error(`Failed to create subledger entry: ${error.message}`);
+    }
+
+    return this.transformFromDb(data);
+  }
+
   private transformFromDb(dbSubledger: any): Subledger {
     return {
       id: dbSubledger.id,
       organizationId: dbSubledger.organization_id,
       journalId: dbSubledger.journal_id,
+      partyOrgId: dbSubledger.party_org_id,
       partyName: dbSubledger.party_name,
       partyCode: dbSubledger.party_code,
+      partyContactId: dbSubledger.party_contact_id,
       transactionDate: dbSubledger.transaction_date,
       amount: parseFloat(dbSubledger.amount),
       sourceReference: dbSubledger.source_reference,

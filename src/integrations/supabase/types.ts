@@ -1466,7 +1466,15 @@ export type Database = {
           old_status?: Database["public"]["Enums"]["payment_status"] | null
           payment_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "payment_audit_log_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payments: {
         Row: {
@@ -1485,6 +1493,7 @@ export type Database = {
           payment_number: string
           payment_type: Database["public"]["Enums"]["payment_type"]
           reference_number: string | null
+          remit_to_contact_id: string | null
           status: Database["public"]["Enums"]["payment_status"]
           updated_by: string | null
           updated_on: string | null
@@ -1505,6 +1514,7 @@ export type Database = {
           payment_number: string
           payment_type: Database["public"]["Enums"]["payment_type"]
           reference_number?: string | null
+          remit_to_contact_id?: string | null
           status?: Database["public"]["Enums"]["payment_status"]
           updated_by?: string | null
           updated_on?: string | null
@@ -1525,11 +1535,48 @@ export type Database = {
           payment_number?: string
           payment_type?: Database["public"]["Enums"]["payment_type"]
           reference_number?: string | null
+          remit_to_contact_id?: string | null
           status?: Database["public"]["Enums"]["payment_status"]
           updated_by?: string | null
           updated_on?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_remit_to_contact"
+            columns: ["remit_to_contact_id"]
+            isOneToOne: false
+            referencedRelation: "organization_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_division_id_fkey"
+            columns: ["division_id"]
+            isOneToOne: false
+            referencedRelation: "divisions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_linked_invoice_id_fkey"
+            columns: ["linked_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoice"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_payee_organization_id_fkey"
+            columns: ["payee_organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       permissions: {
         Row: {
@@ -2203,8 +2250,10 @@ export type Database = {
           id: string
           journal_id: string | null
           organization_id: string
-          party_code: string
+          party_code: string | null
+          party_contact_id: string | null
           party_name: string
+          party_org_id: string
           source_reference: string | null
           status: Database["public"]["Enums"]["subledger_status"]
           transaction_date: string
@@ -2218,8 +2267,10 @@ export type Database = {
           id?: string
           journal_id?: string | null
           organization_id: string
-          party_code: string
+          party_code?: string | null
+          party_contact_id?: string | null
           party_name: string
+          party_org_id: string
           source_reference?: string | null
           status?: Database["public"]["Enums"]["subledger_status"]
           transaction_date: string
@@ -2233,8 +2284,10 @@ export type Database = {
           id?: string
           journal_id?: string | null
           organization_id?: string
-          party_code?: string
+          party_code?: string | null
+          party_contact_id?: string | null
           party_name?: string
+          party_org_id?: string
           source_reference?: string | null
           status?: Database["public"]["Enums"]["subledger_status"]
           transaction_date?: string
@@ -2242,6 +2295,13 @@ export type Database = {
           updated_on?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_subledger_party_contact"
+            columns: ["party_contact_id"]
+            isOneToOne: false
+            referencedRelation: "organization_contacts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "subledger_journal_id_fkey"
             columns: ["journal_id"]
@@ -2252,6 +2312,13 @@ export type Database = {
           {
             foreignKeyName: "subledger_organization_id_fkey"
             columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subledger_party_org_id_fkey"
+            columns: ["party_org_id"]
             isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
