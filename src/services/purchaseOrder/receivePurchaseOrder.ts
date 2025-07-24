@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { PurchaseOrder } from '@/types/purchaseOrder';
 import { accountingRulesService } from '../accountingRulesService';
 import { journalService } from '../journalService';
+import { subledgerService } from '../subledgerService';
 
 export const receivePurchaseOrder = async (
   poId: string,
@@ -258,6 +259,9 @@ export const receivePurchaseOrder = async (
           console.log(`[Auto Journal] Created journal for rule ${rule.ruleName}:`, createdJournal);
 
           if (createdJournal && createdJournal.id) {
+            // Create subledger entries for lines with enableSubledger = true
+            await createSubledgerEntriesForPO(finalPO, rule, createdJournal.id, receivedByName);
+            
             await journalService.postJournal(createdJournal.id, finalPO.organization_id, receivedByName);
           } else {
             console.error(`[Auto Journal] Journal not created or missing ID for rule ${rule.ruleName}`);
@@ -281,3 +285,73 @@ export const receivePurchaseOrder = async (
     updated_on: finalPO.updated_on ? new Date(finalPO.updated_on) : undefined,
   } as unknown as PurchaseOrder;
 };
+
+/**
+ * Creates subledger entries for PO accounting rule lines with enableSubledger = true
+ */
+async function createSubledgerEntriesForPO(
+  po: any,
+  rule: any,
+  journalId: string,
+  createdBy: string
+): Promise<void> {
+  console.log('Creating subledger entries for PO:', po.po_number);
+  
+  const subledgerLines = rule.lines.filter((line: any) => line.enableSubledger);
+  
+  if (subledgerLines.length === 0) {
+    console.log('No subledger lines found for rule:', rule.ruleName);
+    return;
+  }
+
+  for (const line of subledgerLines) {
+    try {
+      // Calculate amount based on line's amount source
+      let amount = 0;
+      if (line.amountSource === 'Total GST value' || line.amountSource === 'Total GST Value') {
+        amount = (po.lines || []).reduce((sum: number, poLine: any) => sum + (poLine.gst_value || 0), 0);
+      } else if (line.amountSource === 'sum of line' || line.amountSource === 'Total PO Value') {
+        amount = (po.lines || []).reduce((sum: number, poLine: any) => sum + (poLine.line_total || 0), 0);
+      } else if (line.amountSource === 'Item total price') {
+        amount = (po.lines || []).reduce((sum: number, poLine: any) => sum + (poLine.total_unit_price || 0), 0);
+      } else if (line.amountSource === 'Total PO CGST') {
+        const gstBreakdown = po.gstBreakdown || [];
+        amount = gstBreakdown.reduce((sum: number, breakdown: any) => sum + (breakdown.cgst_amount || 0), 0);
+      } else if (line.amountSource === 'Total PO SGST') {
+        const gstBreakdown = po.gstBreakdown || [];
+        amount = gstBreakdown.reduce((sum: number, breakdown: any) => sum + (breakdown.sgst_amount || 0), 0);
+      } else if (line.amountSource === 'Total PO IGST') {
+        const gstBreakdown = po.gstBreakdown || [];
+        amount = gstBreakdown.reduce((sum: number, breakdown: any) => sum + (breakdown.igst_amount || 0), 0);
+      }
+
+      // Get supplier organization details for party information
+      const partyOrgId = po.supplier_id;
+      const partyName = po.supplier?.name || '';
+      
+      // Get remit to contact ID from PO if available
+      let partyContactId = undefined;
+      if (po.remit_to_contact_id) {
+        partyContactId = po.remit_to_contact_id;
+      }
+      
+      await subledgerService.createSubledgerEntry({
+        organizationId: po.organization_id,
+        journalId,
+        partyOrgId,
+        partyName,
+        partyContactId,
+        transactionDate: new Date().toISOString().split('T')[0], // Current date
+        amount,
+        sourceReference: po.po_number,
+        status: 'Open',
+        createdBy,
+      });
+      
+      console.log(`Subledger entry created for PO line ${line.lineNumber}`);
+    } catch (error) {
+      console.error(`Error creating subledger entry for PO line ${line.lineNumber}:`, error);
+      throw error;
+    }
+  }
+}
