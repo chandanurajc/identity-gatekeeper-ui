@@ -341,10 +341,14 @@ async function createSubledgerEntriesForPO(
         partyOrgId,
         partyName,
         partyContactId,
+        organizationContactId: undefined, // Will be set based on rule later if needed
         transactionDate: new Date().toISOString().split('T')[0], // Current date
         amount,
+        debitAmount: amount > 0 ? amount : undefined,
+        creditAmount: amount < 0 ? Math.abs(amount) : undefined,
         sourceReference: po.po_number,
-        status: 'Open',
+        transactionCategory: 'Purchase Order', // PO related transaction
+        triggeringAction: 'PO Received', // Triggering action for PO receipt
         createdBy,
       });
       

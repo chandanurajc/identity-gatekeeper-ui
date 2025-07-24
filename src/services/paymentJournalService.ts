@@ -175,16 +175,23 @@ export class PaymentJournalService {
         const amount = this.getAmountFromSource(payment, line.amountSource);
         const { partyOrgId, partyName, partyContactId } = await this.getPartyDetails(payment, rule.transactionCategory);
         
+        const debitAmount = line.debitAccountCode ? amount : undefined;
+        const creditAmount = line.creditAccountCode ? amount : undefined;
+        
         await subledgerService.createSubledgerEntry({
           organizationId: payment.organizationId,
           journalId,
           partyOrgId,
           partyName,
           partyContactId,
-          transactionDate: new Date().toISOString().split('T')[0], // Current date
+          organizationContactId: undefined, // Will be set based on rule later if needed
+          transactionDate: payment.paymentDate,
           amount,
+          debitAmount,
+          creditAmount,
           sourceReference: payment.paymentNumber,
-          status: 'Open',
+          transactionCategory: rule.transactionCategory,
+          triggeringAction: rule.triggeringAction,
           createdBy,
         });
         

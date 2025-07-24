@@ -50,11 +50,14 @@ export default function SubledgerList() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Transaction Date</TableHead>
+                  <TableHead>Organization</TableHead>
+                  <TableHead>Contact</TableHead>
                   <TableHead>Party Name</TableHead>
-                  <TableHead>Party Code</TableHead>
-                  <TableHead>Amount</TableHead>
+                  <TableHead>Debit Amount</TableHead>
+                  <TableHead>Credit Amount</TableHead>
+                  <TableHead>Transaction Category</TableHead>
+                  <TableHead>Triggering Action</TableHead>
                   <TableHead>Source Reference</TableHead>
-                  <TableHead>Status</TableHead>
                   <TableHead>Created By</TableHead>
                 </TableRow>
               </TableHeader>
@@ -64,18 +67,34 @@ export default function SubledgerList() {
                     <TableCell className="font-medium">
                       {new Date(entry.transactionDate).toLocaleDateString()}
                     </TableCell>
+                    <TableCell>{entry.organizationName || '-'}</TableCell>
+                    <TableCell>{entry.contactName || '-'}</TableCell>
                     <TableCell>{entry.partyName}</TableCell>
-                    <TableCell>{entry.partyCode}</TableCell>
-                    <TableCell className={entry.amount >= 0 ? 'text-green-600' : 'text-red-600'}>
-                      ₹{Math.abs(entry.amount).toLocaleString('en-IN')}
-                      {entry.amount >= 0 ? ' Dr' : ' Cr'}
+                    <TableCell className="text-right">
+                      {entry.debitAmount ? (
+                        <span className="text-green-600">
+                          ₹{entry.debitAmount.toLocaleString('en-IN')}
+                        </span>
+                      ) : '-'}
                     </TableCell>
-                    <TableCell>{entry.sourceReference || '-'}</TableCell>
+                    <TableCell className="text-right">
+                      {entry.creditAmount ? (
+                        <span className="text-red-600">
+                          ₹{entry.creditAmount.toLocaleString('en-IN')}
+                        </span>
+                      ) : '-'}
+                    </TableCell>
                     <TableCell>
-                      <Badge variant={entry.status === 'Open' ? 'default' : 'secondary'}>
-                        {entry.status}
+                      <Badge variant="outline">
+                        {entry.transactionCategory || '-'}
                       </Badge>
                     </TableCell>
+                    <TableCell>
+                      <Badge variant="secondary">
+                        {entry.triggeringAction || '-'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{entry.sourceReference || '-'}</TableCell>
                     <TableCell>{entry.createdBy}</TableCell>
                   </TableRow>
                 ))}

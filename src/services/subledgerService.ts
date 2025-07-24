@@ -5,7 +5,11 @@ class SubledgerService {
   async getSubledgers(organizationId: string): Promise<Subledger[]> {
     const { data, error } = await supabase
       .from('subledger')
-      .select('*')
+      .select(`
+        *,
+        organizations!subledger_party_org_id_fkey(name),
+        organization_contacts(first_name, last_name)
+      `)
       .eq('organization_id', organizationId)
       .order('transaction_date', { ascending: false });
 
@@ -36,17 +40,20 @@ class SubledgerService {
   async getPartyBalance(organizationId: string, partyCode: string): Promise<number> {
     const { data, error } = await supabase
       .from('subledger')
-      .select('amount')
+      .select('debit_amount, credit_amount')
       .eq('organization_id', organizationId)
-      .eq('party_code', partyCode)
-      .eq('status', 'Open');
+      .eq('party_code', partyCode);
 
     if (error) {
       console.error('Error calculating party balance:', error);
       throw new Error(`Failed to calculate party balance: ${error.message}`);
     }
 
-    return data?.reduce((sum, record) => sum + (record.amount || 0), 0) || 0;
+    return data?.reduce((sum, record) => {
+      const debit = record.debit_amount || 0;
+      const credit = record.credit_amount || 0;
+      return sum + debit - credit;
+    }, 0) || 0;
   }
 
   async createSubledgerEntry(subledgerData: Omit<Subledger, 'id' | 'createdOn' | 'updatedOn'>): Promise<Subledger> {
@@ -59,10 +66,14 @@ class SubledgerService {
         party_name: subledgerData.partyName,
         party_code: subledgerData.partyCode,
         party_contact_id: subledgerData.partyContactId,
+        organization_contact_id: subledgerData.organizationContactId,
         transaction_date: subledgerData.transactionDate,
         amount: subledgerData.amount,
+        debit_amount: subledgerData.debitAmount,
+        credit_amount: subledgerData.creditAmount,
         source_reference: subledgerData.sourceReference,
-        status: subledgerData.status,
+        transaction_category: subledgerData.transactionCategory,
+        triggering_action: subledgerData.triggeringAction,
         created_by: subledgerData.createdBy,
         updated_by: subledgerData.updatedBy,
       })
@@ -86,14 +97,23 @@ class SubledgerService {
       partyName: dbSubledger.party_name,
       partyCode: dbSubledger.party_code,
       partyContactId: dbSubledger.party_contact_id,
+      organizationContactId: dbSubledger.organization_contact_id,
       transactionDate: dbSubledger.transaction_date,
-      amount: parseFloat(dbSubledger.amount),
+      amount: parseFloat(dbSubledger.amount || '0'),
+      debitAmount: dbSubledger.debit_amount ? parseFloat(dbSubledger.debit_amount) : undefined,
+      creditAmount: dbSubledger.credit_amount ? parseFloat(dbSubledger.credit_amount) : undefined,
       sourceReference: dbSubledger.source_reference,
-      status: dbSubledger.status,
+      transactionCategory: dbSubledger.transaction_category,
+      triggeringAction: dbSubledger.triggering_action,
       createdOn: new Date(dbSubledger.created_on),
       updatedOn: dbSubledger.updated_on ? new Date(dbSubledger.updated_on) : undefined,
       createdBy: dbSubledger.created_by,
       updatedBy: dbSubledger.updated_by,
+      // Add organization and contact name for UI
+      organizationName: dbSubledger.organizations?.name,
+      contactName: dbSubledger.organization_contacts ? 
+        `${dbSubledger.organization_contacts.first_name} ${dbSubledger.organization_contacts.last_name || ''}`.trim() 
+        : undefined,
     };
   }
 }

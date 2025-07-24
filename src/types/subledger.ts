@@ -1,5 +1,3 @@
-export type SubledgerStatus = 'Open' | 'Settled';
-
 export interface Subledger {
   id: string;
   organizationId: string;
@@ -8,12 +6,19 @@ export interface Subledger {
   partyName: string;
   partyCode?: string;
   partyContactId?: string;
+  organizationContactId?: string;
   transactionDate: string;
   amount: number;
+  debitAmount?: number;
+  creditAmount?: number;
   sourceReference?: string;
-  status: SubledgerStatus;
+  transactionCategory?: string;
+  triggeringAction?: string;
   createdOn: Date;
   updatedOn?: Date;
   createdBy: string;
   updatedBy?: string;
+  // UI fields
+  organizationName?: string;
+  contactName?: string;
 }
