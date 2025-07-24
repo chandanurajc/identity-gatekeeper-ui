@@ -29,23 +29,6 @@ export default function PaymentDetail() {
     enabled: !!id && canViewPayments,
   });
 
-  // Remit to contact state
-  const [remitToContact, setRemitToContact] = useState<{ firstName: string; lastName?: string } | null>(null);
-  useEffect(() => {
-    async function fetchRemitContact() {
-      if (payment && payment.remitToContactId && !payment.remitToContact) {
-        // Fetch contact from organizationService
-        const org = payment.payeeOrganizationId ? await organizationService.getOrganizationById(payment.payeeOrganizationId) : null;
-        const contact = org?.contacts?.find((c: any) => String(c.id) === String(payment.remitToContactId));
-        if (contact) setRemitToContact({ firstName: contact.firstName, lastName: contact.lastName });
-      } else if (payment && payment.remitToContact) {
-        setRemitToContact({ firstName: payment.remitToContact.firstName, lastName: payment.remitToContact.lastName });
-      } else {
-        setRemitToContact(null);
-      }
-    }
-    fetchRemitContact();
-  }, [payment]);
 
   const { data: auditLogs = [] } = useQuery({
     queryKey: ["paymentAuditLogs", id],
@@ -276,29 +259,28 @@ export default function PaymentDetail() {
           </CardContent>
         </Card>
 
-        {/* Payee Organization & Remit To */}
+        {/* Payee Details */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Building className="h-5 w-5" />
-              Payee organization
+              Payee Details
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              <div className="text-lg font-semibold">{payment.payeeOrganization?.name}</div>
-              <div className="text-sm text-muted-foreground">Organization ID: {payment.payeeOrganizationId}</div>
-              {remitToContact ? (
-                <div className="text-sm">
-                  <span className="font-medium">Remit to: </span>
-                  {remitToContact.firstName} {remitToContact.lastName || ''}
+            <div className="space-y-4">
+              <div>
+                <div className="text-sm font-medium text-muted-foreground mb-1">Payee Organization</div>
+                <div className="text-lg font-semibold">{payment.payeeOrganization?.name || 'Loading...'}</div>
+              </div>
+              {payment.remitToContact && (
+                <div>
+                  <div className="text-sm font-medium text-muted-foreground mb-1">Remit To</div>
+                  <div className="text-lg font-semibold">
+                    {payment.remitToContact.firstName} {payment.remitToContact.lastName || ''}
+                  </div>
                 </div>
-              ) : payment.remitToContactId ? (
-                <div className="text-sm">
-                  <span className="font-medium">Remit to Contact ID: </span>
-                  {payment.remitToContactId}
-                </div>
-              ) : null}
+              )}
             </div>
           </CardContent>
         </Card>

@@ -24,7 +24,7 @@ export const paymentService = {
       organizationId: payment.organization_id,
       divisionId: payment.division_id,
       payeeOrganizationId: payment.payee_organization_id,
-      remitToContactId: payment.remit_to_contact_id,
+      remitToContactId: (payment as any).remit_to_contact_id || null,
       paymentMode: payment.payment_mode,
       referenceNumber: payment.reference_number,
       amount: payment.amount,
@@ -54,7 +54,7 @@ export const paymentService = {
     }
 
     // Fetch related data separately
-    const [payeeOrg, division, invoice] = await Promise.all([
+    const [payeeOrg, division, invoice, remitContact] = await Promise.all([
       // Fetch payee organization
       supabase
         .from('organizations')
@@ -74,6 +74,13 @@ export const paymentService = {
         .from('invoice')
         .select('id, invoice_number, invoice_date, total_invoice_value, remit_to_name, remit_to_org_id, bill_to_org_id, status')
         .eq('id', payment.linked_invoice_id)
+        .single() : Promise.resolve({ data: null, error: null }),
+      
+      // Fetch remit to contact if exists
+      (payment as any).remit_to_contact_id ? supabase
+        .from('organization_contacts')
+        .select('id, first_name, last_name')
+        .eq('id', (payment as any).remit_to_contact_id)
         .single() : Promise.resolve({ data: null, error: null })
     ]);
 
@@ -85,7 +92,7 @@ export const paymentService = {
       organizationId: payment.organization_id,
       divisionId: payment.division_id,
       payeeOrganizationId: payment.payee_organization_id,
-      remitToContactId: payment.remit_to_contact_id,
+      remitToContactId: (payment as any).remit_to_contact_id || null,
       paymentMode: payment.payment_mode,
       referenceNumber: payment.reference_number,
       amount: payment.amount,
@@ -115,6 +122,11 @@ export const paymentService = {
         billToOrgId: invoice.data.bill_to_org_id,
         remitToOrgId: invoice.data.remit_to_org_id,
         status: invoice.data.status,
+      } : undefined,
+      remitToContact: remitContact.data ? {
+        id: remitContact.data.id,
+        firstName: remitContact.data.first_name,
+        lastName: remitContact.data.last_name
       } : undefined
     };
   },
