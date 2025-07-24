@@ -8,7 +8,7 @@ class SubledgerService {
       .select(`
         *,
         organizations!subledger_party_org_id_fkey(name),
-        organization_contacts(first_name, last_name)
+        organization_contacts!subledger_party_contact_id_fkey(first_name, last_name)
       `)
       .eq('organization_id', organizationId)
       .order('transaction_date', { ascending: false });
@@ -21,12 +21,12 @@ class SubledgerService {
     return data?.map(this.transformFromDb) || [];
   }
 
-  async getSubledgersByParty(organizationId: string, partyCode: string): Promise<Subledger[]> {
+  async getSubledgersByParty(organizationId: string, partyOrgId: string): Promise<Subledger[]> {
     const { data, error } = await supabase
       .from('subledger')
       .select('*')
       .eq('organization_id', organizationId)
-      .eq('party_code', partyCode)
+      .eq('party_org_id', partyOrgId)
       .order('transaction_date', { ascending: false });
 
     if (error) {
@@ -37,12 +37,12 @@ class SubledgerService {
     return data?.map(this.transformFromDb) || [];
   }
 
-  async getPartyBalance(organizationId: string, partyCode: string): Promise<number> {
+  async getPartyBalance(organizationId: string, partyOrgId: string): Promise<number> {
     const { data, error } = await supabase
       .from('subledger')
       .select('debit_amount, credit_amount')
       .eq('organization_id', organizationId)
-      .eq('party_code', partyCode);
+      .eq('party_org_id', partyOrgId);
 
     if (error) {
       console.error('Error calculating party balance:', error);
@@ -63,10 +63,7 @@ class SubledgerService {
         organization_id: subledgerData.organizationId,
         journal_id: subledgerData.journalId,
         party_org_id: subledgerData.partyOrgId,
-        party_name: subledgerData.partyName,
-        party_code: subledgerData.partyCode,
         party_contact_id: subledgerData.partyContactId,
-        organization_contact_id: subledgerData.organizationContactId,
         transaction_date: subledgerData.transactionDate,
         debit_amount: subledgerData.debitAmount,
         credit_amount: subledgerData.creditAmount,
@@ -93,10 +90,7 @@ class SubledgerService {
       organizationId: dbSubledger.organization_id,
       journalId: dbSubledger.journal_id,
       partyOrgId: dbSubledger.party_org_id,
-      partyName: dbSubledger.party_name,
-      partyCode: dbSubledger.party_code,
       partyContactId: dbSubledger.party_contact_id,
-      organizationContactId: dbSubledger.organization_contact_id,
       transactionDate: dbSubledger.transaction_date,
       debitAmount: dbSubledger.debit_amount ? parseFloat(dbSubledger.debit_amount) : undefined,
       creditAmount: dbSubledger.credit_amount ? parseFloat(dbSubledger.credit_amount) : undefined,

@@ -3,10 +3,7 @@ export interface Subledger {
   organizationId: string;
   journalId?: string;
   partyOrgId: string;
-  partyName: string;
-  partyCode?: string;
   partyContactId?: string;
-  organizationContactId?: string;
   transactionDate: string;
   debitAmount?: number;
   creditAmount?: number;

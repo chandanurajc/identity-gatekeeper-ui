@@ -343,9 +343,7 @@ async function createSubledgerEntriesForPO(
         organizationId: po.organization_id,
         journalId,
         partyOrgId,
-        partyName,
         partyContactId,
-        organizationContactId: undefined, // Will be set based on rule later if needed
         transactionDate: new Date().toISOString().split('T')[0], // Current date
         debitAmount,
         creditAmount,
