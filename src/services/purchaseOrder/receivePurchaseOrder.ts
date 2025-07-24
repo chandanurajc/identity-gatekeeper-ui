@@ -335,6 +335,10 @@ async function createSubledgerEntriesForPO(
         partyContactId = po.remit_to_contact_id;
       }
       
+      // Check if the accounting rule line is debit or credit to post accordingly
+      const debitAmount = line.debitAccountCode ? amount : undefined;
+      const creditAmount = line.creditAccountCode ? amount : undefined;
+      
       await subledgerService.createSubledgerEntry({
         organizationId: po.organization_id,
         journalId,
@@ -343,9 +347,8 @@ async function createSubledgerEntriesForPO(
         partyContactId,
         organizationContactId: undefined, // Will be set based on rule later if needed
         transactionDate: new Date().toISOString().split('T')[0], // Current date
-        amount,
-        debitAmount: amount > 0 ? amount : undefined,
-        creditAmount: amount < 0 ? Math.abs(amount) : undefined,
+        debitAmount,
+        creditAmount,
         sourceReference: po.po_number,
         transactionCategory: 'Purchase Order', // PO related transaction
         triggeringAction: 'PO Received', // Triggering action for PO receipt

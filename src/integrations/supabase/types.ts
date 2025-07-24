@@ -2244,7 +2244,6 @@ export type Database = {
       }
       subledger: {
         Row: {
-          amount: number
           created_by: string
           created_on: string
           credit_amount: number | null
@@ -2265,7 +2264,6 @@ export type Database = {
           updated_on: string | null
         }
         Insert: {
-          amount: number
           created_by: string
           created_on?: string
           credit_amount?: number | null
@@ -2286,7 +2284,6 @@ export type Database = {
           updated_on?: string | null
         }
         Update: {
-          amount?: number
           created_by?: string
           created_on?: string
           credit_amount?: number | null

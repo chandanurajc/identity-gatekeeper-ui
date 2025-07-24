@@ -173,7 +173,7 @@ export class PaymentJournalService {
     for (const line of subledgerLines) {
       try {
         const amount = this.getAmountFromSource(payment, line.amountSource);
-        const { partyOrgId, partyName, partyContactId } = await this.getPartyDetails(payment, rule.transactionCategory);
+        const { partyOrgId, partyName, partyContactId, organizationContactId } = await this.getPartyDetails(payment, rule.transactionCategory);
         
         const debitAmount = line.debitAccountCode ? amount : undefined;
         const creditAmount = line.creditAccountCode ? amount : undefined;
@@ -184,9 +184,8 @@ export class PaymentJournalService {
           partyOrgId,
           partyName,
           partyContactId,
-          organizationContactId: undefined, // Will be set based on rule later if needed
+          organizationContactId,
           transactionDate: payment.paymentDate,
-          amount,
           debitAmount,
           creditAmount,
           sourceReference: payment.paymentNumber,
@@ -210,6 +209,7 @@ export class PaymentJournalService {
     partyOrgId: string;
     partyName: string;
     partyContactId?: string;
+    organizationContactId?: string;
   }> {
     // For Payment category, use payee organization details
     if (transactionCategory === 'Payment') {
@@ -225,16 +225,41 @@ export class PaymentJournalService {
         throw new Error(`Failed to fetch payee organization: ${orgError.message}`);
       }
 
-      // Get remit to contact ID from payment if available
+      // Get party contact ID from organization contact table based on remit to contact
       let partyContactId = undefined;
       if (payment.remitToContactId) {
-        partyContactId = payment.remitToContactId;
+        // Verify this is a valid organization contact
+        const { data: contactData, error: contactError } = await supabase
+          .from('organization_contacts')
+          .select('id')
+          .eq('id', payment.remitToContactId)
+          .eq('organization_id', payment.payeeOrganizationId)
+          .single();
+
+        if (!contactError && contactData) {
+          partyContactId = payment.remitToContactId;
+        }
+      }
+
+      // Get organization contact ID from the payer organization (current organization)
+      let organizationContactId = undefined;
+      const { data: orgContactData, error: orgContactError } = await supabase
+        .from('organization_contacts')
+        .select('id')
+        .eq('organization_id', payment.organizationId)
+        .eq('contact_type', 'Billing') // Default to billing contact
+        .limit(1)
+        .single();
+
+      if (!orgContactError && orgContactData) {
+        organizationContactId = orgContactData.id;
       }
 
       return {
         partyOrgId: payment.payeeOrganizationId,
         partyName: orgData.name,
         partyContactId,
+        organizationContactId,
       };
     }
 

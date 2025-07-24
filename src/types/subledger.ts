@@ -8,7 +8,6 @@ export interface Subledger {
   partyContactId?: string;
   organizationContactId?: string;
   transactionDate: string;
-  amount: number;
   debitAmount?: number;
   creditAmount?: number;
   sourceReference?: string;
