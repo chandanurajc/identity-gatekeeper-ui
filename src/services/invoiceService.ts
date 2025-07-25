@@ -434,6 +434,51 @@ class InvoiceService {
 
         if (createdJournal && createdJournal.id) {
           await journalService.postJournal(createdJournal.id, organizationId, changedBy);
+          
+          // Create subledger entries for lines that have enable_subledger = true
+          const { subledgerService } = await import('./subledgerService');
+          const subledgerLines = rule.lines.filter(line => line.enableSubledger);
+          
+          for (const line of subledgerLines) {
+            try {
+              let amount = 0;
+              if (line.amountSource === 'Total GST value') {
+                amount = invoice.totalGstValue || 0;
+              } else if (line.amountSource === 'Total invoice value') {
+                amount = invoice.totalInvoiceValue || 0;
+              } else if (line.amountSource === 'Total item value') {
+                amount = invoice.totalItemValue || 0;
+              } else if (line.amountSource === 'CGST Amount') {
+                amount = totalCGST;
+              } else if (line.amountSource === 'SGST Amount') {
+                amount = totalSGST;
+              } else if (line.amountSource === 'IGST Amount') {
+                amount = totalIGST;
+              }
+              
+              if (!amount || amount === 0) continue;
+              
+              const debitAmount = line.debitAccountCode ? amount : undefined;
+              const creditAmount = line.creditAccountCode ? amount : undefined;
+              
+              await subledgerService.createSubledgerEntry({
+                organizationId: invoice.organizationId,
+                journalId: createdJournal.id,
+                partyOrgId: invoice.remitToOrgId,
+                partyContactId: invoice.remitToContactId,
+                transactionDate: invoice.invoiceDate,
+                debitAmount,
+                creditAmount,
+                sourceReference: invoice.invoiceNumber,
+                transactionCategory: 'Invoice',
+                triggeringAction: 'Invoice Approved',
+                createdBy: changedBy,
+                updatedBy: changedBy,
+              });
+            } catch (error) {
+              console.error(`Failed to create subledger entry for line ${line.lineNumber}:`, error);
+            }
+          }
         }
       }
     }
@@ -536,6 +581,7 @@ class InvoiceService {
       billToGstin: dbInvoice.bill_to_gstin,
       billToCin: dbInvoice.bill_to_cin,
       remitToOrgId: dbInvoice.remit_to_org_id,
+      remitToContactId: dbInvoice.remit_to_contact_id,
       remitToName: dbInvoice.remit_to_name,
       remitToAddress1: dbInvoice.remit_to_address1,
       remitToAddress2: dbInvoice.remit_to_address2,

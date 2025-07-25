@@ -31,6 +31,7 @@ export interface Invoice {
   
   // Remit To details
   remitToOrgId: string;
+  remitToContactId?: string;
   remitToName?: string;
   remitToAddress1?: string;
   remitToAddress2?: string;
