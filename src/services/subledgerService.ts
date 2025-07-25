@@ -11,7 +11,7 @@ class SubledgerService {
         organization_contacts!party_contact_id(first_name, last_name)
       `)
       .eq('organization_id', organizationId)
-      .order('transaction_date', { ascending: false });
+      .order('created_on', { ascending: false });
 
     if (error) {
       console.error('Error fetching subledgers:', error);
