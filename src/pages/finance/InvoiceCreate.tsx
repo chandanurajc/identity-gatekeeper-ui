@@ -56,6 +56,7 @@ interface BillToInfo {
 }
 
 interface RemitToInfo {
+  contactId?: string;
   name: string;
   address1: string;
   address2: string;
@@ -295,6 +296,7 @@ export default function InvoiceCreate() {
         
         if (remitToContact) {
           setRemitToInfo({
+            contactId: remitToContact.id,
             name: `${remitToContact.firstName} ${remitToContact.lastName || ''}`.trim(),
             address1: remitToContact.address1 || '',
             address2: remitToContact.address2 || '',
@@ -514,6 +516,7 @@ export default function InvoiceCreate() {
       billToGstin: billToInfo?.gstin || '',
       billToCin: billToInfo?.cin || '',
       // Remit To
+      remitToContactId: remitToInfo?.contactId,
       remitToName: remitToInfo?.name || '',
       remitToAddress1: remitToInfo?.address1 || '',
       remitToAddress2: remitToInfo?.address2 || '',

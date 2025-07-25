@@ -106,6 +106,7 @@ class InvoiceService {
       bill_to_gstin: invoiceData.billToGstin,
       bill_to_cin: invoiceData.billToCin,
       // Remit To
+      remit_to_contact_id: invoiceData.remitToContactId,
       remit_to_name: invoiceData.remitToName,
       remit_to_address1: invoiceData.remitToAddress1,
       remit_to_address2: invoiceData.remitToAddress2,
@@ -208,6 +209,7 @@ class InvoiceService {
       bill_to_gstin: invoiceData.billToGstin,
       bill_to_cin: invoiceData.billToCin,
       // Remit To fields
+      remit_to_contact_id: invoiceData.remitToContactId,
       remit_to_name: invoiceData.remitToName,
       remit_to_address1: invoiceData.remitToAddress1,
       remit_to_address2: invoiceData.remitToAddress2,
