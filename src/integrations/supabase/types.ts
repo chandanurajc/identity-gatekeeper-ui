@@ -547,6 +547,7 @@ export type Database = {
           remit_to_address2: string | null
           remit_to_cin: string | null
           remit_to_city: string | null
+          remit_to_contact_id: string | null
           remit_to_country: string | null
           remit_to_email: string | null
           remit_to_gstin: string | null
@@ -608,6 +609,7 @@ export type Database = {
           remit_to_address2?: string | null
           remit_to_cin?: string | null
           remit_to_city?: string | null
+          remit_to_contact_id?: string | null
           remit_to_country?: string | null
           remit_to_email?: string | null
           remit_to_gstin?: string | null
@@ -669,6 +671,7 @@ export type Database = {
           remit_to_address2?: string | null
           remit_to_cin?: string | null
           remit_to_city?: string | null
+          remit_to_contact_id?: string | null
           remit_to_country?: string | null
           remit_to_email?: string | null
           remit_to_gstin?: string | null
@@ -696,7 +699,15 @@ export type Database = {
           updated_by?: string | null
           updated_on?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "invoice_remit_to_contact_id_fkey"
+            columns: ["remit_to_contact_id"]
+            isOneToOne: false
+            referencedRelation: "organization_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       invoice_audit_log: {
         Row: {
@@ -1796,6 +1807,7 @@ export type Database = {
           remit_to_address2: string | null
           remit_to_cin: string | null
           remit_to_city: string | null
+          remit_to_contact_id: string | null
           remit_to_country: string | null
           remit_to_email: string | null
           remit_to_gstin: string | null
@@ -1849,6 +1861,7 @@ export type Database = {
           remit_to_address2?: string | null
           remit_to_cin?: string | null
           remit_to_city?: string | null
+          remit_to_contact_id?: string | null
           remit_to_country?: string | null
           remit_to_email?: string | null
           remit_to_gstin?: string | null
@@ -1902,6 +1915,7 @@ export type Database = {
           remit_to_address2?: string | null
           remit_to_cin?: string | null
           remit_to_city?: string | null
+          remit_to_contact_id?: string | null
           remit_to_country?: string | null
           remit_to_email?: string | null
           remit_to_gstin?: string | null
@@ -1968,6 +1982,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_remit_to_contact_id_fkey"
+            columns: ["remit_to_contact_id"]
+            isOneToOne: false
+            referencedRelation: "organization_contacts"
             referencedColumns: ["id"]
           },
           {

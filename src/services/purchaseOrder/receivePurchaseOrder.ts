@@ -329,9 +329,8 @@ async function createSubledgerEntriesForPO(
       const partyOrgId = po.supplier_id;
       const partyName = po.supplier?.name || '';
       
-      // PO doesn't have contact ID, only organization ID
-      // Party contact ID will remain undefined for PO transactions
-      const partyContactId = undefined;
+      // Get remit to contact ID from PO if available
+      const partyContactId = po.remit_to_contact_id;
       
       // Check if the accounting rule line is debit or credit to post accordingly
       const debitAmount = line.debitAccountCode ? amount : undefined;
