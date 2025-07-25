@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import * as XLSX from "xlsx";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -30,11 +31,40 @@ export default function SubledgerList() {
     );
   }
 
+  // Export to XLSX handler
+  const handleExport = () => {
+    if (!subledgers || subledgers.length === 0) return;
+    // Prepare data for export
+    const exportData = subledgers.map(entry => ({
+      'Party Organization': entry.organizationName || '-',
+      'Party Name': entry.contactName || '-',
+      'Transaction Category': entry.transactionCategory || '-',
+      'Source Reference': entry.sourceReference || '-',
+      'Debit': entry.debitAmount || 0,
+      'Credit': entry.creditAmount || 0,
+      'Created On': entry.createdOn ? new Date(entry.createdOn).toLocaleDateString() : '-',
+      'Created By': entry.createdBy || '-',
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Subledger");
+    XLSX.writeFile(workbook, "subledger_export.xlsx");
+  };
+
   return (
     <div className="container mx-auto py-8 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Subledger</h1>
-        <p className="text-muted-foreground">View party-wise transaction records</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Subledger</h1>
+          <p className="text-muted-foreground">View party-wise transaction records</p>
+        </div>
+        <button
+          className="bg-primary text-white px-4 py-2 rounded hover:bg-primary/80 disabled:opacity-50"
+          onClick={handleExport}
+          disabled={isLoading || subledgers.length === 0}
+        >
+          Export to XLSX
+        </button>
       </div>
 
       <Card>
