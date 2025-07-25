@@ -291,13 +291,13 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
     try {
       const organization = await organizationService.getOrganizationById(supplierId);
       if (organization) {
-        const remitToContact = organization.contacts?.find(c => c.type === 'Remit To' || c.type === 'Registered location');
+        // Only use contact with type 'Remit To'
+        const remitToContact = organization.contacts?.find(c => c.type === 'Remit To');
         const gstinRef = organization.references?.find(r => r.type === 'GST');
         const cinRef = organization.references?.find(r => r.type === 'CIN');
-        
         if (remitToContact) {
           setRemitToInfo({
-            contactId: remitToContact.id,  // Store the contact ID
+            contactId: remitToContact.id,
             name: `${remitToContact.firstName} ${remitToContact.lastName || ''}`.trim(),
             address1: remitToContact.address1 || '',
             address2: remitToContact.address2 || '',
@@ -311,6 +311,9 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
             gstin: gstinRef?.value || '',
             cin: cinRef?.value || ''
           });
+        } else {
+          // If no Remit To contact, clear remitToInfo
+          setRemitToInfo(null);
         }
       }
     } catch (error) {

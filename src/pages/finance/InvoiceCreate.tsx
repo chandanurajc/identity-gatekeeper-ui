@@ -290,10 +290,10 @@ export default function InvoiceCreate() {
       // Fetch organization details from organizationService
       const organization = await organizationService.getOrganizationById(supplierId);
       if (organization) {
-        const remitToContact = organization.contacts?.find(c => c.type === 'Remit To' || c.type === 'Registered location');
+        // Only use contact with type 'Remit To'
+        const remitToContact = organization.contacts?.find(c => c.type === 'Remit To');
         const gstinRef = organization.references?.find(r => r.type === 'GST');
         const cinRef = organization.references?.find(r => r.type === 'CIN');
-        
         if (remitToContact) {
           setRemitToInfo({
             contactId: remitToContact.id,
@@ -310,6 +310,9 @@ export default function InvoiceCreate() {
             gstin: gstinRef?.value || '',
             cin: cinRef?.value || ''
           });
+        } else {
+          // If no Remit To contact, clear remitToInfo
+          setRemitToInfo(null);
         }
       }
     } catch (error) {
