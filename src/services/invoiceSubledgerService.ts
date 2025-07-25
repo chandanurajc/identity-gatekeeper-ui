@@ -30,8 +30,6 @@ export async function createSubledgerEntriesForInvoice(
         organizationId: invoice.organizationId,
         journalId,
         partyOrgId: invoice.remitToOrgId, // remit to org for invoice
-        partyName: invoice.remitToName,
-        partyCode: undefined, // Not available on Invoice, can be set if needed
         partyContactId: invoice.remitToContactId, // remit to contact for invoice
         transactionDate: new Date().toISOString().split("T")[0],
         debitAmount: line.debitAccountCode ? amount : null,
