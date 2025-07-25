@@ -459,10 +459,14 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
     console.log("Submitting PO Form Data:", JSON.stringify(mergedData, null, 2));
     setLoading(true);
     try {
+      console.log("About to call onSubmit...");
       await onSubmit(mergedData);
+      console.log("onSubmit completed successfully");
     } catch (error) {
+      console.error("Error in onSubmit:", error);
       // error handling is outside for clarity/UI
     } finally {
+      console.log("Setting loading to false");
       setLoading(false);
     }
   };
