@@ -47,6 +47,7 @@ export interface PurchaseOrder {
   
   // Remit To fields
   remitToOrgId?: string;
+  remitToContactId?: string;  // Add contact ID
   remitToName?: string;
   remitToAddress1?: string;
   remitToAddress2?: string;
@@ -149,6 +150,7 @@ export interface PurchaseOrderFormData {
   
   // Remit To fields
   remitToOrgId?: string;
+  remitToContactId?: string;  // Add contact ID
   remitToName?: string;
   remitToAddress1?: string;
   remitToAddress2?: string;

@@ -53,6 +53,7 @@ interface BillToInfo {
 }
 
 interface RemitToInfo {
+  contactId?: string;  // Add contact ID
   name: string;
   address1: string;
   address2: string;
@@ -296,6 +297,7 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
         
         if (remitToContact) {
           setRemitToInfo({
+            contactId: remitToContact.id,  // Store the contact ID
             name: `${remitToContact.firstName} ${remitToContact.lastName || ''}`.trim(),
             address1: remitToContact.address1 || '',
             address2: remitToContact.address2 || '',
@@ -439,6 +441,7 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
       billToGstin: billToInfo?.gstin || '',
       billToCin: billToInfo?.cin || '',
       remitToOrgId: data.supplierId,
+      remitToContactId: remitToInfo?.contactId,  // Add contact ID
       remitToName: remitToInfo?.name || '',
       remitToAddress1: remitToInfo?.address1 || '',
       remitToAddress2: remitToInfo?.address2 || '',

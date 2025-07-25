@@ -87,6 +87,7 @@ export async function createPurchaseOrder(formData: PurchaseOrderFormData, organ
     bill_to_cin: formData.billToCin || null,
     // Remit To fields
     remit_to_org_id: formData.remitToOrgId || null,
+    remit_to_contact_id: formData.remitToContactId || null,  // Add contact ID
     remit_to_name: formData.remitToName || null,
     remit_to_address1: formData.remitToAddress1 || null,
     remit_to_address2: formData.remitToAddress2 || null,
