@@ -52,7 +52,6 @@ export default function SubledgerList() {
                   <TableHead>Transaction Date</TableHead>
                   <TableHead>Organization</TableHead>
                   <TableHead>Contact</TableHead>
-                  <TableHead>Party Name</TableHead>
                   <TableHead>Debit Amount</TableHead>
                   <TableHead>Credit Amount</TableHead>
                   <TableHead>Transaction Category</TableHead>
@@ -69,7 +68,6 @@ export default function SubledgerList() {
                     </TableCell>
                     <TableCell>{entry.organizationName || '-'}</TableCell>
                     <TableCell>{entry.contactName || '-'}</TableCell>
-                    <TableCell>{entry.partyName}</TableCell>
                     <TableCell className="text-right">
                       {entry.debitAmount ? (
                         <span className="text-green-600">
