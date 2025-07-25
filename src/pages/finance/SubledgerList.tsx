@@ -49,14 +49,13 @@ export default function SubledgerList() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Transaction Date</TableHead>
-                  <TableHead>Organization</TableHead>
-                  <TableHead>Contact</TableHead>
-                  <TableHead>Debit Amount</TableHead>
-                  <TableHead>Credit Amount</TableHead>
+                  <TableHead>Party Organization</TableHead>
+                  <TableHead>Party Name</TableHead>
                   <TableHead>Transaction Category</TableHead>
-                  <TableHead>Triggering Action</TableHead>
                   <TableHead>Source Reference</TableHead>
+                  <TableHead>Debit</TableHead>
+                  <TableHead>Credit</TableHead>
+                  <TableHead>Created On</TableHead>
                   <TableHead>Created By</TableHead>
                 </TableRow>
               </TableHeader>
@@ -64,10 +63,15 @@ export default function SubledgerList() {
                 {subledgers.map((entry) => (
                   <TableRow key={entry.id}>
                     <TableCell className="font-medium">
-                      {new Date(entry.transactionDate).toLocaleDateString()}
+                      {entry.organizationName || '-'}
                     </TableCell>
-                    <TableCell>{entry.organizationName || '-'}</TableCell>
                     <TableCell>{entry.contactName || '-'}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline">
+                        {entry.transactionCategory || '-'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{entry.sourceReference || '-'}</TableCell>
                     <TableCell className="text-right">
                       {entry.debitAmount ? (
                         <span className="text-green-600">
@@ -83,16 +87,8 @@ export default function SubledgerList() {
                       ) : '-'}
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline">
-                        {entry.transactionCategory || '-'}
-                      </Badge>
+                      {new Date(entry.createdOn).toLocaleDateString()}
                     </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">
-                        {entry.triggeringAction || '-'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{entry.sourceReference || '-'}</TableCell>
                     <TableCell>{entry.createdBy}</TableCell>
                   </TableRow>
                 ))}
