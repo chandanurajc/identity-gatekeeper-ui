@@ -7,8 +7,8 @@ class SubledgerService {
       .from('subledger')
       .select(`
         *,
-        organizations!subledger_party_org_id_fkey(name),
-        organization_contacts!subledger_party_contact_id_fkey(first_name, last_name)
+        organizations!party_org_id(name),
+        organization_contacts!party_contact_id(first_name, last_name)
       `)
       .eq('organization_id', organizationId)
       .order('transaction_date', { ascending: false });
