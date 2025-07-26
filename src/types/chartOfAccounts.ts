@@ -1,4 +1,4 @@
-export type AccountType = 'Asset' | 'Liability' | 'Equity' | 'Revenue' | 'Expense';
+export type AccountType = 'Asset' | 'Assets - Inventory' | 'Liability' | 'Equity' | 'Revenue' | 'Expense';
 
 export interface ChartOfAccount {
   id: string;

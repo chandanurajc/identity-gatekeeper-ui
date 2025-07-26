@@ -16,12 +16,12 @@ import { useAuth } from "@/context/AuthContext";
 import { chartOfAccountsService } from "@/services/chartOfAccountsService";
 import type { AccountType, ChartOfAccountFormData } from "@/types/chartOfAccounts";
 
-const accountTypes: AccountType[] = ['Asset', 'Liability', 'Equity', 'Revenue', 'Expense'];
+const accountTypes: AccountType[] = ['Asset', 'Assets - Inventory', 'Liability', 'Equity', 'Revenue', 'Expense'];
 
 const formSchema = z.object({
   accountCode: z.string().min(1, "Account code is required"),
   accountName: z.string().min(1, "Account name is required"),
-  accountType: z.enum(['Asset', 'Liability', 'Equity', 'Revenue', 'Expense']),
+  accountType: z.enum(['Asset', 'Assets - Inventory', 'Liability', 'Equity', 'Revenue', 'Expense']),
   status: z.enum(['Active', 'Inactive']).default('Active'),
 });
 
