@@ -5,11 +5,7 @@ import { InventoryTransfer, InventoryTransferLine, CreateInventoryTransferData }
 async function getInventoryTransfers(organizationId: string): Promise<InventoryTransfer[]> {
   const { data, error } = await supabase
     .from("inventory_transfers")
-    .select(`
-      *,
-      origin_division:origin_division_id(name),
-      destination_division:destination_division_id(name)
-    `)
+    .select("*")
     .eq("organization_id", organizationId)
     .order("created_on", { ascending: false });
 
@@ -18,28 +14,30 @@ async function getInventoryTransfers(organizationId: string): Promise<InventoryT
     throw new Error(`Failed to fetch inventory transfers: ${error.message}`);
   }
 
-  return (data || []).map(transfer => ({
-    ...transfer,
-    created_on: new Date(transfer.created_on),
-    updated_on: transfer.updated_on ? new Date(transfer.updated_on) : undefined,
-    origin_division_name: (transfer as any).origin_division?.name,
-    destination_division_name: (transfer as any).destination_division?.name
-  })) as InventoryTransfer[];
+  // Fetch division names separately
+  const transfers = await Promise.all((data || []).map(async (transfer) => {
+    const [originDivision, destinationDivision] = await Promise.all([
+      supabase.from("divisions").select("name").eq("id", transfer.origin_division_id).single(),
+      supabase.from("divisions").select("name").eq("id", transfer.destination_division_id).single()
+    ]);
+
+    return {
+      ...transfer,
+      created_on: new Date(transfer.created_on),
+      updated_on: transfer.updated_on ? new Date(transfer.updated_on) : undefined,
+      origin_division_name: originDivision.data?.name || 'Unknown',
+      destination_division_name: destinationDivision.data?.name || 'Unknown'
+    };
+  }));
+
+  return transfers as InventoryTransfer[];
 }
 
 // Get a single inventory transfer with its lines
 async function getInventoryTransfer(transferId: string): Promise<InventoryTransfer> {
   const { data, error } = await supabase
     .from("inventory_transfers")
-    .select(`
-      *,
-      origin_division:origin_division_id(name),
-      destination_division:destination_division_id(name),
-      transfer_lines:inventory_transfer_lines(
-        *,
-        item:items(description)
-      )
-    `)
+    .select("*")
     .eq("id", transferId)
     .single();
 
@@ -48,20 +46,33 @@ async function getInventoryTransfer(transferId: string): Promise<InventoryTransf
     throw new Error(`Failed to fetch inventory transfer: ${error.message}`);
   }
 
-  return {
+  // Fetch related data separately
+  const [originDivision, destinationDivision, transferLines] = await Promise.all([
+    supabase.from("divisions").select("name").eq("id", data.origin_division_id).single(),
+    supabase.from("divisions").select("name").eq("id", data.destination_division_id).single(),
+    supabase.from("inventory_transfer_lines").select(`
+      *,
+      items(description)
+    `).eq("transfer_id", transferId)
+  ]);
+
+  const processedTransfer = {
     ...data,
     created_on: new Date(data.created_on),
     updated_on: data.updated_on ? new Date(data.updated_on) : undefined,
-    origin_division_name: (data as any).origin_division?.name,
-    destination_division_name: (data as any).destination_division?.name,
-    transfer_lines: data.transfer_lines?.map((line: any) => ({
+    origin_division_name: originDivision.data?.name || 'Unknown',
+    destination_division_name: destinationDivision.data?.name || 'Unknown',
+    transfer_lines: (transferLines.data || []).map(line => ({
       ...line,
       created_on: new Date(line.created_on),
       updated_on: line.updated_on ? new Date(line.updated_on) : undefined,
-      item_description: line.item?.description
+      item_description: (line as any).items?.description
     }))
-  } as InventoryTransfer;
+  };
+
+  return processedTransfer as InventoryTransfer;
 }
+
 
 // Create a new inventory transfer
 async function createInventoryTransfer(transferData: CreateInventoryTransferData): Promise<InventoryTransfer> {
