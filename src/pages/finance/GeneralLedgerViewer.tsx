@@ -79,12 +79,12 @@ const GeneralLedgerViewer = () => {
     if (!ledgerEntries) return [];
     let runningBalance = 0;
 
-    // Always sort by transaction_date ASC, created_on ASC for balance
+    // Always sort by transactionDate ASC, createdOn ASC for balance
     const sortedEntries = [...ledgerEntries].sort((a, b) => {
-      const aDate = new Date(a.transaction_date).getTime();
-      const bDate = new Date(b.transaction_date).getTime();
+      const aDate = new Date(a.transactionDate).getTime();
+      const bDate = new Date(b.transactionDate).getTime();
       if (aDate !== bDate) return aDate - bDate;
-      return new Date(a.created_on).getTime() - new Date(b.created_on).getTime();
+      return new Date(a.createdOn).getTime() - new Date(b.createdOn).getTime();
     });
 
     const processed = sortedEntries.map((entry) => {
@@ -95,10 +95,10 @@ const GeneralLedgerViewer = () => {
         console.warn(`[GeneralLedger] BAD ENTRY: amount is not a number for entry`, entry);
         amount = 0;
       }
-      if (entry.transaction_type === "Payable Invoice" || entry.transaction_type === "Debit Note") {
+      if (entry.transactionType === "Payable Invoice" || entry.transactionType === "Debit Note") {
         credit = amount;
         runningBalance += amount;
-      } else if (entry.transaction_type === "Payment" || entry.transaction_type === "Credit Note") {
+      } else if (entry.transactionType === "Payment" || entry.transactionType === "Credit Note") {
         debit = amount;
         runningBalance -= amount;
       }
@@ -117,10 +117,10 @@ const GeneralLedgerViewer = () => {
   const outstandingBalance = useMemo(() => {
     if (!ledgerEntries || ledgerEntries.length === 0) return 0;
     const totalCredit = ledgerEntries
-      .filter(e => e.transaction_type === "Payable Invoice" || e.transaction_type === "Debit Note")
+      .filter(e => e.transactionType === "Payable Invoice" || e.transactionType === "Debit Note")
       .reduce((acc, entry) => acc + Number(entry.amount), 0);
     const totalDebit = ledgerEntries
-      .filter(e => e.transaction_type === "Payment" || e.transaction_type === "Credit Note")
+      .filter(e => e.transactionType === "Payment" || e.transactionType === "Credit Note")
       .reduce((acc, entry) => acc + Number(entry.amount), 0);
     return totalCredit - totalDebit;
   }, [ledgerEntries]);
@@ -149,9 +149,7 @@ const GeneralLedgerViewer = () => {
           )}
 
           <GeneralLedgerTable
-            processedData={processedData}
-            isLoadingLedger={isLoadingLedger}
-            loadTrigger={loadTrigger}
+            entries={processedData}
           />
         </CardContent>
       </Card>

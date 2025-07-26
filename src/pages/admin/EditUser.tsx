@@ -77,8 +77,8 @@ const EditUser = () => {
       const updatedByValue = currentUser?.name || "unknown";
       console.log("Updated by value:", updatedByValue);
       
-      // Update user with organization context
-      await userService.updateUser(userId, userData, updatedByValue, currentUser?.organizationId);
+      // Use the organizationId from userData (selected in form)
+      await userService.updateUser(userId, userData, updatedByValue, userData.organizationId);
       
       toast({
         title: "User updated successfully",
