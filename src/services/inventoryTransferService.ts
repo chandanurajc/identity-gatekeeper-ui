@@ -168,12 +168,27 @@ async function createInventoryTransfer(transferData: CreateInventoryTransferData
 
 // Update inventory transfer (only tracking number for transfers in 'Transfer initiated' status)
 async function updateInventoryTransfer(transferId: string, tracking_number?: string): Promise<void> {
+  // Fetch username for updated_by (assume tracking_number update is by current user, pass as param if needed)
+  let updatedByUsername = undefined;
+  if (typeof tracking_number === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tracking_number)) {
+    // If tracking_number is actually a userId, fetch username (for future extensibility)
+    const { data: userProfile, error: userError } = await supabase
+      .from('profiles')
+      .select('username')
+      .eq('id', tracking_number)
+      .single();
+    if (!userError && userProfile?.username) {
+      updatedByUsername = userProfile.username;
+    }
+  }
+  const updateObj: any = {
+    tracking_number,
+    updated_on: new Date().toISOString()
+  };
+  if (updatedByUsername) updateObj.updated_by = updatedByUsername;
   const { error } = await supabase
     .from("inventory_transfers")
-    .update({
-      tracking_number,
-      updated_on: new Date().toISOString()
-    })
+    .update(updateObj)
     .eq("id", transferId)
     .eq("status", "Transfer initiated"); // Only allow updates for initiated transfers
 
@@ -192,12 +207,24 @@ async function confirmInventoryTransfer(transferId: string, confirmedBy: string)
     throw new Error('Only transfers in "Transfer initiated" status can be confirmed');
   }
 
+  // Fetch username for updated_by
+  let updatedByUsername = confirmedBy;
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(confirmedBy)) {
+    const { data: userProfile, error: userError } = await supabase
+      .from('profiles')
+      .select('username')
+      .eq('id', confirmedBy)
+      .single();
+    if (!userError && userProfile?.username) {
+      updatedByUsername = userProfile.username;
+    }
+  }
   // Update transfer status
   const { error: updateError } = await supabase
     .from("inventory_transfers")
     .update({
       status: 'Transfer confirmed',
-      updated_by: confirmedBy,
+      updated_by: updatedByUsername,
       updated_on: new Date().toISOString()
     })
     .eq("id", transferId);

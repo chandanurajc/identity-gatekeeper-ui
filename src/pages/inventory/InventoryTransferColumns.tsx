@@ -101,16 +101,8 @@ export function getInventoryTransferColumns(canViewInventoryTransfer: boolean): 
         </Button>
       ),
       cell: ({ row }) => {
-        const userId = row.getValue("created_by") as string;
-        const [username, setUsername] = useState<string>(userId);
-        useEffect(() => {
-          let mounted = true;
-          getUserNameById(userId).then(name => {
-            if (mounted) setUsername(name);
-          });
-          return () => { mounted = false; };
-        }, [userId]);
-        return <span>{username}</span>;
+        const value = row.getValue("created_by") as string;
+        return <span>{value}</span>;
       },
     },
     {

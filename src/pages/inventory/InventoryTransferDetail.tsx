@@ -68,9 +68,7 @@ export default function InventoryTransferDetail() {
   }
 
   const handleConfirmTransfer = () => {
-    if (window.confirm("Are you sure you want to confirm this inventory transfer? This action cannot be undone.")) {
-      confirmTransferMutation.mutate();
-    }
+    confirmTransferMutation.mutate();
   };
 
   return (
