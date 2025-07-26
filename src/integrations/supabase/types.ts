@@ -542,6 +542,20 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_inventory_transfer_lines_item"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_inventory_transfer_lines_transfer"
+            columns: ["transfer_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_transfers"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "inventory_transfer_lines_transfer_id_fkey"
             columns: ["transfer_id"]
             isOneToOne: false
@@ -593,7 +607,29 @@ export type Database = {
           updated_by?: string | null
           updated_on?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_inventory_transfers_destination_division"
+            columns: ["destination_division_id"]
+            isOneToOne: false
+            referencedRelation: "divisions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_inventory_transfers_organization"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_inventory_transfers_origin_division"
+            columns: ["origin_division_id"]
+            isOneToOne: false
+            referencedRelation: "divisions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       invoice: {
         Row: {
