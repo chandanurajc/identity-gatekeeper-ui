@@ -135,14 +135,7 @@ export const createModuleGroups = (permissions: PermissionsMap): ModuleGroup[] =
 
   // Finance module
   const financeItems: MenuItem[] = [];
-  if (permissions.canViewGeneralLedger) {
-    financeItems.push({
-      label: "General Ledger",
-      path: "/finance/general-ledger",
-      icon: BookCopy,
-      permission: true,
-    });
-  }
+  // Removed General Ledger from financeItems
 
   if (permissions.canViewInvoices) {
     financeItems.push({

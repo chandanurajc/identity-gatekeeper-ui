@@ -2,7 +2,7 @@
 import React from 'react';
 import { Routes, Route } from "react-router-dom";
 import PermissionProtectedRoute from "@/components/PermissionProtectedRoute";
-import GeneralLedgerViewer from "@/pages/finance/GeneralLedgerViewer";
+// GeneralLedgerViewer removed
 import InvoicesList from "@/pages/finance/InvoicesList";
 import InvoiceCreate from "@/pages/finance/InvoiceCreate";
 import InvoiceDetail from "@/pages/finance/InvoiceDetail";
@@ -23,14 +23,7 @@ import PaymentDetail from "@/pages/finance/PaymentDetail";
 export function FinanceRoutes() {
   return (
     <Routes>
-      <Route
-        path="/general-ledger"
-        element={
-          <PermissionProtectedRoute requiredPermission="View General Ledger">
-            <GeneralLedgerViewer />
-          </PermissionProtectedRoute>
-        }
-      />
+      {/* GeneralLedgerViewer route removed */}
       <Route
         path="/chart-of-accounts"
         element={

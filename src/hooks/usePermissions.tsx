@@ -45,7 +45,7 @@ export const usePermissions = () => {
               "View PO", "Create PO", "Edit PO", "Cancel PO",
               "View Invoices", "Create Invoice", "Edit Invoice", "Delete Invoice", 
               "Send Invoice for Approval", "Approve Invoice", "Reject Invoice",
-              "View General Ledger", "Record Payment",
+              "Record Payment",
               "access_admin", "access_settings"
             ];
             setPermissions(allPermissions);
@@ -326,7 +326,7 @@ export const usePermissions = () => {
       canSendInvoiceForApproval: permissions.includes("Send Invoice for Approval"),
       canApproveInvoice: permissions.includes("Approve Invoice"),
       canRejectInvoice: permissions.includes("Reject Invoice"),
-      canViewGeneralLedger: permissions.includes("View General Ledger"),
+      // canViewGeneralLedger removed
       canRecordPayment: permissions.includes("Record Payment"),
       canViewPayments: permissions.includes("view_payments"),
       canCreatePayments: permissions.includes("create_payments"),

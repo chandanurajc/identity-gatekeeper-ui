@@ -55,7 +55,7 @@ export function AppSidebar() {
     canViewPurchaseOrders,
     canViewPOReceive,
     canViewInventory,
-    canViewGeneralLedger: hasPermission("View General Ledger"),
+    // canViewGeneralLedger removed
     canViewInvoices: hasPermission("View Invoices"),
     canViewCOA,
     canViewRules,
