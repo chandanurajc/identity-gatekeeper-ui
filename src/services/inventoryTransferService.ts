@@ -255,6 +255,19 @@ async function confirmInventoryTransfer(transferId: string, confirmedBy: string)
     throw new Error(`Failed to confirm transfer: ${updateError.message}`);
   }
 
+  // Fetch username for confirmedBy
+  let confirmedByUsername = confirmedBy;
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(confirmedBy)) {
+    const { data: userProfile, error: userError } = await supabase
+      .from('profiles')
+      .select('username')
+      .eq('id', confirmedBy)
+      .single();
+    if (!userError && userProfile?.username) {
+      confirmedByUsername = userProfile.username;
+    }
+  }
+
   // --- Journal Posting Logic for Inventory Transfer ---
   try {
     // Lazy import to avoid circular deps
@@ -292,10 +305,9 @@ async function confirmInventoryTransfer(transferId: string, confirmedBy: string)
         };
       });
 
-      // Prepare journal form data
+      // Prepare journal form data (omit transactionType since it's not compatible)
       const journalData = {
         journalDate: new Date().toISOString().slice(0, 10),
-        transactionType: 'Inventory Transfer',
         transactionReference: transfer.transfer_number,
         journalLines,
       };
@@ -311,19 +323,6 @@ async function confirmInventoryTransfer(transferId: string, confirmedBy: string)
   } catch (err) {
     console.error('Error posting journal for inventory transfer:', err);
     // Optionally: throw or continue
-  }
-
-  // Fetch username for confirmedBy
-  let confirmedByUsername = confirmedBy;
-  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(confirmedBy)) {
-    const { data: userProfile, error: userError } = await supabase
-      .from('profiles')
-      .select('username')
-      .eq('id', confirmedBy)
-      .single();
-    if (!userError && userProfile?.username) {
-      confirmedByUsername = userProfile.username;
-    }
   }
   // For each transfer line, update the in-process entry for destination division:
   for (const line of transfer.transfer_lines || []) {
