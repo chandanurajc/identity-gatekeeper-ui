@@ -447,13 +447,14 @@ export type Database = {
       }
       inventory_stock: {
         Row: {
+          available_quantity: number
           created_by: string
           created_on: string
           division_id: string
           id: string
+          in_process_quantity: number
           item_id: string
           organization_id: string
-          quantity: number
           reference_number: string | null
           transaction_type: string
           uom: string
@@ -461,13 +462,14 @@ export type Database = {
           updated_on: string | null
         }
         Insert: {
+          available_quantity: number
           created_by: string
           created_on?: string
           division_id: string
           id?: string
+          in_process_quantity?: number
           item_id: string
           organization_id: string
-          quantity: number
           reference_number?: string | null
           transaction_type: string
           uom: string
@@ -475,13 +477,14 @@ export type Database = {
           updated_on?: string | null
         }
         Update: {
+          available_quantity?: number
           created_by?: string
           created_on?: string
           division_id?: string
           id?: string
+          in_process_quantity?: number
           item_id?: string
           organization_id?: string
-          quantity?: number
           reference_number?: string | null
           transaction_type?: string
           uom?: string
