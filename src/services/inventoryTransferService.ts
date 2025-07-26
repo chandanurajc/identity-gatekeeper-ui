@@ -7,8 +7,8 @@ async function getInventoryTransfers(organizationId: string): Promise<InventoryT
     .from("inventory_transfers")
     .select(`
       *,
-      origin_division:divisions!fk_inventory_transfers_origin_division(name),
-      destination_division:divisions!fk_inventory_transfers_destination_division(name)
+      origin_division:origin_division_id(name),
+      destination_division:destination_division_id(name)
     `)
     .eq("organization_id", organizationId)
     .order("created_on", { ascending: false });
@@ -33,8 +33,8 @@ async function getInventoryTransfer(transferId: string): Promise<InventoryTransf
     .from("inventory_transfers")
     .select(`
       *,
-      origin_division:divisions!fk_inventory_transfers_origin_division(name),
-      destination_division:divisions!fk_inventory_transfers_destination_division(name),
+      origin_division:origin_division_id(name),
+      destination_division:destination_division_id(name),
       transfer_lines:inventory_transfer_lines(
         *,
         item:items(description)
