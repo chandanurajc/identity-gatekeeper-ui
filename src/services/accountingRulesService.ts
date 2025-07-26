@@ -59,6 +59,7 @@ class AccountingRulesService {
     const ruleToCreate = {
       organization_id: organizationId,
       division_id: ruleData.divisionId || null, // Include divisionId
+      destination_division_id: ruleData.destinationDivisionId || null,
       rule_name: ruleData.ruleName,
       transaction_category: ruleData.transactionCategory,
       transaction_reference: ruleData.transactionReference,
@@ -115,6 +116,7 @@ class AccountingRulesService {
     
     const ruleToUpdate = {
       division_id: ruleData.divisionId || null, // Include divisionId
+      destination_division_id: ruleData.destinationDivisionId || null,
       rule_name: ruleData.ruleName,
       transaction_category: ruleData.transactionCategory,
       transaction_reference: ruleData.transactionReference,
@@ -198,6 +200,7 @@ class AccountingRulesService {
       id: dbRule.id,
       organizationId: dbRule.organization_id,
       divisionId: dbRule.division_id,
+      destinationDivisionId: dbRule.destination_division_id,
       divisionName: dbRule.divisions?.name,
       ruleName: dbRule.rule_name,
       transactionCategory: dbRule.transaction_category,

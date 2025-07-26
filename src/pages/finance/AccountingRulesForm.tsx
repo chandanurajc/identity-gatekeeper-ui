@@ -22,8 +22,12 @@ import type { AccountingRuleFormData, RuleTransactionCategory } from "@/types/ac
 import type { Division } from "@/types/division";
 import { PAYMENT_AMOUNT_SOURCES } from "@/types/payment";
 
-const transactionCategories: RuleTransactionCategory[] = ['Invoice', 'PO', 'Payment'];
+const transactionCategories: RuleTransactionCategory[] = ['Invoice', 'PO', 'Payment', 'Inventory Transfer'];
 const triggeringActions = ['Invoice Approved', 'PO Created', 'Payment Processed', 'Purchase order receive', 'Payment Created', 'Payment Approved'];
+const inventoryTransferTriggeringActions = [
+  { label: 'Transfer initiated', value: 'Transfer initiated' },
+  { label: 'Transfer confirmed', value: 'Transfer confirmed' },
+];
 const paymentTriggeringActions = [
   { label: 'Payment created', value: 'Payment Created', status: 'Created' },
   { label: 'Payment approved', value: 'Payment Approved', status: 'Approved' },
@@ -56,15 +60,9 @@ const paymentAmountSourceOptions = [...PAYMENT_AMOUNT_SOURCES];
 const formSchema = z.object({
   ruleName: z.string().min(1, "Rule name is required"),
   divisionId: z.string().optional(),
-  transactionCategory: z.enum(['Invoice', 'PO', 'Payment']),
-  triggeringAction: z.enum([
-    'Invoice Approved',
-    'PO Created',
-    'Payment Processed',
-    'Purchase order receive',
-    'Payment Created',
-    'Payment Approved',
-  ]),
+  destinationDivisionId: z.string().optional(),
+  transactionCategory: z.enum(['Invoice', 'PO', 'Payment', 'Inventory Transfer']),
+  triggeringAction: z.string(),
   transactionReference: z.string().min(1, "Transaction reference is required"),
   transactionType: z.string().optional(),
   lines: z.array(z.object({
@@ -271,31 +269,61 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="divisionId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Division</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value || ""}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select division (optional)" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="">None</SelectItem>
-                          {divisions.filter(div => div.status === 'active').map((division) => (
-                            <SelectItem key={division.id} value={division.id}>
-                              {division.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                {/* Division (for all except Inventory Transfer) */}
+                {form.watch('transactionCategory') !== 'Inventory Transfer' && (
+                  <FormField
+                    control={form.control}
+                    name="divisionId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Division</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value || ""}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select division (optional)" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="">None</SelectItem>
+                            {divisions.filter(div => div.status === 'active').map((division) => (
+                              <SelectItem key={division.id} value={division.id}>
+                                {division.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+                {/* Destination Division for Inventory Transfer */}
+                {form.watch('transactionCategory') === 'Inventory Transfer' && (
+                  <FormField
+                    control={form.control}
+                    name="destinationDivisionId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Destination Division *</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value || ""}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select destination division" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {divisions.filter(div => div.status === 'active').map((division) => (
+                              <SelectItem key={division.id} value={division.id}>
+                                {division.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
 
                 <FormField
                   control={form.control}
@@ -327,6 +355,14 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
                   name="triggeringAction"
                   render={({ field }) => {
                     const transactionCategory = form.watch('transactionCategory');
+                    let actions: { label: string; value: string }[] = [];
+                    if (transactionCategory === 'Payment') {
+                      actions = paymentTriggeringActions;
+                    } else if (transactionCategory === 'Inventory Transfer') {
+                      actions = inventoryTransferTriggeringActions;
+                    } else {
+                      actions = triggeringActions.map(a => ({ label: a, value: a }));
+                    }
                     return (
                       <FormItem>
                         <FormLabel>Triggering Action *</FormLabel>
@@ -337,17 +373,11 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {transactionCategory === 'Payment'
-                              ? paymentTriggeringActions.map((action) => (
-                                  <SelectItem key={action.value} value={action.value}>
-                                    {action.label}
-                                  </SelectItem>
-                                ))
-                              : triggeringActions.map((action) => (
-                                  <SelectItem key={action} value={action}>
-                                    {action}
-                                  </SelectItem>
-                                ))}
+                            {actions.map((action) => (
+                              <SelectItem key={action.value} value={action.value}>
+                                {action.label}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -361,7 +391,14 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
                   name="transactionReference"
                   render={({ field }) => {
                     const transactionCategory = form.watch('transactionCategory');
-                    const fields = transactionCategory === 'Payment' ? paymentDatabaseFields : databaseFields;
+                    let fields = databaseFields;
+                    if (transactionCategory === 'Payment') {
+                      fields = paymentDatabaseFields;
+                    } else if (transactionCategory === 'Inventory Transfer') {
+                      fields = [
+                        { value: 'inventory_transfer.transfer_id', label: 'Transfer ID' },
+                      ];
+                    }
                     return (
                       <FormItem>
                         <FormLabel>Transaction Reference *</FormLabel>
@@ -515,6 +552,8 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
                             options = invoiceAmountSourceOptions;
                           } else if (transactionCategory === 'Payment') {
                             options = paymentAmountSourceOptions;
+                          } else if (transactionCategory === 'Inventory Transfer') {
+                            options = ['Inventory cost'];
                           }
                           return (
                             <FormItem>

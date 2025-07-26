@@ -1,6 +1,14 @@
 
-export type RuleTransactionCategory = 'Invoice' | 'PO' | 'Payment';
-export type RuleAction = 'Invoice Approved' | 'PO Created' | 'Payment Processed' | 'Purchase order receive' | 'Payment Created' | 'Payment Approved';
+export type RuleTransactionCategory = 'Invoice' | 'PO' | 'Payment' | 'Inventory Transfer';
+export type RuleAction =
+  | 'Invoice Approved'
+  | 'PO Created'
+  | 'Payment Processed'
+  | 'Purchase order receive'
+  | 'Payment Created'
+  | 'Payment Approved'
+  | 'Transfer initiated'
+  | 'Transfer confirmed';
 export type PartyType = 'Bill To' | 'Remit To';
 export type FilterLogicType = 'AND' | 'OR';
 
@@ -25,6 +33,7 @@ export interface AccountingRule {
   ruleName: string;
   divisionId?: string;
   divisionName?: string;
+  destinationDivisionId?: string; // For Inventory Transfer
   transactionCategory: RuleTransactionCategory;
   transactionReference: string;
   transactionType?: string;
@@ -45,6 +54,7 @@ export interface AccountingRule {
 export interface AccountingRuleFormData {
   ruleName: string;
   divisionId?: string;
+  destinationDivisionId?: string; // For Inventory Transfer
   transactionCategory: RuleTransactionCategory;
   transactionReference: string;
   transactionType?: string;
