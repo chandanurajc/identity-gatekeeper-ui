@@ -74,6 +74,8 @@ export default function InventoryTransferCreate() {
     name: "transfer_lines",
   });
 
+  const [searchTerms, setSearchTerms] = useState<string[]>([]);
+
   const originDivisionId = form.watch("origin_division_id");
   const destinationDivisionId = form.watch("destination_division_id");
 
@@ -145,6 +147,7 @@ export default function InventoryTransferCreate() {
 
   const addTransferLine = () => {
     append({ item_id: "", quantity_to_transfer: 0 });
+    setSearchTerms(prev => [...prev, ""]);
   };
 
   const removeTransferLine = (index: number) => {
@@ -157,6 +160,7 @@ export default function InventoryTransferCreate() {
       });
     }
     remove(index);
+    setSearchTerms(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleItemChange = (index: number, itemId: string) => {
@@ -347,8 +351,6 @@ export default function InventoryTransferCreate() {
                       const unitCost = currentItem?.costs?.[0]?.cost || 0;
                       const transferQty = form.watch(`transfer_lines.${index}.quantity_to_transfer`);
                       const inventoryCost = unitCost * transferQty;
-                      // Use a search state array to avoid useState in a loop
-                      const [searchTerms, setSearchTerms] = useState<string[]>(() => fields.map(() => ""));
                       const searchTerm = searchTerms[index] || "";
                       const handleSearchChange = (val: string) => {
                         setSearchTerms(prev => {
