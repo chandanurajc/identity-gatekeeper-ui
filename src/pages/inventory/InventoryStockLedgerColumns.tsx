@@ -60,9 +60,8 @@ export const columns: ColumnDef<InventoryStockLedgerItem>[] = [
     header: () => <div className="text-right">Quantity</div>,
     cell: ({ row }) => {
         const quantity = parseFloat(row.getValue("quantity"));
-        const type = row.original.transaction_type;
-        const displayQuantity = (type === 'SALES_ORDER' || type === 'ADJUSTMENT_OUT') ? -Math.abs(quantity) : Math.abs(quantity);
-        return <div className="text-right">{displayQuantity.toLocaleString()}</div>;
+        // Show the actual sign of the quantity (negative for origin division transfer, etc.)
+        return <div className="text-right">{quantity.toLocaleString()}</div>;
     }
   },
   {

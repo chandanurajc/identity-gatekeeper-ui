@@ -87,6 +87,20 @@ async function createInventoryTransfer(transferData: CreateInventoryTransferData
     throw new Error(`Failed to generate transfer number: ${numberError.message}`);
   }
 
+  // Fetch username for created_by
+  let createdByUsername = transferData.created_by;
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(transferData.created_by)) {
+    // Only fetch if it's a UUID
+    const { data: userProfile, error: userError } = await supabase
+      .from('profiles')
+      .select('username')
+      .eq('id', transferData.created_by)
+      .single();
+    if (!userError && userProfile?.username) {
+      createdByUsername = userProfile.username;
+    }
+  }
+
   // Create the transfer header
   const { data: transfer, error: transferError } = await supabase
     .from("inventory_transfers")
@@ -97,7 +111,7 @@ async function createInventoryTransfer(transferData: CreateInventoryTransferData
       destination_division_id: transferData.destination_division_id,
       transfer_date: transferData.transfer_date,
       tracking_number: transferData.tracking_number,
-      created_by: transferData.created_by
+      created_by: createdByUsername
     })
     .select()
     .single();
@@ -131,9 +145,9 @@ async function createInventoryTransfer(transferData: CreateInventoryTransferData
     division_id: transferData.origin_division_id,
     quantity: -line.quantity_to_transfer,
     uom: 'Unit', // Default UOM, should be fetched from item
-    transaction_type: 'INVENTORY_TRANSFER',
+    transaction_type: 'TRANSFER',
     reference_number: transferNumber,
-    created_by: transferData.created_by
+    created_by: createdByUsername
   }));
 
   const { error: stockError } = await supabase
@@ -193,6 +207,18 @@ async function confirmInventoryTransfer(transferId: string, confirmedBy: string)
     throw new Error(`Failed to confirm transfer: ${updateError.message}`);
   }
 
+  // Fetch username for confirmedBy
+  let confirmedByUsername = confirmedBy;
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(confirmedBy)) {
+    const { data: userProfile, error: userError } = await supabase
+      .from('profiles')
+      .select('username')
+      .eq('id', confirmedBy)
+      .single();
+    if (!userError && userProfile?.username) {
+      confirmedByUsername = userProfile.username;
+    }
+  }
   // Create positive inventory stock entries for destination division
   const stockEntries = transfer.transfer_lines?.map(line => ({
     organization_id: transfer.organization_id,
@@ -200,9 +226,9 @@ async function confirmInventoryTransfer(transferId: string, confirmedBy: string)
     division_id: transfer.destination_division_id,
     quantity: line.quantity_to_transfer,
     uom: 'Unit', // Default UOM, should be fetched from item
-    transaction_type: 'INVENTORY_TRANSFER',
+    transaction_type: 'TRANSFER',
     reference_number: transfer.transfer_number,
-    created_by: confirmedBy
+    created_by: confirmedByUsername
   })) || [];
 
   const { error: stockError } = await supabase

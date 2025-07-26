@@ -10,10 +10,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useMultiTenant } from "@/hooks/useMultiTenant";
 import { useInventoryTransferPermissions } from "@/hooks/useInventoryTransferPermissions";
 import { inventoryTransferService } from "@/services/inventoryTransferService";
-import { columns } from "./InventoryTransferColumns";
+import { getInventoryTransferColumns } from "./InventoryTransferColumns";
 import { InventoryTransfer } from "@/types/inventoryTransfer";
 import { Table } from "@tanstack/react-table";
 import PermissionButton from "@/components/PermissionButton";
+
 
 function TransferListToolbar(table: Table<InventoryTransfer>) {
   return (
@@ -58,9 +59,7 @@ export default function InventoryTransferList() {
   const navigate = useNavigate();
   const { getCurrentOrganizationId } = useMultiTenant();
   const organizationId = getCurrentOrganizationId();
-  const { canCreateInventoryTransfer } = useInventoryTransferPermissions();
-
-  console.log("InventoryTransferList rendering", { organizationId, canCreateInventoryTransfer });
+  const { canCreateInventoryTransfer, canViewInventoryTransfer } = useInventoryTransferPermissions();
 
   const { data: transfers, isLoading, error } = useQuery({
     queryKey: ["inventory-transfers", organizationId],
@@ -68,10 +67,7 @@ export default function InventoryTransferList() {
     enabled: !!organizationId,
   });
 
-  console.log("Query state:", { transfers, isLoading, error });
-
   if (isLoading) {
-    console.log("Showing loading state");
     return (
       <div className="space-y-4">
         <div className="flex justify-between items-center">
@@ -92,7 +88,6 @@ export default function InventoryTransferList() {
   }
 
   if (error) {
-    console.log("Showing error state:", error);
     return (
       <Card>
         <CardContent className="pt-6">
@@ -104,7 +99,6 @@ export default function InventoryTransferList() {
     );
   }
 
-  console.log("Showing main content");
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -124,7 +118,7 @@ export default function InventoryTransferList() {
         </CardHeader>
         <CardContent>
           <DataTable
-            columns={columns}
+            columns={getInventoryTransferColumns(canViewInventoryTransfer)}
             data={transfers || []}
             toolbar={TransferListToolbar}
           />

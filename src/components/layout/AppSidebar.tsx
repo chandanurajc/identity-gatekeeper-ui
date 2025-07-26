@@ -34,7 +34,7 @@ export function AppSidebar() {
   const { canViewItem } = useItemPermissions();
   const { canViewItemGroup } = useItemGroupPermissions();
   const { canViewPurchaseOrders, canViewPOReceive } = usePurchaseOrderPermissions();
-  const { canViewInventory } = useInventoryPermissions();
+  const { canViewInventory, canViewInventoryTransfer } = useInventoryPermissions();
   const { canViewCOA } = useChartOfAccountsPermissions();
   const { canViewRules } = useAccountingRulesPermissions();
   const { canViewJournal } = useJournalPermissions();
@@ -55,6 +55,7 @@ export function AppSidebar() {
     canViewPurchaseOrders,
     canViewPOReceive,
     canViewInventory,
+    canViewInventoryTransfer,
     // canViewGeneralLedger removed
     canViewInvoices: hasPermission("View Invoices"),
     canViewCOA,
