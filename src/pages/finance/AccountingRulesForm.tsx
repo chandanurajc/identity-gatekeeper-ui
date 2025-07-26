@@ -259,6 +259,7 @@ export default function AccountingRulesForm({ mode: propMode }: AccountingRulesF
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                {/* 1. Rule Name */}
                 <FormField
                   control={form.control}
                   name="ruleName"
@@ -273,6 +274,7 @@ export default function AccountingRulesForm({ mode: propMode }: AccountingRulesF
                   )}
                 />
                 
+                {/* 2. Division */}
                 <FormField
                   control={form.control}
                   name="divisionId"
@@ -299,48 +301,7 @@ export default function AccountingRulesForm({ mode: propMode }: AccountingRulesF
                   )}
                 />
 
-                <FormField
-                  control={form.control}
-                  name="transactionType"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Transaction Type</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter transaction type" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {form.watch('transactionCategory') === 'Inventory Transfer' && (
-                  <FormField
-                    control={form.control}
-                    name="destinationDivisionId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Destination Division</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value || ""}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select destination division (optional)" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="">None</SelectItem>
-                            {divisions.filter(div => div.status === 'active').map((division) => (
-                              <SelectItem key={division.id} value={division.id}>
-                                {division.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
-
+                {/* 3. Transaction Category */}
                 <FormField
                   control={form.control}
                   name="transactionCategory"
@@ -366,6 +327,7 @@ export default function AccountingRulesForm({ mode: propMode }: AccountingRulesF
                   )}
                 />
 
+                {/* 4. Triggering Action */}
                 <FormField
                   control={form.control}
                   name="triggeringAction"
@@ -402,6 +364,7 @@ export default function AccountingRulesForm({ mode: propMode }: AccountingRulesF
                   }}
                 />
 
+                {/* 5. Transaction Reference */}
                 <FormField
                   control={form.control}
                   name="transactionReference"
@@ -441,6 +404,22 @@ export default function AccountingRulesForm({ mode: propMode }: AccountingRulesF
                   }}
                 />
 
+                {/* 6. Transaction Type */}
+                <FormField
+                  control={form.control}
+                  name="transactionType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Transaction Type</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter transaction type" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* 7. Status */}
                 <FormField
                   control={form.control}
                   name="status"
@@ -462,6 +441,35 @@ export default function AccountingRulesForm({ mode: propMode }: AccountingRulesF
                     </FormItem>
                   )}
                 />
+
+                {/* 8. Destination Division (only for Inventory Transfer) */}
+                {form.watch('transactionCategory') === 'Inventory Transfer' && (
+                  <FormField
+                    control={form.control}
+                    name="destinationDivisionId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Destination Division</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value || ""}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select destination division (optional)" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="">None</SelectItem>
+                            {divisions.filter(div => div.status === 'active').map((division) => (
+                              <SelectItem key={division.id} value={division.id}>
+                                {division.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
               </div>
 
               {/* Rule Lines Section */}
