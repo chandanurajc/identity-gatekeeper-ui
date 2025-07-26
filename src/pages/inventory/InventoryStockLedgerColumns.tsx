@@ -58,6 +58,10 @@ export const columns: ColumnDef<InventoryStockLedgerItem>[] = [
   {
     accessorKey: "reference_number",
     header: "Reference",
+    cell: ({ row }) => {
+      const ref = row.getValue("reference_number");
+      return <span className="whitespace-nowrap">{String(ref)}</span>;
+    },
   },
   {
     accessorKey: "available_quantity",

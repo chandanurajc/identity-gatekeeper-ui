@@ -115,6 +115,7 @@ export default function InventoryStockLedger() {
             columns={columns} 
             data={stockLedger || []} 
             toolbar={(table) => <StockLedgerToolbar table={table} />}
+            tableContainerClassName="w-full overflow-x-auto"
           />
         </CardContent>
       </Card>

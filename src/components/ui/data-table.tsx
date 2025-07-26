@@ -40,7 +40,8 @@ export function DataTable<TData, TValue>({
   filterColumn,
   filterPlaceholder,
   toolbar,
-}: DataTableProps<TData, TValue>) {
+  tableContainerClassName,
+}: DataTableProps<TData, TValue> & { tableContainerClassName?: string }) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
 
@@ -75,8 +76,8 @@ export function DataTable<TData, TValue>({
           />
         </div>
       ) : null}
-      <div className="rounded-md border">
-        <Table>
+      <div className={tableContainerClassName ? tableContainerClassName + " rounded-md border" : "rounded-md border w-full overflow-x-auto"}>
+        <Table className="min-w-[900px]">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
