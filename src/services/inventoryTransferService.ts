@@ -288,11 +288,15 @@ async function confirmInventoryTransfer(transferId: string, confirmedBy: string)
     if (matchingRule && matchingRule.lines && matchingRule.lines.length > 0) {
       // Build journal lines
       const journalLines = matchingRule.lines.map((line, idx) => {
-        // For now, only support 'Item total price' as amount source
         let amount = 0;
         if (line.amountSource === 'Item total price') {
           amount = (transfer.transfer_lines || []).reduce(
             (sum, l) => sum + (l.inventory_cost || 0) * (l.quantity_to_transfer || 0),
+            0
+          );
+        } else if (line.amountSource === 'Total transfer value') {
+          amount = (transfer.transfer_lines || []).reduce(
+            (sum, l) => sum + (l.inventory_cost || 0),
             0
           );
         }
