@@ -50,7 +50,7 @@ class ChartOfAccountsService {
 
     const { data, error } = await supabase
       .from('chart_of_accounts')
-      .insert(accountToCreate)
+      .insert(accountToCreate as any)
       .select()
       .single();
 
@@ -78,7 +78,7 @@ class ChartOfAccountsService {
 
     const { data, error } = await supabase
       .from('chart_of_accounts')
-      .update(accountToUpdate)
+      .update(accountToUpdate as any)
       .eq('id', id)
       .eq('organization_id', organizationId)
       .select()

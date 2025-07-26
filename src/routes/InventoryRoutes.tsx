@@ -10,7 +10,7 @@ export const InventoryRoutes = () => (
     <Route 
       path="/visibility" 
       element={
-        <PermissionProtectedRoute requiredPermission="view-inventory">
+        <PermissionProtectedRoute requiredPermission="View Inventory">
           <InventoryVisibilityList />
         </PermissionProtectedRoute>
       } 
@@ -18,7 +18,7 @@ export const InventoryRoutes = () => (
     <Route 
       path="/stock-ledger" 
       element={
-        <PermissionProtectedRoute requiredPermission="view-inventory">
+        <PermissionProtectedRoute requiredPermission="View Inventory">
           <InventoryStockLedger />
         </PermissionProtectedRoute>
       } 
