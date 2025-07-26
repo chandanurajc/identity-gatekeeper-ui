@@ -192,8 +192,13 @@ export default function AccountingRulesForm({ mode: propMode }: AccountingRulesF
 
   const onSubmit = (data: AccountingRuleFormData) => {
     // Ensure line numbers are sequential
+    // Always include destinationDivisionId in data, even if not shown (set to null if not Inventory Transfer)
     const processedData = {
       ...data,
+      destinationDivisionId:
+        data.transactionCategory === 'Inventory Transfer'
+          ? data.destinationDivisionId || null
+          : null,
       lines: data.lines.map((line, index) => ({
         ...line,
         lineNumber: index + 1,
