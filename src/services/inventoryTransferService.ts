@@ -239,6 +239,7 @@ async function confirmInventoryTransfer(transferId: string, confirmedBy: string)
       updatedByUsername = userProfile.username;
     }
   }
+
   // Update transfer status
   const { error: updateError } = await supabase
     .from("inventory_transfers")
@@ -252,6 +253,64 @@ async function confirmInventoryTransfer(transferId: string, confirmedBy: string)
   if (updateError) {
     console.error("Error confirming transfer:", updateError);
     throw new Error(`Failed to confirm transfer: ${updateError.message}`);
+  }
+
+  // --- Journal Posting Logic for Inventory Transfer ---
+  try {
+    // Lazy import to avoid circular deps
+    const { accountingRulesService } = await import("@/services/accountingRulesService");
+    const { journalService } = await import("@/services/journalService");
+
+    // Fetch active accounting rules for Inventory Transfer, Transfer confirmed
+    const rules = await accountingRulesService.getAccountingRules(transfer.organization_id);
+    const matchingRule = rules.find(
+      (rule) =>
+        rule.transactionCategory === 'Inventory Transfer' &&
+        rule.triggeringAction === 'Transfer confirmed' &&
+        rule.status === 'Active' &&
+        rule.divisionId === transfer.origin_division_id &&
+        rule.destinationDivisionId === transfer.destination_division_id
+    );
+
+    if (matchingRule && matchingRule.lines && matchingRule.lines.length > 0) {
+      // Build journal lines
+      const journalLines = matchingRule.lines.map((line, idx) => {
+        // For now, only support 'Item total price' as amount source
+        let amount = 0;
+        if (line.amountSource === 'Item total price') {
+          amount = (transfer.transfer_lines || []).reduce(
+            (sum, l) => sum + (l.inventory_cost || 0) * (l.quantity_to_transfer || 0),
+            0
+          );
+        }
+        return {
+          lineNumber: line.lineNumber,
+          accountCode: line.debitAccountCode || line.creditAccountCode || '',
+          debitAmount: line.debitAccountCode ? amount : undefined,
+          creditAmount: line.creditAccountCode ? amount : undefined,
+          narration: `Inventory transfer journal for transfer #${transfer.transfer_number}`,
+        };
+      });
+
+      // Prepare journal form data
+      const journalData = {
+        journalDate: new Date().toISOString().slice(0, 10),
+        transactionType: 'Inventory Transfer',
+        transactionReference: transfer.transfer_number,
+        journalLines,
+      };
+
+      // Create and post journal
+      const journal = await journalService.createJournal(
+        journalData,
+        transfer.organization_id,
+        confirmedByUsername
+      );
+      await journalService.postJournal(journal.id, transfer.organization_id, confirmedByUsername);
+    }
+  } catch (err) {
+    console.error('Error posting journal for inventory transfer:', err);
+    // Optionally: throw or continue
   }
 
   // Fetch username for confirmedBy
