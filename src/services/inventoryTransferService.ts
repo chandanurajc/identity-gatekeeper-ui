@@ -276,54 +276,94 @@ async function confirmInventoryTransfer(transferId: string, confirmedBy: string)
 
     // Fetch active accounting rules for Inventory Transfer, Transfer confirmed
     const rules = await accountingRulesService.getAccountingRules(transfer.organization_id);
-    const matchingRule = rules.find(
+    console.log('Available accounting rules:', rules);
+    
+    // Try to find matching rule with more flexible matching
+    let matchingRule = rules.find(
       (rule) =>
         rule.transactionCategory === 'Inventory Transfer' &&
         rule.triggeringAction === 'Transfer confirmed' &&
         rule.status === 'Active' &&
         rule.divisionId === transfer.origin_division_id &&
-        rule.destinationDivisionId === transfer.destination_division_id
+        (rule.destinationDivisionId === transfer.destination_division_id || rule.destinationDivisionId === null)
     );
 
+    // If no rule found with exact division match, try without destination division requirement
+    if (!matchingRule) {
+      matchingRule = rules.find(
+        (rule) =>
+          rule.transactionCategory === 'Inventory Transfer' &&
+          rule.triggeringAction === 'Transfer confirmed' &&
+          rule.status === 'Active' &&
+          (rule.divisionId === transfer.origin_division_id || rule.divisionId === null)
+      );
+    }
+
+    console.log('Matching accounting rule:', matchingRule);
+
     if (matchingRule && matchingRule.lines && matchingRule.lines.length > 0) {
+      // Calculate total transfer value
+      const totalTransferValue = (transfer.transfer_lines || []).reduce(
+        (sum, l) => sum + (l.inventory_cost || 0) * (l.quantity_to_transfer || 1),
+        0
+      );
+
+      console.log('Total transfer value:', totalTransferValue);
+
       // Build journal lines
-      const journalLines = matchingRule.lines.map((line, idx) => {
+      const journalLines = matchingRule.lines.map((line) => {
         let amount = 0;
-        if (line.amountSource === 'Item total price') {
-          amount = (transfer.transfer_lines || []).reduce(
-            (sum, l) => sum + (l.inventory_cost || 0) * (l.quantity_to_transfer || 0),
-            0
-          );
-        } else if (line.amountSource === 'Total transfer value') {
-          amount = (transfer.transfer_lines || []).reduce(
-            (sum, l) => sum + (l.inventory_cost || 0),
-            0
-          );
+        
+        // Map amount source values
+        if (line.amountSource === 'Item total price' || line.amountSource === 'Total transfer value') {
+          amount = totalTransferValue;
         }
-        return {
+
+        const journalLine = {
           lineNumber: line.lineNumber,
           accountCode: line.debitAccountCode || line.creditAccountCode || '',
           debitAmount: line.debitAccountCode ? amount : undefined,
           creditAmount: line.creditAccountCode ? amount : undefined,
           narration: `Inventory transfer journal for transfer #${transfer.transfer_number}`,
         };
-      });
 
-      // Prepare journal form data (omit transactionType since it's not compatible)
-      const journalData = {
-        journalDate: new Date().toISOString().slice(0, 10),
-        transactionType: 'Inventory transfer',
-        transactionReference: transfer.transfer_number,
-        journalLines,
-      };
-
-      // Create and post journal
-      const journal = await journalService.createJournal(
-        journalData,
-        transfer.organization_id,
-        confirmedByUsername
+        console.log('Journal line created:', journalLine);
+        return journalLine;
+      }).filter(line => 
+        // Only include lines with valid amounts
+        (line.debitAmount && line.debitAmount > 0) || (line.creditAmount && line.creditAmount > 0)
       );
-      await journalService.postJournal(journal.id, transfer.organization_id, confirmedByUsername);
+
+      console.log('Final journal lines:', journalLines);
+
+      if (journalLines.length > 0) {
+        // Prepare journal form data
+        const journalData = {
+          journalDate: new Date().toISOString().slice(0, 10),
+          transactionType: 'Inventory transfer' as 'Inventory transfer',
+          transactionReference: transfer.transfer_number,
+          journalLines,
+        };
+
+        console.log('Creating journal with data:', journalData);
+
+        // Create and post journal
+        const journal = await journalService.createJournal(
+          journalData,
+          transfer.organization_id,
+          confirmedByUsername
+        );
+        
+        console.log('Journal created:', journal);
+        
+        await journalService.postJournal(journal.id, transfer.organization_id, confirmedByUsername);
+        
+        console.log('Journal posted successfully');
+      } else {
+        console.log('No valid journal lines to create');
+      }
+    } else {
+      console.log('No matching accounting rule found for inventory transfer');
     }
   } catch (err) {
     console.error('Error posting journal for inventory transfer:', err);

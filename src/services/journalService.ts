@@ -48,7 +48,7 @@ class JournalService {
     const journalToCreate = {
       organization_id: organizationId,
       journal_date: journalData.journalDate,
-      transaction_type: journalData.transactionType,
+      transaction_type: journalData.transactionType as any,
       transaction_reference: journalData.transactionReference,
       created_by: createdBy,
     };
@@ -106,7 +106,7 @@ class JournalService {
   ): Promise<JournalHeader> {
     const journalToUpdate = {
       journal_date: journalData.journalDate,
-      transaction_type: journalData.transactionType,
+      transaction_type: journalData.transactionType as any,
       transaction_reference: journalData.transactionReference,
       updated_by: updatedBy,
       updated_on: new Date().toISOString(),
