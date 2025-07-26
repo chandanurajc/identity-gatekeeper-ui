@@ -22,6 +22,24 @@ import type { AccountingRuleFormData, RuleTransactionCategory } from "@/types/ac
 import type { Division } from "@/types/division";
 import { PAYMENT_AMOUNT_SOURCES } from "@/types/payment";
 
+const formSchema = z.object({
+  ruleName: z.string().min(1, "Rule name is required"),
+  divisionId: z.string().optional(),
+  destinationDivisionId: z.string().optional(),
+  transactionCategory: z.enum(['Invoice', 'PO', 'Payment', 'Inventory Transfer']),
+  triggeringAction: z.string().min(1, "Triggering action is required"),
+  transactionReference: z.string().min(1, "Transaction reference is required"),
+  transactionType: z.string().optional(),
+  status: z.enum(['Active', 'Inactive']),
+  lines: z.array(z.object({
+    lineNumber: z.number(),
+    debitAccountCode: z.string().optional(),
+    creditAccountCode: z.string().optional(),
+    amountSource: z.string().min(1, "Amount source is required"),
+    enableSubledger: z.boolean(),
+  })).min(1, "At least one line is required"),
+});
+
 const transactionCategories: RuleTransactionCategory[] = ['Invoice', 'PO', 'Payment', 'Inventory Transfer'];
 const triggeringActions = ['Invoice Approved', 'PO Created', 'Payment Processed', 'Purchase order receive', 'Payment Created', 'Payment Approved'];
 const inventoryTransferTriggeringActions = [
@@ -38,35 +56,42 @@ const poAmountSourceOptions = [
   'Total PO Value',
 ];
 
-// ...other constants (inventoryAmountSourceOptions, invoiceAmountSourceOptions, paymentAmountSourceOptions, amountSourceOptions) should be defined here as in your original code...
+const inventoryAmountSourceOptions = [
+  'Item total price',
+  'Total transfer value',
+];
 
-export function AccountingRulesForm(props) {
-  // Place all hooks, state, and logic here (useForm, useQuery, useMutation, etc.)
-  // Example:
-  // const form = useForm(...);
-  // const { data: divisions } = useQuery(...);
-  // ...
+const invoiceAmountSourceOptions = [
+  'Invoice Line Item Value',
+  'Total Invoice Value',
+  'Tax Amount',
+  'Total Payable',
+];
 
-  // All JSX for the form goes here, as in your working version before the JSX corruption.
-  // For example:
-  return (
-    <div className="container mx-auto py-8 max-w-6xl">
-      {/* ...rest of your form JSX, including Card, Form, fields, etc... */}
-    </div>
-  );
+const paymentAmountSourceOptions = PAYMENT_AMOUNT_SOURCES;
+
+const amountSourceOptions = {
+  'Invoice': invoiceAmountSourceOptions,
+  'PO': poAmountSourceOptions,
+  'Payment': paymentAmountSourceOptions,
+  'Inventory Transfer': inventoryAmountSourceOptions,
+};
+
+interface AccountingRulesFormProps {
+  mode?: 'create' | 'edit';
 }
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {actions.map((action) => (
-                              <SelectItem key={action.value} value={action.value}>
-                                {action.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
+
+export default function AccountingRulesForm({ mode: propMode }: AccountingRulesFormProps = {}) {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const { getCurrentOrganizationId } = useMultiTenant();
+  const organizationId = getCurrentOrganizationId();
+  const { user } = useAuth();
+  const mode = propMode || (id ? 'edit' : 'create');
+
+  const form = useForm<AccountingRuleFormData>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
       ruleName: "",
       transactionCategory: "Invoice",
@@ -222,7 +247,7 @@ export function AccountingRulesForm(props) {
   const isSubmitting = createMutation.isPending || updateMutation.isPending;
 
   return (
-    <div className="container mx-auto py-8 max-w-6xl">{/* Increased from max-w-4xl to max-w-6xl */}
+    <div className="container mx-auto py-8 max-w-6xl">
       <Card>
         <CardHeader>
           <CardTitle>{mode === 'create' ? 'Create Accounting Rule' : 'Edit Accounting Rule'}</CardTitle>
@@ -247,7 +272,7 @@ export function AccountingRulesForm(props) {
                     </FormItem>
                   )}
                 />
-                {/* Division (always visible) */}
+                
                 <FormField
                   control={form.control}
                   name="divisionId"
@@ -274,7 +299,6 @@ export function AccountingRulesForm(props) {
                   )}
                 />
 
-                {/* Transaction Type (existing) */}
                 <FormField
                   control={form.control}
                   name="transactionType"
@@ -289,7 +313,6 @@ export function AccountingRulesForm(props) {
                   )}
                 />
 
-                {/* Destination Division (only for Inventory Transfer) */}
                 {form.watch('transactionCategory') === 'Inventory Transfer' && (
                   <FormField
                     control={form.control}
@@ -420,28 +443,14 @@ export function AccountingRulesForm(props) {
 
                 <FormField
                   control={form.control}
-                  name="transactionType"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Transaction Type</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter transaction type" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
                   name="status"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Status</FormLabel>
+                      <FormLabel>Status *</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue />
+                            <SelectValue placeholder="Select status" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -455,324 +464,155 @@ export function AccountingRulesForm(props) {
                 />
               </div>
 
-              {/* Lines Section */}
+              {/* Rule Lines Section */}
               <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-medium">Accounting Lines</h3>
-                  <Button type="button" onClick={addLine} size="sm">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-medium">Accounting Rule Lines</h3>
+                  <Button type="button" onClick={addLine} variant="outline" size="sm">
                     <Plus className="h-4 w-4 mr-2" />
                     Add Line
                   </Button>
                 </div>
 
-                {form.watch("lines").map((line, index) => (
-                  <Card key={index} className="p-4">
-                    <div className="grid grid-cols-1 lg:grid-cols-6 gap-4 items-end">{/* Changed from md:grid-cols-5 to lg:grid-cols-6 */}
-                      <div>
-                        <FormLabel>Line {index + 1}</FormLabel>
-                        <div className="text-sm font-medium p-2 bg-muted rounded">
-                          {index + 1}
-                        </div>
-                      </div>
-                      
-                       <FormField
-                        control={form.control}
-                        name={`lines.${index}.debitAccountCode`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Debit Account</FormLabel>
-                            <Select onValueChange={(value) => field.onChange(value === '' ? undefined : value)} value={field.value || ''}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select account" />
-                                </SelectTrigger>
-                              </FormControl>
-                               <SelectContent className="max-w-md">
-                                 <SelectItem value="">Blank</SelectItem>
-                                 {chartOfAccounts.map((account) => (
-                                   <SelectItem key={account.id} value={account.accountCode} className="text-sm">
-                                     <div className="flex flex-col py-1">
-                                       <span className="font-medium">{account.accountCode}</span>
-                                       <span className="text-xs text-muted-foreground truncate">{account.accountName}</span>
-                                     </div>
-                                   </SelectItem>
-                                 ))}
-                               </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="space-y-4">
+                      {form.watch("lines").map((line, index) => (
+                        <div key={index} className="grid grid-cols-1 lg:grid-cols-6 gap-4 p-4 border rounded-lg">
+                          <div className="lg:col-span-1">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-medium">Line {index + 1}</span>
+                              {form.watch("lines").length > 1 && (
+                                <Button
+                                  type="button"
+                                  onClick={() => removeLine(index)}
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-destructive hover:text-destructive"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              )}
+                            </div>
+                          </div>
 
-                      <FormField
-                        control={form.control}
-                        name={`lines.${index}.creditAccountCode`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Credit Account</FormLabel>
-                            <Select onValueChange={(value) => field.onChange(value === '' ? undefined : value)} value={field.value || ''}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select account" />
-                                </SelectTrigger>
-                              </FormControl>
-                               <SelectContent className="max-w-md">
-                                 <SelectItem value="">Blank</SelectItem>
-                                 {chartOfAccounts.map((account) => (
-                                   <SelectItem key={account.id} value={account.accountCode} className="text-sm">
-                                     <div className="flex flex-col py-1">
-                                       <span className="font-medium">{account.accountCode}</span>
-                                       <span className="text-xs text-muted-foreground truncate">{account.accountName}</span>
-                                     </div>
-                                   </SelectItem>
-                                 ))}
-                               </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                          <FormField
+                            control={form.control}
+                            name={`lines.${index}.debitAccountCode`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Debit Account</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value || ""}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select debit account" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    {chartOfAccounts.map((account) => (
+                                      <SelectItem key={account.id} value={account.accountCode}>
+                                        {account.accountCode} - {account.accountName}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
 
-                      <FormField
-                        control={form.control}
-                        name={`lines.${index}.amountSource`}
-                        render={({ field }) => {
-                          const transactionCategory = form.watch('transactionCategory');
-                          let options = amountSourceOptions;
-                          if (transactionCategory === 'PO') {
-                            options = poAmountSourceOptions;
-                          } else if (transactionCategory === 'Invoice') {
-                            options = invoiceAmountSourceOptions;
-                          } else if (transactionCategory === 'Payment') {
-                            options = paymentAmountSourceOptions;
-                          } else if (transactionCategory === 'Inventory Transfer') {
-                            options = ['Inventory cost'];
-                          }
-                          return (
-                            <FormItem>
-                              <FormLabel>Amount Source *</FormLabel>
-                              <Select onValueChange={field.onChange} value={field.value}>
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select source" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  {options.map((option) => (
-                                    <SelectItem key={option} value={option}>
-                                      {option}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          );
-                        }}
-                      />
+                          <FormField
+                            control={form.control}
+                            name={`lines.${index}.creditAccountCode`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Credit Account</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value || ""}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select credit account" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    {chartOfAccounts.map((account) => (
+                                      <SelectItem key={account.id} value={account.accountCode}>
+                                        {account.accountCode} - {account.accountName}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
 
-              <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                {/* 1. Rule Name */}
-                <FormField
-                  control={form.control}
-                  name="ruleName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Rule Name *</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter rule name" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                {/* 2. Division */}
-                <FormField
-                  control={form.control}
-                  name="divisionId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Division</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value || ""}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select division (optional)" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="">None</SelectItem>
-                          {divisions.filter(div => div.status === 'active').map((division) => (
-                            <SelectItem key={division.id} value={division.id}>
-                              {division.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                {/* 3. Transaction Category */}
-                <FormField
-                  control={form.control}
-                  name="transactionCategory"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Transaction Category *</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select transaction category" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {transactionCategories.map((category) => (
-                            <SelectItem key={category} value={category}>
-                              {category}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                {/* 4. Triggering Action */}
-                <FormField
-                  control={form.control}
-                  name="triggeringAction"
-                  render={({ field }) => {
-                    const transactionCategory = form.watch('transactionCategory');
-                    let actions: { label: string; value: string }[] = [];
-                    if (transactionCategory === 'Payment') {
-                      actions = paymentTriggeringActions;
-                    } else if (transactionCategory === 'Inventory Transfer') {
-                      actions = inventoryTransferTriggeringActions;
-                    } else {
-                      actions = triggeringActions.map(a => ({ label: a, value: a }));
-                    }
-                    return (
-                      <FormItem>
-                        <FormLabel>Triggering Action *</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select triggering action" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {actions.map((action) => (
-                              <SelectItem key={action.value} value={action.value}>
-                                {action.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    );
-                  }}
-                />
-                {/* 5. Transaction Reference */}
-                <FormField
-                  control={form.control}
-                  name="transactionReference"
-                  render={({ field }) => {
-                    const transactionCategory = form.watch('transactionCategory');
-                    let fields = databaseFields;
-                    if (transactionCategory === 'Payment') {
-                      fields = paymentDatabaseFields;
-                    } else if (transactionCategory === 'Inventory Transfer') {
-                      fields = [
-                        { value: 'inventory_transfer.transfer_id', label: 'Transfer ID' },
-                      ];
-                    }
-                    return (
-                      <FormItem>
-                        <FormLabel>Transaction Reference *</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select database field" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent className="max-w-xs">
-                            {fields.map((dbField) => (
-                              <SelectItem key={dbField.value} value={dbField.value} className="text-sm">
-                                <div className="flex flex-col">
-                                  <span className="font-medium">{dbField.label}</span>
-                                  <span className="text-xs text-muted-foreground">{dbField.value}</span>
+                          <FormField
+                            control={form.control}
+                            name={`lines.${index}.amountSource`}
+                            render={({ field }) => {
+                              const transactionCategory = form.watch('transactionCategory');
+                              const options = amountSourceOptions[transactionCategory] || [];
+                              
+                              return (
+                                <FormItem>
+                                  <FormLabel>Amount Source *</FormLabel>
+                                  <Select onValueChange={field.onChange} value={field.value}>
+                                    <FormControl>
+                                      <SelectTrigger>
+                                        <SelectValue placeholder="Select amount source" />
+                                      </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                      {options.map((option) => (
+                                        <SelectItem key={option} value={option}>
+                                          {option}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                  <FormMessage />
+                                </FormItem>
+                              );
+                            }}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name={`lines.${index}.enableSubledger`}
+                            render={({ field }) => (
+                              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                                <div className="space-y-0.5">
+                                  <FormLabel>Enable Subledger</FormLabel>
                                 </div>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    );
-                  }}
-                />
-                {/* 6. Transaction Type */}
-                <FormField
-                  control={form.control}
-                  name="transactionType"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Transaction Type</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter transaction type" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                {/* 7. Status */}
-                <FormField
-                  control={form.control}
-                  name="status"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Status</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="Active">Active</SelectItem>
-                          <SelectItem value="Inactive">Inactive</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                {/* 8. Destination Division (only for Inventory Transfer) */}
-                {form.watch('transactionCategory') === 'Inventory Transfer' && (
-                  <FormField
-                    control={form.control}
-                    name="destinationDivisionId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Destination Division</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value || ""}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select destination division (optional)" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="">None</SelectItem>
-                            {divisions.filter(div => div.status === 'active').map((division) => (
-                              <SelectItem key={division.id} value={division.id}>
-                                {division.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
+                                <FormControl>
+                                  <Switch
+                                    checked={field.value}
+                                    onCheckedChange={field.onChange}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="flex gap-4">
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? 'Saving...' : mode === 'create' ? 'Create Rule' : 'Update Rule'}
+                </Button>
+                <Button type="button" variant="outline" onClick={() => navigate('/finance/accounting-rules')}>
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
