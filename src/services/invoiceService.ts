@@ -2,6 +2,17 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Invoice, InvoiceFormData, ReferenceTransactionSearchParams, ReferenceTransactionResult, InvoiceStatus, TransactionType } from "@/types/invoice";
 
 class InvoiceService {
+  async getInvoicesPendingApprovalCount(organizationId: string): Promise<number> {
+    const { count, error } = await supabase
+      .from('invoice')
+      .select('id', { count: 'exact', head: true })
+      .eq('organization_id', organizationId)
+      .eq('status', 'Awaiting Approval');
+    if (error) {
+      throw new Error(`Failed to fetch pending approval invoices count: ${error.message}`);
+    }
+    return count || 0;
+  }
   async getInvoices(organizationId: string): Promise<Invoice[]> {
     const { data, error } = await supabase
       .from('invoice')
@@ -754,3 +765,4 @@ class InvoiceService {
 }
 
 export const invoiceService = new InvoiceService();
+export const getInvoicesPendingApprovalCount = (orgId: string) => invoiceService.getInvoicesPendingApprovalCount(orgId);

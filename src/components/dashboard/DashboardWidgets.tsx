@@ -1,7 +1,9 @@
 
 import { usePermissions } from "@/hooks/usePermissions";
 import { OpenPurchaseOrdersWidget } from "./OpenPurchaseOrdersWidget";
-// import { TotalPayablesWidget } from "./TotalPayablesWidget";
+import { InvoicesPendingApprovalWidget } from "./InvoicesPendingApprovalWidget";
+import { useOrganizationId } from "@/hooks/useOrganizationId";
+import { AccountsPayableBalanceWidget } from "./AccountsPayableBalanceWidget";
 
 export const DashboardWidgets = () => {
   const { hasPermission } = usePermissions();
@@ -9,7 +11,9 @@ export const DashboardWidgets = () => {
   const canViewOpenPOWidget = hasPermission("View Open PO Widget");
   // const canViewPayablesSummaryWidget = hasPermission("View Payables Summary Widget");
 
-  const showWidgets = canViewOpenPOWidget; // removed payables widget
+  const organizationId = useOrganizationId();
+  // Show if any widget is visible
+  const showWidgets = (canViewOpenPOWidget || hasPermission("Invoice awaiting approval") || hasPermission("AP Balance")) && !!organizationId;
 
   if (!showWidgets) {
     return null;
@@ -19,7 +23,12 @@ export const DashboardWidgets = () => {
     <div className="mb-8">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {canViewOpenPOWidget && <OpenPurchaseOrdersWidget />}
-        {/* Removed TotalPayablesWidget */}
+        {hasPermission("Invoice awaiting approval") && organizationId && (
+          <InvoicesPendingApprovalWidget organizationId={organizationId} />
+        )}
+        {hasPermission("AP Balance") && organizationId && (
+          <AccountsPayableBalanceWidget />
+        )}
       </div>
     </div>
   );

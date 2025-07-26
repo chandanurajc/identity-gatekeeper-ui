@@ -38,9 +38,6 @@ export const OpenPurchaseOrdersWidget = () => {
         ) : (
           <div className="text-2xl font-bold">{count}</div>
         )}
-        <CardDescription className="text-xs text-muted-foreground mt-1">
-          Count of POs in 'Created' status
-        </CardDescription>
       </CardContent>
     </Card>
   );
