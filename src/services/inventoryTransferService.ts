@@ -308,6 +308,7 @@ async function confirmInventoryTransfer(transferId: string, confirmedBy: string)
       // Prepare journal form data (omit transactionType since it's not compatible)
       const journalData = {
         journalDate: new Date().toISOString().slice(0, 10),
+        transactionType: 'Inventory transfer',
         transactionReference: transfer.transfer_number,
         journalLines,
       };

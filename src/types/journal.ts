@@ -1,5 +1,5 @@
 export type JournalStatus = 'Draft' | 'Posted' | 'Reversed';
-export type RuleTransactionType = 'Invoice' | 'PO' | 'Payment';
+export type RuleTransactionType = 'Invoice' | 'PO' | 'Payment' | 'Inventory transfer';
 
 export interface JournalHeader {
   id: string;
