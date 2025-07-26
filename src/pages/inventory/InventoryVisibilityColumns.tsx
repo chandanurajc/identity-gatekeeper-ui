@@ -71,6 +71,19 @@ export const columns: ColumnDef<InventoryStockSummaryItem>[] = [
     },
   },
   {
+    accessorKey: "in_process_quantity",
+    header: ({ column }) => (
+      <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc") }>
+        In Process Quantity
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
+    cell: ({ row }) => {
+      const quantity = parseFloat(row.getValue("in_process_quantity") || "0");
+      return <div className="text-right">{isNaN(quantity) ? "0" : quantity.toLocaleString()}</div>;
+    },
+  },
+  {
     accessorKey: "uom",
     header: "UOM",
   },

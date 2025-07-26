@@ -2532,6 +2532,7 @@ export type Database = {
           division_id: string
           division_name: string
           quantity_available: number
+          in_process_quantity: number
           uom: string
           last_updated_on: string
           item_group_name: string
