@@ -60,13 +60,18 @@ export default function InventoryTransferList() {
   const organizationId = getCurrentOrganizationId();
   const { canCreateInventoryTransfer } = useInventoryTransferPermissions();
 
+  console.log("InventoryTransferList rendering", { organizationId, canCreateInventoryTransfer });
+
   const { data: transfers, isLoading, error } = useQuery({
     queryKey: ["inventory-transfers", organizationId],
     queryFn: () => inventoryTransferService.getInventoryTransfers(organizationId),
     enabled: !!organizationId,
   });
 
+  console.log("Query state:", { transfers, isLoading, error });
+
   if (isLoading) {
+    console.log("Showing loading state");
     return (
       <div className="space-y-4">
         <div className="flex justify-between items-center">
@@ -87,6 +92,7 @@ export default function InventoryTransferList() {
   }
 
   if (error) {
+    console.log("Showing error state:", error);
     return (
       <Card>
         <CardContent className="pt-6">
@@ -98,6 +104,7 @@ export default function InventoryTransferList() {
     );
   }
 
+  console.log("Showing main content");
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
