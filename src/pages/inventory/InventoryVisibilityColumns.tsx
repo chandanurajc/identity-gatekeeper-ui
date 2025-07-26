@@ -58,17 +58,28 @@ export const columns: ColumnDef<InventoryStockSummaryItem>[] = [
     header: "Division Name",
   },
   {
-    accessorKey: "quantity_available",
+    accessorKey: "available_quantity",
     header: ({ column }) => (
-      <div className="text-right w-full">
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-          Quantity Available
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      </div>
+      <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc") }>
+        Available Quantity
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
     ),
     cell: ({ row }) => {
-      const quantity = parseFloat(row.getValue("quantity_available"));
+      const quantity = parseFloat(row.getValue("available_quantity"));
+      return <div className="text-right">{quantity.toLocaleString()}</div>;
+    },
+  },
+  {
+    accessorKey: "in_process_quantity",
+    header: ({ column }) => (
+      <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc") }>
+        In Process Quantity
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
+    cell: ({ row }) => {
+      const quantity = parseFloat(row.getValue("in_process_quantity"));
       return <div className="text-right">{quantity.toLocaleString()}</div>;
     },
   },

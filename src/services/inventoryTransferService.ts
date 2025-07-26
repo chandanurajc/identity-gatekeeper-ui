@@ -138,21 +138,38 @@ async function createInventoryTransfer(transferData: CreateInventoryTransferData
     throw new Error(`Failed to create transfer lines: ${linesError.message}`);
   }
 
+
   // Create negative inventory stock entries for origin division
   const stockEntries = transferData.transfer_lines.map(line => ({
     organization_id: transferData.organization_id,
     item_id: line.item_id,
     division_id: transferData.origin_division_id,
-    quantity: -line.quantity_to_transfer,
+    available_quantity: -line.quantity_to_transfer,
+    in_process_quantity: 0,
     uom: 'Unit', // Default UOM, should be fetched from item
     transaction_type: 'TRANSFER',
     reference_number: transferNumber,
     created_by: createdByUsername
   }));
 
+  // Create in-process inventory stock entries for destination division
+  const inProcessEntries = transferData.transfer_lines.map(line => ({
+    organization_id: transferData.organization_id,
+    item_id: line.item_id,
+    division_id: transferData.destination_division_id,
+    available_quantity: 0,
+    in_process_quantity: line.quantity_to_transfer,
+    uom: 'Unit',
+    transaction_type: 'TRANSFER',
+    reference_number: transferNumber,
+    created_by: createdByUsername
+  }));
+
+  const allStockEntries = [...stockEntries, ...inProcessEntries];
+
   const { error: stockError } = await supabase
     .from("inventory_stock")
-    .insert(stockEntries);
+    .insert(allStockEntries);
 
   if (stockError) {
     console.error("Error creating inventory stock entries:", stockError);
@@ -246,25 +263,60 @@ async function confirmInventoryTransfer(transferId: string, confirmedBy: string)
       confirmedByUsername = userProfile.username;
     }
   }
-  // Create positive inventory stock entries for destination division
-  const stockEntries = transfer.transfer_lines?.map(line => ({
-    organization_id: transfer.organization_id,
-    item_id: line.item_id,
-    division_id: transfer.destination_division_id,
-    quantity: line.quantity_to_transfer,
-    uom: 'Unit', // Default UOM, should be fetched from item
-    transaction_type: 'TRANSFER',
-    reference_number: transfer.transfer_number,
-    created_by: confirmedByUsername
-  })) || [];
-
-  const { error: stockError } = await supabase
-    .from("inventory_stock")
-    .insert(stockEntries);
-
-  if (stockError) {
-    console.error("Error creating destination inventory stock entries:", stockError);
-    throw new Error(`Failed to create destination inventory stock entries: ${stockError.message}`);
+  // For each transfer line, update the in-process entry for destination division:
+  for (const line of transfer.transfer_lines || []) {
+    // Find the in-process entry for this item/division/transfer
+    const { data: stockRows, error: fetchError } = await supabase
+      .from("inventory_stock")
+      .select("id, available_quantity, in_process_quantity")
+      .eq("organization_id", transfer.organization_id)
+      .eq("item_id", line.item_id)
+      .eq("division_id", transfer.destination_division_id)
+      .eq("reference_number", transfer.transfer_number)
+      .eq("transaction_type", "TRANSFER");
+    if (fetchError) {
+      console.error("Error fetching in-process stock entry:", fetchError);
+      throw new Error(`Failed to fetch in-process stock entry: ${fetchError.message}`);
+    }
+    if (stockRows && stockRows.length > 0) {
+      const stock = stockRows[0];
+      const newAvailable = (stock.available_quantity || 0) + line.quantity_to_transfer;
+      const newInProcess = (stock.in_process_quantity || 0) - line.quantity_to_transfer;
+      const { error: updateError2 } = await supabase
+        .from("inventory_stock")
+        .update({
+          available_quantity: newAvailable,
+          in_process_quantity: newInProcess < 0 ? 0 : newInProcess,
+          updated_by: confirmedByUsername,
+          updated_on: new Date().toISOString(),
+        })
+        .eq("id", stock.id);
+      if (updateError2) {
+        console.error("Error updating in-process stock entry:", updateError2);
+        throw new Error(`Failed to update in-process stock entry: ${updateError2.message}`);
+      }
+    } else {
+      // If not found, fallback: create a new available entry (should not happen in normal flow)
+      const { error: insertError } = await supabase
+        .from("inventory_stock")
+        .insert({
+          organization_id: transfer.organization_id,
+          item_id: line.item_id,
+          division_id: transfer.destination_division_id,
+          available_quantity: line.quantity_to_transfer,
+          in_process_quantity: 0,
+          uom: 'Unit',
+          transaction_type: 'TRANSFER',
+          reference_number: transfer.transfer_number,
+          created_by: confirmedByUsername,
+          updated_by: confirmedByUsername,
+          updated_on: new Date().toISOString(),
+        });
+      if (insertError) {
+        console.error("Error inserting fallback available stock entry:", insertError);
+        throw new Error(`Failed to insert fallback available stock entry: ${insertError.message}`);
+      }
+    }
   }
 }
 

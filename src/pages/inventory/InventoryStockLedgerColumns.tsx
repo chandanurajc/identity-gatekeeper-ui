@@ -56,21 +56,28 @@ export const columns: ColumnDef<InventoryStockLedgerItem>[] = [
     header: "Transaction Type",
   },
   {
-    accessorKey: "quantity",
-    header: () => <div className="text-right">Quantity</div>,
+    accessorKey: "reference_number",
+    header: "Reference",
+  },
+  {
+    accessorKey: "available_quantity",
+    header: () => <div className="text-right">Available Quantity</div>,
     cell: ({ row }) => {
-        const quantity = parseFloat(row.getValue("quantity"));
-        // Show the actual sign of the quantity (negative for origin division transfer, etc.)
+        const quantity = parseFloat(row.getValue("available_quantity"));
+        return <div className="text-right">{quantity.toLocaleString()}</div>;
+    }
+  },
+  {
+    accessorKey: "in_process_quantity",
+    header: () => <div className="text-right">In Process Quantity</div>,
+    cell: ({ row }) => {
+        const quantity = parseFloat(row.getValue("in_process_quantity"));
         return <div className="text-right">{quantity.toLocaleString()}</div>;
     }
   },
   {
     accessorKey: "uom",
     header: "UOM",
-  },
-  {
-    accessorKey: "reference_number",
-    header: "Reference",
   },
   {
     accessorKey: "created_by",
