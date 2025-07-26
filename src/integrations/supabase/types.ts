@@ -56,6 +56,7 @@ export type Database = {
         Row: {
           created_by: string
           created_on: string
+          destination_division_id: string | null
           division_id: string | null
           id: string
           organization_id: string
@@ -71,6 +72,7 @@ export type Database = {
         Insert: {
           created_by: string
           created_on?: string
+          destination_division_id?: string | null
           division_id?: string | null
           id?: string
           organization_id: string
@@ -86,6 +88,7 @@ export type Database = {
         Update: {
           created_by?: string
           created_on?: string
+          destination_division_id?: string | null
           division_id?: string | null
           id?: string
           organization_id?: string
@@ -99,6 +102,13 @@ export type Database = {
           updated_on?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "accounting_rules_destination_division_id_fkey"
+            columns: ["destination_division_id"]
+            isOneToOne: false
+            referencedRelation: "divisions"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "accounting_rules_division_id_fkey"
             columns: ["division_id"]
@@ -453,6 +463,7 @@ export type Database = {
           division_id: string
           id: string
           in_process_quantity: number
+          inventory_cost: number | null
           item_id: string
           organization_id: string
           reference_number: string | null
@@ -468,6 +479,7 @@ export type Database = {
           division_id: string
           id?: string
           in_process_quantity?: number
+          inventory_cost?: number | null
           item_id: string
           organization_id: string
           reference_number?: string | null
@@ -483,6 +495,7 @@ export type Database = {
           division_id?: string
           id?: string
           in_process_quantity?: number
+          inventory_cost?: number | null
           item_id?: string
           organization_id?: string
           reference_number?: string | null
@@ -519,6 +532,7 @@ export type Database = {
         Row: {
           created_on: string
           id: string
+          inventory_cost: number | null
           item_id: string
           line_number: number
           quantity_to_transfer: number
@@ -528,6 +542,7 @@ export type Database = {
         Insert: {
           created_on?: string
           id?: string
+          inventory_cost?: number | null
           item_id: string
           line_number: number
           quantity_to_transfer: number
@@ -537,6 +552,7 @@ export type Database = {
         Update: {
           created_on?: string
           id?: string
+          inventory_cost?: number | null
           item_id?: string
           line_number?: number
           quantity_to_transfer?: number
