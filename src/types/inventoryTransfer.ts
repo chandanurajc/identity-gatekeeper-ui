@@ -29,6 +29,7 @@ export interface InventoryTransferLine {
   item_description?: string;
   origin_quantity?: number;
   destination_quantity?: number;
+  inventory_cost?: number;
 }
 
 export interface InventoryTransferFormData {
@@ -42,6 +43,7 @@ export interface InventoryTransferFormData {
 export interface InventoryTransferLineFormData {
   item_id: string;
   quantity_to_transfer: number;
+  inventory_cost?: number;
 }
 
 export interface CreateInventoryTransferData {
@@ -55,5 +57,6 @@ export interface CreateInventoryTransferData {
     line_number: number;
     item_id: string;
     quantity_to_transfer: number;
+    inventory_cost?: number;
   }[];
 }

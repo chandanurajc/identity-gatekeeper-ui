@@ -80,6 +80,14 @@ export const columns: ColumnDef<InventoryStockLedgerItem>[] = [
     header: "UOM",
   },
   {
+    accessorKey: "inventory_cost",
+    header: () => <div className="text-right">Inventory Cost</div>,
+    cell: ({ row }) => {
+      const cost = row.getValue("inventory_cost");
+      return <div className="text-right">{cost ? Number(cost).toLocaleString(undefined, { style: 'currency', currency: 'INR' }) : '-'}</div>;
+    }
+  },
+  {
     accessorKey: "created_by",
     header: "User",
   },

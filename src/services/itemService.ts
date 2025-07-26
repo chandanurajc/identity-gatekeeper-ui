@@ -24,9 +24,10 @@ export const itemService = {
         return [];
       }
 
+      // Fetch items with costs as a nested select
       const { data, error } = await supabase
         .from('items')
-        .select('*')
+        .select(`*, item_costs: item_costs(*)`)
         .eq('organization_id', profile.organization_id)
         .order('created_on', { ascending: false });
 
@@ -35,13 +36,12 @@ export const itemService = {
         throw new Error(`Failed to fetch items: ${error.message}`);
       }
 
-      console.log("Raw items data from Supabase:", data);
-      
       if (!data) {
         console.log("No items data returned");
         return [];
       }
 
+      // Map costs to ItemCost[]
       const transformedData = data.map(item => ({
         id: item.id,
         description: item.description,
@@ -61,11 +61,21 @@ export const itemService = {
         createdOn: new Date(item.created_on),
         updatedBy: item.updated_by,
         updatedOn: item.updated_on ? new Date(item.updated_on) : undefined,
+        costs: (item.item_costs || []).map((cost: any) => ({
+          id: cost.id,
+          itemId: cost.item_id,
+          supplierId: cost.supplier_id || "",
+          supplierName: cost.supplier_id ? undefined : 'Default Cost',
+          cost: cost.price, // Using 'price' column from DB
+          organizationId: cost.organization_id,
+          createdBy: cost.created_by,
+          createdOn: cost.created_on ? new Date(cost.created_on) : undefined,
+          updatedBy: cost.updated_by,
+          updatedOn: cost.updated_on ? new Date(cost.updated_on) : undefined,
+        })),
       }));
 
-      console.log("Transformed items data:", transformedData);
       return transformedData;
-      
     } catch (error) {
       console.error("Service error fetching items:", error);
       throw error;

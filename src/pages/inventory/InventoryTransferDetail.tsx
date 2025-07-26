@@ -165,6 +165,7 @@ export default function InventoryTransferDetail() {
                 <TableHead>Line #</TableHead>
                 <TableHead>Item</TableHead>
                 <TableHead className="text-right">Quantity Transferred</TableHead>
+                <TableHead className="text-right">Inventory Cost</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -179,6 +180,9 @@ export default function InventoryTransferDetail() {
                   </TableCell>
                   <TableCell className="text-right font-medium">
                     {line.quantity_to_transfer.toLocaleString()}
+                  </TableCell>
+                  <TableCell className="text-right font-medium">
+                    {typeof line.inventory_cost === 'number' ? line.inventory_cost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}
                   </TableCell>
                 </TableRow>
               ))}

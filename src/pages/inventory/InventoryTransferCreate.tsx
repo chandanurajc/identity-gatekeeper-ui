@@ -119,11 +119,17 @@ export default function InventoryTransferCreate() {
       transfer_date: data.transfer_date,
       tracking_number: data.tracking_number,
       created_by: user.id,
-      transfer_lines: data.transfer_lines.map((line, index) => ({
-        line_number: index + 1,
-        item_id: line.item_id,
-        quantity_to_transfer: line.quantity_to_transfer,
-      })),
+          transfer_lines: data.transfer_lines.map((line: any, idx: number) => {
+            const item = items?.find(item => item.id === line.item_id);
+            const unitCost = item?.costs?.[0]?.cost || 0;
+            const inventoryCost = unitCost * (line.quantity_to_transfer || 0);
+            return {
+              line_number: idx + 1,
+              item_id: line.item_id,
+              quantity_to_transfer: line.quantity_to_transfer,
+              inventory_cost: inventoryCost,
+            };
+          }),
     };
 
     createTransferMutation.mutate(transferData);
@@ -245,59 +251,64 @@ export default function InventoryTransferCreate() {
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="transfer_date"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Transfer Date</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
+                <div className="flex flex-row gap-4 w-full">
+                  <div className="flex-1 min-w-0">
+                    <FormField
+                      control={form.control}
+                      name="transfer_date"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel>Transfer Date</FormLabel>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant={"outline"}
+                                  className={cn(
+                                    "w-full pl-3 text-left font-normal",
+                                    !field.value && "text-muted-foreground"
+                                  )}
+                                >
+                                  {field.value ? (
+                                    format(new Date(field.value), "PPP")
+                                  ) : (
+                                    <span>Pick a date</span>
+                                  )}
+                                  <Calendar className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <CalendarComponent
+                                mode="single"
+                                selected={field.value ? new Date(field.value) : undefined}
+                                onSelect={(date) => field.onChange(date ? format(date, "yyyy-MM-dd") : "")}
+                                initialFocus
+                                className="p-3 pointer-events-auto"
+                              />
+                            </PopoverContent>
+                          </Popover>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <FormField
+                      control={form.control}
+                      name="tracking_number"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel>Tracking Number</FormLabel>
                           <FormControl>
-                            <Button
-                              variant={"outline"}
-                              className={cn(
-                                "w-full pl-3 text-left font-normal",
-                                !field.value && "text-muted-foreground"
-                              )}
-                            >
-                              {field.value ? (
-                                format(new Date(field.value), "PPP")
-                              ) : (
-                                <span>Pick a date</span>
-                              )}
-                              <Calendar className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
+                            <Input placeholder="Enter tracking number" {...field} />
                           </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <CalendarComponent
-                            mode="single"
-                            selected={field.value ? new Date(field.value) : undefined}
-                            onSelect={(date) => field.onChange(date ? format(date, "yyyy-MM-dd") : "")}
-                            initialFocus
-                            className="p-3 pointer-events-auto"
-                          />
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="tracking_number"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Tracking Number</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter tracking number" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -313,111 +324,141 @@ export default function InventoryTransferCreate() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {fields.map((field, index) => {
-                  const lineItemId = form.watch(`transfer_lines.${index}.item_id`);
-                  const originQty = getQuantityInDivision(lineItemId, originDivisionId);
-                  const destinationQty = getQuantityInDivision(lineItemId, destinationDivisionId);
-                  const currentItem = items?.find(item => item.id === lineItemId);
-
-                  return (
-                    <div key={field.id} className="grid grid-cols-12 gap-4 items-end p-4 border rounded-lg">
-                      <div className="col-span-1">
-                        <Label className="text-sm font-medium">{index + 1}</Label>
-                      </div>
-
-                      <div className="col-span-3">
-                        <FormField
-                          control={form.control}
-                          name={`transfer_lines.${index}.item_id`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Item</FormLabel>
-                              <Select
-                                onValueChange={(value) => {
-                                  field.onChange(value);
-                                  handleItemChange(index, value);
-                                }}
-                                defaultValue={field.value}
+              <div className="overflow-x-auto">
+                <table className="min-w-full border text-xs">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-2 py-2 font-medium text-center">#</th>
+                      <th className="px-2 py-2 font-medium text-center">Item *</th>
+                      <th className="px-2 py-2 font-medium text-center">Desc.</th>
+                      <th className="px-2 py-2 font-medium text-center">Origin Qty</th>
+                      <th className="px-2 py-2 font-medium text-center">Transfer Qty</th>
+                      <th className="px-2 py-2 font-medium text-center">Dest. Qty</th>
+                      <th className="px-2 py-2 font-medium text-center">Inventory Cost</th>
+                      <th className="px-2 py-2 font-medium text-center"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {fields.map((field, index) => {
+                      const lineItemId = form.watch(`transfer_lines.${index}.item_id`);
+                      const originQty = getQuantityInDivision(lineItemId, originDivisionId);
+                      const destinationQty = getQuantityInDivision(lineItemId, destinationDivisionId);
+                      const currentItem = items?.find(item => item.id === lineItemId);
+                      const unitCost = currentItem?.costs?.[0]?.cost || 0;
+                      const transferQty = form.watch(`transfer_lines.${index}.quantity_to_transfer`);
+                      const inventoryCost = unitCost * transferQty;
+                      // Use a search state array to avoid useState in a loop
+                      const [searchTerms, setSearchTerms] = useState<string[]>(() => fields.map(() => ""));
+                      const searchTerm = searchTerms[index] || "";
+                      const handleSearchChange = (val: string) => {
+                        setSearchTerms(prev => {
+                          const copy = [...prev];
+                          copy[index] = val;
+                          return copy;
+                        });
+                      };
+                      const filteredItems = availableItems
+                        .filter(item =>
+                          item.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          item.description.toLowerCase().includes(searchTerm.toLowerCase())
+                        )
+                        .slice(0, 10);
+                      return (
+                        <tr key={field.id} className="border-b">
+                          <td className="px-2 py-2 text-center align-middle">{index + 1}</td>
+                          <td className="px-2 py-2 align-middle">
+                            <Input
+                              placeholder="Search by ID or description"
+                              value={searchTerm}
+                              onChange={e => handleSearchChange(e.target.value)}
+                              className="h-8 text-xs text-center mb-1"
+                            />
+                            <FormField
+                              control={form.control}
+                              name={`transfer_lines.${index}.item_id`}
+                              render={({ field }) => (
+                                <FormItem className="mb-0">
+                                  <Select
+                                    onValueChange={(value) => {
+                                      field.onChange(value);
+                                      handleItemChange(index, value);
+                                    }}
+                                    defaultValue={field.value}
+                                  >
+                                    <FormControl>
+                                      <SelectTrigger className="h-8 text-xs">
+                                        <SelectValue placeholder="Select Item" />
+                                      </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                      {filteredItems.map((item) => (
+                                        <SelectItem key={item.id} value={item.id}>
+                                          <div className="flex flex-col items-start">
+                                            <span className="font-medium">{item.id}</span>
+                                            <span className="text-xs text-muted-foreground">{item.description}</span>
+                                          </div>
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </td>
+                          <td className="px-2 py-2 align-middle">
+                            <Input
+                              value={currentItem?.description || ""}
+                              readOnly
+                              placeholder="Item description"
+                              className="h-8 text-xs text-center bg-gray-50"
+                            />
+                          </td>
+                          <td className="px-2 py-2 text-center align-middle">{originQty.toLocaleString()}</td>
+                          <td className="px-2 py-2 align-middle">
+                            <FormField
+                              control={form.control}
+                              name={`transfer_lines.${index}.quantity_to_transfer`}
+                              render={({ field }) => (
+                                <FormItem className="mb-0">
+                                  <FormControl>
+                                    <Input
+                                      type="number"
+                                      step="0.01"
+                                      min="0"
+                                      max={originQty}
+                                      disabled={originQty === 0}
+                                      placeholder="0"
+                                      className="h-8 text-xs text-center"
+                                      {...field}
+                                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </td>
+                          <td className="px-2 py-2 text-center align-middle">{destinationQty.toLocaleString()}</td>
+                          <td className="px-2 py-2 text-center align-middle">{isNaN(inventoryCost) ? '-' : inventoryCost.toLocaleString(undefined, { style: 'currency', currency: 'INR' })}</td>
+                          <td className="px-2 py-2 text-center align-middle">
+                            {fields.length > 1 && (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                className="h-7 w-7"
+                                onClick={() => removeTransferLine(index)}
                               >
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select item" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  {lineItemId && currentItem && (
-                                    <SelectItem value={lineItemId}>
-                                      {currentItem.description}
-                                    </SelectItem>
-                                  )}
-                                  {availableItems.map((item) => (
-                                    <SelectItem key={item.id} value={item.id}>
-                                      {item.description}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-
-                      <div className="col-span-2">
-                        <Label className="text-sm font-medium">Origin Qty</Label>
-                        <div className="text-sm text-muted-foreground mt-1">
-                          {originQty.toLocaleString()}
-                        </div>
-                      </div>
-
-                      <div className="col-span-2">
-                        <FormField
-                          control={form.control}
-                          name={`transfer_lines.${index}.quantity_to_transfer`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Transfer Qty</FormLabel>
-                              <FormControl>
-                                <Input
-                                  type="number"
-                                  step="0.01"
-                                  min="0"
-                                  max={originQty}
-                                  disabled={originQty === 0}
-                                  placeholder="0"
-                                  {...field}
-                                  onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-
-                      <div className="col-span-2">
-                        <Label className="text-sm font-medium">Destination Qty</Label>
-                        <div className="text-sm text-muted-foreground mt-1">
-                          {destinationQty.toLocaleString()}
-                        </div>
-                      </div>
-
-                      <div className="col-span-1">
-                        {fields.length > 1 && (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => removeTransferLine(index)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             </CardContent>
           </Card>

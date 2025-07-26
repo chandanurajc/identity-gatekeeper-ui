@@ -95,7 +95,10 @@ export const receivePurchaseOrder = async (
       throw new Error(`Failed to create receive transaction: ${receiveTransactionError.message}`);
     }
 
-    // Update inventory stock
+    // Calculate inventory cost (receivedQuantity * unitPrice)
+    const inventoryCost = receivedLine.receivedQuantity * (poLine.unit_price || 0);
+
+    // Update inventory stock with inventory_cost
     const { error: inventoryError } = await supabase
       .from('inventory_stock')
       .insert({
@@ -107,6 +110,7 @@ export const receivePurchaseOrder = async (
         transaction_type: 'PO_RECEIVE',
         reference_number: currentPO.po_number,
         created_by: receivedByName,
+        inventory_cost: inventoryCost,
       });
 
     if (inventoryError) {

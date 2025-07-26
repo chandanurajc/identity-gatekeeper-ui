@@ -126,7 +126,8 @@ async function createInventoryTransfer(transferData: CreateInventoryTransferData
     transfer_id: transfer.id,
     line_number: line.line_number,
     item_id: line.item_id,
-    quantity_to_transfer: line.quantity_to_transfer
+    quantity_to_transfer: line.quantity_to_transfer,
+    inventory_cost: line.inventory_cost ?? null
   }));
 
   const { error: linesError } = await supabase
@@ -149,7 +150,8 @@ async function createInventoryTransfer(transferData: CreateInventoryTransferData
     uom: 'Unit', // Default UOM, should be fetched from item
     transaction_type: 'TRANSFER',
     reference_number: transferNumber,
-    created_by: createdByUsername
+    created_by: createdByUsername,
+    inventory_cost: line.inventory_cost ?? null
   }));
 
   // Create in-process inventory stock entries for destination division
@@ -162,7 +164,8 @@ async function createInventoryTransfer(transferData: CreateInventoryTransferData
     uom: 'Unit',
     transaction_type: 'TRANSFER',
     reference_number: transferNumber,
-    created_by: createdByUsername
+    created_by: createdByUsername,
+    inventory_cost: line.inventory_cost ?? null
   }));
 
   const allStockEntries = [...stockEntries, ...inProcessEntries];
