@@ -255,7 +255,7 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
                 <FormField
                   control={form.control}
                   name="ruleName"
@@ -269,61 +269,74 @@ export default function AccountingRulesForm({ mode }: AccountingRulesFormProps) 
                     </FormItem>
                   )}
                 />
-                {/* Division (for all except Inventory Transfer) */}
-                {form.watch('transactionCategory') !== 'Inventory Transfer' && (
-                  <FormField
-                    control={form.control}
-                    name="divisionId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Division</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value || ""}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select division (optional)" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="">None</SelectItem>
-                            {divisions.filter(div => div.status === 'active').map((division) => (
-                              <SelectItem key={division.id} value={division.id}>
-                                {division.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
-                {/* Destination Division for Inventory Transfer */}
-                {form.watch('transactionCategory') === 'Inventory Transfer' && (
-                  <FormField
-                    control={form.control}
-                    name="destinationDivisionId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Destination Division *</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value || ""}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select destination division" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {divisions.filter(div => div.status === 'active').map((division) => (
-                              <SelectItem key={division.id} value={division.id}>
-                                {division.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
+                {/* Division (always visible) */}
+                <FormField
+                  control={form.control}
+                  name="divisionId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Division</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value || ""}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select division (optional)" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="">None</SelectItem>
+                          {divisions.filter(div => div.status === 'active').map((division) => (
+                            <SelectItem key={division.id} value={division.id}>
+                              {division.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Transaction Type (existing) */}
+                <FormField
+                  control={form.control}
+                  name="transactionType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Transaction Type</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter transaction type" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Destination Division (always visible) */}
+                <FormField
+                  control={form.control}
+                  name="destinationDivisionId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Destination Division</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value || ""}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select destination division (optional)" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="">None</SelectItem>
+                          {divisions.filter(div => div.status === 'active').map((division) => (
+                            <SelectItem key={division.id} value={division.id}>
+                              {division.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
                 <FormField
                   control={form.control}
