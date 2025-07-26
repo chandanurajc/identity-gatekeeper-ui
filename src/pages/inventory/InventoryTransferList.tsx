@@ -15,7 +15,7 @@ import { InventoryTransfer } from "@/types/inventoryTransfer";
 import { Table } from "@tanstack/react-table";
 import PermissionButton from "@/components/PermissionButton";
 
-function TransferListToolbar<TData>({ table }: { table: Table<TData> }) {
+function TransferListToolbar(table: Table<InventoryTransfer>) {
   return (
     <div className="flex items-center py-4 gap-4">
       <Input
@@ -119,8 +119,8 @@ export default function InventoryTransferList() {
           <DataTable
             columns={columns}
             data={transfers || []}
+            toolbar={TransferListToolbar}
           />
-          <TransferListToolbar table={undefined} />
         </CardContent>
       </Card>
     </div>
