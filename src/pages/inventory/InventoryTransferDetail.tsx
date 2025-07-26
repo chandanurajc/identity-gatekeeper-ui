@@ -1,3 +1,4 @@
+import React from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -15,6 +16,7 @@ import { inventoryTransferService } from "@/services/inventoryTransferService";
 import PermissionButton from "@/components/PermissionButton";
 
 export default function InventoryTransferDetail() {
+  const [isPostingJournal, setIsPostingJournal] = React.useState(false);
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -39,12 +41,28 @@ export default function InventoryTransferDetail() {
     },
   });
 
+  const handleManualJournal = async () => {
+    setIsPostingJournal(true);
+    try {
+      await inventoryTransferService.createOrPostJournalForTransfer(id!, user?.id || "");
+      toast.success("Journal entry created/posted successfully.");
+      queryClient.invalidateQueries({ queryKey: ["inventory-transfer", id] });
+    } catch (err) {
+      toast.error("Failed to create/post journal: " + (err instanceof Error ? err.message : String(err)));
+    } finally {
+      setIsPostingJournal(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-6">
         <div className="flex items-center space-x-4">
           <Skeleton className="h-10 w-10" />
           <Skeleton className="h-8 w-64" />
+          <Button variant="outline" onClick={handleManualJournal} disabled={isPostingJournal}>
+            {isPostingJournal ? "Posting Journal..." : "Post Journal Entry"}
+          </Button>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Skeleton className="h-64" />
@@ -72,6 +90,21 @@ export default function InventoryTransferDetail() {
   };
 
   return (
+    const [isPostingJournal, setIsPostingJournal] = React.useState(false);
+    const handleManualJournal = async () => {
+      setIsPostingJournal(true);
+      try {
+        // Use the same logic as confirmInventoryTransfer, but only for journal
+        await inventoryTransferService.createOrPostJournalForTransfer(id!, user?.id || "");
+        toast.success("Journal entry created/posted successfully.");
+        queryClient.invalidateQueries({ queryKey: ["inventory-transfer", id] });
+      } catch (err: any) {
+        toast.error("Failed to create/post journal: " + (err?.message || err));
+      } finally {
+        setIsPostingJournal(false);
+      }
+    };
+
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
@@ -89,6 +122,9 @@ export default function InventoryTransferDetail() {
         </div>
 
         <div className="flex space-x-2">
+          <Button variant="outline" onClick={handleManualJournal} disabled={isPostingJournal}>
+            {isPostingJournal ? "Posting Journal..." : "Post Journal Entry"}
+          </Button>
           {transfer.status === "Transfer initiated" && canEditInventoryTransfer && (
             <Button variant="outline" onClick={() => navigate(`/inventory/transfer/${id}/edit`)}>
               Edit Transfer

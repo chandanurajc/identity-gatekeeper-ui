@@ -1,3 +1,59 @@
+// Manually trigger journal creation/posting for a transfer
+async function createOrPostJournalForTransfer(transferId: string, confirmedBy: string): Promise<void> {
+  // Get transfer details
+  const transfer = await getInventoryTransfer(transferId);
+  // Use the same journal logic as in confirmInventoryTransfer
+  try {
+    const { accountingRulesService } = await import("@/services/accountingRulesService");
+    const { journalService } = await import("@/services/journalService");
+    const rules = await accountingRulesService.getAccountingRules(transfer.organization_id);
+    const matchingRule = rules.find(
+      (rule) =>
+        rule.transactionCategory === 'Inventory Transfer' &&
+        rule.triggeringAction === 'Transfer confirmed' &&
+        rule.status === 'Active' &&
+        rule.divisionId === transfer.origin_division_id &&
+        rule.destinationDivisionId === transfer.destination_division_id
+    );
+    if (matchingRule && matchingRule.lines && matchingRule.lines.length > 0) {
+      const journalLines = matchingRule.lines.map((line) => {
+        let amount = 0;
+        if (line.amountSource === 'Item total price') {
+          amount = (transfer.transfer_lines || []).reduce(
+            (sum, l) => sum + (l.inventory_cost || 0) * (l.quantity_to_transfer || 0),
+            0
+          );
+        } else if (line.amountSource === 'Total transfer value') {
+          amount = (transfer.transfer_lines || []).reduce(
+            (sum, l) => sum + (l.inventory_cost || 0),
+            0
+          );
+        }
+        return {
+          lineNumber: line.lineNumber,
+          accountCode: line.debitAccountCode || line.creditAccountCode || '',
+          debitAmount: line.debitAccountCode ? amount : undefined,
+          creditAmount: line.creditAccountCode ? amount : undefined,
+          narration: `Inventory transfer journal for transfer #${transfer.transfer_number}`,
+        };
+      });
+      const journalData = {
+        journalDate: new Date().toISOString().slice(0, 10),
+        transactionType: 'Inventory transfer',
+        transactionReference: transfer.transfer_number,
+        journalLines,
+      };
+      const journal = await journalService.createJournal(
+        journalData,
+        transfer.organization_id,
+        confirmedBy
+      );
+      await journalService.postJournal(journal.id, transfer.organization_id, confirmedBy);
+    }
+  } catch (err) {
+    throw err;
+  }
+}
 import { supabase } from "@/integrations/supabase/client";
 import { InventoryTransfer, InventoryTransferLine, CreateInventoryTransferData } from "@/types/inventoryTransfer";
 
@@ -432,4 +488,5 @@ export const inventoryTransferService = {
   createInventoryTransfer,
   updateInventoryTransfer,
   confirmInventoryTransfer,
+  createOrPostJournalForTransfer,
 };
