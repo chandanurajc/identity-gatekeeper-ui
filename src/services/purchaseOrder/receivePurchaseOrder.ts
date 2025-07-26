@@ -103,7 +103,7 @@ export const receivePurchaseOrder = async (
         division_id: currentPO.division_id,
         item_id: poLine.item_id,
         uom: poLine.uom,
-        quantity: receivedLine.receivedQuantity,
+        available_quantity: receivedLine.receivedQuantity,
         transaction_type: 'PO_RECEIVE',
         reference_number: currentPO.po_number,
         created_by: receivedByName,

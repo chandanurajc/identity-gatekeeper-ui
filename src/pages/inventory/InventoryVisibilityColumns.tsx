@@ -58,7 +58,7 @@ export const columns: ColumnDef<InventoryStockSummaryItem>[] = [
     header: "Division Name",
   },
   {
-    accessorKey: "available_quantity",
+    accessorKey: "quantity_available",
     header: ({ column }) => (
       <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc") }>
         Available Quantity
@@ -66,21 +66,8 @@ export const columns: ColumnDef<InventoryStockSummaryItem>[] = [
       </Button>
     ),
     cell: ({ row }) => {
-      const quantity = parseFloat(row.getValue("available_quantity"));
-      return <div className="text-right">{quantity.toLocaleString()}</div>;
-    },
-  },
-  {
-    accessorKey: "in_process_quantity",
-    header: ({ column }) => (
-      <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc") }>
-        In Process Quantity
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
-    cell: ({ row }) => {
-      const quantity = parseFloat(row.getValue("in_process_quantity"));
-      return <div className="text-right">{quantity.toLocaleString()}</div>;
+      const quantity = parseFloat(row.getValue("quantity_available") || "0");
+      return <div className="text-right">{isNaN(quantity) ? "0" : quantity.toLocaleString()}</div>;
     },
   },
   {
