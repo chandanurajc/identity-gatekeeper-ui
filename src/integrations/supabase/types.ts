@@ -512,6 +512,89 @@ export type Database = {
           },
         ]
       }
+      inventory_transfer_lines: {
+        Row: {
+          created_on: string
+          id: string
+          item_id: string
+          line_number: number
+          quantity_to_transfer: number
+          transfer_id: string
+          updated_on: string | null
+        }
+        Insert: {
+          created_on?: string
+          id?: string
+          item_id: string
+          line_number: number
+          quantity_to_transfer: number
+          transfer_id: string
+          updated_on?: string | null
+        }
+        Update: {
+          created_on?: string
+          id?: string
+          item_id?: string
+          line_number?: number
+          quantity_to_transfer?: number
+          transfer_id?: string
+          updated_on?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_transfer_lines_transfer_id_fkey"
+            columns: ["transfer_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_transfers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory_transfers: {
+        Row: {
+          created_by: string
+          created_on: string
+          destination_division_id: string
+          id: string
+          organization_id: string
+          origin_division_id: string
+          status: string
+          tracking_number: string | null
+          transfer_date: string
+          transfer_number: string
+          updated_by: string | null
+          updated_on: string | null
+        }
+        Insert: {
+          created_by: string
+          created_on?: string
+          destination_division_id: string
+          id?: string
+          organization_id: string
+          origin_division_id: string
+          status?: string
+          tracking_number?: string | null
+          transfer_date?: string
+          transfer_number: string
+          updated_by?: string | null
+          updated_on?: string | null
+        }
+        Update: {
+          created_by?: string
+          created_on?: string
+          destination_division_id?: string
+          id?: string
+          organization_id?: string
+          origin_division_id?: string
+          status?: string
+          tracking_number?: string | null
+          transfer_date?: string
+          transfer_number?: string
+          updated_by?: string | null
+          updated_on?: string | null
+        }
+        Relationships: []
+      }
       invoice: {
         Row: {
           bill_to_address1: string | null
@@ -2398,6 +2481,10 @@ export type Database = {
         Args: { org_id: string }
         Returns: string
       }
+      generate_transfer_number: {
+        Args: { org_id: string }
+        Returns: string
+      }
       get_inventory_stock_summary: {
         Args: { p_organization_id: string; p_include_zero_stock?: boolean }
         Returns: {
@@ -2431,7 +2518,13 @@ export type Database = {
       }
     }
     Enums: {
-      account_type: "Asset" | "Liability" | "Equity" | "Revenue" | "Expense"
+      account_type:
+        | "Asset"
+        | "Liability"
+        | "Equity"
+        | "Revenue"
+        | "Expense"
+        | "Assets - Inventory"
       app_role: "admin" | "user" | "guest"
       attachment_file_type: "display_picture" | "other_document"
       filter_logic_type: "AND" | "OR"
@@ -2595,7 +2688,14 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      account_type: ["Asset", "Liability", "Equity", "Revenue", "Expense"],
+      account_type: [
+        "Asset",
+        "Liability",
+        "Equity",
+        "Revenue",
+        "Expense",
+        "Assets - Inventory",
+      ],
       app_role: ["admin", "user", "guest"],
       attachment_file_type: ["display_picture", "other_document"],
       filter_logic_type: ["AND", "OR"],

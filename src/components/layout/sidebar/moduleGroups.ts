@@ -125,6 +125,15 @@ export const createModuleGroups = (permissions: PermissionsMap): ModuleGroup[] =
       permission: true,
     });
   }
+  
+  if (permissions.canViewInventoryTransfer) {
+    inventoryItems.push({
+      label: "Inventory Transfer",
+      path: "/inventory/transfer",
+      icon: Truck,
+      permission: true,
+    });
+  }
 
   if (inventoryItems.length > 0) {
     moduleGroups.push({

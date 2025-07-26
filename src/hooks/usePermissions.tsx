@@ -335,6 +335,7 @@ export const usePermissions = () => {
       canRejectPayments: permissions.includes("reject_payments"),
       // Inventory permissions
       canViewInventory: permissions.includes("View Inventory"),
+      canViewInventoryTransfer: permissions.includes("View Inventory transfer"),
       // Module access
       canAccessAdminModule: permissions.includes("access_admin") || permissions.length > 0,
       canAccessSettingsModule: permissions.includes("access_settings"),
