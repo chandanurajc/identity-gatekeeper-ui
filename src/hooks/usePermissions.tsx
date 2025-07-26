@@ -46,6 +46,7 @@ export const usePermissions = () => {
               "View Invoices", "Create Invoice", "Edit Invoice", "Delete Invoice", 
               "Send Invoice for Approval", "Approve Invoice", "Reject Invoice",
               "Record Payment",
+              "View Inventory transfer", "Create Inventory transfer", "Edit Inventory transfer", "Confirm Inventory transfer",
               "access_admin", "access_settings"
             ];
             setPermissions(allPermissions);
