@@ -202,6 +202,7 @@ export const usePermissions = () => {
         canRejectPayments: false,
         // Inventory permissions
         canViewInventory: false,
+        canViewInventoryTransfer: false,
         // Module access
         canAccessAdminModule: false,
         canAccessSettingsModule: false,
@@ -269,6 +270,7 @@ export const usePermissions = () => {
         canRejectPayments: true,
         // Inventory
         canViewInventory: true,
+        canViewInventoryTransfer: true,
         // Module access
         canAccessAdminModule: true,
         canAccessSettingsModule: true,
