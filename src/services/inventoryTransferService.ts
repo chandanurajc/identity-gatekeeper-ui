@@ -18,14 +18,9 @@ async function createOrPostJournalForTransfer(transferId: string, confirmedBy: s
     if (matchingRule && matchingRule.lines && matchingRule.lines.length > 0) {
       const journalLines = matchingRule.lines.map((line) => {
         let amount = 0;
-        if (line.amountSource === 'Item total price') {
+        if (line.amountSource === 'Item total price' || line.amountSource === 'Total transfer value') {
           amount = (transfer.transfer_lines || []).reduce(
             (sum, l) => sum + (l.inventory_cost || 0) * (l.quantity_to_transfer || 0),
-            0
-          );
-        } else if (line.amountSource === 'Total transfer value') {
-          amount = (transfer.transfer_lines || []).reduce(
-            (sum, l) => sum + (l.inventory_cost || 0),
             0
           );
         }
@@ -39,7 +34,7 @@ async function createOrPostJournalForTransfer(transferId: string, confirmedBy: s
       });
       const journalData = {
         journalDate: new Date().toISOString().slice(0, 10),
-        transactionType: 'Inventory transfer',
+        transactionType: 'Inventory transfer' as 'Inventory transfer',
         transactionReference: transfer.transfer_number,
         journalLines,
       };
