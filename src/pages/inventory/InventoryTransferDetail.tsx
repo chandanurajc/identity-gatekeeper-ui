@@ -90,61 +90,43 @@ export default function InventoryTransferDetail() {
   };
 
   return (
-    const [isPostingJournal, setIsPostingJournal] = React.useState(false);
-    const handleManualJournal = async () => {
-      setIsPostingJournal(true);
-      try {
-        // Use the same logic as confirmInventoryTransfer, but only for journal
-        await inventoryTransferService.createOrPostJournalForTransfer(id!, user?.id || "");
-        toast.success("Journal entry created/posted successfully.");
-        queryClient.invalidateQueries({ queryKey: ["inventory-transfer", id] });
-      } catch (err: any) {
-        toast.error("Failed to create/post journal: " + (err?.message || err));
-      } finally {
-        setIsPostingJournal(false);
-      }
-    };
-
-    <div className="space-y-6">
+    <div>
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <Button variant="outline" onClick={() => navigate("/inventory/transfer")}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Transfers
-          </Button>
-          <h1 className="text-3xl font-bold flex items-center">
-            <Package2 className="h-8 w-8 mr-3" />
-            {transfer.transfer_number}
-          </h1>
-          <Badge variant={transfer.status === "Transfer confirmed" ? "default" : "secondary"}>
-            {transfer.status}
-          </Badge>
-        </div>
-
-        <div className="flex space-x-2">
-          <Button variant="outline" onClick={handleManualJournal} disabled={isPostingJournal}>
-            {isPostingJournal ? "Posting Journal..." : "Post Journal Entry"}
-          </Button>
-          {transfer.status === "Transfer initiated" && canEditInventoryTransfer && (
-            <Button variant="outline" onClick={() => navigate(`/inventory/transfer/${id}/edit`)}>
-              Edit Transfer
-            </Button>
-          )}
-          
-          {transfer.status === "Transfer initiated" && canConfirmInventoryTransfer && (
-            <PermissionButton
-              permission="Confirm Inventory transfer"
-              onClick={handleConfirmTransfer}
-              disabled={confirmTransferMutation.isPending}
-            >
-              <CheckCircle2 className="h-4 w-4 mr-2" />
-              {confirmTransferMutation.isPending ? "Confirming..." : "Confirm Transfer"}
-            </PermissionButton>
-          )}
-        </div>
+        <Button variant="outline" onClick={() => navigate("/inventory/transfer")}> 
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Transfers
+        </Button>
+        <h1 className="text-3xl font-bold flex items-center">
+          <Package2 className="h-8 w-8 mr-3" />
+          {transfer.transfer_number}
+        </h1>
+        <Badge variant={transfer.status === "Transfer confirmed" ? "default" : "secondary"}>
+          {transfer.status}
+        </Badge>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="flex space-x-2 mt-4">
+        <Button variant="outline" onClick={handleManualJournal} disabled={isPostingJournal}>
+          {isPostingJournal ? "Posting Journal..." : "Post Journal Entry"}
+        </Button>
+        {transfer.status === "Transfer initiated" && canEditInventoryTransfer && (
+          <Button variant="outline" onClick={() => navigate(`/inventory/transfer/${id}/edit`)}>
+            Edit Transfer
+          </Button>
+        )}
+        {transfer.status === "Transfer initiated" && canConfirmInventoryTransfer && (
+          <PermissionButton
+            permission="Confirm Inventory transfer"
+            onClick={handleConfirmTransfer}
+            disabled={confirmTransferMutation.isPending}
+          >
+            <CheckCircle2 className="h-4 w-4 mr-2" />
+            {confirmTransferMutation.isPending ? "Confirming..." : "Confirm Transfer"}
+          </PermissionButton>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
         <Card>
           <CardHeader>
             <CardTitle>Transfer Information</CardTitle>
@@ -190,7 +172,7 @@ export default function InventoryTransferDetail() {
         </Card>
       </div>
 
-      <Card>
+      <Card className="mt-6">
         <CardHeader>
           <CardTitle>Transfer Lines</CardTitle>
         </CardHeader>
@@ -227,7 +209,7 @@ export default function InventoryTransferDetail() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="mt-6">
         <CardHeader>
           <CardTitle>Audit Trail</CardTitle>
         </CardHeader>

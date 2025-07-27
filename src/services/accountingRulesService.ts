@@ -6,14 +6,7 @@ class AccountingRulesService {
   async getAccountingRules(organizationId: string): Promise<AccountingRule[]> {
     const { data, error } = await supabase
       .from('accounting_rules')
-      .select(`
-        *,
-        accounting_rule_lines (*),
-        divisions!accounting_rules_division_id_fkey (
-          id,
-          name
-        )
-      `)
+      .select(`*, accounting_rule_lines (*), divisions!accounting_rules_division_id_fkey (id, name) `)
       .eq('organization_id', organizationId)
       .order('rule_name', { ascending: true });
 
@@ -28,14 +21,7 @@ class AccountingRulesService {
   async getAccountingRuleById(id: string, organizationId: string): Promise<AccountingRule | null> {
     const { data, error } = await supabase
       .from('accounting_rules')
-      .select(`
-        *,
-        accounting_rule_lines (*),
-        divisions!accounting_rules_division_id_fkey (
-          id,
-          name
-        )
-      `)
+      .select(`*, accounting_rule_lines (*), divisions!accounting_rules_division_id_fkey (id, name) `)
       .eq('id', id)
       .eq('organization_id', organizationId)
       .single();
