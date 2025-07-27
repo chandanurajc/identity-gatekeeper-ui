@@ -94,6 +94,8 @@ export default function AccountingRulesForm({ mode: propMode }: AccountingRulesF
     resolver: zodResolver(formSchema),
     defaultValues: {
       ruleName: "",
+      divisionId: "",
+      destinationDivisionId: "",
       transactionCategory: "Invoice",
       triggeringAction: "Invoice Approved",
       transactionReference: "",
@@ -132,10 +134,13 @@ export default function AccountingRulesForm({ mode: propMode }: AccountingRulesF
     enabled: !!organizationId,
   });
 
-  // Reset form when data loads
+  // Reset form when data loads - ensure divisions are loaded first
   React.useEffect(() => {
-    if (existingRule) {
-      form.reset({
+    if (existingRule && divisions.length > 0) {
+      console.log('Resetting form with rule:', existingRule);
+      console.log('Available divisions:', divisions);
+      
+      const formData = {
         ruleName: existingRule.ruleName,
         divisionId: existingRule.divisionId || "",
         destinationDivisionId: existingRule.destinationDivisionId || "",
@@ -151,9 +156,12 @@ export default function AccountingRulesForm({ mode: propMode }: AccountingRulesF
           enableSubledger: false,
         }],
         status: existingRule.status,
-      });
+      };
+      
+      console.log('Form data being set:', formData);
+      form.reset(formData);
     }
-  }, [existingRule, form]);
+  }, [existingRule, divisions, form]);
 
   const createMutation = useMutation({
     mutationFn: (data: AccountingRuleFormData) =>
