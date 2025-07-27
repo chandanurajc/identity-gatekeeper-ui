@@ -118,9 +118,11 @@ export default function AccountingRulesForm({ mode: propMode }: AccountingRulesF
 
   // Load existing rule for edit mode
   const { data: existingRule, isLoading } = useQuery({
-    queryKey: ['accounting-rule', id],
+    queryKey: ['accounting-rule', id, organizationId],
     queryFn: () => id && organizationId ? accountingRulesService.getAccountingRuleById(id, organizationId) : null,
     enabled: mode === 'edit' && !!id && !!organizationId,
+    staleTime: 0, // Always refetch to ensure fresh data
+    refetchOnMount: true,
   });
 
   // Load active divisions
@@ -136,6 +138,7 @@ export default function AccountingRulesForm({ mode: propMode }: AccountingRulesF
       form.reset({
         ruleName: existingRule.ruleName,
         divisionId: existingRule.divisionId || "",
+        destinationDivisionId: existingRule.destinationDivisionId || "",
         transactionCategory: existingRule.transactionCategory,
         triggeringAction: existingRule.triggeringAction,
         transactionReference: existingRule.transactionReference,
