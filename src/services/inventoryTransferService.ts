@@ -237,6 +237,69 @@ async function createInventoryTransfer(transferData: CreateInventoryTransferData
     throw new Error(`Failed to create inventory stock entries: ${stockError.message}`);
   }
 
+  // --- Journal Posting Logic for Transfer Initiated ---
+  try {
+    const { accountingRulesService } = await import("@/services/accountingRulesService");
+    const { journalService } = await import("@/services/journalService");
+
+    const rules = await accountingRulesService.getAccountingRules(transferData.organization_id);
+    const matchingRule = rules.find(
+      (rule) =>
+        rule.transactionCategory === 'Inventory Transfer' &&
+        rule.triggeringAction === 'Transfer initiated' &&
+        rule.status === 'Active' &&
+        (rule.divisionId === transferData.origin_division_id || rule.divisionId === null) &&
+        (rule.destinationDivisionId === transferData.destination_division_id || rule.destinationDivisionId === null)
+    );
+
+    if (matchingRule && matchingRule.lines && matchingRule.lines.length > 0) {
+      const journalLines = matchingRule.lines.map((line) => {
+        let amount = 0;
+        if (line.amountSource === 'Item total price') {
+          // inventory_cost * quantity = total line value
+          amount = transferData.transfer_lines.reduce(
+            (sum, l) => sum + (l.inventory_cost || 0) * (l.quantity_to_transfer || 0),
+            0
+          );
+        } else if (line.amountSource === 'Total transfer value') {
+          // inventory_cost is already the total line value
+          amount = transferData.transfer_lines.reduce(
+            (sum, l) => sum + (l.inventory_cost || 0),
+            0
+          );
+        }
+        return {
+          lineNumber: line.lineNumber,
+          accountCode: line.debitAccountCode || line.creditAccountCode || '',
+          debitAmount: line.debitAccountCode ? amount : undefined,
+          creditAmount: line.creditAccountCode ? amount : undefined,
+          narration: `Inventory transfer journal for transfer #${transferNumber}`,
+        };
+      }).filter(line => 
+        (line.debitAmount && line.debitAmount > 0) || (line.creditAmount && line.creditAmount > 0)
+      );
+
+      if (journalLines.length > 0) {
+        const journalData = {
+          journalDate: new Date().toISOString().slice(0, 10),
+          transactionType: 'Inventory transfer' as 'Inventory transfer',
+          transactionReference: transferNumber,
+          journalLines,
+        };
+
+        const journal = await journalService.createJournal(
+          journalData,
+          transferData.organization_id,
+          createdByUsername
+        );
+        await journalService.postJournal(journal.id, transferData.organization_id, createdByUsername);
+      }
+    }
+  } catch (err) {
+    console.error('Error posting journal for transfer initiated:', err);
+    // Don't throw - let the transfer creation continue
+  }
+
   return {
     ...transfer,
     created_on: new Date(transfer.created_on),
