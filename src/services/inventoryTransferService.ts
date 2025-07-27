@@ -18,9 +18,16 @@ async function createOrPostJournalForTransfer(transferId: string, confirmedBy: s
     if (matchingRule && matchingRule.lines && matchingRule.lines.length > 0) {
       const journalLines = matchingRule.lines.map((line) => {
         let amount = 0;
-        if (line.amountSource === 'Item total price' || line.amountSource === 'Total transfer value') {
+        if (line.amountSource === 'Item total price') {
+          // inventory_cost * quantity = total line value
           amount = (transfer.transfer_lines || []).reduce(
             (sum, l) => sum + (l.inventory_cost || 0) * (l.quantity_to_transfer || 0),
+            0
+          );
+        } else if (line.amountSource === 'Total transfer value') {
+          // inventory_cost is already the total line value
+          amount = (transfer.transfer_lines || []).reduce(
+            (sum, l) => sum + (l.inventory_cost || 0),
             0
           );
         }
@@ -355,7 +362,7 @@ async function confirmInventoryTransfer(transferId: string, confirmedBy: string)
     if (matchingRule && matchingRule.lines && matchingRule.lines.length > 0) {
       // Calculate total transfer value
       const totalTransferValue = (transfer.transfer_lines || []).reduce(
-        (sum, l) => sum + (l.inventory_cost || 0) * (l.quantity_to_transfer || 1),
+        (sum, l) => sum + (l.inventory_cost || 0), // inventory_cost is already the total line value
         0
       );
 
@@ -366,8 +373,14 @@ async function confirmInventoryTransfer(transferId: string, confirmedBy: string)
         let amount = 0;
         
         // Map amount source values
-        if (line.amountSource === 'Item total price' || line.amountSource === 'Total transfer value') {
+        if (line.amountSource === 'Total transfer value') {
           amount = totalTransferValue;
+        } else if (line.amountSource === 'Item total price') {
+          // For item total price, use inventory_cost * quantity if it's unit cost
+          amount = (transfer.transfer_lines || []).reduce(
+            (sum, l) => sum + (l.inventory_cost || 0) * (l.quantity_to_transfer || 1),
+            0
+          );
         }
 
         const journalLine = {
